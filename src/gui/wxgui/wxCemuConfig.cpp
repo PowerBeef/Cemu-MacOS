@@ -35,7 +35,6 @@ void wxCemuConfig::Load(XMLConfigParser& parser)
 	save_screenshot = parser.get("save_screenshot", save_screenshot);
 	did_show_vulkan_warning = parser.get("vk_warning", did_show_vulkan_warning);
 	did_show_graphic_pack_download = parser.get("gp_download", did_show_graphic_pack_download);
-	did_show_macos_disclaimer = parser.get("macos_disclaimer", did_show_macos_disclaimer);
 	fullscreen = parser.get("fullscreen", fullscreen);
 
 	window_position.x = parser.get("window_position").get("x", -1);
@@ -134,7 +133,6 @@ void wxCemuConfig::Save(XMLConfigParser& config)
 	config.set<bool>("save_screenshot", save_screenshot);
 	config.set<bool>("vk_warning", did_show_vulkan_warning);
 	config.set<bool>("gp_download", did_show_graphic_pack_download);
-	config.set<bool>("macos_disclaimer", did_show_macos_disclaimer);
 	config.set<bool>("fullscreen", fullscreen);
 
 	auto wpos = config.set("window_position");
