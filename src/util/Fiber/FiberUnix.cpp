@@ -15,12 +15,9 @@ Fiber::Fiber(void(*FiberEntryPoint)(void* userParam), void* userParam, void* pri
 	ctx->uc_stack.ss_sp = m_stackPtr;
 	ctx->uc_stack.ss_size = stackSize;
 	ctx->uc_link = &ctx[0];
-#ifdef __arm64__
+	// makecontext() passes int arguments, so a 64-bit pointer must be split in two.
 	// https://www.man7.org/linux/man-pages/man3/makecontext.3.html#NOTES
 	makecontext(ctx, (void(*)())FiberEntryPoint, 2, (uint64) userParam >> 32, userParam);
-#else
-	makecontext(ctx, (void(*)())FiberEntryPoint, 1, userParam);
-#endif
 	this->m_implData = (void*)ctx;
 }
 

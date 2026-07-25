@@ -110,7 +110,7 @@ if (MACOS_BUNDLE)
 	set(MACOSX_BUNDLE_COPYRIGHT "Copyright © ${CURRENT_YEAR} Cemu Project")
 
 	set(MACOSX_BUNDLE_CATEGORY "public.app-category.games")
- 	set(MACOSX_MINIMUM_SYSTEM_VERSION "13.4")
+ 	set(MACOSX_MINIMUM_SYSTEM_VERSION "26.0")
   	set(MACOSX_BUNDLE_TYPE_EXTENSION "wua")
 
 	set_target_properties(CemuBin PROPERTIES

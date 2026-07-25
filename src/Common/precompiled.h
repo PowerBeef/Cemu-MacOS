@@ -26,9 +26,10 @@
 
 // arch defines
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(_M_AMD64)
-#define ARCH_X86_64
+#if !defined(__aarch64__) || !defined(__APPLE__)
+#error "This fork targets arm64 macOS only"
 #endif
+#define ARCH_AARCH64 1
 
 // c includes
 #include <cstdint>
@@ -36,10 +37,6 @@
 #include <cmath>
 #include <ctime>
 #include <cassert>
-
-#if defined(ARCH_X86_64)
-#include <immintrin.h>
-#endif
 
 // c++ includes
 #include <string>

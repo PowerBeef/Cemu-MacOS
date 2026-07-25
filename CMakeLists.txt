@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21.1)
 
 option(ENABLE_VCPKG "Enable the vcpkg package manager" ON)
-option(MACOS_BUNDLE "The executable when built on macOS will be created as an application bundle" OFF)
+option(MACOS_BUNDLE "The executable when built on macOS will be created as an application bundle" ON)
 option(ALLOW_PORTABLE "Allow Cemu to be run in portable mode" ON)
 
 # used by CI script to set version:
@@ -99,7 +99,9 @@ endif()
 
 if (APPLE)
     enable_language(OBJC OBJCXX)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "13.4")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "26.0")
+    # arm64 only; the x86-64 recompiler backend and Rosetta support are gone
+    set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "" FORCE)
 endif()
 
 if (UNIX AND NOT APPLE)
@@ -228,14 +230,7 @@ endif()
 
 add_subdirectory("dependencies/ih264d" EXCLUDE_FROM_ALL)
 
-if (CMAKE_OSX_ARCHITECTURES)
-	set(CEMU_ARCHITECTURE ${CMAKE_OSX_ARCHITECTURES})
-else()
-	set(CEMU_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-endif()
-if(CEMU_ARCHITECTURE MATCHES "(aarch64)|(AARCH64)|(arm64)|(ARM64)")
-	add_subdirectory("dependencies/xbyak_aarch64" EXCLUDE_FROM_ALL)
-endif()
+add_subdirectory("dependencies/xbyak_aarch64" EXCLUDE_FROM_ALL)
 
 find_package(ZArchive QUIET)
 if (NOT ZArchive_FOUND)

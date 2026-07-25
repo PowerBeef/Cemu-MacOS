@@ -119,13 +119,7 @@ bool CemuUpdateWindow::QueryUpdateInfo(std::string& downloadUrlOut, std::string&
 #else
 #error Name for current platform is missing
 #endif
-#if defined(__aarch64__)
 	urlStr.append("_aarch64");
-#elif defined(ARCH_X86_64)
-	urlStr.append("_x86_64");
-#else
-	urlStr.append("_unknown");
-#endif
 #if BOOST_OS_BSD
 	return false; // BSD users must update from source; no binary available
 #endif
