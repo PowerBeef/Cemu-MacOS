@@ -1,0 +1,169 @@
+# Cemu-AS — an Apple Silicon / macOS 26 native fork of Cemu
+
+## Context
+
+`/Users/patricedery/Coding_Projects/Cemu-MacOS` is a clone of PowerBeef/Cemu-MacOS — a macOS fork of the Cemu Wii U emulator (~333k LOC C++20). It carries a working AArch64 recompiler and a ~7,300-LOC Metal renderer, but it is fundamentally still a *port*: it builds for x86_64 and arm64, ships three renderer backends, defaults to Vulkan-over-MoltenVK on macOS, targets macOS 13.4, and shows a startup dialog telling the user the macOS build is "purely experimental… degraded performance due to the use of MoltenVk and Rosetta for ARM Macs."
+
+The goal is a hard fork that stops being a port: **arm64-only, macOS 26.0 minimum, Metal-only**, with the Apple Silicon–specific work that the portable codebase structurally cannot do.
+
+Target/dev machine: **Apple M2 (4P+4E), 8 GB unified memory, 16 KB pages, macOS 26.5.2, Xcode 26.6 / Apple clang 21, cmake 4.3.2, ninja 1.13.2.** MoltenVK is not installed — which currently blocks a bundle build outright, and stops mattering once Vulkan is deleted.
+
+Research pass (three parallel deep-read agents + my own verification) produced a full defect and opportunity map. Highlights that shape the plan, each verified directly against the source or the installed SDK:
+
+- **A live heap-corruption bug in the Metal renderer, root-caused.** `MetalRenderer.cpp:239` loops `i < METAL_SHADER_TYPE_TOTAL` (=4) over `m_uniformBufferOffsets[METAL_GENERAL_SHADER_TYPE_TOTAL][MAX_MTL_BUFFERS]` (=`[3][31]`), writing 248 bytes past the array — ~128 of them past the end of `m_state` entirely. This is exactly the symptom the `// HACK: for some reason, this variable ends up being initialized to some garbage data` comment at `:265-268` describes. Everything else in the renderer is built on top of this.
+- **`MAP_JIT` allows exactly one region per process** under hardened runtime. The recompiler currently constructs a fresh xbyak allocator + `CodeGenerator` *per recompiled function*. This works today only because local builds are unsigned; the moment entitlements are applied it fails after the first function. This makes the JIT allocator a hard blocker, not an optimization.
+- **`MemMapper::FreeMemory` never page-aligns and discards the return value.** With 16 KB pages, unmapping `mmuRange_HIGHMEM` (`0xFFFFF000`, which is `0x3000` into a page) returns `EINVAL` silently, so guest memory survives a title switch.
+- **`MTLSamplerDescriptor.lodBias` is `API_AVAILABLE(macos(26.0))`** — confirmed in the installed SDK. The `// TODO: set lod bias` at `MetalSamplerCache.cpp:156` exists because the API didn't exist. Our deployment target is precisely the version that adds it.
+- **No compiled-shader cache on Metal.** Every MSL shader recompiles from source on every launch (Vulkan caches SPIR-V; Metal caches nothing). The disabled replacement shelled out to `diskutil erasevolume` to build a RAM disk and ran `xcrun metal` per shader.
+- **Zero QoS anywhere**, while up to 17 shader/pipeline compile threads compete with 3 guest cores and the render thread for 4 P-cores.
+- `dependencies/metal-cpp` is pinned at `a63bd172` (macOS 14.2 era) — no `MTL4*`, no `MTLResidencySet`, no MetalFX, no `CAMetalLayer` properties.
+- `PPCTimer` spends **3 real seconds at every launch** calibrating a frequency that `cntfrq_el0` returns in one instruction, then reads the clock under a global spinlock with a 128-bit divide.
+- Recompiled code is **never freed** — `PPCRecompiler_cleanupAArch64Code` is defined and never called.
+
+All 7 submodules are currently uninitialized, so nothing arm64- or Metal-related configures yet.
+
+---
+
+## Approach
+
+Four workstreams. **F** (foundation/platform/packaging), **J** (CPU/JIT/memory), **G** (graphics/Metal), plus **M** (measurement), which gates claims in J and G. Every numbered step below ends at a buildable, launchable checkpoint.
+
+Detailed per-workstream designs live alongside this file:
+
+- `01-foundation-platform-packaging.md` — build system, platform layer, W^X/`MAP_JIT`, QoS, signing/notarization, crash handling
+- `02-cpu-jit-memory.md` — AArch64 recompiler codegen, IML, timers, fibers, 16 KB pages, AES
+- `03-graphics-metal.md` — Metal renderer correctness, shader binary cache, TBDR exploitation, presentation, MetalFX
+
+### Stage 1 — Bootstrap and de-risk (do first, in this order)
+
+1. **Init 6 submodules** (skip `Vulkan-Headers`): `git submodule update --init --depth 1 dependencies/{vcpkg,ZArchive,cubeb,imgui,metal-cpp,xbyak_aarch64}`. Let vcpkg clone fully.
+2. **Bump `dependencies/metal-cpp` to `2948dd1e`** (metal-cpp_26.4). Gates the LOD-bias fix, `CAMetalLayer` properties, MetalFX, and any Metal 4 evaluation.
+3. **G0.1 — Fix the ctor overflow.** `MetalRenderer.cpp:239` → `METAL_GENERAL_SHADER_TYPE_TOTAL`; delete the HACK block at `:265-268`. Also: retain `m_device` on the `CopyAllDevices` path (`:264-277` — asymmetric ownership vs. the unconditional release in `~MetalRenderer`), null-guard `GetAndRetainCurrentCommandBufferIfNotCompleted` (`MetalRenderer.h:288-295`), and initialize `m_recordedDrawcalls{0}` / `m_commitTreshold{0}` (`:538-540`).
+4. **G1.1 — `kDefaultGraphicsAPI = kMetal`.** `CemuConfig.h:76-82` and `ActiveSettings.cpp:109-133`. Ship this alone: today an out-of-the-box macOS build runs MoltenVK, so **nobody has been exercising the Metal path by default**. Establish that it boots before deleting the fallbacks.
+5. **G1.2–1.3 — Delete OpenGL and Vulkan.** `Renderer/{OpenGL,Vulkan}/`, the GL/VK canvases, `imgui_impl_{opengl3,vulkan}`, `Vulkan-Headers`, `glslang` (from `vcpkg.json` *and* `overrides`). This is what unblocks `MACOS_BUNDLE=ON` on this machine — the MoltenVK `FATAL_ERROR` probe at `src/CMakeLists.txt:127-135` dies with it. **Read and save `CachedFBOVk.cpp:198-240` + `VulkanRendererCore.cpp:1187-1222` before deleting** — that's the reference design for G3.1.
+6. **R1 probe — the single most schedule-relevant experiment.** Before investing anywhere else: build `MACOS_BUNDLE=ON`, ad-hoc-sign with `com.apple.security.cs.allow-jit` + `--options runtime`, boot a title. If it dies after the first recompiled function, the `MAP_JIT` one-region limit is confirmed and **J-Stage-3 becomes a blocker that must be pulled forward**.
+7. **G0.5 / M — Stand up the harnesses.** Golden-scene screenshot set (8–10 scenes: BotW field+shrine, MK8, Splatoon ink, Smash training, Wind Waker HD sea, Xenoblade X, 3D World, a menu-heavy title) via the existing `HandleScreenshotRequest`. `MTL_DEBUG_LAYER=1` + `MTL_SHADER_VALIDATION=1`. UBSan unconditionally in Debug; ASan scoped to `src/Cafe/HW/Latte/` only (it interacts badly with `MAP_JIT`).
+
+### Stage 2 — The purge (arm64-only, macOS 26)
+
+8. **Delete `BackendX64/`** (9 files, ~8,500 lines incl. `x86Emitter.h`) — it currently compiles on arm64 as dead weight. Then the x86 branches: `PPCRecompiler.cpp:236-250/294-330/614-690`, `IMLOptimizerX86_SubstituteCJumpForEflagsJump`, the x86 half of `GetInstructionFixedRegisters`, `PPCREC_IML_OP_X86_CMP`, `namespace IMLArchX86`, the 15 `_x64XMM_*` fields in `PPCRecompiler.h:134-150`, and `PPCState.h:70`'s `temporaryGPR[4]`. **Keep** the `IMLUtil_*` helpers in `IMLOptimizer.cpp:449-529` — they're the substrate for the AArch64 peephole pass.
+   *Careful:* `PPCRecompiler.cpp:678` allocates from `&_x64XMM_xorNegateMaskBottom` using `offsetof` arithmetic — delete the call, don't retarget it.
+9. **Deployment target and platform purge.** `CMAKE_OSX_DEPLOYMENT_TARGET "26.0"`, force `CMAKE_OSX_ARCHITECTURES "arm64"`, `MACOS_BUNDLE` default **ON** (a non-bundle build can't be signed, so it can't use `MAP_JIT`). Delete Wayland/X11/GTK3/bluez/GameMode/XInput/DirectInput/DirectSound/XAudio, `dist/{linux,windows}/`, the Windows/Linux CI jobs, and the stale "experimental / Rosetta" disclaimer at `CemuApp.cpp:388-402`.
+10. **Rewrite `cpu_features` for arm64** — `hw.optional.arm.FEAT_*` sysctls plus P/E core counts. Use them for the log line and AES dispatch only; **do not gate compiled code paths on them**, because clang 21 already targets `apple-m1` with `+lse +aes +sha2 +dotprod +fullfp16` unconditionally.
+11. **Normalize `__arm64__` → `ARCH_AARCH64`** (`precompiled.h`, `FiberUnix.cpp:18`, `coreinit_Thread.cpp:18/55/1341`). `__arm64__` is an Apple-only spelling used where `__aarch64__` was meant.
+12. **CMake hygiene.** Fix `if(CMAKE_C_COMPILER_ID STREQUAL "Clang")` at `src/CMakeLists.txt:37` — it never matches AppleClang *and* tests the C compiler for a C++ warning. Guard IPO with `check_ipo_supported()`; keep **ThinLTO for Release only** (full LTO will thrash 8 GB), add `-Wl,-cache_path_lto`, turn LTO **off** for RelWithDebInfo. Add `-fvisibility=hidden` + `-Wl,-dead_strip`.
+    **Explicitly not doing:** `-mcpu=apple-m1` (verified no-op), `-fno-semantic-interposition` (ELF-only concept), BOLT (no Mach-O backend), PGO in the default pipeline (the hot code is JIT-generated and invisible to it).
+
+### Stage 3 — Correctness foundations
+
+13. **16 KB pages.** Add an `AlignRange()` helper to `MemMapperUnix.cpp` applied in **both** `AllocateMemory(fromReservation)` and `FreeMemory(fromReservation)` — round base down *and* end up — and check return values. Redeclare `mmuRange_HIGHMEM` as `{0xFFFFC000, 0x4000}` and `CORE0/1/2_LC` as size `0x8000`, making explicit what the kernel's rounding already does. Replace the 4 KB assert at `MMU.h:77` with round-up-and-log (graphic packs in the wild use 4 KB granularity — don't turn a working pack into an assert). Add a boot-time audit that logs every rounding-induced expansion and asserts no two rounded extents overlap.
+14. **First-party `JitCodeArena`** — one 256 MB `MAP_JIT` region (256 MB keeps every intra-arena branch inside the ±128 MB range the jump ladder already enforces), bump+free-list suballocation, a reentrant per-thread `JitWriteScope` RAII guard around `pthread_jit_write_protect_np`, and `sys_icache_invalidate` inside a single `JitCodeArena::Publish()` that is **the only** writer of `ppcRecompilerDirectJumpTable`. Keep `xbyak_aarch64` as an encoder only; replace `AArch64Allocator`'s body and delete `setFreeDisabled`.
+    **Do not adopt `com.apple.security.cs.jit-write-allowlist`** — it disables `pthread_jit_write_protect_np` entirely and would invert the emitter's control flow for zero benefit here.
+15. **Sign from CMake, always.** Two entitlement files: release = `allow-jit` only; debug adds `get-task-allow`. Sign **inner-out** (nested dylibs, then the bundle), never `--deep`, never `--entitlements` together with `--preserve-metadata=entitlements`. Ad-hoc + hardened runtime + `allow-jit` is sufficient for `MAP_JIT` — **no paid Developer ID needed for local development**; document that in BUILD.md.
+    Drop `allow-unsigned-executable-memory` (grants nothing on arm64 — plain RWX `mmap` fails regardless) and `disable-library-validation` (its only justification was MoltenVK, now deleted).
+16. **JIT lifetime.** Fix `x86Size = getMaxSize()` → `getSize()` and restore the emitter cursor after `processAllJumps()` (`BackendAArch64.cpp:1601-1616`) — today the recompiler dump writes trailing garbage and the size metric is meaningless. Then epoch-based deferred reclamation: retire list + per-core epochs, freed from the existing recompiler-thread wakeup, poisoned with `brk #0xdead` for a grace period in debug.
+17. **Crash diagnostics.** `sigaltstack` + `SA_ONSTACK` per thread (today a stack-overflow SIGSEGV is unreportable), arm64 PC recovery via `arm_thread_state64_get_pc` (**not** a raw `__pc` cast — PAC), demangled macOS backtraces into the crash log plus raw UUID+slide for offline `atos`, and `DEBUG_BREAK` → `__builtin_debugtrap()`.
+
+### Stage 4 — Scheduling and native integration
+
+18. **Fix core counts before adding any QoS.** `GetPhysicalCoreCount()` returns 8 on M2, so `MetalPipelineCache.cpp:54` spawns 7 compile threads. Add `GetPerformanceCoreCount()` / `GetEfficiencyCoreCount()` from `hw.perflevel{0,1}.physicalcpu` and size **all** compile pools off the E-core count.
+19. **Replace `FSpinlock` with `os_unfair_lock` — before assigning QoS.** `FSpinlock` is a pure spin with no priority donation. A `USER_INTERACTIVE` guest core spinning on `recompilerSpinlock` held by a descheduled `UTILITY` recompiler is a **hang**, not a slowdown. Doing QoS first converts a latent bug into a reproducible freeze.
+20. **QoS assignment** via a `ConfigureThread(name, role)` seam replacing `SetThreadName`: `USER_INTERACTIVE` for the 3 guest cores + `LatteThread` (exactly 4, matching the P-cluster), `UTILITY` for the recompiler and all shader/pipeline compile pools, `USER_INITIATED` for input, main thread untouched. Replace `ThreadPool::FireAndForget`'s detach-and-leak with `dispatch_async` — libdispatch already has a kernel-tuned P/E-aware pool.
+21. **Audio.** Replace the `std::vector` + mutex in the cubeb realtime callback (`CubebAPI.cpp:40` — a mutex on the CoreAudio HAL thread, which runs above every QoS class, plus an O(n) `erase` from the front) with a lock-free SPSC ring. Clamp latency to `[480, 1920]` frames with a Low/Balanced/Safe setting, default Balanced.
+22. **Native integration.** `NSHighResolutionCapable` (**without it macOS runs the app 1× magnified and the Metal drawable is half resolution**), `NSBluetoothAlwaysUsageDescription` (missing → the app is *killed*, not denied, on Wiimote access), `NSLocalNetworkUsageDescription` for DSU. Screensaver inhibition via `NSProcessInfo -beginActivityWithOptions:` in a new `ScreenSaverMac.mm` (not `IOPMAssertion` — an orphaned assertion keeps the display awake until reboot), which also removes the `SDL_INIT_VIDEO` call that is almost certainly the "feature crashes on macOS" cause. Then delete the macOS-only 5 ms `wxTimer` SDL pump and use the same dedicated SDL thread as every other platform. Replace `<Carbon/Carbon.h>` with four locally-defined key constants. Delete the self-updater (App Translocation makes `cp -rf` over a running bundle unworkable) — replace with "open releases page".
+    **Staying on SDL3; not adopting `GameController.framework`** — it's the better API, but SDL3 also carries the Wiimote HID transport, so adopting it means a sixth provider plus two mapping databases. The 200 Hz cap is a wxTimer problem, not an SDL problem. Recorded as a deferred decision, not a rejected one.
+    **Game Mode needs no code** — it triggers on `LSApplicationCategoryType = public.app-category.games` (already set) + real AppKit fullscreen. Verify empirically via `log stream --predicate 'subsystem CONTAINS "gamepolicy"'`.
+
+### Stage 5 — Performance (measured, incremental)
+
+**M — build the measurement harness first; nothing below is claimable without it.** A `--jit-audit` mode that force-compiles every function at load and emits per-function CSV (`ppcInstrCount, imlCount, spill/fill, hostBytes, hostInstrCount`), with **`hostInstrCount / ppcInstrCount`** as the headline number — deterministic and diffable across commits. Plus PPC and IML opcode histograms, so `rev16` gets sized *before* a day is spent on it. Plus a JIT symbol map side-file for `xctrace`, and an interpreter↔JIT differential fuzzer (randomized operands weighted toward denormals/±0/±inf/sNaN) that **gates the FMA work**.
+
+**J — CPU, ordered by payoff/effort:**
+- **Offset-0 addressing fold** (S) — `load`/`store`/`fpr_load`/`fpr_store` unconditionally emit `add_imm` even when `memOffset == 0`. Biggest instruction-count win in the plan.
+- **FP load/store via `rev32`/`rev64`** (S–M) — removes both an instruction and a ~5-cycle GPR↔FPR domain crossing from every float memory op.
+- **`rev16`** (S) — 3 instructions → 2 on `lhz`/`sth`/`lhbrx`/`sthbrx`.
+- **AArch64 bitmask immediates** (S–M) for AND/OR/XOR. There are exactly **5,334** encodable 32-bit values — enumerate all of them in the predicate's test.
+- **`ldp`/`stp` fusion** for name spill/fill (M) — in the backend emit loop, *not* as an IML pass, so DCE/RA/debug-printer are untouched.
+- **Cycle counting as an IML register** (M) — biggest loop win: 3 instructions per basic block plus a load per back-edge collapse to one `sub`. Highest-risk item; needs a debug-build shadow counter.
+- **FMA** (M) — this is a **correctness fix**: PPC `fmadd` is single-rounding and the current mul+add lowering double-rounds. No new IML type needed (`FPR_R_R_R_R` already exists with correct register-usage semantics). **The trap: PPC `fmsub` ↔ ARM `fnmsub` are swapped** — unit-test all four explicitly.
+- **`PPCTimer` rewrite** (S–M) — `cntfrq_el0` instead of the 3-second calibration; the ratios are exact rationals (`3315/64`), so the global spinlock, `dmb ish`, and 128-bit divide all disappear from a function called on every guest `mftb`.
+- **Fiber switch in hand-written AArch64 asm** (M) — `swapcontext` calls `sigprocmask` on *every* guest thread switch. Save x19–x30, d8–d15 low halves, sp, fpcr; `mmap`'d stacks with **16 KB** guard pages (today: `malloc`, no guard). **Must ship with CFI** — without it, `lldb bt` and Instruments' sampler produce junk, silently invalidating the whole measurement harness.
+- **AES via FEAT_AES** (S–M) — **best payoff/effort in the plan and dependency-free; start it on day one in parallel.** Title decryption currently runs table-driven software AES; ~4–5× on WUA/WUD mount. Gotcha: ARM `AESE` does AddRoundKey *first*, so round-key indexing is offset by one vs. the x86 source — write it against FIPS-197 vectors, not against the x86 code.
+- **`psq_l`/`psq_st` via `fcvtl`/`fcvtn`** (M) — ~10 instructions → 4 on the hottest FP memory op in Wii U graphics code.
+
+**G — graphics, ordered by payoff/risk:**
+- **LOD bias** (S) — 3 lines, now that macOS 26 provides the API. Fixes mip selection in every game using LOD bias.
+- **`MTLBinaryArchive` shader cache** (M) — **largest user-visible win.** Archives carry *both* GPU binaries and the AIR slice, so an OS update degrades to "skip the frontend" rather than "recompile everything". Owned by `MetalPipelineCache` (one archive per title), keyed on `{titleId}_{gpuArch}_{osBuild}_{LatteShaderCache_getPipelineCacheExtraVersion}` so MSL-emitter edits self-invalidate. Delete the RAM-disk/`xcrun` code and the `system()` helpers in `MetalCommon.h`.
+- **Presentation fixes** (S each) — wire `displaySyncEnabled` so the vsync setting stops being a no-op; set `maximumDrawableCount`; use `presentDrawable:afterMinimumDuration:` for frame pacing; stop mutating the live `CAMetalLayer`'s `pixelFormat` per frame (do sRGB in the output shader instead — `MetalOutputShaderCache` already keys on it).
+- **Re-test `Host` buffer-cache mode** (S) — it already imports guest MEM2 as a Shared `MTL::Buffer`, the true zero-copy path. It may have been judged unreliable *because of* the ctor heap corruption. If it's stable, it removes the entire upload path. **Test this before investing in upload batching.**
+- **`D24_S8` decoder** (M) — `depth24Stencil8PixelFormatSupported` is **false on all Apple Silicon**, so the remap-to-`Depth32Float_Stencil8`-with-the-decoder-commented-out branch at `LatteToMtl.cpp:173-179` is a live corruption path on every M-series Mac. Add `logOnce` on unknown formats *first* to get the real priority order.
+- **Render-pass self-dependency** (L) — largest correctness win. Port the *current* Vulkan design (`CheckForSelfDependency`: monotonic stamp + intersect against bound textures, O(bound), once per FBO/binding change), **not** the commented-out per-draw shader-scanning version. Apple-specific win: where the dependency is pixel-only, framebuffer fetch already handles it at zero cost.
+- **Memoryless depth + load/store audit** (M) — largest TBDR win. `CachedFBOMtl` uses `LoadActionLoad`/`StoreActionStore` on *every* attachment of *every* pass; on a TBDR GPU loading an attachment you're about to fully overwrite is pure wasted bandwidth. Depth that's never sampled becomes `Memoryless` + `Clear`/`DontCare`: ~16 MB and its full write bandwidth per 1080p target, 64 MB at 4×.
+- **Encoder/commit fixes** (S each) — re-enable `addCompletedHandler` (handler only enqueues; the Latte thread drains), revive the empty `NotifyLatteCommandProcessorIdle`, use `RequestSoonCommit` on readback.
+- **Drop dead branches** (S) — mesh-shader/Metal3/Apple-GPU/vendor-sniffing checks are all compile-time true on Apple7+; the silent drop of GS/RECTS draws becomes an assert.
+- **MetalFX spatial** (M) — replaces the hand-written bicubic output shader. **Temporal and frame interpolation are rejected**: they require per-pixel motion vectors and a camera matrix, which a Wii U emulator structurally cannot produce.
+- **Compile-thread unification** (S) — three pools with three uncoordinated sizing policies, up to 17 threads. Size from E-core count, `QOS_CLASS_UTILITY` (not `BACKGROUND` — it gets throttled), and check `PreponeCompilation`'s wait primitive for priority donation.
+
+**Metal 4: evaluate, don't migrate.** One timeboxed one-day spike after the binary archive ships — determine whether an `MTLRenderPipelineState` from `MTL4Compiler` works with a *classic* `MTLRenderCommandEncoder` (Apple documents neither compatibility nor incompatibility). If yes, adopt `MTL4Compiler` as a compilation backend only. Full command-encoding migration is not worth it: argument tables and mandatory residency sets are pure cost at Cemu's binding counts, and Metal 4 barriers don't solve intra-pass self-dependency either.
+
+### Explicitly not doing
+
+Argument buffers · `MTLResidencySet` · `MTLHeap` aliasing · EDR/HDR · MetalFX temporal/frame-interpolation · reviving the RAM-disk AIR cache · offline shader precompilation · reviving `IMLReg::Offset` for sub-register views (partial-def semantics on a linear-scan allocator with 7 open TODOs — and NEON has no non-destructive 3-operand vector FMA, so the ceiling is near zero) · vector `fmla` for `ps_madd` · guest FPSCR rounding-mode plumbing · shrinking the 512 MB jump table (it's reserved VA; the flat table is one `ldr` on the hottest path) · `-mcpu`/BOLT/PGO/full LTO · Mach exception ports · static libusb (LGPL) · hand-rolled updater or thread pool · `jit-write-allowlist`.
+
+---
+
+## Critical files
+
+| File | Role |
+|---|---|
+| `CMakeLists.txt`, `src/CMakeLists.txt` | deployment target, arch forcing, renderer purge, MoltenVK removal, codesign integration, LTO/IPO |
+| `src/util/MemMapper/MemMapperUnix.cpp` | the 16 KB page fix (round both ends, check returns) |
+| `src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp` | `JitCodeArena` seam, all codegen wins, size/cursor bug |
+| `src/Cafe/HW/Espresso/Recompiler/PPCRecompiler.cpp` | x86 purge, instance-data shrink, epoch reclamation, thread QoS |
+| `src/Cafe/HW/Espresso/Recompiler/PPCRecompilerImlGenFPU.cpp` + `IML/IMLInstruction.h` | FMA, paired-single work |
+| `src/Cafe/HW/Espresso/PPCTimer.cpp` | `cntfrq_el0` rewrite |
+| `src/util/Fiber/FiberUnix.cpp` (+ new `.S`) | hand-written context switch, guard pages |
+| `src/util/helpers/helpers.cpp` | `ConfigureThread` seam (QoS + name + sigaltstack), core counts |
+| `src/Cafe/HW/Latte/Renderer/Metal/MetalRenderer.{cpp,h}` | ctor overflow, encoder/commit architecture, presentation |
+| `src/Cafe/HW/Latte/Renderer/Metal/MetalPipelineCache.cpp` + `MetalPipelineCompiler.cpp` | `MTLBinaryArchive` home, compile-thread sizing |
+| `src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerAnalyzer.cpp` | the three interleaved `resourceMappingGL/VK/MTL` tables — riskiest edit in the GL/VK deletion |
+| `src/Cafe/HW/Latte/Renderer/Vulkan/CachedFBOVk.cpp` | **read before deleting** — reference design for the Metal barrier mechanism |
+
+---
+
+## Verification
+
+**Per-stage gates** (each must pass before the next stage):
+
+1. **Bootstrap** — `./bin/Cemu_relwithdebinfo` opens, game list populates, a title boots and renders on Metal. Golden-scene screenshots captured as the baseline.
+2. **R1 probe** — bundle + ad-hoc sign + hardened runtime + `allow-jit`; boot a title. Records whether `MAP_JIT` reordering is needed.
+3. **Purge** — `grep -rn "ARCH_X86_64\|__x86_64__\|__arm64__\|ENABLE_VULKAN"` returns only vendored third-party hits. `nm -u` shows no `vk`/`gl` symbols. Golden scenes render identically.
+4. **16 KB pages** — debug self-test round-trips every `MMURange` twice asserting `mprotect` success; boot title A → game list → title B with no stale-memory assertion; `lldb` shows `---` at `memory_base + 0xFFFFF000` after unmap.
+5. **JIT arena** — `vmmap $(pgrep Cemu) | grep -i jit` shows exactly **one** region; an hour of forced `PPCRecompiler_invalidateRange` shows the JIT dirty size plateauing, not growing. Deliberately remove `sys_icache_invalidate` in a scratch build and confirm it crashes — proves the call is load-bearing.
+6. **QoS** — `xctrace record --template 'System Trace'`, 60 s of gameplay: the 3 guest cores + `LatteThread` on P-cores, compile threads on E-cores, zero blocked time on the audio thread.
+7. **Signing** — `codesign --verify --strict`, `codesign -dv --entitlements -`; on a *different* Mac, download the DMG through a browser (to get the quarantine bit), open, drag, launch with no Gatekeeper prompt; `spctl -a -vvv` → `accepted, source=Notarized Developer ID`.
+
+**Continuous:**
+- **`hostInstrCount / ppcInstrCount`** from `--jit-audit`, diffed per commit. Every J-stage change must move it or be reverted.
+- **Golden-scene screenshot diffs** after every G change. For the resource-mapping collapse specifically, **byte-diff the generated MSL** for all golden scenes — that's the single most important gate in the graphics work.
+- **Differential fuzzer** (10⁷ iterations/opcode in CI) gating every FP change; explicit unit tests for the `fmsub`↔`fnmsub` crossover.
+- **Timer drift** — `OSGetSystemTime()` vs `CLOCK_MONOTONIC` over 60 s, fail above 100 ppm.
+- **Memory** — `task_vm_info.phys_footprint` logged every 30 s. Budget on 8 GB is tight: ~1 GB MEM2 + up to 448 MB jump table + 164 MB Latte buffer cache + Metal residency before textures.
+- **Frame pacing** — Metal Performance HUD (`MTL_HUD_ENABLED=1`) and p99 frame time during first traversal of a new BotW region, cold vs. warm archive.
+
+**Batching rule:** every change to `LatteDecompilerEmitMSL.cpp` invalidates the binary archive for all users. Batch MSL-emitter changes and bump the cache version once per release, not once per fix.
+
+---
+
+## Risk register (top 6)
+
+| Risk | Why likely | Detect early |
+|---|---|---|
+| `MAP_JIT` one-region limit breaks the recompiler under hardened runtime | Confirmed from Apple docs; code allocates per function | The Stage-1 R1 probe — **do it before anything else**; it reorders the plan if it fires |
+| Missing `sys_icache_invalidate` after taking JIT ownership | Zero occurrences in `src/` today; hidden inside xbyak | Make `Publish()` the only jump-table writer with the invalidate inside; debug counter asserting publish == invalidate |
+| QoS hang via `FSpinlock` inversion | Pure spin, no donation, genuinely shared across QoS tiers | **Do `os_unfair_lock` before QoS.** `sample $(pgrep Cemu)` during any freeze — a stack pegged in `FSpinlock::lock` is diagnostic |
+| Cycle-counting-in-a-register scheduling divergence | Manifests through the scheduler, not the CPU: nondeterministic hangs reproducing 1-in-100 boots | Debug-build shadow `remainingCycles` asserted at every `leaveRecompilerCode` and HLE entry |
+| FMA changes FP results in the last ULP | Games hashing floats or accumulating physics diverge → replay/ghost desync | Differential fuzzer; ship behind a `GameProfile` toggle; bisect with the existing `--ppcrec-range` flag |
+| Wrong MSL after the resource-mapping collapse | Three binding tables interleaved in one analyzer with three counters | Byte-diff generated MSL for every golden scene; any difference means something broke |
+
+**Non-obvious ordering dependencies:** signing-from-CMake **before** the JIT arena (can't test `MAP_JIT` without entitlements) · `os_unfair_lock` **before** QoS · screensaver→`NSProcessInfo` **before** moving SDL off the main thread · the `getSize()` fix **before** the measurement harness (otherwise the size metric is garbage) · save the Vulkan self-dependency design **before** deleting Vulkan.

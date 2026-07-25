@@ -134,7 +134,10 @@ MetalRenderer::MetalRenderer() : Renderer(RendererAPI::Metal)
             MTL::Device* device = static_cast<MTL::Device*>(devices->object(i));
             if (device->registryID() == config.mtl_graphic_device_uuid)
             {
-                m_device = device;
+                // devices is autoreleased; take our own reference so ownership matches
+                // the +1 that CreateSystemDefaultDevice() returns below, since the
+                // destructor releases m_device unconditionally.
+                m_device = device->retain();
                 break;
             }
         }
@@ -236,7 +239,10 @@ MetalRenderer::MetalRenderer() : Renderer(RendererAPI::Metal)
    	for (uint32 i = 0; i < MAX_MTL_VERTEX_BUFFERS; i++)
         m_state.m_vertexBufferOffsets[i] = INVALID_OFFSET;
 
-   	for (uint32 i = 0; i < METAL_SHADER_TYPE_TOTAL; i++)
+   	// NOTE: m_uniformBufferOffsets is dimensioned METAL_GENERAL_SHADER_TYPE_TOTAL (3),
+   	// not METAL_SHADER_TYPE_TOTAL (4). Using the latter here overran the array by
+   	// MAX_MTL_BUFFERS * sizeof(size_t) bytes and corrupted everything after m_state.
+   	for (uint32 i = 0; i < METAL_GENERAL_SHADER_TYPE_TOTAL; i++)
     {
         for (uint32 j = 0; j < MAX_MTL_BUFFERS; j++)
             m_state.m_uniformBufferOffsets[i][j] = INVALID_OFFSET;
@@ -264,9 +270,6 @@ MetalRenderer::MetalRenderer() : Renderer(RendererAPI::Metal)
     if (m_isAppleGPU)
         m_copyBufferToBufferPipeline = new MetalVoidVertexPipeline(this, utilityLibrary, "vertexCopyBufferToBuffer");
 
-    // HACK: for some reason, this variable ends up being initialized to some garbage data, even though its declared as bool m_captureFrame = false;
-    m_occlusionQuery.m_lastCommandBuffer = nullptr;
-    m_captureFrame = false;
 }
 
 MetalRenderer::~MetalRenderer()

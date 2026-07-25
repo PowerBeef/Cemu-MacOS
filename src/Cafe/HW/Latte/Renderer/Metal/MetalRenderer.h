@@ -287,6 +287,10 @@ public:
 
     MTL::CommandBuffer* GetAndRetainCurrentCommandBufferIfNotCompleted() const
     {
+        // No command buffer has been created yet
+        if (!m_currentCommandBuffer.m_commandBuffer)
+            return nullptr;
+
         // The command buffer has been commited and has finished execution
         if (m_currentCommandBuffer.m_commited && m_executingCommandBuffers.size() == 0)
             return nullptr;
@@ -535,9 +539,9 @@ private:
 	MetalEncoderType m_encoderType = MetalEncoderType::None;
 	MTL::CommandEncoder* m_commandEncoder = nullptr;
 
-    uint32 m_recordedDrawcalls;
-    uint32 m_defaultCommitTreshlod;
-    uint32 m_commitTreshold;
+    uint32 m_recordedDrawcalls = 0;
+    uint32 m_defaultCommitTreshlod = 0;
+    uint32 m_commitTreshold = 0;
 
 	// State
 	MetalState m_state;

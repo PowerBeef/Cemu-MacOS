@@ -110,18 +110,20 @@ GraphicAPI ActiveSettings::GetGraphicsAPI()
 {
 	const GraphicAPI api = g_current_game_profile->GetGraphicsAPI().value_or(GetConfig().graphic_api);
 	std::optional<GraphicAPI> fallbackAPI;
+	// Metal is the primary backend on Apple silicon; Vulkan/MoltenVK is only a fallback
+	// and is being removed entirely.
+#ifdef ENABLE_METAL
+	if (api == kMetal)
+		return api;
+	fallbackAPI = kMetal;
+#endif
 #ifdef ENABLE_VULKAN
 	if (g_vulkan_available)
 	{
 		if (api == kVulkan)
 			return api;
-		fallbackAPI = kVulkan;
+		fallbackAPI = fallbackAPI.value_or(kVulkan);
 	}
-#endif
-#ifdef ENABLE_METAL
-	if (api == kMetal)
-		return api;
-	fallbackAPI = fallbackAPI.value_or(kMetal);
 #endif
 #ifdef ENABLE_OPENGL
 	if (api == kOpenGL)

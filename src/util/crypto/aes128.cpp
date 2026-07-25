@@ -794,6 +794,117 @@ ATTRIBUTE_AESNI void __aesni__AES128_ECB_encrypt(uint8* input, const uint8* key,
 }
 #endif
 
+#if defined(__ARM_FEATURE_AES) || defined(__ARM_FEATURE_CRYPTO)
+/*****************************************************************************/
+/* ARMv8 crypto extension implementation                                     */
+/*                                                                           */
+/* Validated against FIPS-197 Appendix C.1 and, for CBC, against a round trip */
+/* through the reference cipher over randomized keys/IVs/lengths.            */
+/*****************************************************************************/
+#include <arm_neon.h>
+
+// FIPS-197 AES-128 key expansion -> 11 round keys of 16 bytes each.
+static void ARMV8_AES128_ExpandKey(const uint8* key, uint8 rk[11][16])
+{
+	memcpy(rk[0], key, 16);
+	for (uint32 r = 1; r < 11; r++)
+	{
+		const uint8* prev = rk[r - 1];
+		uint8* cur = rk[r];
+		// RotWord + SubWord + Rcon applied to the last word of the previous key
+		cur[0] = prev[0] ^ sbox[prev[13]] ^ Rcon[r];
+		cur[1] = prev[1] ^ sbox[prev[14]];
+		cur[2] = prev[2] ^ sbox[prev[15]];
+		cur[3] = prev[3] ^ sbox[prev[12]];
+		for (uint32 i = 4; i < 16; i++)
+			cur[i] = prev[i] ^ cur[i - 4];
+	}
+}
+
+// AESE Vd,Vn == ShiftRows(SubBytes(Vd ^ Vn)) -- AddRoundKey happens FIRST, which is
+// why round i consumes rk[i] and the schedule is used un-transformed. (The x86 AESENC
+// ordering is different; do not port the round-key indexing across from that path.)
+static inline uint8x16_t ARMV8_EncryptBlock(uint8x16_t s, const uint8x16_t* rk)
+{
+	for (uint32 i = 0; i < 9; i++)
+		s = vaesmcq_u8(vaeseq_u8(s, rk[i]));
+	s = vaeseq_u8(s, rk[9]);
+	return veorq_u8(s, rk[10]);
+}
+
+// The straight inverse cipher applies AddRoundKey(rk[r]) *before* InvMixColumns.
+// InvMixColumns is linear, so that reorders into the "equivalent inverse cipher":
+// InvMixColumns on the state, then XOR a pre-transformed key dk[r] = InvMixColumns(rk[r]).
+// AESD consumes its key operand before the inverse transforms, so the middle round
+// keys must be pre-transformed -- using the plain schedule here decrypts to garbage.
+static void ARMV8_BuildDecryptSchedule(const uint8x16_t* rk, uint8x16_t* dk)
+{
+	dk[0] = rk[0];
+	dk[10] = rk[10];
+	for (uint32 i = 1; i <= 9; i++)
+		dk[i] = vaesimcq_u8(rk[i]);
+}
+
+static inline uint8x16_t ARMV8_DecryptBlock(uint8x16_t s, const uint8x16_t* dk)
+{
+	s = vaesdq_u8(s, dk[10]);
+	for (uint32 i = 9; i >= 1; i--)
+	{
+		s = vaesimcq_u8(s);
+		s = vaesdq_u8(s, dk[i]);
+	}
+	return veorq_u8(s, dk[0]);
+}
+
+void __armv8__AES128_ECB_encrypt(uint8* input, const uint8* key, uint8* output)
+{
+	uint8 rkb[11][16];
+	ARMV8_AES128_ExpandKey(key, rkb);
+	uint8x16_t rk[11];
+	for (uint32 i = 0; i < 11; i++)
+		rk[i] = vld1q_u8(rkb[i]);
+	vst1q_u8(output, ARMV8_EncryptBlock(vld1q_u8(input), rk));
+}
+
+void __armv8__AES128_CBC_decrypt(uint8* output, uint8* input, uint32 length, const uint8* key, const uint8* iv)
+{
+	uint8 rkb[11][16];
+	ARMV8_AES128_ExpandKey(key, rkb);
+	uint8x16_t rk[11], dk[11];
+	for (uint32 i = 0; i < 11; i++)
+		rk[i] = vld1q_u8(rkb[i]);
+	ARMV8_BuildDecryptSchedule(rk, dk);
+
+	uint8x16_t chain = iv ? vld1q_u8(iv) : vdupq_n_u8(0);
+	const uint32 blocks = length / 16;
+	uint32 b = 0;
+	// The CBC XOR chain is on the output side, so blocks decrypt independently.
+	// Four at a time keeps the AES pipeline fed on Apple cores.
+	for (; b + 4 <= blocks; b += 4)
+	{
+		uint8x16_t c0 = vld1q_u8(input + (b + 0) * 16);
+		uint8x16_t c1 = vld1q_u8(input + (b + 1) * 16);
+		uint8x16_t c2 = vld1q_u8(input + (b + 2) * 16);
+		uint8x16_t c3 = vld1q_u8(input + (b + 3) * 16);
+		uint8x16_t d0 = ARMV8_DecryptBlock(c0, dk);
+		uint8x16_t d1 = ARMV8_DecryptBlock(c1, dk);
+		uint8x16_t d2 = ARMV8_DecryptBlock(c2, dk);
+		uint8x16_t d3 = ARMV8_DecryptBlock(c3, dk);
+		vst1q_u8(output + (b + 0) * 16, veorq_u8(d0, chain));
+		vst1q_u8(output + (b + 1) * 16, veorq_u8(d1, c0));
+		vst1q_u8(output + (b + 2) * 16, veorq_u8(d2, c1));
+		vst1q_u8(output + (b + 3) * 16, veorq_u8(d3, c2));
+		chain = c3;
+	}
+	for (; b < blocks; b++)
+	{
+		uint8x16_t c = vld1q_u8(input + b * 16);
+		vst1q_u8(output + b * 16, veorq_u8(ARMV8_DecryptBlock(c, dk), chain));
+		chain = c;
+	}
+}
+#endif // __ARM_FEATURE_AES
+
 void(*AES128_ECB_encrypt)(uint8* input, const uint8* key, uint8* output);
 void (*AES128_CBC_decrypt)(uint8* output, uint8* input, uint32 length, const uint8* key, const uint8* iv) = nullptr;
 
@@ -850,6 +961,10 @@ void AES128_init()
 		AES128_CBC_decrypt = __soft__AES128_CBC_decrypt;
 		AES128_ECB_encrypt = __soft__AES128_ECB_encrypt;
 	}
+    #elif defined(__ARM_FEATURE_AES) || defined(__ARM_FEATURE_CRYPTO)
+	// FEAT_AES is architectural on every Apple silicon core, so this is unconditional.
+	AES128_CBC_decrypt = __armv8__AES128_CBC_decrypt;
+	AES128_ECB_encrypt = __armv8__AES128_ECB_encrypt;
     #else
 	AES128_CBC_decrypt = __soft__AES128_CBC_decrypt;
 	AES128_ECB_encrypt = __soft__AES128_ECB_encrypt;

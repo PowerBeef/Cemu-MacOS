@@ -73,10 +73,10 @@ enum GraphicAPI
 	COUNT
 };
 
-#if defined(ENABLE_VULKAN)
-constexpr GraphicAPI kDefaultGraphicsAPI = kVulkan;
-#elif defined(ENABLE_METAL)
+#if defined(ENABLE_METAL)
 constexpr GraphicAPI kDefaultGraphicsAPI = kMetal;
+#elif defined(ENABLE_VULKAN)
+constexpr GraphicAPI kDefaultGraphicsAPI = kVulkan;
 #elif defined(ENABLE_OPENGL)
 constexpr GraphicAPI kDefaultGraphicsAPI = kOpenGL;
 #endif
