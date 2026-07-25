@@ -1,0 +1,3 @@
+# reference frames and traces: large, machine-specific, regenerate locally
+golden/*.png
+traces/
