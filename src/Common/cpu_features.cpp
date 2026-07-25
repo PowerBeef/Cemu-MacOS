@@ -1,87 +1,65 @@
 #include "cpu_features.h"
 
-#if BOOST_OS_MACOS
 #include <sys/types.h>
 #include <sys/sysctl.h>
-#endif
+#include <cstring>
+#include <vector>
 
-// wrappers with uniform prototype for implementation-specific x86 CPU id
-#if defined(ARCH_X86_64)
-#ifdef __GNUC__
-#include <cpuid.h>
-#endif
+namespace
+{
+	bool ReadSysctlBool(const char* name)
+	{
+		int32_t value = 0;
+		size_t size = sizeof(value);
+		if (sysctlbyname(name, &value, &size, nullptr, 0) != 0)
+			return false;
+		return value != 0;
+	}
 
-inline void cpuid(int cpuInfo[4], int functionId) {
-#if defined(_MSC_VER)
-	__cpuid(cpuInfo, functionId);
-#elif defined(__GNUC__)
-	__cpuid(functionId, cpuInfo[0], cpuInfo[1], cpuInfo[2], cpuInfo[3]);
-#else
-#error No definition for cpuid
-#endif
+	uint32_t ReadSysctlU32(const char* name)
+	{
+		uint64_t value = 0;
+		size_t size = sizeof(value);
+		if (sysctlbyname(name, &value, &size, nullptr, 0) != 0)
+			return 0;
+		return (uint32_t)value;
+	}
 }
-
-inline void cpuidex(int cpuInfo[4], int functionId, int subFunctionId) {
-#if defined(_MSC_VER)
-	__cpuidex(cpuInfo, functionId, subFunctionId);
-#elif defined(__GNUC__)
-	__cpuid_count(functionId, subFunctionId, cpuInfo[0], cpuInfo[1], cpuInfo[2], cpuInfo[3]);
-#else
-#error No definition for cpuidex
-#endif
-}
-#endif
-
 
 CPUFeaturesImpl::CPUFeaturesImpl()
 {
-#if BOOST_OS_MACOS
-	std::string cpuName;
+	// brand name, e.g. "Apple M2"
 	size_t size = 0;
-
 	if (sysctlbyname("machdep.cpu.brand_string", nullptr, &size, nullptr, 0) == 0 && size > 0)
 	{
 		std::vector<char> buffer(size);
-
 		if (sysctlbyname("machdep.cpu.brand_string", buffer.data(), &size, nullptr, 0) == 0 && size > 0)
 		{
-			cpuName.assign(buffer.data());
+			strncpy(m_cpuBrandName, buffer.data(), sizeof(m_cpuBrandName) - 1);
+			m_cpuBrandName[sizeof(m_cpuBrandName) - 1] = '\0';
 		}
 	}
 
-	strncpy(m_cpuBrandName, cpuName.c_str(), sizeof(m_cpuBrandName) - 1);
-	m_cpuBrandName[sizeof(m_cpuBrandName) - 1] = '\0';
-#elif defined(ARCH_X86_64)
-	int cpuInfo[4];
-	cpuid(cpuInfo, 0x80000001);
-	x86.lzcnt = ((cpuInfo[2] >> 5) & 1) != 0;
-	cpuid(cpuInfo, 0x1);
-	x86.movbe = ((cpuInfo[2] >> 22) & 1) != 0;
-	x86.avx = ((cpuInfo[2] >> 28) & 1) != 0;
-	x86.aesni = ((cpuInfo[2] >> 25) & 1) != 0;
-	x86.ssse3 = ((cpuInfo[2] >> 9) & 1) != 0;
-	x86.sse4_1 = ((cpuInfo[2] >> 19) & 1) != 0;
-	cpuidex(cpuInfo, 0x7, 0);
-	x86.avx2 = ((cpuInfo[1] >> 5) & 1) != 0;
-	x86.bmi2 = ((cpuInfo[1] >> 8) & 1) != 0;
-	cpuid(cpuInfo, 0x80000007);
-	x86.invariant_tsc = ((cpuInfo[3] >> 8) & 1);
-	// get CPU brand name
-	uint32_t nExIds, i = 0;
-	memset(m_cpuBrandName, 0, sizeof(m_cpuBrandName));
-	cpuid(cpuInfo, 0x80000000);
-	nExIds = (uint32_t)cpuInfo[0];
-	for (uint32_t i = 0x80000000; i <= nExIds; ++i)
-	{
-		cpuid(cpuInfo, i);
-		if (i == 0x80000002)
-			memcpy(m_cpuBrandName, cpuInfo, sizeof(cpuInfo));
-		else if (i == 0x80000003)
-			memcpy(m_cpuBrandName + 16, cpuInfo, sizeof(cpuInfo));
-		else if (i == 0x80000004)
-			memcpy(m_cpuBrandName + 32, cpuInfo, sizeof(cpuInfo));
-	}
-#endif
+	arm.lse     = ReadSysctlBool("hw.optional.arm.FEAT_LSE");
+	arm.lse2    = ReadSysctlBool("hw.optional.arm.FEAT_LSE2");
+	arm.aes     = ReadSysctlBool("hw.optional.arm.FEAT_AES");
+	arm.sha256  = ReadSysctlBool("hw.optional.arm.FEAT_SHA256");
+	arm.sha512  = ReadSysctlBool("hw.optional.arm.FEAT_SHA512");
+	arm.crc32   = ReadSysctlBool("hw.optional.armv8_crc32");
+	arm.dotprod = ReadSysctlBool("hw.optional.arm.FEAT_DotProd");
+	arm.fp16    = ReadSysctlBool("hw.optional.arm.FEAT_FP16");
+	arm.i8mm    = ReadSysctlBool("hw.optional.arm.FEAT_I8MM");
+	arm.bf16    = ReadSysctlBool("hw.optional.arm.FEAT_BF16");
+
+	physicalCores    = ReadSysctlU32("hw.physicalcpu");
+	performanceCores = ReadSysctlU32("hw.perflevel0.physicalcpu");
+	efficiencyCores  = ReadSysctlU32("hw.perflevel1.physicalcpu");
+	pageSize         = ReadSysctlU32("hw.pagesize");
+	cacheLineSize    = ReadSysctlU32("hw.cachelinesize");
+
+	// A machine without a heterogeneous topology reports no perflevel nodes.
+	if (performanceCores == 0)
+		performanceCores = physicalCores;
 }
 
 std::string CPUFeaturesImpl::GetCPUName()
@@ -98,24 +76,16 @@ std::string CPUFeaturesImpl::GetCommaSeparatedExtensionList()
 			tmp.append(", ");
 		tmp.append(str);
 	};
-	if (x86.ssse3)
-		appendExt("SSSE3");
-	if (x86.sse4_1)
-		appendExt("SSE4.1");
-	if (x86.avx)
-		appendExt("AVX");
-	if (x86.avx2)
-		appendExt("AVX2");
-	if (x86.lzcnt)
-		appendExt("LZCNT");
-	if (x86.movbe)
-		appendExt("MOVBE");
-	if (x86.bmi2)
-		appendExt("BMI2");
-	if (x86.aesni)
-		appendExt("AES-NI");
-	if(x86.invariant_tsc)
-		appendExt("INVARIANT-TSC");
+	if (arm.lse)     appendExt("LSE");
+	if (arm.lse2)    appendExt("LSE2");
+	if (arm.aes)     appendExt("AES");
+	if (arm.sha256)  appendExt("SHA256");
+	if (arm.sha512)  appendExt("SHA512");
+	if (arm.crc32)   appendExt("CRC32");
+	if (arm.dotprod) appendExt("DotProd");
+	if (arm.fp16)    appendExt("FP16");
+	if (arm.i8mm)    appendExt("I8MM");
+	if (arm.bf16)    appendExt("BF16");
 	return tmp;
 }
 

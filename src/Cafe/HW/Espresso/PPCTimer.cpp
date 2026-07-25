@@ -33,10 +33,6 @@ uint64 muldiv64(uint64 a, uint64 b, uint64 d)
 
 uint64 PPCTimer_estimateRDTSCFrequency()
 {
-    #if defined(ARCH_X86_64)
-	if (!g_CPUFeatures.x86.invariant_tsc)
-		cemuLog_log(LogType::Force, "Invariant TSC not supported");
-    #endif
 
 	_mm_mfence();
 	uint64 tscStart = __rdtsc();
