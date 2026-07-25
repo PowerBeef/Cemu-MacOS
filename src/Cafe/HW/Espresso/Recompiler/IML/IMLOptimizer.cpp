@@ -4,7 +4,6 @@
 
 #include "../PPCRecompiler.h"
 #include "../PPCRecompilerIml.h"
-#include "../BackendX64/BackendX64.h"
 
 #include "Common/FileStream.h"
 
@@ -548,16 +547,6 @@ sint32 IMLUtil_MoveInstructionTo(IMLSegment& seg, sint32 initialIndex, sint32 ta
 	}
 }
 
-// x86 specific
-bool IMLOptimizerX86_ModifiesEFlags(IMLInstruction& inst)
-{
-	// this is a very conservative implementation. There are more cases but this is good enough for now
-	if(inst.type == PPCREC_IML_TYPE_NAME_R || inst.type == PPCREC_IML_TYPE_R_NAME)
-		return false;
-	if((inst.type == PPCREC_IML_TYPE_R_R || inst.type == PPCREC_IML_TYPE_R_S32) && inst.operation == PPCREC_IML_OP_ASSIGN)
-		return false;
-	return true; // if we dont know for sure, assume it does
-}
 
 void IMLOptimizer_DebugPrintSeg(ppcImlGenContext_t& ppcImlGenContext, IMLSegment& seg)
 {
@@ -619,94 +608,10 @@ void IMLOptimizer_RemoveDeadCodeFromSegment(IMLOptimizerRegIOAnalysis& regIoAnal
 	}
 }
 
-void IMLOptimizerX86_SubstituteCJumpForEflagsJump(IMLOptimizerRegIOAnalysis& regIoAnalysis, IMLSegment& seg)
-{
-	// convert and optimize bool condition jumps to eflags condition jumps
-	// - Moves eflag setter (e.g. cmp) closer to eflags consumer (conditional jump) if necessary. If not possible but required then exit early
-	// - Since we only rely on eflags, the boolean register can be optimized out if DCE considers it unused
-	// - Further detect and optimize patterns like DEC + CMP + JCC into fused ops (todo)
-
-	// check if this segment ends with a conditional jump
-	if(!seg.HasSuffixInstruction())
-		return;
-	sint32 cjmpInstIndex = seg.GetSuffixInstructionIndex();
-	if(cjmpInstIndex < 0)
-		return;
-	IMLInstruction& cjumpInstr = seg.imlList[cjmpInstIndex];
-	if( cjumpInstr.type != PPCREC_IML_TYPE_CONDITIONAL_JUMP )
-		return;
-	IMLReg regCondBool = cjumpInstr.op_conditional_jump.registerBool;
-	bool invertedCondition = !cjumpInstr.op_conditional_jump.mustBeTrue;
-	// find the instruction which sets the bool
-	sint32 cmpInstrIndex = IMLUtil_FindInstructionWhichWritesRegister(seg, cjmpInstIndex-1, regCondBool, 20);
-	if(cmpInstrIndex < 0)
-		return;
-	// check if its an instruction combo which can be optimized (currently only cmp + cjump) and get the condition
-	IMLInstruction& condSetterInstr = seg.imlList[cmpInstrIndex];
-	IMLCondition cond;
-	if(condSetterInstr.type == PPCREC_IML_TYPE_COMPARE)
-		cond = condSetterInstr.op_compare.cond;
-	else if(condSetterInstr.type == PPCREC_IML_TYPE_COMPARE_S32)
-		cond = condSetterInstr.op_compare_s32.cond;
-	else
-		return;
-	// check if instructions inbetween modify eflags
-	sint32 indexEflagsSafeStart = -1; // index of the first instruction which does not modify eflags up to cjump
-	for(sint32 i = cjmpInstIndex-1; i > cmpInstrIndex; i--)
-	{
-		if(IMLOptimizerX86_ModifiesEFlags(seg.imlList[i]))
-		{
-			indexEflagsSafeStart = i+1;
-			break;
-		}
-	}
-	if(indexEflagsSafeStart >= 0)
-	{
-		cemu_assert(indexEflagsSafeStart > 0);
-		// there are eflags-modifying instructions inbetween the bool setter and cjump
-		// try to move the eflags setter close enough to the cjump (to indexEflagsSafeStart)
-		bool canMove = IMLUtil_CanMoveInstructionTo(seg, cmpInstrIndex, indexEflagsSafeStart);
-		if(!canMove)
-		{
-			return;
-		}
-		else
-		{
-			cmpInstrIndex = IMLUtil_MoveInstructionTo(seg, cmpInstrIndex, indexEflagsSafeStart);
-		}
-	}
-	// we can turn the jump into an eflags jump
-	cjumpInstr.make_x86_eflags_jcc(cond, invertedCondition);
-
-	// note: x86_eflags_jcc doesn't count towards cond reg reads, so we have to check > 0 here instead of > 1
-	if (IMLUtil_CountRegisterReadsInRange(seg, cmpInstrIndex, cjmpInstIndex, regCondBool.GetRegID()) > 0 || regIoAnalysis.IsRegisterNeededAtEndOfSegment(seg, regCondBool.GetRegID()))
-		return; // bool register is used beyond the CMP, we can't drop it
-
-	auto& cmpInstr = seg.imlList[cmpInstrIndex];
-	cemu_assert_debug(cmpInstr.type == PPCREC_IML_TYPE_COMPARE || cmpInstr.type == PPCREC_IML_TYPE_COMPARE_S32);
-	if(cmpInstr.type == PPCREC_IML_TYPE_COMPARE)
-	{
-		IMLReg regA = cmpInstr.op_compare.regA;
-		IMLReg regB = cmpInstr.op_compare.regB;
-		seg.imlList[cmpInstrIndex].make_r_r(PPCREC_IML_OP_X86_CMP, regA, regB);
-	}
-	else
-	{
-		IMLReg regA = cmpInstr.op_compare_s32.regA;
-		sint32 val = cmpInstr.op_compare_s32.immS32;
-		seg.imlList[cmpInstrIndex].make_r_s32(PPCREC_IML_OP_X86_CMP, regA, val);
-	}
-
-}
 
 void IMLOptimizer_StandardOptimizationPassForSegment(IMLOptimizerRegIOAnalysis& regIoAnalysis, IMLSegment& seg)
 {
 	IMLOptimizer_RemoveDeadCodeFromSegment(regIoAnalysis, seg);
-
-#ifdef ARCH_X86_64
-	// x86 specific optimizations
-	IMLOptimizerX86_SubstituteCJumpForEflagsJump(regIoAnalysis, seg); // this pass should be applied late since it creates invisible eflags dependencies (which would break further register dependency analysis)
-#endif
 }
 
 void IMLOptimizer_StandardOptimizationPass(ppcImlGenContext_t& ppcImlGenContext)

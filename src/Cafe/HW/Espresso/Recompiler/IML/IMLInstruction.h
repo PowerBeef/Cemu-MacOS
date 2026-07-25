@@ -158,10 +158,6 @@ enum
 
 	// R_R_R_carry
 	PPCREC_IML_OP_ADD_WITH_CARRY, // similar to ADD but also adds carry bit (0 or 1)
-
-	// X86 extension
-	PPCREC_IML_OP_X86_CMP, // R_R and R_S32
-
 	PPCREC_IML_OP_INVALID
 };
 
@@ -243,9 +239,6 @@ enum
 	PPCREC_IML_TYPE_FPR_R,
 
 	PPCREC_IML_TYPE_FPR_COMPARE,		// r* = r* CMP[cond] r*
-
-	// X86 specific
-	PPCREC_IML_TYPE_X86_EFLAGS_JCC,
 };
 
 enum // IMLName
@@ -501,12 +494,6 @@ struct IMLInstruction
 			uint8 crBitIndex;
 			bool  bitMustBeSet;
 		}op_conditional_r_s32;
-		// X86 specific
-		struct
-		{
-			IMLCondition cond;
-			bool invertedCondition;
-		}op_x86_eflags_jcc;
 	};
 
 	bool IsSuffixInstruction() const
@@ -518,8 +505,7 @@ struct IMLInstruction
 			type == PPCREC_IML_TYPE_MACRO && operation == PPCREC_IML_MACRO_HLE ||
 			type == PPCREC_IML_TYPE_CJUMP_CYCLE_CHECK ||
 			type == PPCREC_IML_TYPE_JUMP ||
-			type == PPCREC_IML_TYPE_CONDITIONAL_JUMP ||
-			type == PPCREC_IML_TYPE_X86_EFLAGS_JCC)
+			type == PPCREC_IML_TYPE_CONDITIONAL_JUMP)
 			return true;
 		return false;
 	}
@@ -803,24 +789,8 @@ struct IMLInstruction
 		this->op_fpr_r_r_r_r.regC = registerOperandC;
 	}
 
-	/* X86 specific */
-	void make_x86_eflags_jcc(IMLCondition cond, bool invertedCondition)
-	{
-		this->type = PPCREC_IML_TYPE_X86_EFLAGS_JCC;
-		this->operation = -999;
-		this->op_x86_eflags_jcc.cond = cond;
-		this->op_x86_eflags_jcc.invertedCondition = invertedCondition;
-	}
-
 	void CheckRegisterUsage(IMLUsedRegisters* registersUsed) const;
 	bool HasSideEffects() const; // returns true if the instruction has side effects beyond just reading and writing registers. Dead code elimination uses this to know if an instruction can be dropped when the regular register outputs are not used
 
 	void RewriteGPR(const std::unordered_map<IMLRegID, IMLRegID>& translationTable);
-};
-
-// architecture specific constants
-namespace IMLArchX86
-{
-	static constexpr int PHYSREG_GPR_BASE = 0;
-	static constexpr int PHYSREG_FPR_BASE = 16;
 };

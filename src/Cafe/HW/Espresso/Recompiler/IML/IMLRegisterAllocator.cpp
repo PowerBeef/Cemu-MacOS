@@ -5,7 +5,6 @@
 #include "IMLRegisterAllocator.h"
 #include "IMLRegisterAllocatorRanges.h"
 
-#include "../BackendX64/BackendX64.h"
 #ifdef __aarch64__
 #include "../BackendAArch64/BackendAArch64.h"
 #endif
@@ -123,7 +122,6 @@ static void SetupCallingConvention(const IMLInstruction* instruction, IMLFixedRe
 	fixedRegs.listOutput.emplace_back(IMLREG_INVALID, volatileRegisters);
 }
 
-#if defined(__aarch64__)
 // aarch64
 static void GetInstructionFixedRegisters(IMLInstruction* instruction, IMLFixedRegisters& fixedRegs)
 {
@@ -147,52 +145,6 @@ static void GetInstructionFixedRegisters(IMLInstruction* instruction, IMLFixedRe
 		SetupCallingConvention(instruction, fixedRegs, intParamToPhysReg, floatParamToPhysReg, IMLArchAArch64::PHYSREG_GPR_BASE + 0, IMLArchAArch64::PHYSREG_FPR_BASE + 0, volatileRegs);
 	}
 }
-#else
-// x86-64
-static void GetInstructionFixedRegisters(IMLInstruction* instruction, IMLFixedRegisters& fixedRegs)
-{
-	fixedRegs.listInput.clear();
-	fixedRegs.listOutput.clear();
-
-	if (instruction->type == PPCREC_IML_TYPE_R_R_R)
-	{
-		if (instruction->operation == PPCREC_IML_OP_LEFT_SHIFT || instruction->operation == PPCREC_IML_OP_RIGHT_SHIFT_S || instruction->operation == PPCREC_IML_OP_RIGHT_SHIFT_U)
-		{
-			if(!g_CPUFeatures.x86.bmi2)
-			{
-				IMLPhysRegisterSet ps;
-				ps.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_ECX);
-				fixedRegs.listInput.emplace_back(instruction->op_r_r_r.regB, ps);
-			}
-		}
-	}
-	else if (instruction->type == PPCREC_IML_TYPE_ATOMIC_CMP_STORE)
-	{
-		IMLPhysRegisterSet ps;
-		ps.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_EAX);
-		fixedRegs.listInput.emplace_back(IMLREG_INVALID, ps); // none of the inputs may use EAX
-		fixedRegs.listOutput.emplace_back(instruction->op_atomic_compare_store.regBoolOut, ps); // but we output to EAX
-	}
-	else if (instruction->type == PPCREC_IML_TYPE_CALL_IMM)
-	{
-		const IMLPhysReg intParamToPhysReg[3] = {IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RCX, IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RDX, IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R8};
-		const IMLPhysReg floatParamToPhysReg[3] = {IMLArchX86::PHYSREG_FPR_BASE + 0, IMLArchX86::PHYSREG_FPR_BASE + 1, IMLArchX86::PHYSREG_FPR_BASE + 2};
-		IMLPhysRegisterSet volatileRegs;
-		volatileRegs.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RAX);
-		volatileRegs.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RCX);
-		volatileRegs.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RDX);
-		volatileRegs.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R8);
-		volatileRegs.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R9);
-		volatileRegs.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R10);
-		volatileRegs.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R11);
-		// YMM0-YMM5 are volatile
-		for (int i = 0; i <= 5; i++)
-			volatileRegs.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + i);
-		// for YMM6-YMM15 only the upper 128 bits are volatile which we dont use
-		SetupCallingConvention(instruction, fixedRegs, intParamToPhysReg, floatParamToPhysReg, IMLArchX86::PHYSREG_GPR_BASE + X86_REG_EAX, IMLArchX86::PHYSREG_FPR_BASE + 0, volatileRegs);
-	}
-}
-#endif
 
 uint32 IMLRA_GetNextIterationIndex()
 {

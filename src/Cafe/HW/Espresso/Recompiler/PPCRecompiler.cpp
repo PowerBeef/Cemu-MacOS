@@ -14,7 +14,6 @@
 
 #include "IML/IML.h"
 #include "IML/IMLRegisterAllocator.h"
-#include "BackendX64/BackendX64.h"
 #ifdef __aarch64__
 #include "BackendAArch64/BackendAArch64.h"
 #endif
@@ -233,20 +232,11 @@ PPCRecFunction_t* PPCRecompiler_recompileFunction(PPCFunctionBoundaryTracker::PP
 		return nullptr;
 	}
 
-#if defined(ARCH_X86_64)
-	// emit x64 code
-	bool x64GenerationSuccess = PPCRecompiler_generateX64Code(ppcRecFunc, &ppcImlGenContext);
-	if (x64GenerationSuccess == false)
-	{
-		return nullptr;
-	}
-#elif defined(__aarch64__)
 	bool aarch64GenerationSuccess = PPCRecompiler_generateAArch64Code(ppcRecFunc, &ppcImlGenContext);
 	if (aarch64GenerationSuccess == false)
 	{
 		return nullptr;
 	}
-#endif
 	if (ActiveSettings::DumpRecompilerFunctionsEnabled())
 	{
 		FileStream* fs = FileStream::createFile2(ActiveSettings::GetUserDataPath(fmt::format("dump/recompiler/ppc_{:08x}.bin", ppcRecFunc->ppcAddress)));
@@ -291,39 +281,6 @@ void PPCRecompiler_NativeRegisterAllocatorPass(ppcImlGenContext_t& ppcImlGenCont
 	for (auto& it : ppcImlGenContext.mappedRegs)
 		raParam.regIdToName.try_emplace(it.second.GetRegID(), it.first);
 
-#if defined(ARCH_X86_64)
-	auto& gprPhysPool = raParam.GetPhysRegPool(IMLRegFormat::I64);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RAX);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RDX);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RBX);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RBP);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RSI);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RDI);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R8);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R9);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R10);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R11);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_R12);
-	gprPhysPool.SetAvailable(IMLArchX86::PHYSREG_GPR_BASE + X86_REG_RCX);
-
-	// add XMM registers, except XMM15 which is the temporary register
-	auto& fprPhysPool = raParam.GetPhysRegPool(IMLRegFormat::F64);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 0);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 1);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 2);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 3);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 4);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 5);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 6);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 7);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 8);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 9);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 10);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 11);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 12);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 13);
-	fprPhysPool.SetAvailable(IMLArchX86::PHYSREG_FPR_BASE + 14);
-#elif defined(__aarch64__)
 	auto& gprPhysPool = raParam.GetPhysRegPool(IMLRegFormat::I64);
 	for (auto i = IMLArchAArch64::PHYSREG_GPR_BASE; i < IMLArchAArch64::PHYSREG_GPR_BASE + IMLArchAArch64::PHYSREG_GPR_COUNT; i++)
 	{
@@ -335,7 +292,6 @@ void PPCRecompiler_NativeRegisterAllocatorPass(ppcImlGenContext_t& ppcImlGenCont
 	auto& fprPhysPool = raParam.GetPhysRegPool(IMLRegFormat::F64);
 	for (auto i = IMLArchAArch64::PHYSREG_FPR_BASE; i < IMLArchAArch64::PHYSREG_FPR_BASE + IMLArchAArch64::PHYSREG_FPR_COUNT; i++)
 		fprPhysPool.SetAvailable(i);
-#endif
 
 	IMLRegisterAllocator_AllocateRegisters(&ppcImlGenContext, raParam);
 }
@@ -611,54 +567,6 @@ void PPCRecompiler_invalidateRange(uint32 startAddr, uint32 endAddr)
 	s_ppcRecompilerState.recompilerSpinlock.unlock();
 }
 
-#if defined(ARCH_X86_64)
-void PPCRecompiler_initPlatform()
-{
-	ppcRecompilerInstanceData->_x64XMM_xorNegateMaskBottom[0] = 1ULL << 63ULL;
-	ppcRecompilerInstanceData->_x64XMM_xorNegateMaskBottom[1] = 0ULL;
-	ppcRecompilerInstanceData->_x64XMM_xorNegateMaskPair[0] = 1ULL << 63ULL;
-	ppcRecompilerInstanceData->_x64XMM_xorNegateMaskPair[1] = 1ULL << 63ULL;
-	ppcRecompilerInstanceData->_x64XMM_xorNOTMask[0] = 0xFFFFFFFFFFFFFFFFULL;
-	ppcRecompilerInstanceData->_x64XMM_xorNOTMask[1] = 0xFFFFFFFFFFFFFFFFULL;
-	ppcRecompilerInstanceData->_x64XMM_andAbsMaskBottom[0] = ~(1ULL << 63ULL);
-	ppcRecompilerInstanceData->_x64XMM_andAbsMaskBottom[1] = ~0ULL;
-	ppcRecompilerInstanceData->_x64XMM_andAbsMaskPair[0] = ~(1ULL << 63ULL);
-	ppcRecompilerInstanceData->_x64XMM_andAbsMaskPair[1] = ~(1ULL << 63ULL);
-	ppcRecompilerInstanceData->_x64XMM_andFloatAbsMaskBottom[0] = ~(1 << 31);
-	ppcRecompilerInstanceData->_x64XMM_andFloatAbsMaskBottom[1] = 0xFFFFFFFF;
-	ppcRecompilerInstanceData->_x64XMM_andFloatAbsMaskBottom[2] = 0xFFFFFFFF;
-	ppcRecompilerInstanceData->_x64XMM_andFloatAbsMaskBottom[3] = 0xFFFFFFFF;
-	ppcRecompilerInstanceData->_x64XMM_singleWordMask[0] = 0xFFFFFFFFULL;
-	ppcRecompilerInstanceData->_x64XMM_singleWordMask[1] = 0ULL;
-	ppcRecompilerInstanceData->_x64XMM_constDouble1_1[0] = 1.0;
-	ppcRecompilerInstanceData->_x64XMM_constDouble1_1[1] = 1.0;
-	ppcRecompilerInstanceData->_x64XMM_constDouble0_0[0] = 0.0;
-	ppcRecompilerInstanceData->_x64XMM_constDouble0_0[1] = 0.0;
-	ppcRecompilerInstanceData->_x64XMM_constFloat0_0[0] = 0.0f;
-	ppcRecompilerInstanceData->_x64XMM_constFloat0_0[1] = 0.0f;
-	ppcRecompilerInstanceData->_x64XMM_constFloat1_1[0] = 1.0f;
-	ppcRecompilerInstanceData->_x64XMM_constFloat1_1[1] = 1.0f;
-	*(uint32*)&ppcRecompilerInstanceData->_x64XMM_constFloatMin[0] = 0x00800000;
-	*(uint32*)&ppcRecompilerInstanceData->_x64XMM_constFloatMin[1] = 0x00800000;
-	ppcRecompilerInstanceData->_x64XMM_flushDenormalMask1[0] = 0x7F800000;
-	ppcRecompilerInstanceData->_x64XMM_flushDenormalMask1[1] = 0x7F800000;
-	ppcRecompilerInstanceData->_x64XMM_flushDenormalMask1[2] = 0x7F800000;
-	ppcRecompilerInstanceData->_x64XMM_flushDenormalMask1[3] = 0x7F800000;
-	ppcRecompilerInstanceData->_x64XMM_flushDenormalMaskResetSignBits[0] = ~0x80000000;
-	ppcRecompilerInstanceData->_x64XMM_flushDenormalMaskResetSignBits[1] = ~0x80000000;
-	ppcRecompilerInstanceData->_x64XMM_flushDenormalMaskResetSignBits[2] = ~0x80000000;
-	ppcRecompilerInstanceData->_x64XMM_flushDenormalMaskResetSignBits[3] = ~0x80000000;
-
-	// mxcsr
-	ppcRecompilerInstanceData->_x64XMM_mxCsr_ftzOn = 0x1F80 | 0x8000;
-	ppcRecompilerInstanceData->_x64XMM_mxCsr_ftzOff = 0x1F80;
-}
-#else
-void PPCRecompiler_initPlatform()
-{
-
-}
-#endif
 
 void PPCRecompiler_init()
 {
@@ -680,17 +588,11 @@ void PPCRecompiler_init()
 	}
 	cemuLog_logDebug(LogType::Force, "Reserving {}MB for recompiler instance data", (sint32)(sizeof(PPCRecompilerInstanceData_t) / 1024 / 1024));
 	ppcRecompilerInstanceData = (PPCRecompilerInstanceData_t*)MemMapper::ReserveMemory(nullptr, sizeof(PPCRecompilerInstanceData_t), MemMapper::PAGE_PERMISSION::P_RW);
-	MemMapper::AllocateMemory(&(ppcRecompilerInstanceData->_x64XMM_xorNegateMaskBottom), sizeof(PPCRecompilerInstanceData_t) - offsetof(PPCRecompilerInstanceData_t, _x64XMM_xorNegateMaskBottom), MemMapper::PAGE_PERMISSION::P_RW, true);
-#ifdef ARCH_X86_64
-	PPCRecompilerX64Gen_generateRecompilerInterfaceFunctions();
-#elif defined(__aarch64__)
 	PPCRecompilerAArch64Gen_generateRecompilerInterfaceFunctions();
-#endif
     PPCRecompiler_allocateRange(0, 0x1000); // the first entry is used for fallback to interpreter
     PPCRecompiler_allocateRange(mmuRange_TRAMPOLINE_AREA.getBase(), mmuRange_TRAMPOLINE_AREA.getSize());
     PPCRecompiler_allocateRange(mmuRange_CODECAVE.getBase(), mmuRange_CODECAVE.getSize());
 
-    PPCRecompiler_initPlatform();
 
 	cemuLog_log(LogType::Force, "Recompiler initialized");
 

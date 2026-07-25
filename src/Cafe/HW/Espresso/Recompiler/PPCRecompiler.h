@@ -130,24 +130,6 @@ typedef void ATTR_MS_ABI (*PPCREC_JUMP_ENTRY)();
 typedef struct  
 {
 	PPCREC_JUMP_ENTRY ppcRecompilerDirectJumpTable[PPC_REC_ALIGN_TO_4MB(PPC_REC_CODE_AREA_SIZE/4)]; // lookup table for ppc offset to native code function
-	// x64 data
-	alignas(16) uint64 _x64XMM_xorNegateMaskBottom[2];
-	alignas(16) uint64 _x64XMM_xorNegateMaskPair[2];
-	alignas(16) uint64 _x64XMM_xorNOTMask[2];
-	alignas(16) uint64 _x64XMM_andAbsMaskBottom[2];
-	alignas(16) uint64 _x64XMM_andAbsMaskPair[2];
-	alignas(16) uint32 _x64XMM_andFloatAbsMaskBottom[4];
-	alignas(16) uint64 _x64XMM_singleWordMask[2];
-	alignas(16) double _x64XMM_constDouble1_1[2];
-	alignas(16) double _x64XMM_constDouble0_0[2];
-	alignas(16) float  _x64XMM_constFloat0_0[2];
-	alignas(16) float  _x64XMM_constFloat1_1[2];
-	alignas(16) float  _x64XMM_constFloatMin[2];
-	alignas(16) uint32 _x64XMM_flushDenormalMask1[4];
-	alignas(16) uint32 _x64XMM_flushDenormalMaskResetSignBits[4];
-	// MXCSR
-	uint32 _x64XMM_mxCsr_ftzOn;
-	uint32 _x64XMM_mxCsr_ftzOff;
 }PPCRecompilerInstanceData_t;
 
 extern PPCRecompilerInstanceData_t* ppcRecompilerInstanceData;

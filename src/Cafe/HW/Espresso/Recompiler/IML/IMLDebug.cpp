@@ -457,10 +457,6 @@ void IMLDebug_DisassembleInstruction(const IMLInstruction& inst, std::string& di
 	{
 		strOutput.addFmt("CYCLE_CHECK");
 	}
-	else if (inst.type == PPCREC_IML_TYPE_X86_EFLAGS_JCC)
-	{
-		strOutput.addFmt("X86_JCC {}", IMLDebug_GetConditionName(inst.op_x86_eflags_jcc.cond));
-	}
 	else
 	{
 		strOutput.addFmt("Unknown iml type {}", inst.type);
