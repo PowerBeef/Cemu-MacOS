@@ -159,11 +159,21 @@ Argument buffers · `MTLResidencySet` · `MTLHeap` aliasing · EDR/HDR · MetalF
 
 | Risk | Why likely | Detect early |
 |---|---|---|
-| `MAP_JIT` one-region limit breaks the recompiler under hardened runtime | Confirmed from Apple docs; code allocates per function | The Stage-1 R1 probe — **do it before anything else**; it reorders the plan if it fires |
+| ~~`MAP_JIT` one-region limit breaks the recompiler under hardened runtime~~ **RETIRED — probe run, does not fire.** See below. | — | — |
 | Missing `sys_icache_invalidate` after taking JIT ownership | Zero occurrences in `src/` today; hidden inside xbyak | Make `Publish()` the only jump-table writer with the invalidate inside; debug counter asserting publish == invalidate |
 | QoS hang via `FSpinlock` inversion | Pure spin, no donation, genuinely shared across QoS tiers | **Do `os_unfair_lock` before QoS.** `sample $(pgrep Cemu)` during any freeze — a stack pegged in `FSpinlock::lock` is diagnostic |
 | Cycle-counting-in-a-register scheduling divergence | Manifests through the scheduler, not the CPU: nondeterministic hangs reproducing 1-in-100 boots | Debug-build shadow `remainingCycles` asserted at every `leaveRecompilerCode` and HLE entry |
 | FMA changes FP results in the last ULP | Games hashing floats or accumulating physics diverge → replay/ghost desync | Differential fuzzer; ship behind a `GameProfile` toggle; bisect with the existing `--ppcrec-range` flag |
 | Wrong MSL after the resource-mapping collapse | Three binding tables interleaved in one analyzer with three counters | Byte-diff generated MSL for every golden scene; any difference means something broke |
 
-**Non-obvious ordering dependencies:** signing-from-CMake **before** the JIT arena (can't test `MAP_JIT` without entitlements) · `os_unfair_lock` **before** QoS · screensaver→`NSProcessInfo` **before** moving SDL off the main thread · the `getSize()` fix **before** the measurement harness (otherwise the size metric is garbage) · save the Vulkan self-dependency design **before** deleting Vulkan.
+### R1 probe result — measured 2026-07-25 on macOS 26.5.2 / M2
+
+**R1 does not fire. The JIT arena is an optimization, not a blocker.** Probes preserved in `tools/probes/`.
+
+- Apple's documentation states an app with the hardened runtime and `com.apple.security.cs.allow-jit` "can only create one memory region with the `MAP_JIT` flag set". **Measured: 4000 regions succeed**, ad-hoc signed with `--options runtime` and that entitlement. The limit is not enforced.
+- The pinned `xbyak_aarch64` maps `PROT_READ|PROT_WRITE` **plus** `MAP_JIT` (not RWX), writes, then `mprotect`s to `PROT_READ|PROT_EXEC`. **That exact sequence works signed and unsigned.** Because the region is never writable and executable at the same time, no `pthread_jit_write_protect_np` is needed, and `mprotect` appears to cover the required cache maintenance.
+- Consequence: **§15 (sign from CMake) no longer gates §14 (JitCodeArena)**, and §14 does not gate shipping. Build the arena for the reasons that remain real — recompiled code is never freed, and owning `sys_icache_invalidate` explicitly is safer than relying on `mprotect`'s side effects — but schedule it on merit.
+
+Methodological caution, learned the hard way here: the *first* version of this probe allocated RWX and toggled `pthread_jit_write_protect_np`. That pattern SIGBUSes on write and would have "confirmed" R1 — but it is not what the code under test does. Reading `xbyak_aarch64_code_array.h` was what corrected it. **Probe the pattern the code actually uses, not the one the documentation describes.**
+
+**Non-obvious ordering dependencies:** `os_unfair_lock` **before** QoS · screensaver→`NSProcessInfo` **before** moving SDL off the main thread · the `getSize()` fix **before** the measurement harness (otherwise the size metric is garbage) · save the Vulkan self-dependency design **before** deleting Vulkan.
