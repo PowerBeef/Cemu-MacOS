@@ -35,7 +35,10 @@ elseif(UNIX)
 		endif()
 	endif()
 	# warnings
-	if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+	# NOTE: this previously tested CMAKE_C_COMPILER_ID STREQUAL "Clang", which never
+	# matches AppleClang (it reports "AppleClang"), and tested the C compiler for a
+	# C++-only warning. The suppression was silently inactive.
+	if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		add_compile_options(-Wno-ambiguous-reversed-operator)
 	endif()
 

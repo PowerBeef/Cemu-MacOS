@@ -73,8 +73,22 @@ add_definitions(-DEMULATOR_VERSION_PATCH=${EMULATOR_VERSION_PATCH})
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # enable link time optimization for release builds
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO ON)
+# ThinLTO for Release only. It is deliberately OFF for RelWithDebInfo: that is the
+# daily-driver config, LTO makes every relink slow, and it turns the .o files into
+# LLVM bitcode which defeats disassembly-based inspection.
+include(CheckIPOSupported)
+check_ipo_supported(RESULT CEMU_IPO_SUPPORTED OUTPUT CEMU_IPO_ERROR)
+option(CEMU_LTO "Enable ThinLTO for Release builds" ${CEMU_IPO_SUPPORTED})
+if(CEMU_LTO AND NOT CEMU_IPO_SUPPORTED)
+	message(WARNING "CEMU_LTO requested but IPO is unsupported: ${CEMU_IPO_ERROR}")
+	set(CEMU_LTO OFF)
+endif()
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ${CEMU_LTO})
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO OFF)
+
+# smaller symbol table and better LTO internalization; nothing here is a public ABI
+add_compile_options(-fvisibility=hidden -fvisibility-inlines-hidden)
+add_link_options(-Wl,-dead_strip)
 
 if (MSVC)
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT CemuBin)
