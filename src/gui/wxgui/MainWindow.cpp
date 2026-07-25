@@ -37,7 +37,6 @@
 #include "Cemu/DiscordPresence/DiscordPresence.h"
 #include "util/ScreenSaver/ScreenSaver.h"
 #include "util/helpers/SystemException.h"
-#include "Cafe/HW/Latte/Renderer/Vulkan/VsyncDriver.h"
 #if BOOST_OS_LINUX && defined(ENABLE_FERAL_GAMEMODE)
 #include <gamemode_client.h>
 #endif
@@ -1665,10 +1664,6 @@ void MainWindow::OnSizeEvent(wxSizeEvent& event)
 		m_debugger_window->OnParentMove(GetPosition(), event.GetSize());
 
 	event.Skip();
-
-	#ifdef ENABLE_VULKAN
-	VsyncDriver_notifyWindowPosChanged();
-	#endif
 }
 
 void MainWindow::OnDPIChangedEvent(wxDPIChangedEvent& event)
@@ -1688,11 +1683,7 @@ void MainWindow::OnMove(wxMoveEvent& event)
 		m_restored_position = GetPosition();
 
 	if (m_debugger_window && m_debugger_window->IsShown())
-		m_debugger_window->OnParentMove(GetPosition(), GetSize());
-	#ifdef ENABLE_VULKAN
-	VsyncDriver_notifyWindowPosChanged();
-	#endif
-}
+		m_debugger_window->OnParentMove(GetPosition(), GetSize());}
 
 void MainWindow::OnDebuggerClose(wxCloseEvent& event)
 {

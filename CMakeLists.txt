@@ -108,21 +108,12 @@ if (UNIX AND NOT APPLE)
 	option(ENABLE_BLUEZ "Build with Bluez support" ON)
 endif()
 
-if (APPLE)
-    set(ENABLE_METAL_DEFAULT ON)
-	set(ENABLE_OPENGL_DEFAULT OFF)
-else()
-    set(ENABLE_METAL_DEFAULT OFF)
-	set(ENABLE_OPENGL_DEFAULT ON)
-endif()
-
-option(ENABLE_OPENGL "Enables the OpenGL backend" ${ENABLE_OPENGL_DEFAULT})
-option(ENABLE_VULKAN "Enables the Vulkan backend" ON)
-option(ENABLE_METAL "Enables the Metal backend" ${ENABLE_METAL_DEFAULT})
+# Metal is the only renderer backend. OpenGL and Vulkan/MoltenVK were removed.
+set(ENABLE_METAL ON)
 option(ENABLE_DISCORD_RPC "Enables the Discord Rich Presence feature" ON)
 
-if (ENABLE_METAL AND NOT APPLE)
-    message(FATAL_ERROR "Metal backend is only supported on Apple platforms")
+if (NOT APPLE)
+    message(FATAL_ERROR "This fork targets Apple silicon macOS only")
 endif()
 
 # input backends
@@ -155,7 +146,6 @@ find_package(pugixml REQUIRED)
 find_package(RapidJSON REQUIRED)
 find_package(Boost COMPONENTS program_options filesystem nowide REQUIRED)
 find_package(libzip REQUIRED)
-find_package(glslang REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(zstd MODULE REQUIRED) # MODULE so that zstd::zstd is available
 find_package(OpenSSL COMPONENTS Crypto SSL REQUIRED)
@@ -166,11 +156,6 @@ find_package(PNG REQUIRED)
 if(ENABLE_SDL)
 	find_package(SDL3 REQUIRED CONFIG REQUIRED COMPONENTS SDL3)
 	add_compile_definitions(HAS_SDL)
-endif()
-
-# glslang versions older than 11.11.0 define targets without a namespace
-if (NOT TARGET glslang::SPIRV AND TARGET SPIRV)
-	add_library(glslang::SPIRV ALIAS SPIRV)
 endif()
 
 if (UNIX AND NOT APPLE)
@@ -198,17 +183,6 @@ if (UNIX AND NOT APPLE)
 
 endif()
 
-if (ENABLE_VULKAN)
-	include_directories("dependencies/Vulkan-Headers/include")
-	add_compile_definitions(ENABLE_VULKAN)
-	add_compile_definitions(VK_NO_PROTOTYPES)
-endif()
-
-if (ENABLE_OPENGL)
-	find_package(OpenGL REQUIRED)
-	add_compile_definitions(ENABLE_OPENGL)
-endif()
-
 if (ENABLE_METAL)
     include_directories(${CMAKE_SOURCE_DIR}/dependencies/metal-cpp)
 
@@ -233,7 +207,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 if (ENABLE_WXWIDGETS)
-	find_package(wxWidgets 3.3 REQUIRED COMPONENTS base core gl propgrid xrc)
+	find_package(wxWidgets 3.3 REQUIRED COMPONENTS base core propgrid xrc)
 endif()
 
 if (ENABLE_CUBEB)

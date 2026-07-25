@@ -6,12 +6,6 @@ add_library(CemuCommon
   ExceptionHandler/ExceptionHandler.cpp
   ExceptionHandler/ExceptionHandler.h
   FileStream.h
-  GLInclude/glext.h
-  GLInclude/glFunctions.h
-  GLInclude/GLInclude.h
-  GLInclude/glxext.h
-  GLInclude/khrplatform.h
-  GLInclude/wglext.h
   MemPtr.h
   platform.h
   precompiled.cpp

@@ -34,10 +34,6 @@
     },
     "libpng",
     "glm",
-    {
-      "name": "glslang",
-      "default-features": false
-    },
     "zstd",
     {
       "name": "wxwidgets",
@@ -70,10 +66,6 @@
     "libusb"
   ],
   "overrides": [
-    {
-      "name": "glslang",
-      "version": "15.1.0"
-    },
     {
       "name": "sdl3",
       "version": "3.4.10"

@@ -63,9 +63,6 @@ add_library(CemuUtil
   Zir/Core/ZpIRDebug.h
   Zir/Core/ZpIRPasses.h
   Zir/Core/ZpIRScheduler.h
-  Zir/EmitterGLSL/ZpIREmitGLSL.cpp
-  Zir/EmitterGLSL/ZpIREmitGLSL.h
-  Zir/Passes/RegisterAllocatorForGLSL.cpp
   Zir/Passes/ZpIRRegisterAllocator.cpp
 )
 

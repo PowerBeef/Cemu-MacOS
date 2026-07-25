@@ -16,14 +16,12 @@
 #include "Cafe/GameProfile/GameProfile.h"
 #include "util/containers/flat_hash_map.hpp"
 #include "util/containers/robin_hood.h"
+#include "util/helpers/StringBuf.h"
 #include "util/helpers/StateHasher.h"
 #ifdef ENABLE_METAL
 #include "Cafe/HW/Latte/Renderer/Metal/LatteToMtl.h"
 #endif
 
-// experimental new decompiler (WIP)
-#include "util/Zir/EmitterGLSL/ZpIREmitGLSL.h"
-#include "util/Zir/Core/ZpIRDebug.h"
 #include "Cafe/HW/Latte/Transcompiler/LatteTC.h"
 #include "Cafe/HW/Latte/ShaderInfo/ShaderInfo.h"
 
@@ -805,58 +803,10 @@ void LatteShader_GetDecompilerOptions(LatteDecompilerOptions& options, LatteCons
 	options.strictMul = g_current_game_profile->GetAccurateShaderMul() != AccurateShaderMulOption::False;
 }
 
-LatteDecompilerShader* LatteShader_CompileSeparableVertexShader2(uint64 baseHash, uint64& vsAuxHash, uint8* vertexShaderPtr, uint32 vertexShaderSize, bool usesGeometryShader, LatteFetchShader* fetchShader)
-{
-	/* Analyze shader to gather general information about inputs/outputs */
-	Latte::ShaderDescription shaderDescription;
-	if (!shaderDescription.analyzeShaderCode(vertexShaderPtr, vertexShaderSize, LatteConst::ShaderType::Vertex))
-	{
-		assert_dbg();
-		return nullptr;
-	}
-	/* Create context dependent IO info for this shader */
-	//Latte::ShaderInstanceInfo
-	assert_dbg();
-
-	// todo - Use ShaderInstanceInfo when generating the GLSL (GLSL::Emit() should take a 'GLSLInfoSource' class which has a bunch of virtual methods for retrieving uniform names etc. We then override this class and plug in logic using ShaderInstanceInfo
-
-	/* Translate R600Plus to GLSL */
-	ZpIR::DebugPrinter irDebugPrinter;
-	LatteTCGenIR genIR;
-	genIR.setVertexShaderContext(fetchShader, LatteGPUState.contextRegister + mmSQ_VTX_SEMANTIC_0);
-	auto irObj = genIR.transcompileLatteToIR(vertexShaderPtr, vertexShaderSize, LatteTCGenIR::VERTEX);
-	// debug output (before register allocation)
-	irDebugPrinter.setShowPhysicalRegisters(false);
-	irDebugPrinter.debugPrint(irObj);
-	// register allocation
-	ZirPass::RegisterAllocatorForGLSL ra(irObj);
-	ra.applyPass();
-	// debug output (after register allocation)
-	irDebugPrinter.setShowPhysicalRegisters(true);
-	irDebugPrinter.setPhysicalRegisterNameSource(ZirPass::RegisterAllocatorForGLSL::DebugPrintHelper_getPhysRegisterName);
-	irDebugPrinter.debugPrint(irObj);
-	// gen GLSL
-	StringBuf glslSourceBuffer(64 * 1024);
-	// emit GLSL header
-	assert_dbg(); // todo
-	// emit main
-	ZirEmitter::GLSL emitter;
-	emitter.Emit(irObj, &glslSourceBuffer);
-
-	// debug copy to string
-	std::string dbg;
-	dbg.insert(0, glslSourceBuffer.c_str(), glslSourceBuffer.getLen());
-	assert_dbg();
-
-
-	return nullptr;
-}
-
 // compile new vertex shader (relies partially on current state)
 LatteDecompilerShader* LatteShader_CompileSeparableVertexShader(uint64 baseHash, uint64& vsAuxHash, uint8* vertexShaderPtr, uint32 vertexShaderSize, bool usesGeometryShader, LatteFetchShader* fetchShader)
 {
 	// new decompiler test
-	//LatteShader_CompileSeparableVertexShader2(baseHash, vsAuxHash, vertexShaderPtr, vertexShaderSize, usesGeometryShader, fetchShader);
 
 	// legacy decompiler
 	LatteDecompilerOptions options;

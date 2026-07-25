@@ -4,11 +4,6 @@
 #include "HW/Latte/Core/LatteShader.h"
 #include "config/CemuConfig.h"
 
-#ifdef ENABLE_OPENGL
-#include "Common/GLInclude/GLInclude.h"
-#include "Cafe/HW/Latte/Renderer/OpenGL/LatteTextureViewGL.h"
-#endif
-
 void LatteDraw_handleSpecialState8_clearAsDepth()
 {
 	if (LatteGPUState.contextNew.GetSpecialStateValues()[0] == 0)

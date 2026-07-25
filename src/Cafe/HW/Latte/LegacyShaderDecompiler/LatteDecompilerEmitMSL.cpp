@@ -400,10 +400,37 @@ private:
 	boost::container::small_vector<GPRTemporary, 4> m_gprTemporaries;
 };
 
-sint32 _getVertexShaderOutParamSemanticId(uint32* contextRegisters, sint32 index);
-sint32 _getInputRegisterDataType(LatteDecompilerShaderContext* shaderContext, LatteDecompilerALUInstruction* aluInstruction, sint32 operandIndex);
-sint32 _getALUInstructionOutputDataType(LatteDecompilerShaderContext* shaderContext, LatteDecompilerALUInstruction* aluInstruction);
-bool _isReductionInstruction(LatteDecompilerALUInstruction* aluInstruction);
+// These helpers previously lived in the GLSL emitter's translation unit, which was
+// removed along with the OpenGL/Vulkan backends. MSL is now the only consumer.
+
+sint32 _getVertexShaderOutParamSemanticId(uint32* contextRegisters, sint32 index) // deprecated - move to LatteShaderPSInputTable
+{
+	uint32 vsSemanticId = (contextRegisters[mmSPI_VS_OUT_ID_0 + (index / 4)] >> (8 * (index % 4))) & 0xFF;
+	// check if export exists since exports are generated based on PS inputs
+	LatteShaderPSInputTable* psInputTable = LatteSHRC_GetPSInputTable();
+	for (sint32 i = 0; i < psInputTable->count; i++)
+	{
+		if(psInputTable->import[i].semanticId == vsSemanticId)
+			return vsSemanticId;
+	}
+	return 0xFF;
+}
+
+sint32 _getInputRegisterDataType(LatteDecompilerShaderContext* shaderContext, LatteDecompilerALUInstruction* aluInstruction, sint32 operandIndex)
+{
+	return shaderContext->typeTracker.defaultDataType;
+}
+
+sint32 _getALUInstructionOutputDataType(LatteDecompilerShaderContext* shaderContext, LatteDecompilerALUInstruction* aluInstruction)
+{
+	return shaderContext->typeTracker.defaultDataType;
+}
+
+// returns true if the ALU instruction is a OP2 reduction instruction
+bool _isReductionInstruction(LatteDecompilerALUInstruction* aluInstruction)
+{
+	return aluInstruction->isOP3 == false && (aluInstruction->opcode == ALU_OP2_INST_DOT4 || aluInstruction->opcode == ALU_OP2_INST_DOT4_IEEE || aluInstruction->opcode == ALU_OP2_INST_CUBE);
+}
 
 /*
  * Writes the name of the output variable and channel

@@ -1,7 +1,6 @@
 #include "Cafe/HW/Latte/Core/Latte.h"
 #include "Cafe/OS/libs/gx2/GX2_Event.h"
 #ifdef ENABLE_VULKAN
-#include "Cafe/HW/Latte/Renderer/Vulkan/VsyncDriver.h"
 #endif
 #include "util/highresolutiontimer/HighResolutionTimer.h"
 #include "config/CemuConfig.h"
@@ -57,10 +56,9 @@ void LatteTiming_EnableHostDrivenVSync()
 {
 	if (s_usingHostDrivenVSync)
 		return;
-	#ifdef ENABLE_VULKAN
-	VsyncDriver_startThread(LatteTiming_NotifyHostVSync);
-	s_usingHostDrivenVSync = true;
-	#endif
+	// Host-driven vsync was provided by the Windows-only D3DKMT VsyncDriver, which was
+	// removed with the Vulkan backend. The Metal replacement is CAMetalDisplayLink.
+	// Until that lands, frame pacing falls back to the emulated vsync timer below.
 }
 
 bool LatteTiming_IsUsingHostDrivenVSync()
