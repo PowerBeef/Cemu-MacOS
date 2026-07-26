@@ -1,0 +1,72 @@
+// Counter declarations for the telemetry harness. Single source of truth: this file
+// generates the CounterId enum, the metadata table written into every run header, and
+// nothing else. Adding a counter is one line here plus one TLM_INC at the site.
+//
+//   TLM_COUNTER(id, "dotted.name", "unit", Area)
+//
+// Names are dotted and stable -- the run header carries the id->name table, and the
+// differ aligns two runs by name, so a counter may be added or removed between builds
+// without silently misaligning older files. Do not renumber; do not reuse a name for a
+// different meaning.
+//
+// All counters are uint64 and monotonic within a run. Per-frame values are deltas
+// computed at the frame boundary, so a counter must only ever be incremented.
+
+// ---------------------------------------------------------------- GPU / Latte / Metal
+TLM_COUNTER(GpuFrames,              "gpu.frames",                "count", Gpu)
+TLM_COUNTER(GpuDrawCalls,           "gpu.draw_calls",            "count", Gpu)
+TLM_COUNTER(GpuDrawCallsFast,       "gpu.draw_calls_fast",       "count", Gpu)
+TLM_COUNTER(GpuRenderPasses,        "gpu.render_passes",         "count", Gpu)
+TLM_COUNTER(GpuRenderPassesTemp,    "gpu.render_passes_temp",    "count", Gpu)
+TLM_COUNTER(GpuCommandBuffers,      "gpu.command_buffers",       "count", Gpu)
+TLM_COUNTER(GpuCommandBuffersDone,  "gpu.command_buffers_done",  "count", Gpu)
+TLM_COUNTER(GpuBusyNs,              "gpu.busy_ns",               "ns",    Gpu)
+TLM_COUNTER(GpuClears,              "gpu.clears",                "count", Gpu)
+TLM_COUNTER(GpuDrawsManualFetch,    "gpu.draws_manual_fetch",    "count", Gpu)
+TLM_COUNTER(GpuDrawsMesh,           "gpu.draws_mesh",            "count", Gpu)
+TLM_COUNTER(GpuDrawsTriangleFan,    "gpu.draws_triangle_fan",    "count", Gpu)
+TLM_COUNTER(GpuShadersCompiledVS,   "gpu.shaders_compiled_vs",   "count", Gpu)
+TLM_COUNTER(GpuShadersCompiledGS,   "gpu.shaders_compiled_gs",   "count", Gpu)
+TLM_COUNTER(GpuShadersCompiledPS,   "gpu.shaders_compiled_ps",   "count", Gpu)
+TLM_COUNTER(GpuPipelinesCompiled,   "gpu.pipelines_compiled",    "count", Gpu)
+TLM_COUNTER(GpuCpIdleNs,            "gpu.cp_idle_ns",            "ns",    Gpu)
+TLM_COUNTER(GpuCpFenceNs,           "gpu.cp_fence_ns",           "ns",    Gpu)
+
+// ------------------------------------------------------------------------- CPU / JIT
+TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)
+TLM_COUNTER(CpuThreadSwitches,      "cpu.thread_switches",       "count", Cpu)
+TLM_COUNTER(CpuFiberSwitches,       "cpu.fiber_switches",        "count", Cpu)
+TLM_COUNTER(CpuRecompilerEnter,     "cpu.recompiler_enter",      "count", Cpu)
+TLM_COUNTER(CpuRecompilerLeaveEarly,"cpu.recompiler_leave_early","count", Cpu)
+TLM_COUNTER(CpuHleCalls,            "cpu.hle_calls",             "count", Cpu)
+TLM_COUNTER(CpuCoreBusyNs0,         "cpu.core0_busy_ns",         "ns",    Cpu)
+TLM_COUNTER(CpuCoreBusyNs1,         "cpu.core1_busy_ns",         "ns",    Cpu)
+TLM_COUNTER(CpuCoreBusyNs2,         "cpu.core2_busy_ns",         "ns",    Cpu)
+
+// -------------------------------------------------------------------- Memory / caches
+TLM_COUNTER(MemBufCacheScans,       "mem.bufcache.scans",        "count", Mem)
+TLM_COUNTER(MemBufCachePagesScanned,"mem.bufcache.pages_scanned","count", Mem)
+TLM_COUNTER(MemBufCachePageMiss,    "mem.bufcache.page_miss",    "count", Mem)
+TLM_COUNTER(MemBufCacheUploads,     "mem.bufcache.uploads",      "count", Mem)
+TLM_COUNTER(MemBufCacheUploadBytes, "mem.bufcache.upload_bytes", "bytes", Mem)
+TLM_COUNTER(MemShaderCacheHit,      "mem.shadercache.hit",       "count", Mem)
+TLM_COUNTER(MemShaderCacheHitAux,   "mem.shadercache.hit_aux",   "count", Mem)
+TLM_COUNTER(MemShaderCacheMiss,     "mem.shadercache.miss",      "count", Mem)
+TLM_COUNTER(MemTexCacheChecks,      "mem.texcache.checks",       "count", Mem)
+TLM_COUNTER(MemTexCacheReloads,     "mem.texcache.reloads",      "count", Mem)
+TLM_COUNTER(MemTexCacheReloadBytes, "mem.texcache.reload_bytes", "bytes", Mem)
+TLM_COUNTER(MemIndexUploadBytes,    "mem.index.upload_bytes",    "bytes", Mem)
+
+// ------------------------------------------------------------------- Accuracy signals
+// "We knowingly did the wrong thing, and a title just hit it." Each of these maps to a
+// row in docs/hardware/09-accuracy-gap-register.md.
+TLM_COUNTER(AccUnsupportedHleCalls, "acc.unsupported_hle_calls", "count", Accuracy)
+TLM_COUNTER(AccDepth24Stencil8Use,  "acc.d24_s8_use",            "count", Accuracy)
+TLM_COUNTER(AccSelfDependency,      "acc.render_self_dependency","count", Accuracy)
+TLM_COUNTER(AccDcStoreRangeMissed,  "acc.dcstorerange_no_notify","count", Accuracy)
+TLM_COUNTER(AccGeometryDrawDropped, "acc.geometry_draw_dropped", "count", Accuracy)
+TLM_COUNTER(AccUnsupportedTexFormat,"acc.unsupported_tex_format","count", Accuracy)
+TLM_COUNTER(AccUnsupportedPrimitive,"acc.unsupported_primitive", "count", Accuracy)
+TLM_COUNTER(AccDrawSkippedNoTarget, "acc.draw_skipped_no_target","count", Accuracy)
+TLM_COUNTER(AccDrawSkippedShaderErr,"acc.draw_skipped_shader_err","count",Accuracy)
+TLM_COUNTER(AccAudioFrameServiced,  "acc.audio_frames_serviced", "count", Accuracy)

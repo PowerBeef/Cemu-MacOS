@@ -41,6 +41,10 @@ public:
 	static uint32 GetPPCRecLowerAddr() { return ppcRec_limitLowerAddr; };
 	static uint32 GetPPCRecUpperAddr() { return ppcRec_limitUpperAddr; };
 
+	static const std::string& GetTelemetryPath() { return s_telemetry_path; }
+	static const std::string& GetTelemetryLabel() { return s_telemetry_label; }
+	static uint32 GetTelemetryAreas() { return s_telemetry_areas; }
+
 private:
 	inline static std::optional<fs::path> s_load_game_file{};
 	inline static std::optional<uint64> s_load_title_id{};
@@ -66,6 +70,11 @@ private:
 	// for recompiler debugging
 	inline static uint32 ppcRec_limitLowerAddr{};
 	inline static uint32 ppcRec_limitUpperAddr{};
+
+	// telemetry. Launch-flag only, never persisted -- see the note at the parse site.
+	inline static std::string s_telemetry_path{};
+	inline static std::string s_telemetry_label{};
+	inline static uint32 s_telemetry_areas = 0xF; // all four areas
 
 	static bool ExtractorTool(std::wstring_view wud_path, std::string_view output_path, std::wstring_view log_path);
 };

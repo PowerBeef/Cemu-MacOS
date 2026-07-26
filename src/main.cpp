@@ -8,6 +8,7 @@
 #include "config/CemuConfig.h"
 #include "config/NetworkSettings.h"
 #include "config/LaunchSettings.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "input/InputManager.h"
 
 #include "Cafe/CafeSystem.h"
@@ -277,6 +278,10 @@ int main(int argc, char *argv[])
 #endif
     if (!LaunchSettings::HandleCommandline(argc, argv))
 		return 0;
+	// Before WindowSystem::Create() so the sink exists before any guest code runs.
+	// No-op unless --telemetry was passed.
+	tlm::Init(LaunchSettings::GetTelemetryPath(), LaunchSettings::GetTelemetryLabel(),
+			  LaunchSettings::GetTelemetryAreas());
 	WindowSystem::Create();
 	return 0;
 }

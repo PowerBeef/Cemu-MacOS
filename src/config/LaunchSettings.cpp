@@ -16,6 +16,19 @@
 
 void requireConsole();
 
+namespace
+{
+	// boost's command_line_parser does not trim the token for short-name parameters
+	// despite short_allow_adjacent, so "-g=foo" arrives as "=foo". The existing --game,
+	// --title-id and --mlc handlers each open-code this; new options use the helper.
+	std::string trim_leading_eq(std::string s)
+	{
+		if (!s.empty() && s.front() == '=')
+			s.erase(s.begin());
+		return s;
+	}
+}
+
 bool LaunchSettings::HandleCommandline(const wchar_t* lpCmdLine)
 {
 	#if BOOST_OS_WINDOWS
@@ -77,7 +90,11 @@ bool LaunchSettings::HandleCommandline(const std::vector<std::wstring>& args)
 
 		("force-interpreter", po::value<bool>()->implicit_value(true), "Force interpreter CPU emulation, disables recompiler. Useful for debugging purposes where you want to get accurate memory accesses and stack traces.")
 		("force-multicore-interpreter", po::value<bool>()->implicit_value(true), "Force multi-core interpreter CPU emulation, disables recompiler. Only useful for getting stack traces, but slightly faster than the single-core interpreter mode.")
-		("enable-gdbstub", po::value<bool>()->implicit_value(true), "Enable GDB stub to debug executables inside Cemu using an external debugger");
+		("enable-gdbstub", po::value<bool>()->implicit_value(true), "Enable GDB stub to debug executables inside Cemu using an external debugger")
+
+		("telemetry", po::value<std::string>(), "Record per-frame telemetry to the given file (JSONL). Off unless specified.")
+		("telemetry-label", po::value<std::string>(), "Scene label recorded in the telemetry run header, e.g. 'botw-shrine'")
+		("telemetry-areas", po::value<std::string>(), "Comma-separated subset of cpu,gpu,mem,accuracy. Default: all");
 
 	po::options_description hidden{ "Hidden options" };
 	hidden.add_options()
@@ -192,6 +209,36 @@ bool LaunchSettings::HandleCommandline(const std::vector<std::wstring>& args)
 		
 		if (vm.count("enable-gdbstub"))
 			s_enable_gdbstub = vm["enable-gdbstub"].as<bool>();
+
+		if (vm.count("telemetry"))
+			s_telemetry_path = trim_leading_eq(vm["telemetry"].as<std::string>());
+		if (vm.count("telemetry-label"))
+			s_telemetry_label = trim_leading_eq(vm["telemetry-label"].as<std::string>());
+		if (vm.count("telemetry-areas"))
+		{
+			// Deliberately not persisted to CemuConfig: a telemetry setting that survived
+			// across launches would silently taint a later measurement, which is exactly
+			// the failure mode this subsystem exists to prevent.
+			std::string areas = trim_leading_eq(vm["telemetry-areas"].as<std::string>());
+			std::transform(areas.begin(), areas.end(), areas.begin(), [](unsigned char c) { return (char)std::tolower(c); });
+			uint32 mask = 0;
+			size_t pos = 0;
+			while (pos <= areas.size())
+			{
+				size_t comma = areas.find(',', pos);
+				std::string_view tok(areas.data() + pos, (comma == std::string::npos ? areas.size() : comma) - pos);
+				if (tok == "cpu") mask |= (1u << 0);
+				else if (tok == "gpu") mask |= (1u << 1);
+				else if (tok == "mem") mask |= (1u << 2);
+				else if (tok == "accuracy") mask |= (1u << 3);
+				else if (!tok.empty()) std::cout << "Unknown telemetry area: " << tok << std::endl;
+				if (comma == std::string::npos)
+					break;
+				pos = comma + 1;
+			}
+			if (mask)
+				s_telemetry_areas = mask;
+		}
 
 		if (vm.count("forward-console-logging"))
 		{

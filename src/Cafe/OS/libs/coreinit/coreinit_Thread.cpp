@@ -6,6 +6,7 @@
 #include "Cafe/OS/libs/coreinit/coreinit_Alarm.h"
 #include "Cafe/OS/libs/snd_core/ax.h"
 #include "Cafe/HW/Espresso/Debugger/GDBStub.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/HW/Espresso/Interpreter/PPCInterpreterInternal.h"
 #include "Cafe/HW/Espresso/Recompiler/PPCRecompiler.h"
 
@@ -1407,6 +1408,7 @@ namespace coreinit
 	{
 		SetThreadName(fmt::format("OSSched[core={}]", (uintptr_t)_assignedCoreIndex).c_str(), ThreadRole::GuestCore);
 		t_assignedCoreIndex = (sint32)(uintptr_t)_assignedCoreIndex;
+		tlm::RegisterThread(fmt::format("OSSched[core={}]", (uintptr_t)_assignedCoreIndex).c_str());
 
 		enableFlushDenormalsToZero();
 

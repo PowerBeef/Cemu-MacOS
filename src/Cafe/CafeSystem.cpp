@@ -10,6 +10,7 @@
 #include "audio/IAudioInputAPI.h"
 #include "config/ActiveSettings.h"
 #include "config/LaunchSettings.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/TitleList/GameInfo.h"
 #include "Cafe/GraphicPack/GraphicPack2.h"
 #include "util/helpers/SystemException.h"
@@ -234,6 +235,34 @@ void InfoLog_TitleLoaded()
 	memory_logModifiedMemoryRanges();
 }
 
+// Emits the same facts InfoLog_PrintActiveSettings logs, as machine-readable run
+// metadata. Without it a telemetry file is uninterpretable later: buffer cache mode alone
+// moves GPU time by 16%, so "which settings produced these numbers" is not optional.
+void Telemetry_WriteRunHeader()
+{
+	if (!tlm::Enabled())
+		return;
+	std::vector<std::pair<std::string, std::string>> settings;
+	auto add = [&](const char* k, std::string v) { settings.emplace_back(k, std::move(v)); };
+	add("cpu_mode", fmt::format("{}", ActiveSettings::GetCPUMode()));
+	add("multicore", ActiveSettings::GetCPUMode() == CPUMode::MulticoreRecompiler ? "true" : "false");
+	add("load_shared_libraries", ActiveSettings::LoadSharedLibrariesEnabled() ? "true" : "false");
+	add("precompiled_shaders", fmt::format("{}", ActiveSettings::GetPrecompiledShadersOption()));
+	add("gx2drawdone_sync", ActiveSettings::WaitForGX2DrawDoneEnabled() ? "true" : "false");
+	add("accurate_shader_mul", g_current_game_profile->GetAccurateShaderMul() == AccurateShaderMulOption::True ? "true" : "false");
+	add("async_compile", GetConfig().async_compile.GetValue() ? "true" : "false");
+	add("thread_quantum", fmt::format("{}", g_current_game_profile->GetThreadQuantum()));
+#ifdef ENABLE_METAL
+	add("force_mesh_shaders", GetConfig().force_mesh_shaders.GetValue() ? "true" : "false");
+	add("shader_fast_math", g_current_game_profile->GetShaderFastMath() ? "true" : "false");
+	add("buffer_cache_mode", fmt::format("{}", g_current_game_profile->GetBufferCacheMode()));
+	add("position_invariance", fmt::format("{}", g_current_game_profile->GetPositionInvariance()));
+#endif
+	add("rpx_hash_updated", fmt::format("{:08x}", currentUpdatedApplicationHash));
+	add("rpx_hash_base", fmt::format("{:08x}", currentBaseApplicationHash));
+	tlm::OnTitleLoaded(CafeSystem::GetForegroundTitleId(), CafeSystem::GetForegroundTitleName(), settings);
+}
+
 void InfoLog_PrintActiveSettings()
 {
 	const auto& config = GetConfig();
@@ -409,6 +438,7 @@ void cemu_initForGame()
 	}
 	LatteGPUState.isDRCPrimary = ActiveSettings::DisplayDRCEnabled();
 	InfoLog_PrintActiveSettings();
+	Telemetry_WriteRunHeader();
 	Latte_Start();
 	// check for debugger entrypoint bp
     if (g_gdbstub)
@@ -1087,6 +1117,7 @@ namespace CafeSystem
 		UnmountBaseDirectories();
 		DestroyMemorySpace();
 		LaunchSettings::ClearCosArgstr();
+		tlm::Shutdown();
 		sSystemRunning = false;
 	}
 

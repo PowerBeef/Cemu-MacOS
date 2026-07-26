@@ -3,6 +3,7 @@
 #include "Cafe/HW/Latte/Core/Latte.h"
 #include "Cafe/HW/Latte/Core/LatteDraw.h"
 #include "Cafe/HW/Latte/Core/LatteShader.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/HW/Latte/Core/LatteAsyncCommands.h"
 #include "Cafe/GameProfile/GameProfile.h"
 #include "Cafe/GraphicPack/GraphicPack2.h"
@@ -115,6 +116,7 @@ void LatteThread_HandleOSScreen()
 int Latte_ThreadEntry()
 {
 	SetThreadName("LatteThread", ThreadRole::GpuCommand);
+	tlm::RegisterThread("LatteThread");
 	sint32 w,h;
 	WindowSystem::GetWindowPhysSize(w,h);
 

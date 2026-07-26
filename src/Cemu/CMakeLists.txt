@@ -27,6 +27,9 @@ add_library(CemuComponents
   nex/prudp.h
   PPCAssembler/ppcAssembler.cpp
   PPCAssembler/ppcAssembler.h
+  Telemetry/Telemetry.cpp
+  Telemetry/Telemetry.h
+  Telemetry/TelemetryCounters.def
   Tools/DownloadManager/DownloadManager.cpp
   Tools/DownloadManager/DownloadManager.h
 )

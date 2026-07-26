@@ -9,6 +9,7 @@
 #include "Cafe/HW/Latte/Core/LatteCachedFBO.h"
 #include "Cafe/HW/Latte/Renderer/Renderer.h"
 #include "Cafe/HW/Latte/Core/LattePerformanceMonitor.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/GraphicPack/GraphicPack2.h"
 #include "HW/Latte/Renderer/RendererCore.h"
 #include "config/ActiveSettings.h"
@@ -696,6 +697,12 @@ void LatteRenderTarget_itHLESwapScanBuffer()
 	LatteQuery_CancelActiveGPU7Queries();
 	LatteBufferCache_notifySwapTVScanBuffer();
 	LattePerformanceMonitor_frameBegin();
+
+	// The one authoritative frame boundary. MetalRenderer::SwapBuffers is also reached
+	// from LatteThread_HandleOSScreen and DrawEmptyFrame, neither of which advances
+	// frameCounter, so hooking there would emit records for non-frames.
+	TLM_INC(Gpu, GpuFrames);
+	tlm::OnFrameBoundary();
 }
 
 void LatteRenderTarget_applyTextureColorClear(LatteTexture* texture, uint32 sliceIndex, uint32 mipIndex, float r, float g, float b, float a, uint64 eventCounter)

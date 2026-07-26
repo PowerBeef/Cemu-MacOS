@@ -72,7 +72,11 @@ pkill -f Cemu_relwithdebinfo 2>/dev/null || true
 sleep 2
 : > "$CEMU_DIR/log.txt"
 
-nohup "$BIN" -g "$ROM" >/dev/null 2>&1 &
+# CEMU_EXTRA_ARGS lets a caller add flags without editing this script, e.g.
+#   CEMU_EXTRA_ARGS="--telemetry out.jsonl --telemetry-label botw-shrine" ./drive-botw.sh
+# Deliberately unquoted so multiple flags split into separate argv entries.
+# shellcheck disable=SC2086
+nohup "$BIN" -g "$ROM" ${CEMU_EXTRA_ARGS:-} >/dev/null 2>&1 &
 sleep 100   # boot + initial shader compilation
 
 PID=$(pgrep -f Cemu_relwithdebinfo | head -1)
