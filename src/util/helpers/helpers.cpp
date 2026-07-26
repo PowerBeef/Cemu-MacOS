@@ -1,4 +1,5 @@
 #include "helpers.h"
+#include "Common/ExceptionHandler/ExceptionHandler.h"
 
 #include <algorithm> 
 #include <functional> 
@@ -145,6 +146,10 @@ void SetThreadName(const char* name)
 #endif
 #elif BOOST_OS_MACOS
 	pthread_setname_np(name);
+	// SetThreadName() is called at the top of every thread entry point, which makes it
+	// the one place guaranteed to run once per thread. sigaltstack is per-thread, so
+	// register here or a stack overflow on this thread cannot produce a crash log.
+	ExceptionHandler_RegisterAltStackForThisThread();
 #else
 	if(std::strlen(name) > 15)
 		cemuLog_log(LogType::Force, "Truncating thread name {} because it was longer than 15 characters", name);

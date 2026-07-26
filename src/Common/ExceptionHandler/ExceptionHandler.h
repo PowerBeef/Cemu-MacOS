@@ -1,6 +1,9 @@
 #pragma once
 
 void ExceptionHandler_Init();
+// sigaltstack is per-thread; every thread that could fault needs one or a
+// stack-overflow SIGSEGV cannot be reported
+void ExceptionHandler_RegisterAltStackForThisThread();
 
 bool CrashLog_Create();
 void CrashLog_SetOutputChannels(bool writeToStdErr, bool writeToLogTxt);

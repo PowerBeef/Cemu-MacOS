@@ -305,12 +305,10 @@ inline uint64 _udiv128(uint64 highDividend, uint64 lowDividend, uint64 divisor, 
     #error Unknown compiler
 #endif
 
-#if defined(_MSC_VER)
-    #define DEBUG_BREAK __debugbreak()
-#else
-    #include <csignal>
-    #define DEBUG_BREAK raise(SIGTRAP) 
-#endif
+// __builtin_debugtrap emits BRK #0xF000, which lldb handles natively. raise(SIGTRAP)
+// goes through our own SIGTRAP handler first, which makes breaking on an assert
+// under a debugger awkward.
+#define DEBUG_BREAK __builtin_debugtrap()
 
 #if defined(_MSC_VER)
     #define DLLEXPORT __declspec(dllexport)
