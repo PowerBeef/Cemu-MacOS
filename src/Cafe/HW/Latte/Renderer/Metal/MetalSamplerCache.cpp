@@ -101,7 +101,7 @@ MTL::SamplerState* MetalSamplerCache::GetSamplerState(const LatteContextRegister
     // lod
     uint32 iMinLOD = samplerWords->WORD1.get_MIN_LOD();
     uint32 iMaxLOD = samplerWords->WORD1.get_MAX_LOD();
-    //sint32 iLodBias = samplerWords->WORD1.get_LOD_BIAS();
+    sint32 iLodBias = samplerWords->WORD1.get_LOD_BIAS();
 
     auto filterMip = samplerWords->WORD0.get_MIP_FILTER();
     if (filterMip == Latte::LATTE_SQ_TEX_SAMPLER_WORD0_0::E_Z_FILTER::NONE)
@@ -153,8 +153,11 @@ MTL::SamplerState* MetalSamplerCache::GetSamplerState(const LatteContextRegister
     if (maxAniso > 0)
         samplerDescriptor->setMaxAnisotropy(1 << maxAniso);
 
-    // TODO: set lod bias
-    //samplerInfo.mipLodBias = (float)iLodBias / 64.0f;
+    // LOD bias, in 1/64th steps. MTLSamplerDescriptor.lodBias is API_AVAILABLE(macos(26.0)),
+    // which is why this was a TODO -- there was simply no way to express it in Metal before.
+    // Without it, every game that biases mip selection (commonly to sharpen or to hide
+    // shimmer) sampled the wrong mip level, and graphic packs setting lod_bias did nothing.
+    samplerDescriptor->setLodBias((float)iLodBias / 64.0f);
 
     // depth compare
     //uint8 depthCompareMode = shader->textureUsesDepthCompare[relative_textureUnit] ? 1 : 0;

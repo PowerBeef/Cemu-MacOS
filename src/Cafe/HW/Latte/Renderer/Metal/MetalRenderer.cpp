@@ -2093,21 +2093,42 @@ void MetalRenderer::BindStageResources(MTL::RenderCommandEncoder* renderCommandE
 		if (stageSamplerIndex != LATTE_DECOMPILER_SAMPLER_NONE)
 		{
 		    uint32 samplerIndex = stageSamplerIndex + LatteDecompiler_getTextureSamplerBaseIndex(shader->shaderType);
-			_LatteRegisterSetSampler* samplerWords = LatteGPUState.contextNew.SQ_TEX_SAMPLER + samplerIndex;
+			const _LatteRegisterSetSampler* samplerWords = LatteGPUState.contextNew.SQ_TEX_SAMPLER + samplerIndex;
 
-			// Overwriting
+			// Graphic pack overrides are applied to a COPY of the sampler registers.
+			//
+			// samplerWords points straight into LatteGPUState.contextNew.SQ_TEX_SAMPLER --
+			// the emulated GPU register file. Writing an override there does not just affect
+			// this draw: it destroys the value the game programmed, so every later draw
+			// reading that sampler sees the pack's value, including draws using textures the
+			// pack never targeted. The anisotropy override below used to do exactly that.
+			//
+			// A copy also keeps the sampler cache correct for free, because the hash is taken
+			// over these same register words -- overridden state hashes differently from
+			// non-overridden state without needing a separate cache key.
+			_LatteRegisterSetSampler effectiveSamplerWords = *samplerWords;
 
-            // Lod bias
-            //if (baseTexture->overwriteInfo.hasLodBias)
-            //    samplerWords->WORD1.set_LOD_BIAS(baseTexture->overwriteInfo.lodBias);
-            //else if (baseTexture->overwriteInfo.hasRelativeLodBias)
-            //    samplerWords->WORD1.set_LOD_BIAS(samplerWords->WORD1.get_LOD_BIAS() + baseTexture->overwriteInfo.relativeLodBias);
+			// Lod bias, in 1/64th steps. Absolute replaces, relative adds.
+			const auto& overwriteInfo = baseTexture->overwriteInfo;
+			if (overwriteInfo.hasLodBias || overwriteInfo.hasRelativeLodBias)
+			{
+				sint32 iLodBias = effectiveSamplerWords.WORD1.get_LOD_BIAS();
+				if (overwriteInfo.hasRelativeLodBias)
+					iLodBias += overwriteInfo.relativeLodBias;
+				if (overwriteInfo.hasLodBias)
+					iLodBias = overwriteInfo.lodBias;
+				// LOD_BIAS is a signed 12-bit field; a relative bias could push the sum past
+				// it and wrap the sign. Clamp instead -- +-32 LOD is already far beyond the
+				// ~15 mip levels any real texture has.
+				iLodBias = std::clamp(iLodBias, -2048, 2047);
+				effectiveSamplerWords.WORD1.set_LOD_BIAS(iLodBias);
+			}
 
             // Max anisotropy
-            if (baseTexture->overwriteInfo.anisotropicLevel >= 0)
-                samplerWords->WORD0.set_MAX_ANISO_RATIO(baseTexture->overwriteInfo.anisotropicLevel);
+            if (overwriteInfo.anisotropicLevel >= 0)
+                effectiveSamplerWords.WORD0.set_MAX_ANISO_RATIO(overwriteInfo.anisotropicLevel);
 
-    		sampler = m_samplerCache->GetSamplerState(LatteGPUState.contextNew, shader->shaderType, stageSamplerIndex, samplerWords);
+    		sampler = m_samplerCache->GetSamplerState(LatteGPUState.contextNew, shader->shaderType, stageSamplerIndex, &effectiveSamplerWords);
 		}
 		else
 		{
