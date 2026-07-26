@@ -78,7 +78,16 @@ MK8, locked 60 FPS, **~104% of one core** (was ~184% before `a7ed8ed`+`612d064`)
 
 Historical note: an earlier baseline recorded `mach_continuous_time` at 47% self and attributed it to the graphics idle path. That attribution was wrong. The caller was `__OSThreadCoreIdle` → `__OSCheckSystemEvents`, an unbounded busy-wait in the *scheduler*. Both idle-wait bugs found in Stage 5 were invisible to the `hostInstrCount / ppcInstrCount` metric the plan ranked first — profile before picking a codegen target.
 
-**The GPU is not the bottleneck on MK8 and probably not on most titles.** Measured from `GPUEndTime - GPUStartTime` on every command buffer: **2.83 ms/frame, 17% of a 16.67 ms budget.** Before starting any graphics-bandwidth work (memoryless attachments, load/store actions, deferred clears, MetalFX), measure GPU time first — `docs/porting/00-master-plan.md` records why all of those were measured and rejected. Encoder construction costs ~12% of *CPU*, and the only lever on it is render-pass count, which is bounded by guest-driven texture-cache copies rather than by anything the renderer chooses.
+**MK8's attract mode drives itself into full demo races — no controller input needed.** This matters more than it sounds: the attract cycle spends most of its wall-clock on the *title card*, so a short trace or an unfiltered average silently measures a near-idle scene. Gate on `draws/f > 200` to isolate race frames.
+
+Measured from `GPUEndTime - GPUStartTime` on every command buffer:
+
+| scene | GPU ms/frame | % of 16.67 ms | passes/f | draws/f | draws per pass |
+|---|---|---|---|---|---|
+| title card | 2.6 – 3.0 | 16 – 18% | 29 | 51 | 1.75 |
+| demo race, peak | **14.6** | **87.7%** | 222 | 1466 | 6.6 |
+
+So the GPU is **not** idle in gameplay, and `draws-per-pass` is a healthy 7–9 rather than the alarming 1.75 the title card shows. An earlier revision of this file claimed the opposite from title-card-only data; `docs/porting/00-master-plan.md` carries the full correction. Before drawing any conclusion about graphics work, check which scene you sampled.
 
 For Metal work: `MTL_HUD_ENABLED=1` for a frame-time overlay, `MTL_DEBUG_LAYER=1` + `MTL_SHADER_VALIDATION=1` for validation, and the in-app Debug menu has GPU capture wired to `MTL::CaptureManager`.
 

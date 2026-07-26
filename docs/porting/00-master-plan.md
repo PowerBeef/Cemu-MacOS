@@ -254,3 +254,33 @@ Followed the churn to its source and measured every proposed mitigation before b
 **4. And none of it matters, because the GPU is idle.** Measured actual GPU execution time from `GPUEndTime - GPUStartTime` on every command buffer: **2.83 ms/frame, 17% of the 16.67 ms budget.** The remaining 83% is headroom. Every item above is a *bandwidth* optimization aimed at a GPU with nothing to do. The 12% of CPU in `renderCommandEncoderWithDescriptor` + `AGXG14GFamilyRenderContext init` is a host-CPU cost, and the only lever on it is pass count — bounded by the texture-cache copies in (1).
 
 **Recommendation: stop here.** The one remaining lever is deferring `texture_copyImageSubData` to a pass boundary when the copy provably does not alias anything the live pass touches (the same machinery as the render-pass self-dependency item). That removes at most 10 of 26 passes, so roughly 4–5% of CPU, in exchange for a correctness-sensitive change to the texture cache. Not a good trade while the emulator already holds a locked 60 FPS at ~103% of one core. Revisit with a GPU-heavy title, where the bandwidth items may actually bind.
+
+---
+
+### CORRECTION (2026-07-26): the section above sampled the wrong scene
+
+**Everything above was measured on MK8's title card. That is not a representative workload, and the "GPU is idle, reject all of it" conclusion does not survive contact with in-game rendering.**
+
+MK8's attract mode drives itself into full demo races with no input at all — the earlier claim that a GPU-heavy scene needed someone to play was simply wrong. Sampling across the whole attract cycle in one run:
+
+| | GPU ms/frame | % of 16.67 ms | passes/f | draws/f | draws per pass |
+|---|---|---|---|---|---|
+| title card | 2.6 – 3.0 | 16 – 18% | 29 | 51 | 1.75 |
+| demo race, typical | 7 – 11 | 45 – 66% | 97 – 137 | 700 – 1200 | 7 – 9 |
+| **demo race, peak** | **14.6** | **87.7%** | **222** | **1466** | 6.6 |
+
+What this overturns:
+
+- **"The GPU has 83% headroom" is false in gameplay.** It peaks at **87.7% of frame budget**. Any additional load — higher internal resolution, a heavier title — pushes it over. The TBDR bandwidth items are *not* aimed at an idle GPU and should be reconsidered on their merits.
+- **"1.75 draws per pass is pathological" was a title-card artifact.** In-game it is **7–9 draws per pass**, which is unremarkable. The renderer is not churning passes the way the title card suggested.
+- **The blit picture is entirely different in-game.** `texture_loadSlice` and `CopyBufferToBuffer` measured *zero* on the title card; in a race they reach **15,812** and **2,943** calls per 60 frames respectively.
+
+What still holds, re-verified in-game:
+
+- **`texture_copyImageSubData` remains unbatchable** — ~960 calls per 60 frames of which ~900 (94%) tear down a live render encoder, exactly as on the title card. These are individually interleaved between draws.
+- **`texture_loadSlice` is already effectively batched** — 15,812 calls but only 980 teardowns (6%), so consecutive uploads already share one blit encoder. No work needed there.
+- Blit-caused teardowns are ~20–25% of all passes in-game (≈23 of 97, ≈46 of 222), similar in proportion to the title card.
+
+**Revised recommendation:** the memoryless-depth and load/store-action audit is back on the table and should be evaluated against a demo-race trace, not the title card. The deferred-clear idea stays dead (clears are only ~6/frame in-game). Re-measure `draws/f > 200` windows specifically; see the sampling caveat below.
+
+**Method note, and the reason this correction exists:** MK8's attract cycle spends most of its wall-clock on the title card, so an unfiltered average or a short trace lands there and reads as a light workload. Gate on `draws/f > 200` to isolate race frames. This is the same non-fixed-workload trap recorded earlier, hit a second time in the opposite direction — the first time it inflated a speedup, this time it hid the entire GPU load.
