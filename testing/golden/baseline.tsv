@@ -17,3 +17,4 @@
 2026-07-26T03:00:23Z	a7ed8ed	mk8-title-stage5-wfe	59.78	Metal/Apple GPU	1579 MB	51 threads	40.5%
 2026-07-26T03:10:13Z	321b9f7	mk8-lodbias-on	60.00	Metal/Apple GPU	1936 MB	51 threads	76.8%
 2026-07-26T20:22:46Z	5cb0620	botw-shrine-shared-buffer-cache	28.59	Metal/Apple GPU	1367 MB	46 threads	224.2%
+2026-07-26T21:37:34Z	2c09604	botw-shrine-hw-docs	28.63	Metal/Apple GPU	1071 MB	45 threads	188.7%
