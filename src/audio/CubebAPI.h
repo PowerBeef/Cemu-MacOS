@@ -46,7 +46,29 @@ private:
 	cubeb_stream* m_stream = nullptr;
 	bool m_is_playing = false;
 
-	mutable std::shared_mutex m_mutex;
-	std::vector<uint8> m_buffer;
+	// Single-producer / single-consumer ring buffer.
+	//
+	// The producer is the emulation thread (FeedBlock); the consumer is cubeb's
+	// data_cb, which CoreAudio runs on a Mach time-constraint thread. That thread sits
+	// above every QoS class, so a mutex shared with a normal-priority producer is an
+	// unfixable priority inversion -- no QoS assignment can help, because there is no
+	// class high enough to represent "real-time". The previous implementation also did
+	// a std::vector::erase from the front inside the callback, i.e. an O(n) memmove of
+	// up to 4 blocks on the realtime thread.
+	//
+	// Wait-free on both sides: each side owns one index and only ever publishes it with
+	// a release store, reading the other with an acquire load.
+	std::unique_ptr<uint8[]> m_ringBuffer;
+	size_t m_ringSize = 0;                    // capacity in bytes, > any single block
+	std::atomic<size_t> m_ringHead{0};        // next byte to read  (consumer owns)
+	std::atomic<size_t> m_ringTail{0};        // next byte to write (producer owns)
+
+	size_t RingBytesUsed() const
+	{
+		const size_t tail = m_ringTail.load(std::memory_order_acquire);
+		const size_t head = m_ringHead.load(std::memory_order_acquire);
+		return tail - head;
+	}
+
 	static long data_cb(cubeb_stream* stream, void* user, const void* inputbuffer, void* outputbuffer, long nframes);
 };

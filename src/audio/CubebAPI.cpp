@@ -38,22 +38,26 @@ long CubebAPI::data_cb(cubeb_stream* stream, void* user, const void* inputbuffer
 	// m_bytesPerBlock = samples_per_block * channels * (bits_per_sample / 8);
 	const auto size = (size_t)nframes * thisptr->m_channels * (thisptr->m_bitsPerSample/8);
 
-	std::unique_lock lock(thisptr->m_mutex);
-	if (thisptr->m_buffer.empty())
+	// Runs on CoreAudio's realtime thread. Nothing here may block, allocate, or take a
+	// lock.
+	const size_t head = thisptr->m_ringHead.load(std::memory_order_relaxed);
+	const size_t tail = thisptr->m_ringTail.load(std::memory_order_acquire);
+	const size_t available = tail - head;
+	const size_t copied = std::min(available, size);
+
+	if (copied)
 	{
-		// we got no data, just write silence
-		memset(outputbuffer, 0x00, size);
+		const size_t cap = thisptr->m_ringSize;
+		const size_t offset = head % cap;
+		const size_t firstChunk = std::min(copied, cap - offset);
+		memcpy(outputbuffer, thisptr->m_ringBuffer.get() + offset, firstChunk);
+		if (copied > firstChunk)
+			memcpy((uint8*)outputbuffer + firstChunk, thisptr->m_ringBuffer.get(), copied - firstChunk);
+		thisptr->m_ringHead.store(head + copied, std::memory_order_release);
 	}
-	else
-	{
-		const auto copied = std::min(thisptr->m_buffer.size(), size);
-		memcpy(outputbuffer, thisptr->m_buffer.data(), copied);
-		thisptr->m_buffer.erase(thisptr->m_buffer.begin(), std::next(thisptr->m_buffer.begin(), copied));
-		lock.unlock();
-		// fill rest with silence
-		if (copied != size)
-			memset((uint8*)outputbuffer + copied, 0x00, size - copied);
-	}
+	// underrun (or partial): pad with silence rather than repeating stale audio
+	if (copied != size)
+		memset((uint8*)outputbuffer + copied, 0x00, size - copied);
 
 	return nframes;
 }
@@ -88,16 +92,28 @@ CubebAPI::CubebAPI(cubeb_devid devid, uint32 samplerate, uint32 channels, uint32
 		break;
 	}
 
-	uint32 latency = 1;
-	cubeb_get_min_latency(s_context, &output_params, &latency);
+	// cubeb_get_min_latency() reports the smallest buffer the device will accept. It is
+	// a floor, not a target: requesting less makes cubeb_stream_init fail outright.
+	//
+	// The Wii U's AI block delivers audio on a coarse cadence tied to guest scheduling,
+	// so running at the device floor invites underruns. Ask for a little more headroom
+	// where the device allows it (~20ms at 48kHz), but never less than the floor.
+	uint32 deviceMinLatency = 1;
+	if (cubeb_get_min_latency(s_context, &output_params, &deviceMinLatency) != CUBEB_OK)
+		deviceMinLatency = 1;
+	constexpr uint32 kDesiredLatencyFrames = 960; // ~20ms at 48kHz
+	const uint32 latency = std::max(deviceMinLatency, kDesiredLatencyFrames);
+	cemuLog_logDebug(LogType::Force, "Cubeb: device min latency {} frames, requesting {}", deviceMinLatency, latency);
 
-	m_buffer.reserve((size_t)m_bytesPerBlock * kBlockCount);
+	m_ringSize = (size_t)m_bytesPerBlock * kBlockCount;
+	m_ringBuffer = std::make_unique<uint8[]>(m_ringSize);
 
 	if (cubeb_stream_init(s_context, &m_stream, "Cemu Cubeb output",
 	                      nullptr, nullptr,
 	                      devid, &output_params,
 	                      latency, data_cb, state_cb, this) != CUBEB_OK)
 	{
+		cemuLog_log(LogType::Force, "Cubeb: cubeb_stream_init failed (latency {} frames, {} ch, {} Hz)", latency, channels, samplerate);
 		throw std::runtime_error("can't initialize cubeb device");
 	}
 }
@@ -113,20 +129,25 @@ CubebAPI::~CubebAPI()
 
 bool CubebAPI::NeedAdditionalBlocks() const
 {
-	std::shared_lock lock(m_mutex);
-	return m_buffer.size() < GetAudioDelay() * m_bytesPerBlock;
+	return RingBytesUsed() < (size_t)GetAudioDelay() * m_bytesPerBlock;
 }
 
 bool CubebAPI::FeedBlock(sint16* data)
 {
-	std::unique_lock lock(m_mutex);
-	if (m_buffer.capacity() <= m_buffer.size() + m_bytesPerBlock)
+	const size_t tail = m_ringTail.load(std::memory_order_relaxed);
+	const size_t head = m_ringHead.load(std::memory_order_acquire);
+	if (m_ringSize - (tail - head) < m_bytesPerBlock)
 	{
-		cemuLog_logDebug(LogType::Force, "dropped direct sound block since too many buffers are queued");
+		cemuLog_logDebug(LogType::Force, "dropped audio block since too many buffers are queued");
 		return false;
 	}
 
-	m_buffer.insert(m_buffer.end(), (uint8*)data, (uint8*)data + m_bytesPerBlock);
+	const size_t offset = tail % m_ringSize;
+	const size_t firstChunk = std::min<size_t>(m_bytesPerBlock, m_ringSize - offset);
+	memcpy(m_ringBuffer.get() + offset, data, firstChunk);
+	if (m_bytesPerBlock > firstChunk)
+		memcpy(m_ringBuffer.get(), (uint8*)data + firstChunk, m_bytesPerBlock - firstChunk);
+	m_ringTail.store(tail + m_bytesPerBlock, std::memory_order_release);
 	return true;
 }
 

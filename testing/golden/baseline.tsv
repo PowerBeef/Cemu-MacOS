@@ -9,3 +9,5 @@
 2026-07-26T00:20:03Z	8e830f24	mk8-crash-diagnostics	59.44	Metal/Apple GPU	949 MB	40 threads	170.8%
 2026-07-26T00:23:21Z	c279de50	mk8-stage3-complete	59.85	Metal/Apple GPU	1055 MB	51 threads	217.1%
 2026-07-26T00:35:05Z	7f82b39	mk8-qos	60.11	Metal/Apple GPU	1490 MB	43 threads	191.0%
+2026-07-26T00:50:28Z	966b1a9	mk8-audio-ring	60.00	Metal/Apple GPU	856 MB	43 threads	172.0%
+2026-07-26T01:37:50Z	966b1a9	mk8-audio-ring-verified	58.88	Metal/Apple GPU	1286 MB	44 threads	169.8%
