@@ -22,6 +22,11 @@
 #include "input/api/SDL/SDLController.h"
 #endif
 
+#if BOOST_OS_MACOS
+#include "input/api/GameController/GCGamepadController.h"
+#include "input/api/GameController/GCControllerProvider.h"
+#endif
+
 ControllerPtr ControllerFactory::CreateController(InputAPI::Type api, std::string_view uuid,
                                                   std::string_view display_name)
 {
@@ -61,6 +66,10 @@ ControllerPtr ControllerFactory::CreateController(InputAPI::Type api, std::strin
 			const auto index = ConvertString<uint32>(uuid);
 			return std::make_shared<XInputController>(index);
 		}
+#endif
+#if BOOST_OS_MACOS
+	case InputAPI::GameController:
+		return std::make_shared<GCGamepadController>(uuid, display_name);
 #endif
 #ifdef HAS_SDL
 	case InputAPI::SDLController:
@@ -139,6 +148,10 @@ ControllerProviderPtr ControllerFactory::CreateControllerProvider(InputAPI::Type
 #if HAS_KEYBOARD
 	case InputAPI::Keyboard:
 		return std::make_shared<KeyboardControllerProvider>();
+#endif
+#if BOOST_OS_MACOS
+	case InputAPI::GameController:
+		return std::make_shared<GCControllerProvider>();
 #endif
 #ifdef HAS_SDL
 	case InputAPI::SDLController:

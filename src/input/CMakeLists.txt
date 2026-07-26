@@ -98,6 +98,21 @@ if(ENABLE_SDL)
 	target_link_libraries(CemuInput PRIVATE	SDL3::SDL3)
 endif()
 
+if(APPLE)
+	# Native GameController.framework provider. Gives us the OS-applied remapping
+	# profiles from System Settings > Game Controllers, plus battery and motion,
+	# which SDL does not surface.
+	target_sources(CemuInput PRIVATE
+		api/GameController/GCControllerProvider.cpp
+		api/GameController/GCControllerProvider.h
+		api/GameController/GCGamepadController.cpp
+		api/GameController/GCGamepadController.h
+		api/GameController/GCController_mac.mm
+		api/GameController/GCController_mac.h
+	)
+	target_link_libraries(CemuInput PRIVATE "-framework GameController")
+endif()
+
 target_include_directories(CemuInput PUBLIC "../")
 
 target_link_libraries(CemuInput PRIVATE

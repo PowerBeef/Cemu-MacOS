@@ -8,6 +8,7 @@ namespace InputAPI
 	{
 		Keyboard,
 		SDLController,
+		GameController,   // Apple GameController.framework
 		XInput,
 		DirectInput,
 		DSUClient,
@@ -42,6 +43,8 @@ namespace InputAPI
 			return "WGIRawController";
 		case SDLController:
 			return "SDLController";
+		case GameController:
+			return "GameController";
 		default:
 			break;
 		}
@@ -65,6 +68,8 @@ namespace InputAPI
 			return DSUClient;
 		else if (str == to_string(SDLController))
 			return SDLController;
+		else if (str == to_string(GameController))
+			return GameController;
 		else if (str == "DSU") // legacy
 			return DSUClient;
 		

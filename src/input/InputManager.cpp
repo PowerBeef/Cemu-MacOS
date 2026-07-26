@@ -1,6 +1,9 @@
 #include "input/InputManager.h"
 #include "config/ActiveSettings.h"
 #include "input/ControllerFactory.h"
+#if BOOST_OS_MACOS
+#include "input/api/GameController/GCControllerProvider.h"
+#endif
 #include <boost/property_tree/ini_parser.hpp>
 #include <pugixml.hpp>
 #include "Cafe/GameProfile/GameProfile.h"
@@ -30,6 +33,13 @@ InputManager::InputManager()
 #endif
 #ifdef HAS_SDL
 	create_provider<SDLControllerProvider>();
+#endif
+#if BOOST_OS_MACOS
+	// Registered after SDL so SDL keeps its historical position in the API list and
+	// existing profiles keep resolving. Both providers can see the same physical pad;
+	// GameController is preferred for supported devices because the OS applies the
+	// user's own remapping profiles from System Settings before input reaches us.
+	create_provider<GCControllerProvider>();
 #endif
 #if HAS_XINPUT
 	create_provider<XInputControllerProvider>();
