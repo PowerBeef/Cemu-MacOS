@@ -30,6 +30,12 @@ enforced, and that the existing allocator works signed. The arena is still worth
 building -- recompiled code is currently never freed -- but it is an optimization,
 not a gate on distribution.
 
+A second caution: an early reading of xbyak concluded it performed no I-cache
+maintenance, based on a grep that only covered `xbyak_aarch64/*.h`. It does --
+`CodeGenerator::clearCache` lives in `src/xbyak_aarch64_impl.h` and calls
+`sys_icache_invalidate` on Apple. Grep the whole submodule, not just its public
+headers.
+
 A caution recorded from writing these: the first version of `mapjit_region_limit.c`
 allocated `PROT_READ|PROT_WRITE|PROT_EXEC` and toggled `pthread_jit_write_protect_np`.
 That pattern SIGBUSes on write, but it is *not* what xbyak does -- xbyak maps RW-only
