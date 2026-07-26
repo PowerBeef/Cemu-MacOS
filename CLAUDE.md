@@ -78,6 +78,8 @@ MK8, locked 60 FPS, **~104% of one core** (was ~184% before `a7ed8ed`+`612d064`)
 
 Historical note: an earlier baseline recorded `mach_continuous_time` at 47% self and attributed it to the graphics idle path. That attribution was wrong. The caller was `__OSThreadCoreIdle` → `__OSCheckSystemEvents`, an unbounded busy-wait in the *scheduler*. Both idle-wait bugs found in Stage 5 were invisible to the `hostInstrCount / ppcInstrCount` metric the plan ranked first — profile before picking a codegen target.
 
+**The GPU is not the bottleneck on MK8 and probably not on most titles.** Measured from `GPUEndTime - GPUStartTime` on every command buffer: **2.83 ms/frame, 17% of a 16.67 ms budget.** Before starting any graphics-bandwidth work (memoryless attachments, load/store actions, deferred clears, MetalFX), measure GPU time first — `docs/porting/00-master-plan.md` records why all of those were measured and rejected. Encoder construction costs ~12% of *CPU*, and the only lever on it is render-pass count, which is bounded by guest-driven texture-cache copies rather than by anything the renderer chooses.
+
 For Metal work: `MTL_HUD_ENABLED=1` for a frame-time overlay, `MTL_DEBUG_LAYER=1` + `MTL_SHADER_VALIDATION=1` for validation, and the in-app Debug menu has GPU capture wired to `MTL::CaptureManager`.
 
 ## Architecture worth knowing before editing

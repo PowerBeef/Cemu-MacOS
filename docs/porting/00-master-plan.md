@@ -235,4 +235,22 @@ The plan proposed re-testing the `Host` buffer-cache mode here, on the theory th
 
 Caveat bounding all of this: the measurable scene is the static title screen (51 draws/frame). Buffer-upload traffic there is small, so this does **not** rule out `Host` mating well with real gameplay — it only says the benefit is unproven on the one workload that can be measured without driving a controller.
 
-The remaining 10 blit-caused passes per frame come from the other blit users (texture upload, readback, clears). Batching those — or moving uploads to the start of the frame / a separate command buffer — is the real fix for encoder churn, and is a larger change than a mode flag. The memoryless-depth and load/store-action audit in the G list attacks the same 26 passes from the bandwidth side and is still unstarted.
+### The rest of the G-list TBDR work is not worth doing — measured
+
+Followed the churn to its source and measured every proposed mitigation before building any of it. **All of them come up empty on this workload.** Attributing every blit call and every render-pass start, per 60 frames:
+
+| blit call site | calls | of which tore down a live render pass |
+|---|---|---|
+| **`texture_copyImageSubData`** | **600** | **600 (100%)** |
+| `UploadToBufferCache` (DevicePrivate only) | ~270 | ~175 |
+| `texture_loadSlice` · readback · `CopyBufferToBuffer` · screenshot | 0 | 0 |
+
+**1. Batching the blits does not work.** The churn is essentially one call site — `texture_copyImageSubData`, exactly 10 per frame — and *every* call finds a live render encoder, meaning no two are ever adjacent. There is nothing to batch. These come from `LatteTexture_copySlice`/`copyData`, the texture-cache view-coherency mechanism shared with the old GL/Vulkan backends: legitimate guest-driven work, not a Metal defect. Removing them means changing Latte texture-cache policy, which is a different and much riskier project.
+
+**2. Deferred clears have zero opportunity here.** Both clear paths (`texture_clearDepthSlice`, `ClearColorTextureInternal`) spin up a dedicated render pass that only clears and stores, 3 per frame. Folding those into the next pass's `LoadActionClear` is the textbook fix, so it was measured first: of 180 clears per 60 frames, **0 were followed by a render pass using that texture as an attachment.** The optimization would fire never.
+
+**3. Memoryless depth / `DontCare` is structurally blocked, and the two items are coupled.** The plan listed pass-count and load/store actions as independent, but they are not. Because a frame's rendering to one target is split across many Metal passes, `LoadActionLoad`/`StoreActionStore` is exactly what keeps pass N+1 seeing what pass N wrote. Only the *last* store per depth texture per frame is elidable — 1–2 of 26. Memoryless requires all usage of an attachment to sit in a single pass, which this design cannot provide until pass count itself drops.
+
+**4. And none of it matters, because the GPU is idle.** Measured actual GPU execution time from `GPUEndTime - GPUStartTime` on every command buffer: **2.83 ms/frame, 17% of the 16.67 ms budget.** The remaining 83% is headroom. Every item above is a *bandwidth* optimization aimed at a GPU with nothing to do. The 12% of CPU in `renderCommandEncoderWithDescriptor` + `AGXG14GFamilyRenderContext init` is a host-CPU cost, and the only lever on it is pass count — bounded by the texture-cache copies in (1).
+
+**Recommendation: stop here.** The one remaining lever is deferring `texture_copyImageSubData` to a pass boundary when the copy provably does not alias anything the live pass touches (the same machinery as the render-pass self-dependency item). That removes at most 10 of 26 passes, so roughly 4–5% of CPU, in exchange for a correctness-sensitive change to the texture cache. Not a good trade while the emulator already holds a locked 60 FPS at ~103% of one core. Revisit with a GPU-heavy title, where the bandwidth items may actually bind.
