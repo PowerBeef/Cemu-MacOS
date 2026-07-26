@@ -102,7 +102,7 @@ Detailed per-workstream designs live alongside this file:
 - **LOD bias** (S) — 3 lines, now that macOS 26 provides the API. Fixes mip selection in every game using LOD bias.
 - **`MTLBinaryArchive` shader cache** (M) — **largest user-visible win.** Archives carry *both* GPU binaries and the AIR slice, so an OS update degrades to "skip the frontend" rather than "recompile everything". Owned by `MetalPipelineCache` (one archive per title), keyed on `{titleId}_{gpuArch}_{osBuild}_{LatteShaderCache_getPipelineCacheExtraVersion}` so MSL-emitter edits self-invalidate. Delete the RAM-disk/`xcrun` code and the `system()` helpers in `MetalCommon.h`.
 - **Presentation fixes** (S each) — wire `displaySyncEnabled` so the vsync setting stops being a no-op; set `maximumDrawableCount`; use `presentDrawable:afterMinimumDuration:` for frame pacing; stop mutating the live `CAMetalLayer`'s `pixelFormat` per frame (do sRGB in the output shader instead — `MetalOutputShaderCache` already keys on it).
-- **Re-test `Host` buffer-cache mode** (S) — it already imports guest MEM2 as a Shared `MTL::Buffer`, the true zero-copy path. It may have been judged unreliable *because of* the ctor heap corruption. If it's stable, it removes the entire upload path. **Test this before investing in upload batching.**
+- ~~**Re-test `Host` buffer-cache mode** (S) — the true zero-copy path.~~ **Done — `Host` tested and rejected; `DeviceShared` adopted instead.** `Host` is measurably no better than `DeviceShared` (150.2–152.7 passes/f vs 149.0–150.1) despite also removing the memcpy. Switching Auto from `DevicePrivate` to `DeviceShared` was the win: −17% render passes, −16% GPU time. Details at the end of this document.
 - **`D24_S8` decoder** (M) — `depth24Stencil8PixelFormatSupported` is **false on all Apple Silicon**, so the remap-to-`Depth32Float_Stencil8`-with-the-decoder-commented-out branch at `LatteToMtl.cpp:173-179` is a live corruption path on every M-series Mac. Add `logOnce` on unknown formats *first* to get the real priority order.
 - **Render-pass self-dependency** (L) — largest correctness win. Port the *current* Vulkan design (`CheckForSelfDependency`: monotonic stamp + intersect against bound textures, O(bound), once per FBO/binding change), **not** the commented-out per-draw shader-scanning version. Apple-specific win: where the dependency is pixel-only, framebuffer fetch already handles it at zero cost.
 - **Memoryless depth + load/store audit** (M) — largest TBDR win. `CachedFBOMtl` uses `LoadActionLoad`/`StoreActionStore` on *every* attachment of *every* pass; on a TBDR GPU loading an attachment you're about to fully overwrite is pure wasted bandwidth. Depth that's never sampled becomes `Memoryless` + `Clear`/`DontCare`: ~16 MB and its full write bandwidth per 1080p target, 64 MB at 4×.
@@ -287,14 +287,20 @@ What still holds, re-verified in-game:
 
 ---
 
-### BotW settles it: the GPU is the bottleneck, and the bandwidth work is justified
+### BotW: a repeatable, GPU-heavy measurement scene
+
+> **Superseded in part.** The "108–147% of budget / GPU-bound" reading below divided by the
+> **60 FPS** budget for a title that targets **30 FPS**. Against BotW's real 33.3 ms budget the
+> GPU sits near 50% duty cycle and is *not* the limiter in this scene. See
+> "The render-pass churn was buffer uploads, not texture copies" at the end of this document
+> for the corrected numbers. The scene itself remains the right A/B target.
 
 Breath of the Wild (US v208, update installed) at the Shrine of Resurrection, Link standing still:
 
 | metric | value |
 |---|---|
-| **GPU time** | **18.0 – 24.5 ms/frame = 108 – 147% of the 16.67 ms budget** |
-| FPS | **23.95** (BotW targets 30 → dropping frames, GPU-bound) |
+| **GPU time** | **18.0 – 24.5 ms/frame** (~108–147% of 16.67 ms, but see the correction above) |
+| FPS | **23.95** (BotW targets 30) |
 | CPU | 184% of one core |
 | render passes / frame | 173.7 |
 | draws / frame | 4838.8 |
@@ -305,7 +311,7 @@ Breath of the Wild (US v208, update installed) at the Shrine of Resurrection, Li
 **This retires the "reject all of it" conclusion for good.** The GPU is not idle with 83% headroom — it is *over* frame budget and is the reason BotW misses its 30 FPS target. Every item rejected on the idle-GPU argument is back:
 
 - **Memoryless depth + load/store audit is now the top graphics item.** 174 passes per frame, each doing `LoadActionLoad` + `StoreActionStore` on every attachment, against a GPU that is already over budget.
-- **Reducing pass count is justified too.** ~67 of 174 passes per frame (**38%**) are torn down by a blit, so the deferred-copy design that was dismissed as "4–5% of CPU on MK8" is worth far more here — and it buys GPU time, not just CPU.
+- **Reducing pass count is justified too.** ~67 of 174 passes per frame (**38%**) are torn down by a blit. (Which blit turned out to matter: the *buffer*-upload blits, not the texture copies this bullet originally pointed at. Acted on — see the end of this document.)
 - Draws-per-pass is a healthy 27.9, so the passes are doing real work. The problem is their *number*, and the per-pass attachment traffic that comes with it.
 
 **This is the measurement scene to use from now on.** It is *exactly* repeatable — `draws/f` holds at 4838.8 ± 0.3 and `passes/f` at 173.7 across every sample — which is far better than anything MK8 offers, where the attract cycle constantly changes what it renders. Standing still in a heavy scene is the ideal A/B target.
@@ -363,10 +369,112 @@ against roughly 100 GB/s of unified memory bandwidth on an M2. Attachment load/s
 
 **What the audit actually points at:** the 35.9 same-FBO splits per frame. When consecutive passes target the same FBO, the store-then-reload between them is pure waste — the data leaves tile memory and comes straight back. That is ≈529 MB/frame ≈ **14.8 GB/s**, the single largest addressable item found, and it is ~10x the depth-store win.
 
-Those splits are caused by blits (`texture_copyImageSubData`) interrupting a live render pass. So **the deferred-copy design is the keystone, not an alternative**: it is what removes the splits, and only once an FBO gets one pass per frame do `DontCare`/memoryless become expressible at all. The G-list treated these as independent items; they are strictly ordered.
+~~Those splits are caused by blits (`texture_copyImageSubData`) interrupting a live render pass. So **the deferred-copy design is the keystone, not an alternative**.~~
 
-**Proposed design for the deferred copy** (not yet implemented — it is a correctness-sensitive change to the texture cache and deserves its own careful pass):
+> **Wrong — retired by measurement.** The splits were caused by **buffer** uploads, not texture
+> copies. Zero mid-pass `texture_copyImageSubData` calls are followed by a pass on the same FBO,
+> so deferring them would have removed no render passes at all. The proposed deferred-copy design
+> (queue the copy when provably disjoint, flush at pass end / on dst bind / at frame end) is
+> retired unimplemented. See "The render-pass churn was buffer uploads, not texture copies" at
+> the end of this document for the attribution and the change that did work.
 
-1. On `texture_copyImageSubData` with a live render encoder, queue the copy instead of performing it, *if* neither src nor dst is an attachment of the current FBO and dst is not currently bound as a sampled texture.
-2. Flush the queue when the render pass ends naturally, when anything binds or reads dst, or at frame end. Flushing at pass end preserves ordering against every later pass.
-3. Anything not provably disjoint falls back to today's behaviour — end the encoder and copy immediately.
+---
+
+### The render-pass churn was buffer uploads, not texture copies — and the deferred copy is retired
+
+The section above concluded that blits interrupting a live render pass caused the 35.9 same-FBO
+splits per frame, and that deferring `texture_copyImageSubData` was therefore "the keystone".
+**That was wrong, and the deferred-copy design is now retired as a measured negative.**
+
+#### What was measured
+
+Every `texture_copyImageSubData` issued while a render encoder was live was classified against
+the live pass's FBO, and a backtrace was captured at every render-pass teardown so that each
+same-FBO split could be attributed to whoever ended the previous pass. BotW shrine scene,
+steady state:
+
+| | per frame |
+|---|---|
+| copies that tore down a live render pass | ~41 |
+| of those, dst is an attachment of the live FBO | **0** |
+| of those, src is an attachment of the live FBO | ~35 |
+| **copies followed by a render pass on the same FBO** | **0** |
+
+The last row is the one that matters, and it is measured purely from FBO pointers, so it carries
+no classification uncertainty. **Deferring texture copies would have removed zero render passes.**
+They land at genuine FBO transitions, where the pass was ending anyway. On top of that they are
+mostly not deferrable in the first place — in ~35 of 41 the copy *reads* an attachment of the
+live pass, which forces the pass to end no matter what.
+
+#### What actually caused the splits
+
+Backtrace attribution put every one of the top eight split causes in `GetBlitCommandEncoder()`,
+reached from **buffer** work — not one texture copy:
+
+| cause | splits/frame |
+|---|---|
+| `MetalMemoryManager::UploadToBufferCache` ← `LatteBufferCache_Sync` ← `draw_execute` | ~25 (summed over several stacks) |
+| `bufferCache_copyStreamoutToMainBuffer` ← `LatteStreamout_FinishDrawcall` | 4.6 |
+| `LatteTextureReadbackInfoMtl::StartTransfer` | 0.9 |
+
+`UploadToBufferCache` dominates, and the reason is the buffer-cache storage mode. In
+`DevicePrivate` the upload cannot be a memcpy: it allocates staging memory, copies into it, and
+encodes a blit — and asking for a blit encoder tears down the live render pass. In `DeviceShared`
+it is a plain memcpy into shared storage and no encoder is involved at all.
+
+`InitBufferCache` picked `DevicePrivate` for every title except Wind Waker HD. Since this fork
+only ever runs on unified memory, device-private storage buys nothing and costs a pass teardown
+per upload. **Auto now selects `DeviceShared`.**
+
+#### A/B, same scene, same binary, env-var override
+
+| | passes/f | same-FBO splits/f | GPU ms/f | draws/f | FPS | CPU |
+|---|---|---|---|---|---|---|
+| `DevicePrivate` (was) | 176.4 – 181.3 | 35.6 – 40.8 | 18.17 – 18.85 | 1190 | 28.63 | 204.9% |
+| **`DeviceShared` (now)** | **149.0 – 150.1** | **12.3 – 13.5** | **15.37 – 15.85** | 1187 | 28.63 | 205.3% |
+| `Host` (zero-copy MEM2) | 150.2 – 152.7 | 13.6 – 16.2 | 15.67 – 16.38 | 1190 | 28.63 | — |
+
+Ten consecutive 60-frame windows per variant; the ranges are full min–max and do not overlap on
+any of the three metrics that moved. **−17% render passes, −67% same-FBO splits, −16% GPU time.**
+
+`Host` mode was tested at the same time and is *not* better than `DeviceShared` despite removing
+the memcpy as well — it was rejected on the measurement, not on principle. That closes the
+"re-test Host buffer-cache mode" item on the G-list.
+
+#### What did not change, and why that matters
+
+**Frame rate did not move: 28.63 FPS in every variant.** Neither did CPU (204.9% → 205.3% —
+the memcpy still happens, only the blit encoding disappears). A 16% GPU reduction changing
+nothing is itself the finding: at 15.6–18.5 ms of GPU time against a ~35 ms wall-clock frame,
+**the GPU is at roughly 50% duty cycle and is not what caps this scene.** The earlier
+"GPU-bound / over budget" conclusion came from dividing by a 16.67 ms budget for a 30 FPS title.
+
+So this change buys headroom and power, not frame rate, in the shrine. It should be re-measured
+somewhere actually GPU-bound — the open world outside the Great Plateau is the obvious candidate
+and is the scene that motivated using BotW at all.
+
+#### Consequences for the rest of the graphics list
+
+- The memoryless/`DontCare` work is **still blocked**, but no longer behind the deferred copy.
+  ~13 same-FBO splits per frame remain (streamout copy, texture readback, and the rest); the
+  depth textures are still written by up to 28 passes each, so memoryless remains unavailable.
+- **The trade this change makes is an ordering guarantee.** A staging blit is ordered on the GPU
+  timeline, so a draw that is already encoded still reads the old contents. A memcpy into shared
+  storage lands immediately, so an in-flight draw may observe the new data one draw early. No
+  visual difference appeared across ~8000 frames of BotW (two captures of the same static scene
+  differ by 0.88% of pixels, all of it drifting dust motes), and Cemu already shipped this mode
+  for Wind Waker HD — but a title that shows artifacts can be pinned back to `device private`
+  through its game profile.
+
+#### Method note
+
+Two things made this tractable, and both are worth reusing:
+
+- **Attribute, don't guess.** One `backtrace()` at every render-pass teardown, bucketed by stack
+  and symbolized at report time, answered in a single run a question that two prior rounds of
+  reasoning had gotten backwards. The cost is ~0.5% CPU in a diagnostic build.
+- **Watch for state that is never cleared.** The first classifier used `m_state.m_textures[]` to
+  test "is dst bound as a sampled texture". That array is only ever overwritten, never reset per
+  pass, so it reports textures bound at any point in the past — the resulting figure was an upper
+  bound, not a measurement. The FBO-pointer comparison had no such problem, which is why it is
+  the number the conclusion rests on.

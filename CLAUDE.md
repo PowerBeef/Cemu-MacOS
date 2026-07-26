@@ -89,7 +89,9 @@ Measured from `GPUEndTime - GPUStartTime` on every command buffer:
 
 So the GPU is **not** idle in gameplay, and `draws-per-pass` is a healthy 7–9 rather than the alarming 1.75 the title card shows. An earlier revision of this file claimed the opposite from title-card-only data; `docs/porting/00-master-plan.md` carries the full correction. Before drawing any conclusion about graphics work, check which scene you sampled.
 
-**Use BotW for graphics measurement, not MK8.** Breath of the Wild (US v208) at the Shrine of Resurrection with Link standing still: **GPU 18–24.5 ms/frame, 108–147% of budget**, 23.95 FPS against a 30 FPS target, 174 passes/frame, 4839 draws/frame. The GPU is over budget and is what caps the frame rate. It is also *exactly* repeatable — `draws/f` holds at 4838.8 ± 0.3 — which MK8 never is.
+**Use BotW for graphics measurement, not MK8.** Breath of the Wild (US v208) at the Shrine of Resurrection with Link standing still, reachable unattended via `testing/drive-botw.sh`. It is *exactly* repeatable — `passes/f` holds within ±2 and `draws/f` within ±3 across every 60-frame window — which no MK8 scene is. Current numbers: 28.6 FPS, 149 passes/frame, ~1190 draws/frame, **GPU 15.6 ms/frame**, CPU ~205% of one core.
+
+**Do not divide BotW's GPU time by 16.67 ms.** BotW targets **30 FPS**, so the budget is 33.3 ms. An earlier revision of this file divided by the 60 FPS budget and concluded the GPU was at "108–147% of budget" and "is what caps the frame rate" — both wrong. At 15.6–18.5 ms against a ~35 ms wall-clock frame, the GPU sits at roughly **50% duty cycle and is not the limiter in this scene**: cutting GPU time 16% moved the frame rate not at all. Check what the title actually targets before computing a percentage.
 
 ### Driving a game without a controller (needed for the above)
 

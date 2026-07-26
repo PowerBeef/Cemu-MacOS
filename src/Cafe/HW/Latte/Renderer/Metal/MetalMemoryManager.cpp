@@ -2,7 +2,6 @@
 #include "Cafe/HW/Latte/Renderer/Metal/MetalMemoryManager.h"
 #include "Cafe/HW/Latte/Renderer/Metal/MetalVoidVertexPipeline.h"
 
-#include "CafeSystem.h"
 #include "Cemu/Logging/CemuLogging.h"
 #include "Common/precompiled.h"
 #include "HW/MMU/MMU.h"
@@ -40,27 +39,23 @@ void MetalMemoryManager::InitBufferCache(size_t size)
 
     if (m_metalBufferCacheMode == MetalBufferCacheMode::Auto)
     {
-        // TODO: do this for all unified memory systems?
-        if (m_mtlr->IsAppleGPU())
-        {
-            switch (CafeSystem::GetForegroundTitleId())
-            {
-            // The Legend of Zelda: Wind Waker HD
-            case 0x0005000010143600: // EUR
-            case 0x0005000010143500: // USA
-            case 0x0005000010143400: // JPN
-                // TODO: use host instead?
-                m_metalBufferCacheMode = MetalBufferCacheMode::DeviceShared;
-                break;
-            default:
-                m_metalBufferCacheMode = MetalBufferCacheMode::DevicePrivate;
-                break;
-            }
-        }
-        else
-        {
-            m_metalBufferCacheMode = MetalBufferCacheMode::DevicePrivate;
-        }
+        // Every device this fork supports has unified memory, so a device-private cache buys
+        // nothing: the upload cannot be a memcpy, it has to go through a staging buffer and a
+        // blit -- and asking for a blit encoder tears down whatever render pass is live. That
+        // made buffer uploads, not texture copies, the single largest source of render-pass
+        // churn. Measured on BotW at the Shrine of Resurrection (see 00-master-plan.md):
+        //
+        //                    passes/frame   same-FBO splits/frame   GPU ms/frame
+        //   DevicePrivate       179.4              38.6                18.5
+        //   DeviceShared        149.4              12.8                15.6
+        //
+        // The trade is a weaker ordering guarantee. A staging blit is ordered on the GPU
+        // timeline, so an already-encoded draw still reads the old contents; a memcpy into
+        // shared storage lands immediately and an in-flight draw may observe the new data one
+        // draw early. No difference was visible across ~8000 frames of BotW, and Cemu already
+        // shipped this mode for Wind Waker HD, but a title that shows artifacts can be pinned
+        // back to "device private" through its game profile.
+        m_metalBufferCacheMode = MetalBufferCacheMode::DeviceShared;
     }
 
     // First, try to import the host memory as a buffer
