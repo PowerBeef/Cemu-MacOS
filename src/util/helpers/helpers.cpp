@@ -1,6 +1,8 @@
 #include "helpers.h"
 #include "Common/ExceptionHandler/ExceptionHandler.h"
 
+#include <pthread/qos.h>
+
 #include <algorithm> 
 #include <functional> 
 #include <cctype>
@@ -114,7 +116,30 @@ typedef struct tagTHREADNAME_INFO
 #pragma pack(pop)
 #endif
 
-void SetThreadName(const char* name)
+namespace
+{
+	qos_class_t QosForRole(ThreadRole role)
+	{
+		switch (role)
+		{
+		case ThreadRole::GuestCore:
+		case ThreadRole::GpuCommand:
+			return QOS_CLASS_USER_INTERACTIVE;
+		case ThreadRole::Input:
+			return QOS_CLASS_USER_INITIATED;
+		case ThreadRole::Compiler:
+		case ThreadRole::Background:
+			// UTILITY, deliberately not BACKGROUND. BACKGROUND is aggressively throttled
+			// and I/O-limited on macOS, which would starve shader compilation exactly
+			// when a new area is being loaded.
+			return QOS_CLASS_UTILITY;
+		default:
+			return QOS_CLASS_UNSPECIFIED;
+		}
+	}
+}
+
+void SetThreadName(const char* name, ThreadRole role)
 {
 #if BOOST_OS_WINDOWS
 	using SetThreadDescription_t = HRESULT (*)(HANDLE hThread, PCWSTR lpThreadDescription);
@@ -150,6 +175,8 @@ void SetThreadName(const char* name)
 	// the one place guaranteed to run once per thread. sigaltstack is per-thread, so
 	// register here or a stack overflow on this thread cannot produce a crash log.
 	ExceptionHandler_RegisterAltStackForThisThread();
+	if (const qos_class_t qos = QosForRole(role); qos != QOS_CLASS_UNSPECIFIED)
+		pthread_set_qos_class_self_np(qos, 0);
 #else
 	if(std::strlen(name) > 15)
 		cemuLog_log(LogType::Force, "Truncating thread name {} because it was longer than 15 characters", name);

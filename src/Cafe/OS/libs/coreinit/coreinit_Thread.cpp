@@ -1369,7 +1369,7 @@ namespace coreinit
 
 	void OSSchedulerCoreEmulationThread(void* _assignedCoreIndex)
 	{
-		SetThreadName(fmt::format("OSSched[core={}]", (uintptr_t)_assignedCoreIndex).c_str());
+		SetThreadName(fmt::format("OSSched[core={}]", (uintptr_t)_assignedCoreIndex).c_str(), ThreadRole::GuestCore);
 		t_assignedCoreIndex = (sint32)(uintptr_t)_assignedCoreIndex;
 
 		enableFlushDenormalsToZero();

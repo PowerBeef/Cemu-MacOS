@@ -8,3 +8,4 @@
 2026-07-26T00:13:00Z	af4fe44	mk8-signed-bundle-hardened-runtime	58.76	Metal/Apple GPU	~1000 MB	40 threads	-
 2026-07-26T00:20:03Z	8e830f24	mk8-crash-diagnostics	59.44	Metal/Apple GPU	949 MB	40 threads	170.8%
 2026-07-26T00:23:21Z	c279de50	mk8-stage3-complete	59.85	Metal/Apple GPU	1055 MB	51 threads	217.1%
+2026-07-26T00:35:05Z	7f82b39	mk8-qos	60.11	Metal/Apple GPU	1490 MB	43 threads	191.0%

@@ -1,4 +1,5 @@
 #include "Cafe/HW/Latte/Renderer/Metal/MetalPipelineCache.h"
+#include "Common/cpu_features.h"
 #include "Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h"
 #include "Cafe/HW/Latte/Renderer/Metal/LatteToMtl.h"
 #include "Cafe/HW/Latte/Renderer/Metal/MetalPipelineCompiler.h"
@@ -24,7 +25,7 @@ static std::queue<MetalPipelineCompiler*> g_compilePipelineRequests;
 
 static void compileThreadFunc(sint32 threadIndex)
 {
-	SetThreadName("compilePl");
+	SetThreadName("compilePl", ThreadRole::Compiler);
 
 	// one thread runs at normal priority while the others run at lower priority
 	if (threadIndex != 0)
@@ -49,15 +50,13 @@ static void compileThreadFunc(sint32 threadIndex)
 
 static void initCompileThread()
 {
-	uint32 numCompileThreads;
-
-	uint32 cpuCoreCount = GetPhysicalCoreCount();
-	if (cpuCoreCount <= 2)
-		numCompileThreads = 1;
-	else
-		numCompileThreads = 2 + (cpuCoreCount - 3); // 2 plus one additionally for every extra core above 3
-
-	numCompileThreads = std::min(numCompileThreads, 8u); // cap at 8
+	// Size against the efficiency cluster, not the total core count. These threads run
+	// at QOS_CLASS_UTILITY and are meant to stay off the performance cores, which are
+	// reserved for the three guest cores and LatteThread. GetPhysicalCoreCount()
+	// reports 8 on a 4P+4E M2, which previously produced 7 threads here (plus 8 more
+	// from the cache loader and 2 from the MSL pool) and oversubscribed the machine.
+	uint32 numCompileThreads = std::max(1u, g_CPUFeatures.efficiencyCores);
+	numCompileThreads = std::min(numCompileThreads, 8u);
 
 	for (uint32 i = 0; i < numCompileThreads; i++)
 	{
@@ -277,9 +276,10 @@ uint32 MetalPipelineCache::BeginLoading(uint64 cacheTitleId)
 	m_compilationCount.store(0);
 	m_compilationQueue.clear();
 
-	// get core count
-	uint32 cpuCoreCount = GetPhysicalCoreCount();
-	m_numCompilationThreads = std::clamp(cpuCoreCount, 1u, 8u);
+	// Cache preload happens on the loading screen, so a little more parallelism is
+	// justified than during gameplay -- but still bounded by the efficiency cluster
+	// rather than by the total core count.
+	m_numCompilationThreads = std::clamp(g_CPUFeatures.efficiencyCores, 1u, 8u);
 	// TODO: uncomment?
 	//if (VulkanRenderer::GetInstance()->GetDisableMultithreadedCompilation())
 	//	m_numCompilationThreads = 1;
@@ -582,7 +582,7 @@ bool MetalPipelineCache::DeserializePipeline(MemStreamReader& memReader, CachedP
 
 int MetalPipelineCache::CompilerThread()
 {
-	SetThreadName("plCacheCompiler");
+	SetThreadName("plCacheCompiler", ThreadRole::Compiler);
 	while (m_numCompilationThreads != 0)
 	{
 		std::vector<uint8> pipelineData = m_compilationQueue.pop();
@@ -596,7 +596,7 @@ int MetalPipelineCache::CompilerThread()
 
 void MetalPipelineCache::WorkerThread()
 {
-	SetThreadName("plCacheWriter");
+	SetThreadName("plCacheWriter", ThreadRole::Background);
 	while (true)
 	{
 		CachedPipeline* job;

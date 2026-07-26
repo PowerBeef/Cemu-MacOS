@@ -217,7 +217,23 @@ size_t RemoveDuplicatesKeepOrder(std::vector<T>& vec)
 	return vec.size();
 }
 
-void SetThreadName(const char* name);
+// Scheduling role of a thread, used to pick a QoS class.
+//
+// On a 4P+4E machine the point is to keep exactly the frame-critical threads on the
+// performance cluster -- three guest cores plus the GPU command processor -- and push
+// everything else to the efficiency cluster. Without this, macOS is free to schedule a
+// shader compiler on a P-core while a guest core waits on an E-core.
+enum class ThreadRole
+{
+	Default,    // leave QoS untouched (e.g. the AppKit main thread, already USER_INTERACTIVE)
+	GuestCore,  // emulated PPC core; demoting one stalls the whole emulation
+	GpuCommand, // LatteThread; frame-critical
+	Input,      // latency-sensitive but nearly free; must not be starved
+	Compiler,   // shader/pipeline/PPC recompilation; throughput work, off the critical path
+	Background, // housekeeping, IO, IOSU services
+};
+
+void SetThreadName(const char* name, ThreadRole role = ThreadRole::Default);
 
 inline uint64 MakeU64(uint32 high, uint32 low)
 {

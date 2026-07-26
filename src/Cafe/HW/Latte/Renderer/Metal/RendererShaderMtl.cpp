@@ -1,4 +1,5 @@
 #include "Cafe/HW/Latte/Renderer/Metal/RendererShaderMtl.h"
+#include "Common/cpu_features.h"
 #include "Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h"
 #include "Cafe/HW/Latte/Renderer/Metal/MetalCommon.h"
 
@@ -29,8 +30,11 @@ public:
 		if (m_threadsActive.exchange(true))
 			return;
 
-		// Create thread pool
-		const uint32 threadCount = 2;
+		// Create thread pool.
+		// MSL -> AIR is the expensive half of shader compilation and it feeds the
+		// pipeline pool, so a hardcoded 2 was the bottleneck. Size it off the
+		// efficiency cluster like the other compile pools.
+		const uint32 threadCount = std::clamp(g_CPUFeatures.efficiencyCores, 2u, 4u);
 		for (uint32 i = 0; i < threadCount; ++i)
 			s_threads.emplace_back(&ShaderMtlThreadPool::CompilerThreadFunc, this);
 
@@ -78,7 +82,7 @@ public:
 
 	void CompilerThreadFunc()
 	{
-		SetThreadName("mtlShaderComp");
+		SetThreadName("mtlShaderComp", ThreadRole::Compiler);
 		while (m_threadsActive.load(std::memory_order::relaxed))
 		{
 			s_compilationQueueCount.decrementWithWait();

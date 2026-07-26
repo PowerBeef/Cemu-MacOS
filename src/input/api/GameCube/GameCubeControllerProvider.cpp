@@ -256,7 +256,7 @@ std::tuple<libusb_device_handle*, uint8, uint8> GameCubeControllerProvider::fetc
 
 void GameCubeControllerProvider::reader_thread()
 {
-	SetThreadName("GCControllerAdapter::reader_thread");
+	SetThreadName("GCControllerAdapter::reader_thread", ThreadRole::Input);
 	while (m_running.load(std::memory_order_relaxed))
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -308,7 +308,7 @@ void GameCubeControllerProvider::reader_thread()
 
 void GameCubeControllerProvider::writer_thread()
 {
-	SetThreadName("GCControllerAdapter::writer_thread");
+	SetThreadName("GCControllerAdapter::writer_thread", ThreadRole::Input);
 
 	std::array<std::array<bool, 4>, kMaxAdapters> rumble_states{};
 

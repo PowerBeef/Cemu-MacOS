@@ -39,7 +39,7 @@ private:
 	
 	static CoreinitAsyncCallback* allocateAndInitFromPool(MPTR functionMPTR, uint32 numParameters, uint32 r3, uint32 r4, uint32 r5, uint32 r6, uint32 r7, uint32 r8, uint32 r9, uint32 r10)
 	{
-		cemu_assert_debug(s_asyncCallbackSpinlock.is_locked());
+		s_asyncCallbackSpinlock.assert_owner();
 		if (s_asyncCallbackPool.empty())
 		{
 			CoreinitAsyncCallback* cb = new CoreinitAsyncCallback(functionMPTR, numParameters, r3, r4, r5, r6, r7, r8, r9, r10);
@@ -54,7 +54,7 @@ private:
 
 	static void releaseToPool(CoreinitAsyncCallback* cb)
 	{
-		cemu_assert_debug(s_asyncCallbackSpinlock.is_locked());
+		s_asyncCallbackSpinlock.assert_owner();
 		s_asyncCallbackPool.emplace_back(cb);
 	}
 

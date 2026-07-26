@@ -414,7 +414,7 @@ std::atomic<uint64> g_jitLeakedFunctions{0};
 
 void PPCRecompiler_thread()
 {
-	SetThreadName("PPCRecompiler");
+	SetThreadName("PPCRecompiler", ThreadRole::Compiler);
 #if PPCREC_FORCE_SYNCHRONOUS_COMPILATION
 	return;
 #endif
@@ -545,7 +545,7 @@ extern "C" DLLEXPORT uintptr_t* PPCRecompiler_getJumpTableBase()
 
 void PPCRecompiler_deleteFunction(PPCRecFunction_t* func)
 {
-	cemu_assert_debug(s_ppcRecompilerState.recompilerSpinlock.is_locked());
+	s_ppcRecompilerState.recompilerSpinlock.assert_owner();
 	// unlink entrypoints from JumpTable
 	for (auto& entrypoint : func->jumpTableEntries)
 	{

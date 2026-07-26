@@ -288,7 +288,7 @@ void SDLControllerProvider::event_thread()
 #if BOOST_OS_MACOS
 	cemu_assert(false);
 #endif
-	SetThreadName("SDL_events");
+	SetThreadName("SDL_events", ThreadRole::Input);
 	InitSDL();
 	while (s_running.load(std::memory_order_relaxed))
 	{

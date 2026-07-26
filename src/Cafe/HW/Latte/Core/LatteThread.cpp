@@ -114,7 +114,7 @@ void LatteThread_HandleOSScreen()
 
 int Latte_ThreadEntry()
 {
-	SetThreadName("LatteThread");
+	SetThreadName("LatteThread", ThreadRole::GpuCommand);
 	sint32 w,h;
 	WindowSystem::GetWindowPhysSize(w,h);
 

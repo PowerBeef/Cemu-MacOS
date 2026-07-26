@@ -243,7 +243,7 @@ MotionSample DSUControllerProvider::get_motion_sample(uint8_t index) const
 
 void DSUControllerProvider::reader_thread()
 {
-	SetThreadName("DSU-reader");
+	SetThreadName("DSU-reader", ThreadRole::Input);
 	bool first_read = true;
 	while (m_running.load(std::memory_order_relaxed))
 	{
@@ -381,7 +381,7 @@ void DSUControllerProvider::reader_thread()
 
 void DSUControllerProvider::writer_thread()
 {
-	SetThreadName("DSU-writer");
+	SetThreadName("DSU-writer", ThreadRole::Input);
 	while (m_running.load(std::memory_order_relaxed))
 	{
 		std::unique_ptr<ClientMessage> msg = m_writerJobs.pop();

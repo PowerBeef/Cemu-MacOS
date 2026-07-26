@@ -203,7 +203,7 @@ class BootSoundPlayer
 
 	void StreamBootSound()
 	{
-		SetThreadName("bootsnd");
+		SetThreadName("bootsnd", ThreadRole::Background);
 		constexpr sint32 sampleRate = 48'000;
 		constexpr sint32 bitsPerSample = 16;
 		constexpr sint32 samplesPerBlock = sampleRate / 10; // block is 1/10th of a second
