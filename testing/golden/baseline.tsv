@@ -5,3 +5,4 @@
 2026-07-25T23:42:49Z	222902d	mk8-title-macos26-target	60.00	Metal/Apple GPU	923 MB	40 threads	130.0%
 2026-07-25T23:46:45Z	213bcd7	mk8-title-stage2-complete	60.00	Metal/Apple GPU	995 MB	41 threads	197.1%
 2026-07-26T00:05:48Z	8ea8c58	mk8-title-jit-size-fix	59.87	Metal/Apple GPU	1089 MB	39 threads	198.1%
+2026-07-26T00:13:00Z	af4fe44	mk8-signed-bundle-hardened-runtime	58.76	Metal/Apple GPU	~1000 MB	40 threads	-

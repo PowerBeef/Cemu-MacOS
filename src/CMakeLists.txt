@@ -97,7 +97,13 @@ string(TIMESTAMP CURRENT_YEAR "%Y" UTC)
 
 set_property(TARGET CemuBin PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 set_property(TARGET CemuBin PROPERTY WIN32_EXECUTABLE $<NOT:$<CONFIG:Debug>>)
-set(OUTPUT_NAME "Cemu_$<LOWER_CASE:$<CONFIG>>")
+if (MACOS_BUNDLE)
+	# a fixed name keeps CFBundleExecutable stable; rewriting Info.plist after
+	# signing would invalidate the signature
+	set(OUTPUT_NAME "Cemu")
+else()
+	set(OUTPUT_NAME "Cemu_$<LOWER_CASE:$<CONFIG>>")
+endif()
 
 if (MACOS_BUNDLE)
 	set_property(TARGET CemuBin PROPERTY MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resource/MacOSXBundleInfo.plist.in")
@@ -127,15 +133,6 @@ if (MACOS_BUNDLE)
 			COMMAND ${CMAKE_COMMAND} ARGS -E copy_directory "${CMAKE_SOURCE_DIR}/bin/${folder}" "$<TARGET_BUNDLE_DIR:CemuBin>/Contents/SharedSupport/${folder}")
 	endforeach(folder)
 
-	if (ENABLE_VULKAN)
-		if (EXISTS "/usr/local/lib/libMoltenVK.dylib")
-			set(MOLTENVK_PATH "/usr/local/lib/libMoltenVK.dylib")
-		elseif (EXISTS "/opt/homebrew/lib/libMoltenVK.dylib")
-			set(MOLTENVK_PATH "/opt/homebrew/lib/libMoltenVK.dylib")
-		else()
-			message(FATAL_ERROR "failed to find libMoltenVK.dylib")
-		endif ()
-  endif()
   
 	if (ENABLE_LIBUSB)
 		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -150,13 +147,6 @@ if (MACOS_BUNDLE)
 	set(FRAMEWORKS_DIR "${APP_BUNDLE_DIR}/Contents/Frameworks")
 	set(RESOURCES_DIR  "${APP_BUNDLE_DIR}/Contents/Resources")
 
-	if (ENABLE_VULKAN)
-		add_custom_command(TARGET CemuBin POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy 
-				"${MOLTENVK_PATH}"
-				"${FRAMEWORKS_DIR}/libMoltenVK.dylib"
-		)
-	endif()
 
 	add_custom_command(TARGET CemuBin POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy
@@ -187,25 +177,46 @@ if (MACOS_BUNDLE)
 				"$<TARGET_FILE:CemuBin>"
 		)
 	endif()
-else()
-    if(APPLE)
-		if (ENABLE_VULKAN)
-			find_library(MOLTENVK_LIBRARY
-				NAMES MoltenVK moltenvk libMoltenVK.dylib
-				PATHS /usr/local/lib /opt/homebrew/lib
-			)
-			if(MOLTENVK_LIBRARY)
-				message(STATUS "Found MoltenVK: ${MOLTENVK_LIBRARY}")
-				target_link_libraries(CemuBin PRIVATE ${MOLTENVK_LIBRARY})
-			else()
-				message(WARNING "libMoltenVK.dylib not found")
-			endif()
-			set_target_properties(CemuBin PROPERTIES
-				BUILD_WITH_INSTALL_RPATH TRUE
-				INSTALL_RPATH "/usr/local/lib;/opt/homebrew/lib"
-			)
-		endif()
-    endif()
+
+	# --- code signing -------------------------------------------------------
+	# Ad-hoc ("-") is enough for local development: hardened runtime plus
+	# com.apple.security.cs.allow-jit is what makes MAP_JIT work, and neither
+	# requires a paid Developer ID. Override CEMU_CODESIGN_IDENTITY with a
+	# "Developer ID Application: ..." string for a distributable build.
+	#
+	# Rules encoded here, each of which the previous CI invocation got wrong:
+	#   * sign inner-out - nested Mach-O first, bundle last. Signing the bundle
+	#     seals the nested signatures into _CodeSignature/CodeResources, so any
+	#     nested signing afterwards invalidates the outer signature.
+	#   * never --deep (deprecated, and it re-signs nested code with the outer
+	#     entitlements)
+	#   * never combine --entitlements with --preserve-metadata=entitlements;
+	#     codesign resolves in favour of --preserve-metadata and silently
+	#     ignores the file
+	#   * --timestamp requires a real identity and network access, so it is off
+	#     for ad-hoc builds and turned on by CI
+	set(CEMU_CODESIGN_IDENTITY "-" CACHE STRING "codesign identity; '-' means ad-hoc")
+	set(CEMU_CODESIGN_TIMESTAMP "--timestamp=none" CACHE STRING "codesign timestamp flag")
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		set(CEMU_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/dist/macos/Cemu.debug.entitlements")
+	else()
+		set(CEMU_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/dist/macos/Cemu.entitlements")
+	endif()
+
+	if (ENABLE_LIBUSB)
+		add_custom_command(TARGET CemuBin POST_BUILD
+			COMMAND codesign --force --options runtime ${CEMU_CODESIGN_TIMESTAMP}
+				--sign "${CEMU_CODESIGN_IDENTITY}"
+				"${FRAMEWORKS_DIR}/libusb-1.0.0.dylib"
+			VERBATIM)
+	endif()
+	add_custom_command(TARGET CemuBin POST_BUILD
+		COMMAND codesign --force --options runtime ${CEMU_CODESIGN_TIMESTAMP}
+			--entitlements "${CEMU_ENTITLEMENTS}"
+			--sign "${CEMU_CODESIGN_IDENTITY}"
+			"${APP_BUNDLE_DIR}"
+		COMMAND codesign --verify --strict --verbose=1 "${APP_BUNDLE_DIR}"
+		VERBATIM)
 endif()
 
 set_target_properties(CemuBin PROPERTIES
