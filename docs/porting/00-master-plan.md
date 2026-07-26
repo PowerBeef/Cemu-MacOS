@@ -319,3 +319,54 @@ No save file and no human input needed. Cemu's `controllerProfiles/` ships empty
 3. Boot BotW, raise the window, send a few `key code 6` presses to get through the title and the awakening cutscene. Link is then in control inside the Shrine.
 
 The whole intro is scriptable this way. Camera control (right stick, mappings 21–24) was left unmapped in the profile used here — add it if you need to navigate further, e.g. out onto the Great Plateau, which is heavier still.
+
+`testing/drive-botw.sh` automates all of it and is now the standard way to get to the measurement scene. **Two traps cost real time and are worth knowing:**
+
+- **A bare `key code` tap usually does nothing.** Cemu samples keystate once per emulated frame — 33 ms at 30 FPS — so a synthetic press/release often falls entirely between two samples. Every button must be held (~150 ms). This is why input appears to "work sometimes".
+- Installing the DLC adds a *"Downloaded DLC"* entry to the title menu, so a blind sequence of A presses walks into it instead of starting the game. Once a save exists, the script selects **Continue** rather than replaying the intro, which is both faster and more reliable.
+
+---
+
+### Memoryless-depth / load-store audit — result: the safe wins are small, the big one needs pass-count work first
+
+Audited against the BotW shrine scene. Measured structure per frame:
+
+| | |
+|---|---|
+| render passes | 173.7 |
+| distinct FBOs | 101.2 |
+| **passes re-targeting the same FBO as the previous pass** | **35.9 (21%)** |
+| passes with a depth attachment | 63.5 |
+| **passes where the depth texture is also sampled by a shader** | **0** |
+| depth attachment size | 1280×720 |
+| distinct depth textures / frame | 13 |
+| **max passes writing one depth texture / frame** | **28** |
+
+**Estimated attachment traffic** (assuming RGBA8 colour and Depth32Float — exact formats not confirmed, so treat as an order-of-magnitude figure):
+
+```
+colour load+store   174 passes x 2 x 3.7 MB = 1281 MB/frame
+depth  load+store    64 passes x 2 x 3.7 MB =  468 MB/frame
+                                      total ~ 1749 MB/frame = ~49 GB/s at 28 fps
+```
+
+against roughly 100 GB/s of unified memory bandwidth on an M2. Attachment load/store plausibly accounts for about half the machine's bandwidth, which is consistent with the GPU sitting over frame budget.
+
+**What the audit rules out:**
+
+- **Memoryless depth is not available.** It requires all use of an attachment to sit inside one pass. Measured: all 13 depth textures are written by more than one pass, and one is written by **28 passes per frame**.
+- **Blanket `StoreActionDontCare` on depth would corrupt.** For the same reason — pass N+1 loads what pass N stored.
+
+**What it confirms is safe but small:**
+
+- **Depth is never sampled (0 of 63.5 passes).** So the *final* store of each depth texture in a frame is dead: nothing ever reads it. That is 13 dead stores per frame ≈ 48 MB/frame ≈ 1.3 GB/s. Real, but it needs last-use lookahead that the current architecture (render pass descriptors cached per FBO, store action fixed at encoder creation) does not provide.
+
+**What the audit actually points at:** the 35.9 same-FBO splits per frame. When consecutive passes target the same FBO, the store-then-reload between them is pure waste — the data leaves tile memory and comes straight back. That is ≈529 MB/frame ≈ **14.8 GB/s**, the single largest addressable item found, and it is ~10x the depth-store win.
+
+Those splits are caused by blits (`texture_copyImageSubData`) interrupting a live render pass. So **the deferred-copy design is the keystone, not an alternative**: it is what removes the splits, and only once an FBO gets one pass per frame do `DontCare`/memoryless become expressible at all. The G-list treated these as independent items; they are strictly ordered.
+
+**Proposed design for the deferred copy** (not yet implemented — it is a correctness-sensitive change to the texture cache and deserves its own careful pass):
+
+1. On `texture_copyImageSubData` with a live render encoder, queue the copy instead of performing it, *if* neither src nor dst is an attachment of the current FBO and dst is not currently bound as a sampled texture.
+2. Flush the queue when the render pass ends naturally, when anything binds or reads dst, or at frame end. Flushing at pass end preserves ordering against every later pass.
+3. Anything not provably disjoint falls back to today's behaviour — end the encoder and copy immediately.
