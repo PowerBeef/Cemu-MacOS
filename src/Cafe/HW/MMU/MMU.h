@@ -74,6 +74,9 @@ struct MMURange
 	void setEnd(uint32 endAddress)
 	{
 		cemu_assert_debug(!m_isMapped);
+		// Graphic packs specify RAM extensions with 4K granularity, so this stays a 4K
+		// check. The host page size (16K on Apple silicon) is handled by MemMapper,
+		// which rounds the actual mprotect() outward.
 		cemu_assert_debug((endAddress & 0xFFF) == 0);
 		size = endAddress - baseAddress;
 	}

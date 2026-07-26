@@ -120,10 +120,10 @@ MMURange mmuRange_TILINGAPERTURE		{ 0xE8000000, 0x02000000, MMU_MEM_AREA_ID::TIL
 MMURange mmuRange_MEM1					{ 0xF4000000, 0x02000000, MMU_MEM_AREA_ID::MEM1, "MEM1" }; // 32MiB
 MMURange mmuRange_RPLLOADER				{ 0xF6000000, 0x02000000, MMU_MEM_AREA_ID::RPLLOADER, "RPLLOADER_AREA" }; // shared with RPLLoader
 MMURange mmuRange_SHARED_AREA			{ 0xF8000000, 0x02000000, MMU_MEM_AREA_ID::SHAREDDATA, "SHARED_AREA", MMURange::MFLAG::FLAG_MAP_EARLY }; // 32MiB, Cemuhook accesses this memory region at boot
-MMURange mmuRange_CORE0_LC				{ 0xFFC00000, 0x00005000, MMU_MEM_AREA_ID::CPU_LC0, "CORE0_LC" }; // locked L2 cache of core 0
-MMURange mmuRange_CORE1_LC				{ 0xFFC40000, 0x00005000, MMU_MEM_AREA_ID::CPU_LC1, "CORE1_LC" }; // locked L2 cache of core 1
-MMURange mmuRange_CORE2_LC				{ 0xFFC80000, 0x00005000, MMU_MEM_AREA_ID::CPU_LC2, "CORE2_LC" }; // locked L2 cache of core 2
-MMURange mmuRange_HIGHMEM				{ 0xFFFFF000, 0x00001000, MMU_MEM_AREA_ID::CPU_PER_CORE, "PER-CORE" }; // per-core memory? Used by coreinit and PPC kernel to store core context specific data (like current thread ptr). We dont use it but Project Zero has a bug where it writes a byte at 0xfffffffe thus this memory range needs to be writable
+MMURange mmuRange_CORE0_LC				{ 0xFFC00000, 0x00008000, MMU_MEM_AREA_ID::CPU_LC0, "CORE0_LC" }; // locked L2 cache of core 0 (real size 0x5000, rounded up to a 16K page)
+MMURange mmuRange_CORE1_LC				{ 0xFFC40000, 0x00008000, MMU_MEM_AREA_ID::CPU_LC1, "CORE1_LC" }; // locked L2 cache of core 1 (real size 0x5000, rounded up to a 16K page)
+MMURange mmuRange_CORE2_LC				{ 0xFFC80000, 0x00008000, MMU_MEM_AREA_ID::CPU_LC2, "CORE2_LC" }; // locked L2 cache of core 2 (real size 0x5000, rounded up to a 16K page)
+MMURange mmuRange_HIGHMEM				{ 0xFFFFC000, 0x00004000, MMU_MEM_AREA_ID::CPU_PER_CORE, "PER-CORE" }; // per-core memory? Used by coreinit and PPC kernel to store core context specific data (like current thread ptr). We dont use it but Project Zero has a bug where it writes a byte at 0xfffffffe thus this memory range needs to be writable. Base was 0xFFFFF000/0x1000, which is not 16K-page-aligned; widened down to the containing page so mprotect() does not fail.
 
 void memory_init()
 {
@@ -136,6 +136,24 @@ void memory_init()
 		debugBreakpoint();
 		WindowSystem::ShowErrorDialog(_tr("Unable to reserve 4GB of memory"), _tr("Error"));
 		exit(-1);
+	}
+	// Audit the range table against the host page size. Apple silicon uses 16K pages, so a
+	// range whose base or end is only 4K-aligned gets widened by MemMapper and can silently
+	// make neighbouring guest memory writable. Ranges are declared page-aligned on purpose;
+	// this catches any future edit that breaks that.
+	{
+		const uint32 hostPageSize = (uint32)MemMapper::GetPageSize();
+		for (auto& itr : g_mmuRanges)
+		{
+			const uint32 base = itr->getBase();
+			const uint32 end = itr->getEnd();
+			if ((base & (hostPageSize - 1)) != 0 || (end & (hostPageSize - 1)) != 0)
+			{
+				cemuLog_log(LogType::Force,
+					"MMU: range {} [{:#010x}-{:#010x}) is not aligned to the {}K host page size and will be widened",
+					itr->getName(), base, end, hostPageSize / 1024);
+			}
+		}
 	}
 	for (auto& itr : g_mmuRanges)
 	{
