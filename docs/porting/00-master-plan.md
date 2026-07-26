@@ -56,12 +56,19 @@ Detailed per-workstream designs live alongside this file:
 
 ### Stage 3 — Correctness foundations
 
+> **Status: complete.** 16 KB pages fixed and verified with a probe; the JIT
+> size/cursor bug fixed (it was truncating the I-cache flush range, not just the
+> size metric); signing wired into CMake and a signed hardened-runtime bundle
+> verified running the JIT; crash diagnostics rewritten for arm64.
+> **§14 (JitCodeArena) was measured rather than built** — see the note under
+> §16 below.
+
 13. **16 KB pages.** Add an `AlignRange()` helper to `MemMapperUnix.cpp` applied in **both** `AllocateMemory(fromReservation)` and `FreeMemory(fromReservation)` — round base down *and* end up — and check return values. Redeclare `mmuRange_HIGHMEM` as `{0xFFFFC000, 0x4000}` and `CORE0/1/2_LC` as size `0x8000`, making explicit what the kernel's rounding already does. Replace the 4 KB assert at `MMU.h:77` with round-up-and-log (graphic packs in the wild use 4 KB granularity — don't turn a working pack into an assert). Add a boot-time audit that logs every rounding-induced expansion and asserts no two rounded extents overlap.
 14. **First-party `JitCodeArena`** — one 256 MB `MAP_JIT` region (256 MB keeps every intra-arena branch inside the ±128 MB range the jump ladder already enforces), bump+free-list suballocation, a reentrant per-thread `JitWriteScope` RAII guard around `pthread_jit_write_protect_np`, and `sys_icache_invalidate` inside a single `JitCodeArena::Publish()` that is **the only** writer of `ppcRecompilerDirectJumpTable`. Keep `xbyak_aarch64` as an encoder only; replace `AArch64Allocator`'s body and delete `setFreeDisabled`.
     **Do not adopt `com.apple.security.cs.jit-write-allowlist`** — it disables `pthread_jit_write_protect_np` entirely and would invert the emitter's control flow for zero benefit here.
 15. **Sign from CMake, always.** Two entitlement files: release = `allow-jit` only; debug adds `get-task-allow`. Sign **inner-out** (nested dylibs, then the bundle), never `--deep`, never `--entitlements` together with `--preserve-metadata=entitlements`. Ad-hoc + hardened runtime + `allow-jit` is sufficient for `MAP_JIT` — **no paid Developer ID needed for local development**; document that in BUILD.md.
     Drop `allow-unsigned-executable-memory` (grants nothing on arm64 — plain RWX `mmap` fails regardless) and `disable-library-validation` (its only justification was MoltenVK, now deleted).
-16. **JIT lifetime.** Fix `x86Size = getMaxSize()` → `getSize()` and restore the emitter cursor after `processAllJumps()` (`BackendAArch64.cpp:1601-1616`) — today the recompiler dump writes trailing garbage and the size metric is meaningless. Then epoch-based deferred reclamation: retire list + per-core epochs, freed from the existing recompiler-thread wakeup, poisoned with `brk #0xdead` for a grace period in debug.
+16. **JIT lifetime.** *(Partially done — the size/cursor bug is fixed; reclamation is deliberately not built. `PPCRecompiler_invalidateRange` has only three callers — GDB breakpoints, the debugger, and graphic-pack code patches — none of which occur in ordinary play, and a measured MK8 session leaked zero bytes. The leak is bounded by graphic-pack patching, not by playtime, so deferred reclamation is gated on the counter showing real growth rather than built speculatively against a use-after-free risk.)* Fix `x86Size = getMaxSize()` → `getSize()` and restore the emitter cursor after `processAllJumps()` (`BackendAArch64.cpp:1601-1616`) — today the recompiler dump writes trailing garbage and the size metric is meaningless. Then epoch-based deferred reclamation: retire list + per-core epochs, freed from the existing recompiler-thread wakeup, poisoned with `brk #0xdead` for a grace period in debug.
 17. **Crash diagnostics.** `sigaltstack` + `SA_ONSTACK` per thread (today a stack-overflow SIGSEGV is unreportable), arm64 PC recovery via `arm_thread_state64_get_pc` (**not** a raw `__pc` cast — PAC), demangled macOS backtraces into the crash log plus raw UUID+slide for offline `atos`, and `DEBUG_BREAK` → `__builtin_debugtrap()`.
 
 ### Stage 4 — Scheduling and native integration
