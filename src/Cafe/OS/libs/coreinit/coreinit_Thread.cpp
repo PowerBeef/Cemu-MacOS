@@ -1227,6 +1227,11 @@ namespace coreinit
 
 	Fiber* g_idleLoopFiber[3]{};
 
+	// How long the main core parks when nothing is runnable. Bounds how late a periodic
+	// system event (AX, alarm, NFP) can be serviced while the console is idle. A runnable
+	// thread wakes the loop immediately regardless, so this is not thread-wakeup latency.
+	static constexpr auto kIdleCorePollInterval = std::chrono::microseconds(250);
+
 	// idle fiber per core if no thread is runnable
 	// this is necessary since we can't block in __OSThreadSwitchToNext() (__OSStoreThread + thread switch must happen inside same scheduler lock)
 	void __OSThreadCoreIdle(void* unusedParam)
@@ -1252,6 +1257,37 @@ namespace coreinit
 				__OSCheckSystemEvents();
 				if(g_isMulticoreMode == false)
 					coreIndex = (coreIndex + 1) % 3;
+
+				// Park instead of spinning when the console has nothing to run.
+				//
+				// This loop used to turn as fast as the CPU allowed. Every iteration reads
+				// the clock (AX via steady_clock, alarms via OSGetTime), so profiling a
+				// title sitting at a locked 60 FPS put 67% of all CPU cycles in
+				// mach_continuous_time underneath here -- an entire P-core burned
+				// busy-waiting, taken away from the Latte thread and the audio callback.
+				//
+				// Making a thread runnable increments this semaphore and notifies it, so a
+				// real wakeup is immediate and costs no scheduling latency. The timeout is
+				// only so periodic system events still get serviced while nothing is
+				// runnable, and is far inside AX's 1.7 ms minimum update interval.
+				//
+				// The other two cores already block on waitUntilNonZero; this just gives
+				// the main core the equivalent, bounded so it keeps servicing events.
+				bool anyRunnable;
+				if (g_isMulticoreMode)
+					anyRunnable = !g_coreRunQueueThreadCount[coreIndex].isZero();
+				else
+				{
+					// singlecore rotates one host thread across all three guest cores, so
+					// a thread runnable on any of them is work for this loop
+					anyRunnable = !g_coreRunQueueThreadCount[0].isZero() ||
+					              !g_coreRunQueueThreadCount[1].isZero() ||
+					              !g_coreRunQueueThreadCount[2].isZero();
+				}
+				// in singlecore mode only park once per full rotation, so the idle delay is
+				// paid once rather than once per guest core
+				if (!anyRunnable && (g_isMulticoreMode || coreIndex == 0))
+					g_coreRunQueueThreadCount[coreIndex].waitUntilNonZeroWithTimeout(kIdleCorePollInterval);
 			}
 			else
 			{

@@ -1,163 +1,173 @@
 #include "Cafe/HW/Espresso/Const.h"
 #include "config/ActiveSettings.h"
-#include "util/helpers/fspinlock.h"
 #include "util/highresolutiontimer/HighResolutionTimer.h"
 #include "Common/cpu_features.h"
 
-#if defined(ARCH_X86_64)
-#include <immintrin.h>
-#pragma intrinsic(__rdtsc)
-#endif
+#include <atomic>
 
-uint64 _rdtscLastMeasure = 0;
-uint64 _rdtscFrequency = 0;
+// Espresso timebase, derived from the ARM generic timer.
+//
+// This used to spend 3 real seconds at every launch measuring the counter frequency
+// against a wall clock, then read the result under a global spinlock with a 128-bit
+// multiply and a 128-bit divide per call. None of that is needed on Apple silicon:
+// cntfrq_el0 reports the frequency exactly, in one instruction, and its ratio to the
+// Espresso core clock is a small exact rational.
+//
+//   CORE_CLOCK / cntfrq = 1243125000 / 24000000 = 3315 / 64   (exact, not an approximation)
+//
+// The old code then scaled by <<3 and >>timerShiftFactor, so the whole conversion
+// collapses to one multiply and one shift:
+//
+//   guestTicks = counterDelta * (3315/64) * 8 >> shift
+//              = (counterDelta * 3315) >> (3 + shift)
+//
+// This sits on OSGetSystemTime, on guest `mftb`, and on every scheduler thread wake, so
+// it is one of the hottest non-JIT paths in the emulator.
 
-struct uint128_t
+static uint64 sCounterFrequency = 0;
+
+// The exact rational is only valid at the frequency it was derived for. Any other part
+// falls back to a general path that is slower but still correct.
+static constexpr uint64 EXPECTED_COUNTER_FREQ = 24000000;
+static constexpr uint64 CORE_CLOCK_NUMERATOR = 3315; // CORE_CLOCK/cntfrq == 3315/64
+static bool sUseExactPath = false;
+
+static inline uint64 ReadCounter()
 {
-	uint64 low;
-	uint64 high;
+	uint64 t;
+	asm volatile("mrs %0, cntvct_el0" : "=r"(t));
+	return t;
+}
+
+// Timebase origin. The returned tick count is a pure function of the hardware counter and
+// this origin, which makes it inherently monotonic and lock-free -- there is no
+// accumulator, so the read path mutates nothing and needs no lock to serialise it.
+//
+// The origin only moves when the user changes emulation speed, because the shift factor
+// applies to time elapsed from that point on. Rescaling from the raw counter instead would
+// retroactively reinterpret time already elapsed and jump the guest clock. A seqlock keeps
+// that rare update consistent for readers without imposing a lock on them.
+struct TimerOrigin
+{
+	uint64 baseCounter;
+	uint64 baseTicks;
+	uint8 shift;
 };
 
-static_assert(sizeof(uint128_t) == 16);
+static std::atomic<uint32> sOriginSeq{0};
+static TimerOrigin sOrigin{};
 
-uint128_t _rdtscAcc{};
-
-uint64 muldiv64(uint64 a, uint64 b, uint64 d)
+static inline uint64 ScaleToTicks(uint64 counterDelta, uint8 shift)
 {
-	uint64 diva = a / d;
-	uint64 moda = a % d;
-	uint64 divb = b / d;
-	uint64 modb = b % d;
-	return diva * b + moda * divb + moda * modb / d;
-}
-
-uint64 PPCTimer_estimateRDTSCFrequency()
-{
-
-	_mm_mfence();
-	uint64 tscStart = __rdtsc();
-	unsigned int startTime = GetTickCount();
-	HRTick startTick = HighResolutionTimer::now().getTick();
-	// wait roughly 3 seconds
-	while (true)
+	if (sUseExactPath) [[likely]]
 	{
-		if ((GetTickCount() - startTime) >= 3000)
-			break;
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		// counterDelta * 3315 cannot overflow: that needs ~7 years of uptime at 24 MHz.
+		return (counterDelta * CORE_CLOCK_NUMERATOR) >> (3 + shift);
 	}
-	_mm_mfence();
-	HRTick stopTick = HighResolutionTimer::now().getTick();
-	uint64 tscEnd = __rdtsc();
-	// derive frequency approximation from measured time difference
-	uint64 tsc_diff = tscEnd - tscStart;
-	uint64 hrtFreq = 0;
-	uint64 hrtDiff = HighResolutionTimer::getTimeDiffEx(startTick, stopTick, hrtFreq);
-	uint64 tsc_freq = muldiv64(tsc_diff, hrtFreq, hrtDiff);
-
-	// uint64 freqMultiplier = tsc_freq / hrtFreq;
-	//cemuLog_log(LogType::Force, "RDTSC measurement test:");
-	//cemuLog_log(LogType::Force, "TSC-diff:   0x{:016x}", tsc_diff);
-	//cemuLog_log(LogType::Force, "TSC-freq:   0x{:016x}", tsc_freq);
-	//cemuLog_log(LogType::Force, "HPC-diff:   0x{:016x}", qpc_diff);
-	//cemuLog_log(LogType::Force, "HPC-freq:   0x{:016x}", (uint64)qpc_freq.QuadPart);
-	//cemuLog_log(LogType::Force, "Multiplier: 0x{:016x}", freqMultiplier);
-
-	return tsc_freq;
+	// General path: (delta * CORE_CLOCK / freq) << 3 >> shift, widened against overflow.
+	unsigned __int128 scaled = (unsigned __int128)counterDelta * Espresso::CORE_CLOCK;
+	return (uint64)(scaled / sCounterFrequency) << 3 >> shift;
 }
 
-int PPCTimer_initThread()
+static void RebaseOrigin(uint64 nowCounter, uint64 nowTicks, uint8 newShift)
 {
-	_rdtscFrequency = PPCTimer_estimateRDTSCFrequency();
-	return 0;
+	uint32 seq = sOriginSeq.load(std::memory_order_relaxed);
+	if (seq & 1)
+		return; // another thread is mid-update; its result is equally valid
+	if (!sOriginSeq.compare_exchange_strong(seq, seq + 1, std::memory_order_acquire))
+		return;
+	sOrigin.baseCounter = nowCounter;
+	sOrigin.baseTicks = nowTicks;
+	sOrigin.shift = newShift;
+	sOriginSeq.store(seq + 2, std::memory_order_release);
 }
 
 void PPCTimer_init()
 {
-	std::thread t(PPCTimer_initThread);
-	t.detach();
-	_rdtscLastMeasure = __rdtsc();
-}
+	asm volatile("mrs %0, cntfrq_el0" : "=r"(sCounterFrequency));
+	if (sCounterFrequency == 0)
+	{
+		// Should be impossible on AArch64, but a zero would divide by zero below.
+		sCounterFrequency = EXPECTED_COUNTER_FREQ;
+	}
+	sUseExactPath = (sCounterFrequency == EXPECTED_COUNTER_FREQ);
+	if (!sUseExactPath)
+	{
+		cemuLog_log(LogType::Force,
+			"PPCTimer: unexpected cntfrq_el0 of {} Hz (expected {}), using the general conversion path",
+			sCounterFrequency, EXPECTED_COUNTER_FREQ);
+	}
 
-uint64 _tickSummary = 0;
+	sOrigin.baseCounter = ReadCounter();
+	sOrigin.baseTicks = 0;
+	sOrigin.shift = ActiveSettings::GetTimerShiftFactor();
+	sOriginSeq.store(2, std::memory_order_release);
+}
 
 void PPCTimer_start()
 {
-	_rdtscLastMeasure = __rdtsc();
-	_tickSummary = 0;
+	sOrigin.baseCounter = ReadCounter();
+	sOrigin.baseTicks = 0;
+	sOrigin.shift = ActiveSettings::GetTimerShiftFactor();
+	sOriginSeq.store(sOriginSeq.load(std::memory_order_relaxed) + 2, std::memory_order_release);
 }
 
 uint64 PPCTimer_getRawTsc()
 {
-	return __rdtsc();
+	return ReadCounter();
 }
 
 uint64 PPCTimer_microsecondsToTsc(uint64 us)
 {
-	return (us * _rdtscFrequency) / 1000000ULL;
+	return (us * sCounterFrequency) / 1000000ULL;
 }
 
-uint64 PPCTimer_tscToMicroseconds(uint64 us)
+uint64 PPCTimer_tscToMicroseconds(uint64 tsc)
 {
-	uint128_t r{};
-	r.low = _umul128(us, 1000000ULL, &r.high);
-
-	uint64 remainder;
-	const uint64 microseconds = _udiv128(r.high, r.low, _rdtscFrequency, &remainder);
-
-	return microseconds;
+	return (uint64)((unsigned __int128)tsc * 1000000ULL / sCounterFrequency);
 }
 
 bool PPCTimer_isReady()
 {
-	return _rdtscFrequency != 0;
+	return sCounterFrequency != 0;
 }
 
 void PPCTimer_waitForInit()
 {
-	while (!PPCTimer_isReady()) std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	// Initialisation is now two register reads rather than a 3 second calibration, so this
+	// is already satisfied by the time anything can call it. Kept because callers
+	// legitimately want to express the dependency.
+	if (!PPCTimer_isReady())
+		PPCTimer_init();
 }
-
-FSpinlock sTimerSpinlock;
 
 // thread safe
 uint64 PPCTimer_getFromRDTSC()
 {
-	sTimerSpinlock.lock();
-	_mm_mfence();
-	uint64 rdtscCurrentMeasure = __rdtsc();
-	uint64 rdtscDif = rdtscCurrentMeasure - _rdtscLastMeasure;
-	// optimized max(rdtscDif, 0) without conditionals
-	rdtscDif = rdtscDif & ~(uint64)((sint64)rdtscDif >> 63);
+	const uint8 shift = ActiveSettings::GetTimerShiftFactor();
 
-	uint128_t diff{};
-	diff.low = _umul128(rdtscDif, Espresso::CORE_CLOCK, &diff.high);
+	for (;;)
+	{
+		uint32 seq = sOriginSeq.load(std::memory_order_acquire);
+		if (seq & 1)
+			continue; // update in flight
+		const TimerOrigin origin = sOrigin;
+		if (sOriginSeq.load(std::memory_order_acquire) != seq)
+			continue; // torn read, retry
 
-	if(rdtscCurrentMeasure > _rdtscLastMeasure)
-		_rdtscLastMeasure = rdtscCurrentMeasure; // only travel forward in time
+		const uint64 nowCounter = ReadCounter();
+		// The counter is monotonic, but a rebase racing with this read could leave
+		// baseCounter marginally ahead; clamp instead of wrapping to a huge value.
+		const uint64 delta = (nowCounter > origin.baseCounter) ? (nowCounter - origin.baseCounter) : 0;
+		const uint64 ticks = origin.baseTicks + ScaleToTicks(delta, origin.shift);
 
-	uint8 c = 0;
-	#if BOOST_OS_WINDOWS
-	c = _addcarry_u64(c, _rdtscAcc.low, diff.low, &_rdtscAcc.low);
-	_addcarry_u64(c, _rdtscAcc.high, diff.high, &_rdtscAcc.high);
-	#else
-	// requires casting because of long / long long nonesense
-	c = _addcarry_u64(c, _rdtscAcc.low, diff.low, (unsigned long long*)&_rdtscAcc.low);
-	_addcarry_u64(c, _rdtscAcc.high, diff.high, (unsigned long long*)&_rdtscAcc.high);
-	#endif
-
-	uint64 remainder;
-	uint64 elapsedTick = _udiv128(_rdtscAcc.high, _rdtscAcc.low, _rdtscFrequency, &remainder);
-
-	_rdtscAcc.low = remainder;
-	_rdtscAcc.high = 0;
-
-	// timer scaling
-	elapsedTick <<= 3ull; // *8
-	uint8 timerShiftFactor = ActiveSettings::GetTimerShiftFactor();
-	elapsedTick >>= timerShiftFactor;
-
-	_tickSummary += elapsedTick;
-
-	sTimerSpinlock.unlock();
-	return _tickSummary;
+		if (shift != origin.shift) [[unlikely]]
+		{
+			// Speed changed: freeze everything elapsed so far at the old rate, then apply
+			// the new rate only going forward.
+			RebaseOrigin(nowCounter, ticks, shift);
+			continue;
+		}
+		return ticks;
+	}
 }

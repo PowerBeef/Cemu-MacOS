@@ -112,6 +112,17 @@ public:
 			m_condition.wait(lock);
 	}
 
+	// wait until non-zero or until the timeout expires, whichever comes first
+	// returns true if the counter is non-zero on return
+	// does not decrement, matching waitUntilNonZero
+	bool waitUntilNonZeroWithTimeout(std::chrono::microseconds timeout)
+	{
+		std::unique_lock lock(m_mutex);
+		if (m_count == 0)
+			m_condition.wait_for(lock, timeout);
+		return m_count != 0;
+	}
+
 	bool isZero() const
 	{
 		return m_count == 0;
