@@ -17,6 +17,7 @@
 #include "Cafe/HW/Latte/Core/LatteShader.h"
 #include "Cafe/HW/Latte/Core/LatteIndices.h"
 #include "Cafe/HW/Latte/Core/LatteBufferCache.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "CafeSystem.h"
 #include "Cemu/Logging/CemuLogging.h"
 #include "Cafe/HW/Latte/Core/FetchShader.h"
@@ -864,6 +865,7 @@ void MetalRenderer::texture_clearDepthSlice(LatteTexture* hostTexture, uint32 sl
 
     // Debug
     m_performanceMonitor.m_clears++;
+    TLM_INC(Gpu, GpuClears);
 }
 
 LatteTexture* MetalRenderer::texture_createTextureEx(Latte::E_DIM dim, MPTR physAddress, MPTR physMipAddress, Latte::E_GX2SURFFMT format, uint32 width, uint32 height, uint32 depth, uint32 pitch, uint32 mipLevels, uint32 swizzle, Latte::E_HWTILEMODE tileMode, bool isDepth)
@@ -1460,11 +1462,20 @@ void MetalRenderer::draw_execute(uint32 baseVertex, uint32 baseInstance, uint32 
 
 	// Debug
 	if (fetchVertexManually)
+	{
 	    m_performanceMonitor.m_manualVertexFetchDraws++;
+	    TLM_INC(Gpu, GpuDrawsManualFetch);
+	}
 	if (usesGeometryShader)
+	{
 	    m_performanceMonitor.m_meshDraws++;
+	    TLM_INC(Gpu, GpuDrawsMesh);
+	}
 	if (primitiveMode == LattePrimitiveMode::TRIANGLE_FAN)
+	{
 	    m_performanceMonitor.m_triangleFans++;
+	    TLM_INC(Gpu, GpuDrawsTriangleFan);
+	}
 
 	LatteGPUState.drawCallCounter++;
 }
@@ -1737,6 +1748,7 @@ MTL::CommandBuffer* MetalRenderer::GetCommandBuffer()
 
         // Debug
         m_performanceMonitor.m_commandBuffers++;
+        TLM_INC(Gpu, GpuCommandBuffers);
 
 		return mtlCommandBuffer;
 	}
@@ -1763,6 +1775,7 @@ MTL::RenderCommandEncoder* MetalRenderer::GetTemporaryRenderCommandEncoder(MTL::
 
     // Debug
     m_performanceMonitor.m_renderPasses++;
+    TLM_INC(Gpu, GpuRenderPassesTemp);
 
     return renderCommandEncoder;
 }
@@ -1834,6 +1847,7 @@ MTL::RenderCommandEncoder* MetalRenderer::GetRenderCommandEncoder(bool forceRecr
 
     // Debug
     m_performanceMonitor.m_renderPasses++;
+    TLM_INC(Gpu, GpuRenderPasses);
 
     return renderCommandEncoder;
 }
@@ -1943,6 +1957,23 @@ void MetalRenderer::ProcessFinishedCommandBuffers()
         auto commandBuffer = *it;
         if (CommandBufferCompleted(commandBuffer))
         {
+            // The measurement that has been hand-added and thrown away twice. Attributed
+            // to the frame the buffer *completed* in, not the one that submitted it, so
+            // an individual frame's figure can be off by a buffer; over a run the
+            // distribution is right, which is what the median and p99 are read from.
+            // Guard the errored case: GPUStartTime() can be 0 there, which would produce
+            // a nonsense multi-second duration.
+            if (tlm::AreaEnabled(tlm::Area::Gpu) &&
+                commandBuffer->status() == MTL::CommandBufferStatusCompleted)
+            {
+                double gpuSeconds = commandBuffer->GPUEndTime() - commandBuffer->GPUStartTime();
+                if (gpuSeconds > 0.0)
+                {
+                    TLM_ADD(Gpu, GpuBusyNs, (uint64)(gpuSeconds * 1e9));
+                }
+                // counted unconditionally, so busy_ns/buffers_done stays a valid average
+                TLM_INC(Gpu, GpuCommandBuffersDone);
+            }
             m_memoryManager->CleanupBuffers(commandBuffer);
             commandBuffer->release();
             it = m_executingCommandBuffers.erase(it);
@@ -2276,6 +2307,7 @@ void MetalRenderer::ClearColorTextureInternal(MTL::Texture* mtlTexture, sint32 s
 
     // Debug
     m_performanceMonitor.m_clears++;
+    TLM_INC(Gpu, GpuClears);
 }
 
 void MetalRenderer::CopyBufferToBuffer(MTL::Buffer* src, uint32 srcOffset, MTL::Buffer* dst, uint32 dstOffset, uint32 size, MTL::RenderStages after, MTL::RenderStages before)

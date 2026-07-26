@@ -6,6 +6,7 @@
 #include "Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompiler.h"
 #include "Cafe/HW/Latte/Core/FetchShader.h"
 #include "Cafe/HW/Latte/Core/LattePerformanceMonitor.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #ifdef ENABLE_VULKAN
 #include "Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.h"
 #endif
@@ -826,6 +827,7 @@ LatteDecompilerShader* LatteShader_CompileSeparableVertexShader(uint64 baseHash,
 	LatteShader_DumpRawShader(vertexShader->baseHash, vertexShader->auxHash, SHADER_DUMP_TYPE_VERTEX, vertexShaderPtr, vertexShaderSize);
 	LatteShader_CreateRendererShader(vertexShader, false);
 	performanceMonitor.numCompiledVS++;
+	TLM_INC(Gpu, GpuShadersCompiledVS);
 
 #ifdef ENABLE_OPENGL
 	if (g_renderer->GetType() == RendererAPI::OpenGL)
@@ -857,6 +859,7 @@ LatteDecompilerShader* LatteShader_CompileSeparableGeometryShader(uint64 baseHas
 	LatteShader_DumpRawShader(geometryShader->baseHash, geometryShader->auxHash, SHADER_DUMP_TYPE_COPY, geometryCopyShader, geometryCopyShaderSize);
 	LatteShader_CreateRendererShader(geometryShader, false);
 	performanceMonitor.numCompiledGS++;
+	TLM_INC(Gpu, GpuShadersCompiledGS);
 
 #ifdef ENABLE_OPENGL
 	if (g_renderer->GetType() == RendererAPI::OpenGL)
@@ -884,6 +887,7 @@ LatteDecompilerShader* LatteShader_CompileSeparablePixelShader(uint64 baseHash, 
 	LatteShader_DumpRawShader(_shaderBaseHash_ps, psAuxHash, SHADER_DUMP_TYPE_PIXEL, pixelShaderPtr, pixelShaderSize);
 	LatteShader_CreateRendererShader(pixelShader, false);
 	performanceMonitor.numCompiledPS++;
+	TLM_INC(Gpu, GpuShadersCompiledPS);
 	if (pixelShader->hasError == false)
 	{
 		LatteShaderCache_writeSeparablePixelShader(_shaderBaseHash_ps, psAuxHash, pixelShaderPtr, pixelShaderSize, LatteGPUState.contextRegister, usesGeometryShader);

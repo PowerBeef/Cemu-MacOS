@@ -6,6 +6,7 @@
 #include "Cafe/HW/Latte/Core/LatteShader.h"
 #include "Cafe/HW/Latte/Core/LatteAsyncCommands.h"
 #include "Cafe/HW/Latte/Core/LattePerformanceMonitor.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/HW/Latte/Core/LatteIndices.h"
 #include "Cafe/HW/Latte/Core/LatteBufferCache.h"
 #include "Cafe/HW/Latte/Core/LattePM4.h"
@@ -80,8 +81,12 @@ public:
 			g_renderer->draw_execute(baseVertex, baseInstance, numInstances, count, MPTR_NULL, Latte::LATTE_VGT_DMA_INDEX_TYPE::E_INDEX_TYPE::AUTO, m_drawcallContext);
 		}
 		performanceMonitor.cycle[performanceMonitor.cycleIndex].drawCallCounter++;
+		TLM_INC(Gpu, GpuDrawCalls);
 		if (!m_drawcallContext.isFirst)
+		{
 			performanceMonitor.cycle[performanceMonitor.cycleIndex].fastDrawCallCounter++;
+			TLM_INC(Gpu, GpuDrawCallsFast);
+		}
 		m_drawcallContext.isFirst = false;
 		m_drawcallContext.vertexBufferDirtyMask = 0;
 		m_drawcallContext.vsUniformBufferDirtyMask = 0;
