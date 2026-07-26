@@ -406,6 +406,12 @@ void PPCRecompiler_recompileAtAddress(uint32 address)
 	PPCRecompiler_makeRecompiledFunctionActive(address, range, func, functionEntryPoints);
 }
 
+// Recompiled code is currently never freed (see PPCRecompiler_deleteFunction).
+// These track how much that actually costs, so the decision to build deferred
+// reclamation rests on measured data rather than on the fact that a leak exists.
+std::atomic<uint64> g_jitLeakedBytes{0};
+std::atomic<uint64> g_jitLeakedFunctions{0};
+
 void PPCRecompiler_thread()
 {
 	SetThreadName("PPCRecompiler");
@@ -418,6 +424,17 @@ void PPCRecompiler_thread()
         if(s_ppcRecompilerState.workerThreadStopSignal)
             return;
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		// periodic report of code invalidated but not reclaimed
+		{
+			static uint32 s_leakReportTick = 0;
+			if ((++s_leakReportTick % 1000) == 0) // ~every 10s
+			{
+				uint64 bytes = g_jitLeakedBytes.load(std::memory_order_relaxed);
+				if (bytes != 0)
+					cemuLog_log(LogType::Force, "JIT: {} KiB of recompiled code invalidated but not reclaimed ({} functions)",
+						bytes / 1024, g_jitLeakedFunctions.load(std::memory_order_relaxed));
+			}
+		}
 		// asynchronous recompilation:
 		// 1) take address from queue
 		// 2) check if address is still marked as visited
@@ -542,7 +559,13 @@ void PPCRecompiler_deleteFunction(PPCRecFunction_t* func)
 			s_ppcRecompilerState.functionStorage.deleteRange(r.storedRange);
 		r.storedRange = nullptr;
 	}
-	// todo - free x86 code
+	// The generated code is intentionally not freed yet. Freeing it here would be a
+	// use-after-free: another guest core may be executing inside this function right
+	// now, or hold a return address into it. Doing this safely needs deferred
+	// reclamation (retire list + per-core epochs, freed at a safepoint), which is only
+	// worth building if the leak is actually significant -- hence the counters.
+	g_jitLeakedBytes.fetch_add(func->x86Size, std::memory_order_relaxed);
+	g_jitLeakedFunctions.fetch_add(1, std::memory_order_relaxed);
 }
 
 void PPCRecompiler_invalidateRange(uint32 startAddr, uint32 endAddr)
