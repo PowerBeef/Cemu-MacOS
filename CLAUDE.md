@@ -68,6 +68,10 @@ Two traps already caught in this repo — both produce confident, wrong numbers:
 
 Prefer `ps -p <pid> -o cputime=` deltas over `%cpu` (a decaying average) for headline numbers.
 
+- **`cemuLog_log` writes to `~/Library/Application Support/Cemu/log.txt`, not stdout.** Grepping the process's redirected stdout for errors, or for your own instrumentation, silently finds nothing and reads as "clean".
+- **`testing/capture-scene.sh` uses `screencapture -R`, which grabs a screen *region*** — Cemu must be frontmost or you capture whatever is on top of it. Raise it first (`set frontmost of ... to true`).
+- **A before/after pixel diff of the MK8 title screen proves nothing**: the "Press A to start" prompt pulses and the background animates, so ~22% of pixels differ between any two captures. Use targeted instrumentation to show a rendering change is live.
+
 ### Current baseline (2026-07-26, after the Stage 5 idle-wait fixes)
 
 MK8, locked 60 FPS, **~104% of one core** (was ~184% before `a7ed8ed`+`612d064`). The profile is now dominated by real draw work: `LatteCP_itIndirectBufferDepr` 30.1% incl, `DrawPassContext::executeDraw` 19.2%, `MetalRenderer::draw_execute` 16.3%, and **`renderCommandEncoderWithDescriptor` 6.4% + `AGXG14GFamilyRenderContext init` 5.7%** — encoder/render-pass churn is the largest remaining target.

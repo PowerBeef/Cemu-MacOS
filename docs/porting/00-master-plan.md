@@ -210,4 +210,29 @@ Combined result on MK8 at a locked 60 FPS: **1.77x less CPU** (median 183.5% →
 
 #### Where the CPU goes now
 
-Real draw work, and encoder construction is conspicuous: `LatteCP_itIndirectBufferDepr` 30.1% incl · `DrawPassContext::executeDraw` 19.2% · `MetalRenderer::draw_execute` 16.3% · **`renderCommandEncoderWithDescriptor` 6.4% + `AGXG14GFamilyRenderContext init` 5.7%**. That last pair points at render-pass/encoder churn, which is the same thing the memoryless-depth and load/store-action audit in the G list targets — worth doing before any instruction-selection work.
+Real draw work, and encoder construction is conspicuous: `LatteCP_itIndirectBufferDepr` 30.1% incl · `DrawPassContext::executeDraw` 19.2% · `MetalRenderer::draw_execute` 16.3% · **`renderCommandEncoderWithDescriptor` 6.4% + `AGXG14GFamilyRenderContext init` 5.7%**.
+
+**4. Sampler LOD bias, and a graphic-pack register-corruption bug** (commit `3bb1049`). `MTLSamplerDescriptor.lodBias` is `API_AVAILABLE(macos(26.0))`, which is why it was a bare TODO. Instrumenting MK8: **29 of 81 distinct samplers carry a non-zero bias** (−1.0, −1.5, −2.0 LOD), all previously sampling a blurrier mip than the game asked for. The override beside it was worse — it wrote through `samplerWords` into `LatteGPUState.contextNew.SQ_TEX_SAMPLER`, i.e. the emulated register file, so a pack's anisotropy setting permanently replaced the game's for every later draw. Overrides now apply to a local copy, which also keeps the sampler cache key correct for free.
+
+### Render-pass churn — measured, and the obvious fix does *not* work
+
+**MK8 runs 29 render passes for 51 draws: 1.75 draws per pass.** On a TBDR GPU each pass is a full tile-memory load and store of the attachment set, so this is the structural problem behind the 12% of CPU in encoder construction. Instrumenting the cause of every pass start, per frame:
+
+| cause | passes/frame |
+|---|---|
+| previous encoder was Render (genuine target switch) | 11 |
+| **previous encoder was Blit (a blit tore down the render pass)** | **13** |
+| previous encoder was Compute | 0 |
+| forced recreate | 0 |
+
+So ~45% of render passes exist only because a blit encoder ran between draws.
+
+The plan proposed re-testing the `Host` buffer-cache mode here, on the theory that `UploadToBufferCache` only uses a blit encoder in `DevicePrivate` mode (`Shared`/`Host` are a plain `memcpy`), and that Host may have been judged unreliable *because of* the ctor heap corruption since fixed. Tested all three modes:
+
+- **`Host` works.** "Buffer cache type: host", 60 FPS, no errors, no crash. It is stable and available — worth recording, since it was previously untried on a fixed build.
+- Render passes drop 29 → 26 and blit-caused passes 13 → 10 per frame in both `DeviceShared` and `Host`.
+- **But CPU is unchanged.** 30 s of `cputime` each: DevicePrivate **89.7%**, DeviceShared **94.9%**, Host **88.7%** of one core. That spread is noise; DeviceShared is nominally *worse*. **No default was changed** — there is no evidence to justify it.
+
+Caveat bounding all of this: the measurable scene is the static title screen (51 draws/frame). Buffer-upload traffic there is small, so this does **not** rule out `Host` mating well with real gameplay — it only says the benefit is unproven on the one workload that can be measured without driving a controller.
+
+The remaining 10 blit-caused passes per frame come from the other blit users (texture upload, readback, clears). Batching those — or moving uploads to the start of the frame / a separate command buffer — is the real fix for encoder churn, and is a larger change than a mode flag. The memoryless-depth and load/store-action audit in the G list attacks the same 26 passes from the bandwidth side and is still unstarted.
