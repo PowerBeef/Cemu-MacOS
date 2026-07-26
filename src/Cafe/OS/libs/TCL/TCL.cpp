@@ -80,6 +80,41 @@ namespace TCL
 		return true;
 	}
 
+	// Park the core until the producer writes to the ring buffer.
+	//
+	// The GPU thread used to wait for command data by spinning on `yield`, which costs
+	// only ~42 ns for 80 iterations -- cheap per pass, but it turns millions of times a
+	// second, and profiling showed that spin plus its trailing sched_yield accounting for
+	// roughly a quarter of the emulator's remaining CPU once the scheduler idle loop was
+	// fixed.
+	//
+	// ldxr arms the CPU's exclusive monitor on the write index; wfe then puts the core in
+	// a low-power state until something stores to that address. Measured on an M2: a store
+	// from another thread wakes it in 42-208 ns, so this costs no meaningful latency
+	// versus spinning, while a pass takes ~1269 ns instead of ~42 ns -- about 30x fewer
+	// idle iterations.
+	//
+	// This cannot stall the GPU thread even if the guest never submits again: Apple
+	// silicon implements a WFE timeout, measured at ~1.3 us, so wfe always returns on its
+	// own. The caller re-checks the ring buffer and its periodic work every pass.
+	void TCLGPUWaitForRBData()
+	{
+		uint32 readIndex = tclRingBufferA_readIndex.load(std::memory_order::relaxed);
+		// std::atomic<uint32> is lock-free and standard-layout here, so its storage is a
+		// plain uint32 that the exclusive monitor can watch.
+		static_assert(sizeof(std::atomic<uint32>) == sizeof(uint32));
+		uint32* writeIndexAddr = reinterpret_cast<uint32*>(&tclRingBufferA_writeIndex);
+		uint32 observed;
+		__asm__ volatile("ldxr %w0, [%1]" : "=r"(observed) : "r"(writeIndexAddr) : "memory");
+		if (observed != readIndex)
+		{
+			// data already available, don't arm a wait we would immediately regret
+			__asm__ volatile("clrex" ::: "memory");
+			return;
+		}
+		__asm__ volatile("wfe" ::: "memory");
+	}
+
 	void TCLWaitForRBSpace(uint32be numU32s)
 	{
 		uint32 writeIndex = tclRingBufferA_writeIndex.load(std::memory_order::relaxed);

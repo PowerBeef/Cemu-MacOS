@@ -176,11 +176,10 @@ uint32 LatteCP_readU32Deprc()
 
 		g_renderer->NotifyLatteCommandProcessorIdle(); // let the renderer know in case it wants to flush any commands
 		performanceMonitor.gpuTime_idleTime.beginMeasuring();
-		// no command data available, spin in a busy loop for a bit then check again
-		for (sint32 busy = 0; busy < 80; busy++)
-		{
-			_mm_pause();
-		}
+		// no command data available -- park the core until the producer writes, rather than
+		// spinning on it (see TCLGPUWaitForRBData; wfe has its own timeout, so this still
+		// falls through regularly to run the periodic work below)
+		TCL::TCLGPUWaitForRBData();
 		LatteThread_HandleOSScreen(); // check if new frame was presented via OSScreen API
 
 		if ( TCL::TCLGPUReadRBWord(cmdWord) )
