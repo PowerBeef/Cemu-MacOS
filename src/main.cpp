@@ -282,6 +282,7 @@ int main(int argc, char *argv[])
 	// No-op unless --telemetry was passed.
 	tlm::Init(LaunchSettings::GetTelemetryPath(), LaunchSettings::GetTelemetryLabel(),
 			  LaunchSettings::GetTelemetryAreas());
+	tlm::RegisterDetailFlushCallback(&PPCInterpreter_flushUnsupportedHLEStats);
 	WindowSystem::Create();
 	return 0;
 }

@@ -3,21 +3,77 @@
 #include "PPCInterpreterHelper.h"
 #include "Cemu/Telemetry/Telemetry.h"
 
-std::unordered_set<std::string> s_unsupportedHLECalls;
+#include <shared_mutex>
+#include <unordered_map>
+#include <memory>
+
+// Per-import call counts for unresolved imports, keyed by the address of the trampoline
+// the RPL loader synthesised. That address is unique and stable per import, so the hot
+// path is a uint32 hash lookup with no string work at all.
+//
+// The previous version built `fmt::format("Unsupported lib call: {}", name)` -- a heap
+// allocation -- on *every* call, then hashed and looked up that string. That was tolerable
+// while only the interpreter reached here; routing the recompiler through it too would
+// have put ~17,000 allocations/second on the default path in BotW, which calls unresolved
+// imports 557 times per frame.
+struct UnsupportedHLECall
+{
+	std::string name;
+	std::atomic<uint64> count;
+};
+static std::shared_mutex s_unsupportedHLEMutex;
+static std::unordered_map<uint32, std::unique_ptr<UnsupportedHLECall>> s_unsupportedHLECalls;
 
 void PPCInterpreter_handleUnsupportedHLECall(PPCInterpreter_t* hCPU)
 {
-	const char* libFuncName = (char*)memory_getPointerFromVirtualOffset(hCPU->instructionPointer + 8);
-	std::string tempString = fmt::format("Unsupported lib call: {}", libFuncName);
-	if (s_unsupportedHLECalls.find(tempString) == s_unsupportedHLECalls.end())
+	const uint32 trampolineIP = hCPU->instructionPointer;
+	// Reached from up to three guest core threads concurrently, so this must be locked --
+	// the interpreter caller used to hold a mutex around it and the recompiler caller
+	// does not.
 	{
-		cemuLog_log(LogType::UnsupportedAPI, "{}", tempString);
-		s_unsupportedHLECalls.emplace(tempString);
-		tlm::NoteAccuracyDetail(tlm::CounterId::AccUnsupportedHleCalls, libFuncName);
+		std::shared_lock readLock(s_unsupportedHLEMutex);
+		auto it = s_unsupportedHLECalls.find(trampolineIP);
+		if (it != s_unsupportedHLECalls.end()) [[likely]]
+		{
+			it->second->count.fetch_add(1, std::memory_order_relaxed);
+			readLock.unlock();
+			TLM_INC(Accuracy, AccUnsupportedHleCalls);
+			hCPU->gpr[3] = 0;
+			PPCInterpreter_nextInstruction(hCPU);
+			return;
+		}
+	}
+	// First sighting of this import: the RPL loader wrote the "lib.func" string inline
+	// after the trap and the blr.
+	const char* libFuncName = (char*)memory_getPointerFromVirtualOffset(trampolineIP + 8);
+	{
+		std::unique_lock writeLock(s_unsupportedHLEMutex);
+		auto [it, inserted] = s_unsupportedHLECalls.try_emplace(trampolineIP);
+		if (inserted)
+		{
+			it->second = std::make_unique<UnsupportedHLECall>();
+			it->second->name = libFuncName;
+			it->second->count.store(1, std::memory_order_relaxed);
+			cemuLog_log(LogType::UnsupportedAPI, "Unsupported lib call: {}", libFuncName);
+		}
+		else
+		{
+			it->second->count.fetch_add(1, std::memory_order_relaxed);
+		}
 	}
 	TLM_INC(Accuracy, AccUnsupportedHleCalls);
 	hCPU->gpr[3] = 0;
 	PPCInterpreter_nextInstruction(hCPU);
+}
+
+// Pushes the histogram into telemetry. Registered as a flush callback so it runs only
+// when details are about to be written, not on the hot path.
+void PPCInterpreter_flushUnsupportedHLEStats()
+{
+	std::shared_lock readLock(s_unsupportedHLEMutex);
+	for (const auto& [ip, info] : s_unsupportedHLECalls)
+		tlm::NoteAccuracyDetail(tlm::CounterId::AccUnsupportedHleCalls, info->name,
+								info->count.load(std::memory_order_relaxed));
 }
 
 static constexpr size_t HLE_TABLE_CAPACITY = 0x4000;

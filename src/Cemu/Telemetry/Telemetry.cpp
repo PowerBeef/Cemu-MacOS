@@ -150,8 +150,15 @@ namespace tlm
 		// Accuracy details are rare and unbounded in principle, so they are capped and
 		// deduplicated. The point is to name what was hit, not to log every occurrence.
 		std::mutex s_detailMutex;
-		std::vector<std::pair<CounterId, std::string>> s_details;
-		size_t s_detailsEmitted = 0;
+		struct AccuracyDetail
+		{
+			CounterId id;
+			std::string detail;
+			uint64_t count;
+		};
+		std::vector<AccuracyDetail> s_details;
+		bool s_detailsDirty = false;
+		void (*s_detailFlush)() = nullptr;
 		constexpr size_t kMaxDetails = 256;
 
 		std::mutex s_metaMutex;
@@ -298,19 +305,27 @@ namespace tlm
 		// its findings at shutdown would in practice never write them at all.
 		void MaybeEmitAccuracyDetails()
 		{
+			if (s_detailFlush)
+				s_detailFlush();
 			std::string details;
 			{
 				std::lock_guard lock(s_detailMutex);
-				if (s_details.size() == s_detailsEmitted)
+				if (!s_detailsDirty)
 					return;
-				s_detailsEmitted = s_details.size();
-				for (size_t i = 0; i < s_details.size(); i++)
+				s_detailsDirty = false;
+				std::vector<const AccuracyDetail*> sorted;
+				sorted.reserve(s_details.size());
+				for (const auto& d : s_details)
+					sorted.push_back(&d);
+				std::sort(sorted.begin(), sorted.end(),
+						  [](const AccuracyDetail* a, const AccuracyDetail* b) { return a->count > b->count; });
+				for (size_t i = 0; i < sorted.size(); i++)
 				{
 					if (i)
 						details += ',';
-					details += fmt::format(R"({{"signal":"{}","detail":"{}"}})",
-										   kMeta[(size_t)s_details[i].first].name,
-										   JsonEscape(s_details[i].second));
+					details += fmt::format(R"({{"signal":"{}","detail":"{}","count":{}}})",
+										   kMeta[(size_t)sorted[i]->id].name,
+										   JsonEscape(sorted[i]->detail), sorted[i]->count);
 				}
 			}
 			s_sink.Push(fmt::format(R"({{"t":"acc","details":[{}]}})"
@@ -359,19 +374,32 @@ namespace tlm
 			MaybeEmitAccuracyDetails();
 	}
 
-	void NoteAccuracyDetail(CounterId id, const std::string& detail)
+	void NoteAccuracyDetail(CounterId id, const std::string& detail, uint64_t count)
 	{
 		if (!AreaEnabled(Area::Accuracy))
 			return;
 		std::lock_guard lock(s_detailMutex);
+		for (auto& d : s_details)
+		{
+			if (d.id == id && d.detail == detail)
+			{
+				if (count > d.count)
+				{
+					d.count = count;
+					s_detailsDirty = true;
+				}
+				return;
+			}
+		}
 		if (s_details.size() >= kMaxDetails)
 			return;
-		for (const auto& [existingId, existingDetail] : s_details)
-		{
-			if (existingId == id && existingDetail == detail)
-				return;
-		}
-		s_details.emplace_back(id, detail);
+		s_details.push_back({id, detail, count});
+		s_detailsDirty = true;
+	}
+
+	void RegisterDetailFlushCallback(void (*fn)())
+	{
+		s_detailFlush = fn;
 	}
 
 	void Shutdown()
@@ -380,6 +408,8 @@ namespace tlm
 			return;
 		g_areaMask = 0; // stop producers before draining
 
+		if (s_detailFlush)
+			s_detailFlush();
 		SumInto(s_totals);
 		const uint64_t wallNs = HighResolutionTimer::now().getTick() - s_runStart;
 
@@ -399,9 +429,9 @@ namespace tlm
 			{
 				if (i)
 					details += ',';
-				details += fmt::format(R"({{"signal":"{}","detail":"{}"}})",
-									   kMeta[(size_t)s_details[i].first].name,
-									   JsonEscape(s_details[i].second));
+				details += fmt::format(R"({{"signal":"{}","detail":"{}","count":{}}})",
+									   kMeta[(size_t)s_details[i].id].name,
+									   JsonEscape(s_details[i].detail), s_details[i].count);
 			}
 		}
 

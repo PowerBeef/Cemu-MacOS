@@ -18,3 +18,5 @@
 2026-07-26T03:10:13Z	321b9f7	mk8-lodbias-on	60.00	Metal/Apple GPU	1936 MB	51 threads	76.8%
 2026-07-26T20:22:46Z	5cb0620	botw-shrine-shared-buffer-cache	28.59	Metal/Apple GPU	1367 MB	46 threads	224.2%
 2026-07-26T21:37:34Z	2c09604	botw-shrine-hw-docs	28.63	Metal/Apple GPU	1071 MB	45 threads	188.7%
+2026-07-26T23:43:56Z	9614b46	botw-korok-forest	30.05	Metal/Apple GPU	1047 MB	45 threads	113.2%
+2026-07-26T23:46:40Z	9614b46	botw-korok-forest	20.04	Metal/Apple GPU	942 MB	50 threads	151.7%

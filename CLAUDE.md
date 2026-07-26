@@ -91,6 +91,27 @@ So the GPU is **not** idle in gameplay, and `draws-per-pass` is a healthy 7–9 
 
 **Use BotW for graphics measurement, not MK8.** Breath of the Wild (US v208) at the Shrine of Resurrection with Link standing still, reachable unattended via `testing/drive-botw.sh`. It is *exactly* repeatable — `passes/f` holds within ±2 and `draws/f` within ±3 across every 60-frame window — which no MK8 scene is. Current numbers: 28.6 FPS, 149 passes/frame, ~1190 draws/frame, **GPU 15.6 ms/frame**, CPU ~205% of one core.
 
+**Two BotW scenes, and the open world is the interesting one.** `testing/drive-botw.sh` reaches the
+Shrine of Resurrection. A Korok Forest save (dense foliage + fog, the "roaming the open world" case)
+is the heavier scene. Measured with the telemetry harness:
+
+| | Shrine | Korok Forest |
+|---|---|---|
+| fps median | 30.06 | **20.04** |
+| frame ms median / p99 | 33.27 / 49.92 | 49.90 / **49.97** |
+| draws/frame | 3784 | **3480** (fewer!) |
+| render passes/frame | 132 | **201** |
+| GPU busy/frame | 14.0 ms | 18.7 ms |
+| GPU duty cycle | 42% | **38%** |
+
+**The forest is not GPU-bound and is not draw-bound** — it issues *fewer* draws than the shrine and
+leaves the GPU idle 62% of the time. What it is, is **vsync-quantised**: 20.04 fps is exactly
+59.94/3, 49.90 ms is exactly 1.5x the shrine's 33.27 ms, and p99 equals the median, so there is
+essentially no variance. Something misses the 33.3 ms deadline and the software vsync timer
+(`LatteTiming`, host-driven vsync is a stub on this fork) drops it to the next whole division rather
+than degrading smoothly. The gap between 18.7 ms of GPU work and a 49.9 ms frame is where the answer
+is, and it is not the renderer.
+
 **Do not divide BotW's GPU time by 16.67 ms.** BotW targets **30 FPS**, so the budget is 33.3 ms. An earlier revision of this file divided by the 60 FPS budget and concluded the GPU was at "108–147% of budget" and "is what caps the frame rate" — both wrong. At 15.6–18.5 ms against a ~35 ms wall-clock frame, the GPU sits at roughly **50% duty cycle and is not the limiter in this scene**: cutting GPU time 16% moved the frame rate not at all. Check what the title actually targets before computing a percentage.
 
 ### Driving a game without a controller (needed for the above)
