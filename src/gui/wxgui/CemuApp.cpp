@@ -338,16 +338,7 @@ bool CemuApp::OnInit()
 	UnitTests();
 #endif
 
-#if BOOST_OS_MACOS
-	SDLControllerProvider::InitSDL();
-#endif
 	CemuCommonInit();
-
-#if BOOST_OS_MACOS
-	m_sdlEventPumpTimer = new wxTimer(this);
-	Bind(wxEVT_TIMER, &CemuApp::OnSDLEventPumpTimer, this);
-	m_sdlEventPumpTimer->Start(5, wxTIMER_CONTINUOUS);
-#endif
 
 	wxInitAllImageHandlers();
 
@@ -391,39 +382,18 @@ bool CemuApp::OnInit()
 
 int CemuApp::OnExit()
 {
-#if BOOST_OS_MACOS
-	if (m_sdlEventPumpTimer)
-	{
-		m_sdlEventPumpTimer->Stop();
-		Unbind(wxEVT_TIMER, &CemuApp::OnSDLEventPumpTimer, this);
-		delete m_sdlEventPumpTimer;
-		m_sdlEventPumpTimer = nullptr;
-	}
-#endif
 	wxApp::OnExit();
 	wxTheClipboard->Flush();
 	InputManager::instance().Shutdown();
 	int retValue = 0;
 	if (auto r = CafeSystem::GetForegroundTitleReturnStatus(); (LaunchSettings::GetLoadFile() || LaunchSettings::GetLoadTitleID()) && r)
 		retValue = *r;
-#if BOOST_OS_MACOS
-	SDLControllerProvider::ShutdownSDL();
-#endif
 #if BOOST_OS_WINDOWS
 	ExitProcess(retValue);
 #else
 	_Exit(retValue);
 #endif
 }
-
-#if BOOST_OS_MACOS
-void CemuApp::OnSDLEventPumpTimer(wxTimerEvent& event)
-{
-	// this callback is only used on macOS where SDL event functions need to be called on the main thread
-	// on other platforms SDLControllerProvider creates a separate thread for SDL event polling
-	SDLControllerProvider::PumpSDLEvents();
-}
-#endif
 
 #if BOOST_OS_WINDOWS
 void DumpThreadStackTrace();

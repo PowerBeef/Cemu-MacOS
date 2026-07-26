@@ -247,10 +247,6 @@ wxPanel* GeneralSettings2::AddGeneralPage(wxNotebook* notebook)
 			CountRowElement();
 #endif
 
-			// temporary workaround because feature crashes on macOS
-#if BOOST_OS_MACOS
-			m_disable_screensaver->Enable(false);
-#endif
 			m_play_boot_sound = new wxCheckBox(box, wxID_ANY, _("Enable intro sound"));
 			m_play_boot_sound->SetToolTip(_("Play bootSound file while compiling shaders/pipelines."));
 			third_row->Add(m_play_boot_sound, 0, botflag, 5);
@@ -1875,10 +1871,6 @@ void GeneralSettings2::ApplyConfig()
 #endif
 #if BOOST_OS_LINUX && defined(ENABLE_FERAL_GAMEMODE)
     	m_feral_gamemode->SetValue(wxGUIconfig.feral_gamemode);
-#endif
-	// temporary workaround because feature crashes on macOS
-#if BOOST_OS_MACOS
-	m_disable_screensaver->SetValue(false);
 #endif
 
 	m_game_paths->Clear();

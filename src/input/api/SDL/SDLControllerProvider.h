@@ -24,20 +24,11 @@ public:
 
 	MotionSample motion_sample(SDL_JoystickID diid);
 
-	// exposed for manual event handling on macOS
-#if BOOST_OS_MACOS
-	static void InitSDL();
-	static void ShutdownSDL();
-	static void PumpSDLEvents();
-#endif
-
 private:
 	void event_thread();
 	static void HandleSDLEvent(union SDL_Event& event);
-#if !BOOST_OS_MACOS
 	static void InitSDL();
 	static void ShutdownSDL();
-#endif
 
 	// there is only one SDL instance, for this reason all of our state can be static
 	inline static std::atomic_int s_initCount{0};

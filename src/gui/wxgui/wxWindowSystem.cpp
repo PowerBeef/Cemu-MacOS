@@ -15,7 +15,18 @@
 #endif
 
 #if BOOST_OS_MACOS
-#include <Carbon/Carbon.h>
+// Virtual key codes, from <Carbon/HIToolbox/Events.h>. Defined locally rather than
+// pulling in the whole Carbon umbrella, which is a deprecated 30-year-old framework
+// that drags in HIToolbox and QuickDraw headers and collides with C++ on common
+// identifiers (Point, Rect, Boolean, nil). These values are ABI-frozen hardware
+// scancodes and have not changed since 1984.
+enum : uint16
+{
+	kVK_Control      = 0x3B,
+	kVK_RightControl = 0x3E,
+	kVK_Tab          = 0x30,
+	kVK_Escape       = 0x35,
+};
 #endif
 
 #include "wxgui/wxgui.h"

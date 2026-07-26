@@ -11,3 +11,5 @@
 2026-07-26T00:35:05Z	7f82b39	mk8-qos	60.11	Metal/Apple GPU	1490 MB	43 threads	191.0%
 2026-07-26T00:50:28Z	966b1a9	mk8-audio-ring	60.00	Metal/Apple GPU	856 MB	43 threads	172.0%
 2026-07-26T01:37:50Z	966b1a9	mk8-audio-ring-verified	58.88	Metal/Apple GPU	1286 MB	44 threads	169.8%
+2026-07-26T01:42:10Z	94fe786	mk8-screensaver	57.64	Metal/Apple GPU	996 MB	44 threads	156.1%
+2026-07-26T01:48:32Z	94fe786	mk8-stage4-complete	59.20	Metal/Apple GPU	1137 MB	46 threads	164.7%

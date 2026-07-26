@@ -24,6 +24,21 @@
 	<string>${MACOSX_BUNDLE_BUNDLE_VERSION}</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
+	<!-- Without this macOS runs the app in 1x magnified mode: everything is blurry on a
+	     Retina display and the Metal drawable is created at half resolution. -->
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<!-- Allows the window to use the full height beside the camera housing in fullscreen. -->
+	<key>NSPrefersDisplaySafeAreaCompatibilityMode</key>
+	<false/>
+	<!-- Wiimote support enumerates Bluetooth devices through SDL3's HID API. Without a
+	     usage description macOS terminates the process on first access rather than
+	     merely denying it. -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Cemu uses Bluetooth to connect Wii Remotes.</string>
+	<!-- DSU motion servers bind UDP on the local network, which is gated by TCC. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Cemu uses the local network to receive motion data from DSU controller servers.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>${MACOSX_BUNDLE_COPYRIGHT}</string>
     	<key>LSApplicationCategoryType</key>

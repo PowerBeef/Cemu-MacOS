@@ -24,6 +24,8 @@ add_library(CemuUtil
   helpers/fixedSizeList.h
   helpers/fspinlock.h
   helpers/helpers.cpp
+  ScreenSaver/ScreenSaver.h
+  ScreenSaver/ScreenSaverMac.mm
   helpers/helpers.h
   helpers/MapAdaptor.h
   helpers/MemoryPool.h

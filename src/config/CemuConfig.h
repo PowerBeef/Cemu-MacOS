@@ -409,14 +409,7 @@ struct CemuConfig
 	ConfigValue<std::string> mlc_path{};
 	ConfigValue<std::string> proxy_server{};
 
-	// temporary workaround because feature crashes on macOS
-#if BOOST_OS_MACOS
-#define DISABLE_SCREENSAVER_DEFAULT false
-#else
-#define DISABLE_SCREENSAVER_DEFAULT true
-#endif
-	ConfigValue<bool> disable_screensaver{DISABLE_SCREENSAVER_DEFAULT};
-#undef DISABLE_SCREENSAVER_DEFAULT
+	ConfigValue<bool> disable_screensaver{true};
 	ConfigValue<bool> play_boot_sound{false};
 
 	std::vector<std::string> game_paths;
