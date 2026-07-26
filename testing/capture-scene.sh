@@ -14,7 +14,12 @@ mkdir -p "$OUT"
 
 ax() { osascript -e "tell application \"System Events\" to tell (first process whose unix id is $PID) to $1" 2>/dev/null; }
 
-TITLE=$(ax 'get value of attribute "AXTitle" of (first window whose subrole is "AXStandardWindow")')
+# wait for a live FPS reading; sampling mid-boot yields 0.00 and pollutes the baseline
+for _ in $(seq 1 40); do
+  TITLE=$(ax 'get value of attribute "AXTitle" of (first window whose subrole is "AXStandardWindow")')
+  case "$TITLE" in *"FPS: 0.00"*|*FPS*) [ "${TITLE#*FPS: 0.00}" = "$TITLE" ] && break ;; esac
+  sleep 2
+done
 BOUNDS=$(ax 'get {position, size} of (first window whose subrole is "AXStandardWindow")')
 X=$(echo "$BOUNDS" | cut -d, -f1 | tr -d ' '); Y=$(echo "$BOUNDS" | cut -d, -f2 | tr -d ' ')
 W=$(echo "$BOUNDS" | cut -d, -f3 | tr -d ' '); H=$(echo "$BOUNDS" | cut -d, -f4 | tr -d ' ')

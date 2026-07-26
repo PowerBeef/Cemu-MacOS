@@ -1603,17 +1603,26 @@ bool PPCRecompiler_generateAArch64Code(struct PPCRecFunction_t* PPCRecFunction, 
 		return false;
 	}
 
+	// processAllJumps() rewinds the emitter to each jump site to patch it and never
+	// restores the cursor, so afterwards getSize() points at the last patched jump
+	// rather than the end of the code. That matters because readyRE() flushes the
+	// I-cache over [getCode(), getCurr()) -- with the cursor left short, any code
+	// after the last jump would never be invalidated, which on Apple silicon means
+	// executing stale instructions.
+	const size_t codeEnd = aarch64GenContext.getSize();
 	if (!aarch64GenContext.processAllJumps())
 	{
 		cemuLog_log(LogType::Recompiler, "PPCRecompiler_generateAArch64Code(): some jumps exceeded the +/-128MB offset.");
 		return false;
 	}
+	aarch64GenContext.setSize(codeEnd);
 
 	aarch64GenContext.readyRE();
 
 	// set code
 	PPCRecFunction->x86Code = aarch64GenContext.getCode<void*>();
-	PPCRecFunction->x86Size = aarch64GenContext.getMaxSize();
+	// getMaxSize() is the AutoGrow buffer capacity, not the emitted size
+	PPCRecFunction->x86Size = aarch64GenContext.getSize();
 	// set free disabled to skip freeing the code from the CodeGenerator destructor
 	allocator.setFreeDisabled(true);
 	return true;

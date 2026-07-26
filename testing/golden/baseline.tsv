@@ -4,3 +4,4 @@
 2026-07-25T23:38:05Z	a496813	mk8-title-post-cpufeatures	60.00	Metal/Apple GPU	1226 MB	40 threads	150.8%
 2026-07-25T23:42:49Z	222902d	mk8-title-macos26-target	60.00	Metal/Apple GPU	923 MB	40 threads	130.0%
 2026-07-25T23:46:45Z	213bcd7	mk8-title-stage2-complete	60.00	Metal/Apple GPU	995 MB	41 threads	197.1%
+2026-07-26T00:05:48Z	8ea8c58	mk8-title-jit-size-fix	59.87	Metal/Apple GPU	1089 MB	39 threads	198.1%
