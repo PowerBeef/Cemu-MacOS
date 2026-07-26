@@ -56,3 +56,5 @@ bin/graphicPacks/*
 .DS_Store
 # local test content (game images) - never commit
 /Roms/
+
+/build*/
