@@ -284,3 +284,38 @@ What still holds, re-verified in-game:
 **Revised recommendation:** the memoryless-depth and load/store-action audit is back on the table and should be evaluated against a demo-race trace, not the title card. The deferred-clear idea stays dead (clears are only ~6/frame in-game). Re-measure `draws/f > 200` windows specifically; see the sampling caveat below.
 
 **Method note, and the reason this correction exists:** MK8's attract cycle spends most of its wall-clock on the title card, so an unfiltered average or a short trace lands there and reads as a light workload. Gate on `draws/f > 200` to isolate race frames. This is the same non-fixed-workload trap recorded earlier, hit a second time in the opposite direction — the first time it inflated a speedup, this time it hid the entire GPU load.
+
+---
+
+### BotW settles it: the GPU is the bottleneck, and the bandwidth work is justified
+
+Breath of the Wild (US v208, update installed) at the Shrine of Resurrection, Link standing still:
+
+| metric | value |
+|---|---|
+| **GPU time** | **18.0 – 24.5 ms/frame = 108 – 147% of the 16.67 ms budget** |
+| FPS | **23.95** (BotW targets 30 → dropping frames, GPU-bound) |
+| CPU | 184% of one core |
+| render passes / frame | 173.7 |
+| draws / frame | 4838.8 |
+| draws per pass | 27.9 |
+| `copyImageSubData` blits | 4906 per 60 f, **3329 tearing down a live pass (~55/frame)** |
+| `CopyBufferToBuffer` blits | 1440 per 60 f, 720 teardowns (~12/frame) |
+
+**This retires the "reject all of it" conclusion for good.** The GPU is not idle with 83% headroom — it is *over* frame budget and is the reason BotW misses its 30 FPS target. Every item rejected on the idle-GPU argument is back:
+
+- **Memoryless depth + load/store audit is now the top graphics item.** 174 passes per frame, each doing `LoadActionLoad` + `StoreActionStore` on every attachment, against a GPU that is already over budget.
+- **Reducing pass count is justified too.** ~67 of 174 passes per frame (**38%**) are torn down by a blit, so the deferred-copy design that was dismissed as "4–5% of CPU on MK8" is worth far more here — and it buys GPU time, not just CPU.
+- Draws-per-pass is a healthy 27.9, so the passes are doing real work. The problem is their *number*, and the per-pass attachment traffic that comes with it.
+
+**This is the measurement scene to use from now on.** It is *exactly* repeatable — `draws/f` holds at 4838.8 ± 0.3 and `passes/f` at 173.7 across every sample — which is far better than anything MK8 offers, where the attract cycle constantly changes what it renders. Standing still in a heavy scene is the ideal A/B target.
+
+#### Reproducing it without a controller, and without playing
+
+No save file and no human input needed. Cemu's `controllerProfiles/` ships empty, which is why input appears not to work at all:
+
+1. Write `~/Library/Application Support/Cemu/controllerProfiles/controller0.xml` by hand — `<type>Wii U GamePad</type>`, `<api>Keyboard</api>`, `<uuid>keyboard</uuid>`. Button values are **macOS virtual key codes**, because `wxKeyEvent::GetRawKeyCode()` is a pass-through on macOS (`fix_raw_keycode`'s fixups are all inside `#if BOOST_OS_WINDOWS`). Mapping ids are `VPADController::ButtonId` (1=A, 2=B, 9=Plus, 11–14=dpad, 17–20=left stick).
+2. Those same virtual key codes are what `osascript` sends, so `tell application "System Events" to key code 6` presses the mapped A button. `key down "w"` / `key up "w"` also work, which is what makes walking possible.
+3. Boot BotW, raise the window, send a few `key code 6` presses to get through the title and the awakening cutscene. Link is then in control inside the Shrine.
+
+The whole intro is scriptable this way. Camera control (right stick, mappings 21–24) was left unmapped in the profile used here — add it if you need to navigate further, e.g. out onto the Great Plateau, which is heavier still.

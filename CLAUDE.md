@@ -89,6 +89,12 @@ Measured from `GPUEndTime - GPUStartTime` on every command buffer:
 
 So the GPU is **not** idle in gameplay, and `draws-per-pass` is a healthy 7–9 rather than the alarming 1.75 the title card shows. An earlier revision of this file claimed the opposite from title-card-only data; `docs/porting/00-master-plan.md` carries the full correction. Before drawing any conclusion about graphics work, check which scene you sampled.
 
+**Use BotW for graphics measurement, not MK8.** Breath of the Wild (US v208) at the Shrine of Resurrection with Link standing still: **GPU 18–24.5 ms/frame, 108–147% of budget**, 23.95 FPS against a 30 FPS target, 174 passes/frame, 4839 draws/frame. The GPU is over budget and is what caps the frame rate. It is also *exactly* repeatable — `draws/f` holds at 4838.8 ± 0.3 — which MK8 never is.
+
+### Driving a game without a controller (needed for the above)
+
+`controllerProfiles/` ships empty, which is why input looks broken out of the box. Write `~/Library/Application Support/Cemu/controllerProfiles/controller0.xml` directly (the GUI combo boxes don't respond to accessibility scripting): `<type>Wii U GamePad</type>`, `<api>Keyboard</api>`, `<uuid>keyboard</uuid>`, and `<mappings>` of `VPADController::ButtonId` → **macOS virtual key code** (`fix_raw_keycode` is a pass-through outside Windows). Then `osascript -e 'tell application "System Events" to key code 6'` presses that button, and `key down "w"` / `key up "w"` hold it. That is enough to script BotW's whole intro — no save file and no human needed.
+
 For Metal work: `MTL_HUD_ENABLED=1` for a frame-time overlay, `MTL_DEBUG_LAYER=1` + `MTL_SHADER_VALIDATION=1` for validation, and the in-app Debug menu has GPU capture wired to `MTL::CaptureManager`.
 
 ## Architecture worth knowing before editing
