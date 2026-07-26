@@ -7,6 +7,31 @@ it is the input to the telemetry harness's accuracy signals: a row marked *detec
 emulator should be able to count and name at runtime, turning "we probably get this wrong" into
 "this title hit it 1,840 times last frame".
 
+## Measured, BotW at the Shrine of Resurrection
+
+The telemetry harness now counts these at runtime. First full run, 9,555 frames:
+
+| Signal | Per frame | Run total | Reading |
+|---|---|---|---|
+| `acc.unsupported_hle_calls` | **557** | 3,696,250 | 31 distinct functions — see 4.2 |
+| `acc.audio_frames_serviced` | 11.0 | 111,246 | **Exactly the expected rate** — see 2.5 |
+| `acc.audio_update_polls` | 232 | 2,175,964 | 21× oversampled, harmless |
+| `acc.d24_s8_use` | 0 | 0 | BotW is not affected by 1.1 |
+| `acc.dcstorerange_no_notify` | 0 | 0 | BotW never takes the 1.3 path |
+| `acc.geometry_draw_dropped` | 0 | 0 | Confirms the branch is dead on Apple Silicon |
+| `acc.unsupported_tex_format` | 0 | 0 | |
+| `acc.unsupported_primitive` | 0 | 0 | |
+| `acc.draw_skipped_no_target` / `_shader_err` | 0 | 0 | |
+
+**Only one gap in this register actually fires in BotW, and it fires 557 times a frame.**
+Every other one is either absent from this title's workload or, in the geometry-shader case,
+confirmed dead. That is the point of measuring rather than reasoning: a list of eleven
+plausible problems turned out to be one real one, and the real one was previously invisible.
+
+These figures are for one scene in one title. A different title will light up different rows.
+
+---
+
 Severity is about **observable consequence**, not effort:
 
 | | Meaning |
@@ -121,16 +146,29 @@ Titles that budget CPU time around library-call cost see a uniform, wrong figure
 **Detectable:** yes — the HLE histogram gives call counts per function; combined with host timing it
 shows where the flat charge is most wrong.
 
-### 2.5 Audio is paced by the idle loop, not a 3 ms clock
+### 2.5 Audio is paced by the idle loop, not a 3 ms clock — **measured, and not a problem here**
 
 AX runs on a 3 ms frame (chapter 07), but `AXOut_update()` is driven from `__OSCheckSystemEvents()`
 on the main core's **idle loop**, which parks with a 250 µs bound
-`[SRC coreinit_Thread.cpp:1218-1226, :1229]`. When the main core is rarely idle, audio servicing
-degrades. This is a plausible — and **unverified** — explanation for audio glitching correlating with
-CPU load.
+`[SRC coreinit_Thread.cpp:1218-1226, :1229]`. The hypothesis was that under load the servicing rate
+degrades, explaining audio glitching that correlates with frame drops.
 
-**Detectable:** yes, and worth doing: count audio frames serviced per video frame and compare against
-the expected ~5.5 at 60 Hz.
+**Measured on the BotW shrine: it does not.** `acc.audio_frames_serviced` is **11.0 per video
+frame**, and 333 Hz ÷ 30 fps = 11.1 — audio is serviced at exactly the right rate.
+
+What the measurement did show is that `AXOut_update` is *polled* 232 times per frame and does work
+11 times, because it early-returns from two gates before touching anything. A 21× oversample of a
+cheap function: not a correctness issue, and not obviously worth changing.
+
+Downgraded from "plausible explanation" to "not supported by evidence" for this scene. It could
+still bite a title that saturates the main core harder than BotW does; the counters are in place to
+catch that if it happens.
+
+**Note on how this was nearly measured wrong:** the counter was first placed at the top of
+`AXOut_update`, which is *before* both early-return gates, and it read 232/frame — 20× the expected
+rate. That looks exactly like the problem the hypothesis predicted, and it would have confirmed the
+hypothesis while actually measuring the poll rate. The name promised "frames serviced"; the site
+delivered "calls". Both counters exist now precisely so the distinction stays visible.
 
 ### 2.6 No IPC latency
 
@@ -188,10 +226,30 @@ if (hleFuncId == 0xFFD0) {
 ```
 `[SRC BackendAArch64.cpp:870-876]`
 
-The recompiler is the **default** CPU mode, so in normal operation unresolved imports produce no
-diagnostic whatsoever, and the `UnsupportedAPI` log under-reports by an unknown margin. This is the
-single most valuable row in this table for accuracy work: it means we do not currently know what we
-are missing.
+The recompiler is the **default** CPU mode, so in normal operation unresolved imports produced no
+diagnostic whatsoever, and the `UnsupportedAPI` log under-reported by an unknown margin.
+
+**Fixed.** Both paths now route through `PPCInterpreter_handleUnsupportedHLECall`, and the margin
+turned out to be the whole thing. BotW at the shrine calls unimplemented functions **557 times per
+frame** — 3.7 million times in a 9,555-frame run — across **31 distinct imports**:
+
+| Library | Distinct unresolved imports | Examples |
+|---|---|---|
+| `snd_core` | **13** | `AXSetVoicePriority`, `AXSetVoiceRmtOn`, `AXSetVoiceRmtIIR`, `AXSetDRCVSSurroundDepth`, `AXGetSwapProfile` |
+| `coreinit` | 6 | **`OSCoherencyBarrier`**, `FSSetStateChangeNotification`, `OSGetShutdownReason`, `UCOpen`/`UCClose` |
+| `gx2` | 6 | `GX2SetLineWidth`, `GX2ExpandDepthBuffer`, `GX2SetAlphaToMaskReg`, `GX2SetTVScale` |
+| `padscore` | 2 | `WPADEnableURCC`, `KPADSetMplsWorkarea` |
+| `vpad` | 2 | `VPADEnableGyroAccRevise`, `VPADSetGyroAccReviseParam` |
+| `nn_aoc` | 2 | `AOC_Initialize` |
+
+Two of these deserve follow-up on their own. **`coreinit.OSCoherencyBarrier` is a coherency
+primitive** and a title calling it is telling us exactly where it expects memory ordering to be
+enforced — which bears directly on gap 1.3. And the `gx2` entries are GPU state
+(`GX2SetLineWidth`, `GX2SetAlphaToMaskReg`) that currently does nothing, so they are candidate
+causes for any visual difference in this title.
+
+The audio surface being the least complete thing BotW actually touches was not predicted by any
+prior analysis in this repo.
 
 ### 4.3 HLE function names are registered and discarded
 

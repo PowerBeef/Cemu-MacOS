@@ -1,5 +1,6 @@
 #include "Cafe/OS/libs/snd_core/ax.h"
 #include "Cafe/OS/libs/snd_core/ax_internal.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/HW/MMU/MMU.h"
 #include "audio/IAudioAPI.h"
 //#include "ax.h"
@@ -477,6 +478,13 @@ namespace snd_core
 	// called periodically to check for AX updates
 	void AXOut_update()
 	{
+		// Two different questions, two counters. This function is called from
+		// __OSCheckSystemEvents on the main core's idle loop, so it is *polled* far more
+		// often than AX's 3ms frame needs -- and it early-returns from two gates below
+		// before doing any work. Counting at the top would measure the poll rate and call
+		// it "frames serviced", which is why the serviced counter sits at the queue site
+		// instead. See docs/hardware/09-accuracy-gap-register.md 2.5.
+		TLM_INC(Accuracy, AccAudioUpdatePolls);
 		constexpr static auto kTimeout = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(((IAudioAPI::kBlockCount * 3) / 4) * (AX_FRAMES_PER_GROUP * 3)));
 		constexpr static auto kWaitDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(3));
 		constexpr static auto kWaitDurationFast = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::microseconds(2900));
@@ -525,6 +533,7 @@ namespace snd_core
 				AXOut_updateDevicePlayState(true);
 				snd_core::AXIst_QueueFrame();
 				numQueuedFramesSndGeneric++;
+				TLM_INC(Accuracy, AccAudioFrameServiced);
 			}
 		}
 	}

@@ -1,4 +1,5 @@
 #include "Cafe/HW/Latte/Renderer/Metal/LatteToMtl.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cemu/Logging/CemuLogging.h"
 #include "HW/Latte/Core/LatteTextureLoader.h"
 #include "HW/Latte/Renderer/Metal/MetalCommon.h"
@@ -183,9 +184,18 @@ const MetalPixelFormatInfo GetMtlPixelFormatInfo(Latte::E_GX2SURFFMT format, boo
 {
     if (isDepth)
     {
+        // D24_S8 is remapped to Depth32Float_Stencil8 because no Apple GPU supports
+        // Depth24Unorm_Stencil8, but the decoder that would convert the data is not
+        // implemented -- see docs/hardware/09-accuracy-gap-register.md 1.1. Counting the
+        // uses tells us which titles are actually affected.
+        if (format == Latte::E_GX2SURFFMT::D24_S8_UNORM) [[unlikely]]
+            TLM_INC(Accuracy, AccDepth24Stencil8Use);
         auto it = MTL_DEPTH_FORMAT_TABLE.find(format);
         if (it == MTL_DEPTH_FORMAT_TABLE.end())
+        {
+            TLM_INC(Accuracy, AccUnsupportedTexFormat);
             return {MTL::PixelFormatDepth16Unorm, MetalDataType::NONE, 2}; // Fallback
+        }
         else
             return it->second;
     }
@@ -193,7 +203,10 @@ const MetalPixelFormatInfo GetMtlPixelFormatInfo(Latte::E_GX2SURFFMT format, boo
     {
         auto it = MTL_COLOR_FORMAT_TABLE.find(format);
         if (it == MTL_COLOR_FORMAT_TABLE.end())
+        {
+            TLM_INC(Accuracy, AccUnsupportedTexFormat);
             return {MTL::PixelFormatR8Unorm, MetalDataType::FLOAT, 1}; // Fallback
+        }
         else
             return it->second;
     }
@@ -255,6 +268,7 @@ MTL::PrimitiveType GetMtlPrimitiveType(LattePrimitiveMode primitiveMode)
 		return MTL::PrimitiveTypeTriangle; // rects are emulated as 2 triangles
 	default:
 		cemuLog_log(LogType::Force, "Unsupported primitive mode {}", primitiveMode);
+		TLM_INC(Accuracy, AccUnsupportedPrimitive);
 		cemu_assert_debug(false);
 		return MTL::PrimitiveTypeTriangle;
     }

@@ -870,8 +870,13 @@ void* PPCRecompiler_virtualHLE(PPCInterpreter_t* ppcInterpreter, uint32 hleFuncI
 	if (hleFuncId == 0xFFD0)
 	{
 		ppcInterpreter->remainingCycles -= 500; // let subtract about 500 cycles for each HLE call
-		ppcInterpreter->gpr[3] = 0;
-		PPCInterpreter_nextInstruction(ppcInterpreter);
+		// This used to set gpr[3]=0 and return with no diagnostic at all, unlike the
+		// interpreter path which routes to PPCInterpreter_handleUnsupportedHLECall and
+		// logs the "lib.func" name once. Since the recompiler is the default CPU mode,
+		// that meant unresolved imports were silently swallowed in normal operation and
+		// the UnsupportedAPI log under-reported by an unknown margin -- i.e. we did not
+		// know what we were missing. Route both paths through the same handler.
+		PPCInterpreter_handleUnsupportedHLECall(ppcInterpreter);
 		return PPCInterpreter_getCurrentInstance();
 	}
 	else

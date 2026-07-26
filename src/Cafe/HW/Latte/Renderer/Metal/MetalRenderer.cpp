@@ -1063,6 +1063,7 @@ void MetalRenderer::draw_beginSequence()
 	if (LatteGPUState.activeShaderHasError)
 	{
 		cemuLog_logOnce(LogType::Force, "Skipping drawcalls due to shader error\n");
+		TLM_INC(Accuracy, AccDrawSkippedShaderErr);
 		m_state.m_skipDrawSequence = true;
 		cemu_assert_debug(false);
 		return;
@@ -1076,6 +1077,7 @@ void MetalRenderer::draw_beginSequence()
 		if (!LatteMRT::UpdateCurrentFBO())
 		{
 			cemuLog_logOnce(LogType::Force, "Rendertarget invalid\n");
+			TLM_INC(Accuracy, AccDrawSkippedNoTarget);
 			m_state.m_skipDrawSequence = true;
 			return; // no render target
 		}
@@ -1083,6 +1085,7 @@ void MetalRenderer::draw_beginSequence()
 		if (!hasValidFramebufferAttached && !streamoutEnable)
 		{
 			cemuLog_logOnce(LogType::Force, "Drawcall with no color buffer or depth buffer attached\n");
+			TLM_INC(Accuracy, AccDrawSkippedNoTarget);
 			m_state.m_skipDrawSequence = true;
 			return; // no render target
 		}
@@ -1170,7 +1173,13 @@ void MetalRenderer::draw_execute(uint32 baseVertex, uint32 baseInstance, uint32 
 
     bool usesGeometryShader = UseGeometryShader(LatteGPUState.contextNew, geometryShader != nullptr);
     if (usesGeometryShader && !m_supportsMeshShaders)
+    {
+        // Silently dropped the whole draw -- the only early-out in this function without
+        // even a logOnce. Dead on Apple silicon (mesh shaders are always available there)
+        // but counted so it can never be silent again.
+        TLM_INC(Accuracy, AccGeometryDrawDropped);
         return;
+    }
 
     bool fetchVertexManually = (usesGeometryShader || fetchShader->mtlFetchVertexManually);
 

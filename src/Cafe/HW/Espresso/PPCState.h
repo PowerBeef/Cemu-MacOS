@@ -232,8 +232,10 @@ static inline float flushDenormalToZero(float f)
 using HLECALL = void(*)(PPCInterpreter_t*);
 using HLEIDX = sint32;
 
+void PPCInterpreter_handleUnsupportedHLECall(PPCInterpreter_t* hCPU);
 HLEIDX PPCInterpreter_registerHLECall(HLECALL hleCall, std::string hleName);
 HLECALL PPCInterpreter_getHLECall(HLEIDX funcIndex);
+const std::string& PPCInterpreter_getHLEName(HLEIDX funcIndex);
 
 // HLE scheduler
 

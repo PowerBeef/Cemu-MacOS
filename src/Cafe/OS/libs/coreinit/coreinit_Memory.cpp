@@ -1,6 +1,7 @@
 #include "Cafe/OS/common/OSCommon.h"
 #include "coreinit_Memory.h"
 #include "Cafe/HW/Latte/Core/LatteBufferCache.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/OS/RPL/rpl.h"
 #include "Cafe/GraphicPack/GraphicPack2.h"
 #include "Cafe/CafeSystem.h"
@@ -33,7 +34,13 @@ namespace coreinit
 	{
 		MPTR addrEnd = (addr + size + 0x1F) & ~0x1F;
 		addr &= ~0x1F;
+		// Store writes dirty lines back to memory, which is exactly what the GPU-side
+		// cache needs to hear about -- and DCStoreRangeNoSync below *does* notify. The
+		// asymmetry looks like an oversight, but changing it is a correctness change to
+		// the buffer cache, so for now count how often a title takes this path.
+		// See docs/hardware/09-accuracy-gap-register.md 1.3.
 		//LatteBufferCache_notifyDCFlush(addr, addrEnd - addr);
+		TLM_INC(Accuracy, AccDcStoreRangeMissed);
 	}
 
 	void DCStoreRangeNoSync(MPTR addr, uint32 size)

@@ -70,3 +70,4 @@ TLM_COUNTER(AccUnsupportedPrimitive,"acc.unsupported_primitive", "count", Accura
 TLM_COUNTER(AccDrawSkippedNoTarget, "acc.draw_skipped_no_target","count", Accuracy)
 TLM_COUNTER(AccDrawSkippedShaderErr,"acc.draw_skipped_shader_err","count",Accuracy)
 TLM_COUNTER(AccAudioFrameServiced,  "acc.audio_frames_serviced", "count", Accuracy)
+TLM_COUNTER(AccAudioUpdatePolls,    "acc.audio_update_polls",    "count", Accuracy)
