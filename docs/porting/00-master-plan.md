@@ -186,3 +186,28 @@ Argument buffers · `MTLResidencySet` · `MTLHeap` aliasing · EDR/HDR · MetalF
 Methodological caution, learned the hard way here: the *first* version of this probe allocated RWX and toggled `pthread_jit_write_protect_np`. That pattern SIGBUSes on write and would have "confirmed" R1 — but it is not what the code under test does. Reading `xbyak_aarch64_code_array.h` was what corrected it. **Probe the pattern the code actually uses, not the one the documentation describes.**
 
 **Non-obvious ordering dependencies:** `os_unfair_lock` **before** QoS · screensaver→`NSProcessInfo` **before** moving SDL off the main thread · the `getSize()` fix **before** the measurement harness (otherwise the size metric is garbage) · save the Vulkan self-dependency design **before** deleting Vulkan.
+
+---
+
+### Stage 5 progress — measured 2026-07-26 on macOS 26.5.2 / M2
+
+**The plan's J/G ordering was wrong about where the CPU actually went, and profiling caught it before any codegen work started.** Both wins so far were idle-wait bugs, not the instruction-selection items the plan ranked first. Neither would have been found by `hostInstrCount / ppcInstrCount`.
+
+Combined result on MK8 at a locked 60 FPS: **1.77x less CPU** (median 183.5% → 103.9% of one core), FPS unchanged, scene renders identically.
+
+**1. The scheduler idle loop was burning a P-core on clock reads** (commit `a7ed8ed`). `mach_continuous_time` was **67.6% of all CPU cycles**. The caller was not the graphics code — it was `__OSThreadCoreIdle`, which spun with no yield and no backoff calling `__OSCheckSystemEvents()` (and therefore reading the clock) as fast as the CPU allowed whenever no guest thread was runnable. Fixed by parking on the existing run-queue semaphore with a 250 µs bound (new `CounterSemaphore::waitUntilNonZeroWithTimeout`). A runnable thread already increments and notifies that semaphore, so real wakeups stay immediate; the timeout only bounds how late a periodic system event is serviced while idle, well inside AX's 1.7 ms floor.
+
+**2. The Latte ring-buffer wait spun instead of parking** (commit `612d064`). Next largest after the above: `_mm_pause` 16.0% self + `swtch_pri` 9.4%. The spin *body* is cheap — 80 `yield`s measure 41.7 ns — the cost is the iteration rate. Replaced with `ldxr`/`wfe` on the ring's write index (`TCLGPUWaitForRBData`). Probed first: bare `wfe` blocks **1269 ns avg (max 1375)** because Apple silicon implements a WFE timeout, so it can never stall the GPU thread; a store from another thread wakes it in **42–208 ns**, so latency is unchanged. ~30x fewer idle passes, producer side untouched.
+
+**3. `PPCTimer` rewrite landed as planned, and fixed an accuracy bug.** `cntfrq_el0` is exactly 24 MHz, so `CORE_CLOCK/cntfrq = 3315/64` exactly and the conversion is one multiply and one shift; the 3-second boot calibration, the global spinlock, and the 128-bit divide are all gone. Verified over 20M random deltas spanning ~8 days of uptime: `(delta*3315)>>3 == floor(delta*CORE_CLOCK*8/cntfrq)`, zero mismatches. At 1x speed old and new agree exactly — but at reduced speeds **the old code was wrong**, truncating `>>shift` on every call and drifting 0.067% slow over 2M calls at 0.125x. The new form is exact at every speed.
+
+`HighResolutionTimer::now()` likewise reads `cntvct_el0` directly instead of `clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)` — same counter, **bit-identical output measured**, 18.40 ns → 0.44 ns.
+
+#### Measurement methodology — two traps hit here
+
+- **MK8's attract mode is not a fixed workload.** It cycles demo scenes with very different draw loads, so two traces captured at different times are not comparable. The first A/B suggested 4.4x from sample counts; a proper run showed 1.77x. **Interleave variants inside one process** (a temporary runtime toggle flipped every 20 s), discard windows that straddle a switch, and report the median of n≥5 each.
+- **`xcprof compare` reports share-of-CPU, not absolute CPU.** When total CPU drops sharply it labels everything that survived a "regression" — it flagged 15. Absolute `cputime` over a fixed wall window is the number to trust.
+
+#### Where the CPU goes now
+
+Real draw work, and encoder construction is conspicuous: `LatteCP_itIndirectBufferDepr` 30.1% incl · `DrawPassContext::executeDraw` 19.2% · `MetalRenderer::draw_execute` 16.3% · **`renderCommandEncoderWithDescriptor` 6.4% + `AGXG14GFamilyRenderContext init` 5.7%**. That last pair points at render-pass/encoder churn, which is the same thing the memoryless-depth and load/store-action audit in the G list targets — worth doing before any instruction-selection work.

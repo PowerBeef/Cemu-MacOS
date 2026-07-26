@@ -59,7 +59,20 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
 
 `--output` must stay inside the repo (its sandbox) or pass `--allow-external-output`. `xcsym crash <file>` symbolicates `.ips`/MetricKit crash reports.
 
-A measured baseline, MK8 title screen, 15s: `mach_continuous_time` **47% self time**, with `now_cached()` → `steady_clock::now()` → `clock_gettime` accounting for ~55% inclusive, plus `PPCTimer_getFromRDTSC()` at 3.7% self and `shared_mutex` try/unlock around 10%. That is a mostly-idle scene dominated by `__OSCheckSystemEvents` polling, so it is **not** representative of in-game load — but it independently confirms the planned `PPCTimer` rewrite (`cntfrq_el0` instead of a 3-second calibration, and dropping the global spinlock + 128-bit divide) is aimed at the right place.
+### How to measure here without fooling yourself
+
+Two traps already caught in this repo — both produce confident, wrong numbers:
+
+- **MK8's attract mode is not a fixed workload.** It cycles demo scenes with very different draw loads, so two traces taken minutes apart are not comparable, and neither are their sample counts. A first A/B here read as "4.4x faster" from sample counts; the real figure was 1.77x. To compare two implementations, **put a runtime toggle behind an env var, flip it every ~20 s inside one process**, discard any window that straddles a switch, and report the median of n≥5 per variant. Ranges that overlap mean you have not measured anything.
+- **`xcprof compare` reports share of CPU, not absolute CPU.** If total CPU drops, everything that survives looks like a "regression" — it reported 15 of them for a change that cut CPU nearly in half. Use it to see *which frames left the profile*; use absolute process `cputime` over a fixed wall-clock window for the magnitude.
+
+Prefer `ps -p <pid> -o cputime=` deltas over `%cpu` (a decaying average) for headline numbers.
+
+### Current baseline (2026-07-26, after the Stage 5 idle-wait fixes)
+
+MK8, locked 60 FPS, **~104% of one core** (was ~184% before `a7ed8ed`+`612d064`). The profile is now dominated by real draw work: `LatteCP_itIndirectBufferDepr` 30.1% incl, `DrawPassContext::executeDraw` 19.2%, `MetalRenderer::draw_execute` 16.3%, and **`renderCommandEncoderWithDescriptor` 6.4% + `AGXG14GFamilyRenderContext init` 5.7%** — encoder/render-pass churn is the largest remaining target.
+
+Historical note: an earlier baseline recorded `mach_continuous_time` at 47% self and attributed it to the graphics idle path. That attribution was wrong. The caller was `__OSThreadCoreIdle` → `__OSCheckSystemEvents`, an unbounded busy-wait in the *scheduler*. Both idle-wait bugs found in Stage 5 were invisible to the `hostInstrCount / ppcInstrCount` metric the plan ranked first — profile before picking a codegen target.
 
 For Metal work: `MTL_HUD_ENABLED=1` for a frame-time overlay, `MTL_DEBUG_LAYER=1` + `MTL_SHADER_VALIDATION=1` for validation, and the in-app Debug menu has GPU capture wired to `MTL::CaptureManager`.
 
