@@ -1,9 +1,9 @@
 name: Build check
 on:
-  # Manual trigger. Push-triggered runs do not fire on this repository: it is
-  # still a fork of cemu-project/Cemu, and GitHub gates a fork's Actions behind
-  # a one-time opt-in in the Actions tab. workflow_dispatch is an explicit user
-  # action and runs regardless, so this is also the way to get CI on demand.
+  # Manual trigger, for asking for a build without pushing. Push-triggered runs
+  # were dead for a while: GitHub disables a fork's workflows until the owner
+  # opts in from the Actions tab, and workflow_dispatch was the only event that
+  # bypassed it. That opt-in has since been given.
   workflow_dispatch:
   pull_request:
     paths-ignore:
