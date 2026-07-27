@@ -163,3 +163,16 @@ namespace tlm
 
 #define TLM_SCOPED_TIMER(area_, id_)                                                     \
 	::tlm::ScopedTimer tlmScopedTimer_##id_(::tlm::Area::area_, ::tlm::CounterId::id_)
+
+// Runtime-indexed variant, for counters that come in a per-core set. The set must be
+// declared consecutively in TelemetryCounters.def; the static_asserts below hold that.
+static_assert((size_t)tlm::CounterId::CpuCoreBusyNs1 == (size_t)tlm::CounterId::CpuCoreBusyNs0 + 1);
+static_assert((size_t)tlm::CounterId::CpuCoreBusyNs2 == (size_t)tlm::CounterId::CpuCoreBusyNs0 + 2);
+static_assert((size_t)tlm::CounterId::CpuCoreIdleNs1 == (size_t)tlm::CounterId::CpuCoreIdleNs0 + 1);
+static_assert((size_t)tlm::CounterId::CpuCoreIdleNs2 == (size_t)tlm::CounterId::CpuCoreIdleNs0 + 2);
+
+#define TLM_SCOPED_TIMER_CORE(area_, baseId_, coreIdx_)                                  \
+	::tlm::ScopedTimer tlmScopedTimerCore_##baseId_(                                     \
+		::tlm::Area::area_,                                                              \
+		(::tlm::CounterId)((size_t)::tlm::CounterId::baseId_ +                            \
+						   ((uint32_t)(coreIdx_) < 3u ? (uint32_t)(coreIdx_) : 0u)))

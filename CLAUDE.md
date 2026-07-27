@@ -112,6 +112,37 @@ essentially no variance. Something misses the 33.3 ms deadline and the software 
 than degrading smoothly. The gap between 18.7 ms of GPU work and a 49.9 ms frame is where the answer
 is, and it is not the renderer.
 
+**Nothing is saturated in the open world.** Full frame decomposition of Korok Forest, 49.90 ms
+frame / 20.04 fps, from `--telemetry`:
+
+| | ms/frame | % of frame |
+|---|---|---|
+| guest core 0 busy / idle | 7.94 / 41.86 | 16% / 84% |
+| guest core 1 busy / idle | 9.42 / 39.61 | 19% / 79% |
+| guest core 2 busy / idle | 9.53 / 37.39 | 19% / 75% |
+| **all 3 guest cores busy** | **26.89** | **18% of 3-core capacity** |
+| Latte thread: waiting on guest (`cp_idle`) | 20.28 | 41% |
+| Latte thread: waiting on GPU (`cp_fence`) | 15.58 | 31% |
+| GPU busy (asynchronous) | 19.16 | 38% |
+
+Guest cores ~18% busy, GPU ~38% busy, command processor ~72% waiting. **This is a latency and
+serialisation problem, not a throughput problem** — each stage waits on the previous one and nothing
+overlaps. Note the process still shows ~205% CPU in `ps`: most of that is spin-wait burn in the
+command processor, not useful work.
+
+Two numbers stand out as suspects, neither yet acted on:
+
+- **52,330 HLE calls per frame** (1.05M/s). Each is charged a flat 500 guest cycles
+  `[BackendAArch64.cpp:872]`, so the charge alone is **524M cycles/s = 42% of one Espresso core's
+  entire nominal budget**, and it is a guess (accuracy gap 2.4). It inflates timeslice consumption
+  directly.
+- **3,156 guest thread switches per frame** (63k/s). Average timeslice is ~5,200 cycles against a
+  45,000 quantum, so threads are blocking early rather than running out — consistent with heavy
+  synchronisation churn.
+
+`cpu.guest_cycles_retired` is reported but should not be read as a clean instruction count:
+`__OSStoreThread` zeroes it when `executedCycles < skippedCycles`, so it undercounts.
+
 **Do not divide BotW's GPU time by 16.67 ms.** BotW targets **30 FPS**, so the budget is 33.3 ms. An earlier revision of this file divided by the 60 FPS budget and concluded the GPU was at "108–147% of budget" and "is what caps the frame rate" — both wrong. At 15.6–18.5 ms against a ~35 ms wall-clock frame, the GPU sits at roughly **50% duty cycle and is not the limiter in this scene**: cutting GPU time 16% moved the frame rate not at all. Check what the title actually targets before computing a percentage.
 
 ### Driving a game without a controller (needed for the above)

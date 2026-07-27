@@ -40,13 +40,20 @@ TLM_COUNTER(GpuDrawableWaitNs,      "gpu.drawable_wait_ns",      "ns",    Gpu)
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)
 TLM_COUNTER(CpuThreadSwitches,      "cpu.thread_switches",       "count", Cpu)
-TLM_COUNTER(CpuFiberSwitches,       "cpu.fiber_switches",        "count", Cpu)
 TLM_COUNTER(CpuRecompilerEnter,     "cpu.recompiler_enter",      "count", Cpu)
 TLM_COUNTER(CpuRecompilerLeaveEarly,"cpu.recompiler_leave_early","count", Cpu)
 TLM_COUNTER(CpuHleCalls,            "cpu.hle_calls",             "count", Cpu)
+// Per-guest-core busy and idle. Keyed by spr.UPIR (the guest-visible core index), NOT by
+// t_assignedCoreIndex -- the two disagree in singlecore mode, where one host thread
+// rotates all three logical cores. These three must stay CONSECUTIVE and in this order:
+// the runtime-indexed timer adds the core number to the first id (static_assert in
+// Telemetry.h enforces it).
 TLM_COUNTER(CpuCoreBusyNs0,         "cpu.core0_busy_ns",         "ns",    Cpu)
 TLM_COUNTER(CpuCoreBusyNs1,         "cpu.core1_busy_ns",         "ns",    Cpu)
 TLM_COUNTER(CpuCoreBusyNs2,         "cpu.core2_busy_ns",         "ns",    Cpu)
+TLM_COUNTER(CpuCoreIdleNs0,         "cpu.core0_idle_ns",         "ns",    Cpu)
+TLM_COUNTER(CpuCoreIdleNs1,         "cpu.core1_idle_ns",         "ns",    Cpu)
+TLM_COUNTER(CpuCoreIdleNs2,         "cpu.core2_idle_ns",         "ns",    Cpu)
 
 // -------------------------------------------------------------------- Memory / caches
 TLM_COUNTER(MemBufCacheScans,       "mem.bufcache.scans",        "count", Mem)

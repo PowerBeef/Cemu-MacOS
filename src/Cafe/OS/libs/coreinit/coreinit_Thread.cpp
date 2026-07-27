@@ -7,6 +7,7 @@
 #include "Cafe/OS/libs/snd_core/ax.h"
 #include "Cafe/HW/Espresso/Debugger/GDBStub.h"
 #include "Cemu/Telemetry/Telemetry.h"
+#include "util/highresolutiontimer/HighResolutionTimer.h"
 #include "Cafe/HW/Espresso/Interpreter/PPCInterpreterInternal.h"
 #include "Cafe/HW/Espresso/Recompiler/PPCRecompiler.h"
 
@@ -1111,8 +1112,24 @@ namespace coreinit
 		thread->context.srr0 = hCPU->instructionPointer;
 	}
 
+	// Wall-clock at which each guest core last began running a thread. Only one thread
+	// runs per core at a time, so a plain array is sufficient; see the note above
+	// __OSLoadThread for why this is not a scope guard.
+	static uint64 s_coreRunStartNs[Espresso::CORE_COUNT] = {};
+
 	void __OSStoreThread(OSThread_t* thread, PPCInterpreter_t* hCPU)
 	{
+		if (tlm::AreaEnabled(tlm::Area::Cpu)) [[unlikely]]
+		{
+			uint32 coreIndex = (uint32)hCPU->spr.UPIR;
+			if (coreIndex < Espresso::CORE_COUNT && s_coreRunStartNs[coreIndex])
+			{
+				uint64 nowNs = HighResolutionTimer::now().getTick();
+				tlm::t_slot[(size_t)tlm::CounterId::CpuCoreBusyNs0 + coreIndex] +=
+					nowNs - s_coreRunStartNs[coreIndex];
+				s_coreRunStartNs[coreIndex] = 0;
+			}
+		}
 		if (thread->state == OSThread_t::THREAD_STATE::STATE_RUNNING)
 		{
 			thread->state = OSThread_t::THREAD_STATE::STATE_READY;
@@ -1137,14 +1154,21 @@ namespace coreinit
 		else
 			executedCycles -= hCPU->skippedCycles;
 		thread->totalCycles += (uint64)executedCycles;
+		TLM_ADD(Cpu, CpuGuestCyclesRetired, (uint64)executedCycles);
 		// store context and set current thread to null
 		__OSThreadStoreContext(hCPU, thread);
 		OSSetCurrentThread(OSGetCoreId(), nullptr);
 		PPCInterpreter_setCurrentInstance(nullptr);
 	}
 
+	// Starts the per-core busy clock. Paired with __OSStoreThread, this measures the time
+	// a core spends with a thread actually scheduled on it -- a thread that blocks inside
+	// an HLE call reaches __OSStoreThread via the scheduler, so blocked time is correctly
+	// excluded rather than counted as busy.
 	void __OSLoadThread(OSThread_t* thread, PPCInterpreter_t* hCPU, uint32 coreIndex)
 	{
+		if (tlm::AreaEnabled(tlm::Area::Cpu) && coreIndex < Espresso::CORE_COUNT) [[unlikely]]
+			s_coreRunStartNs[coreIndex] = HighResolutionTimer::now().getTick();
 		hCPU->LSQE = 1;
 		hCPU->PSE = 1;
 		hCPU->reservedMemAddr = MPTR_NULL;
@@ -1288,12 +1312,18 @@ namespace coreinit
 				// in singlecore mode only park once per full rotation, so the idle delay is
 				// paid once rather than once per guest core
 				if (!anyRunnable && (g_isMulticoreMode || coreIndex == 0))
+				{
+					TLM_SCOPED_TIMER_CORE(Cpu, CpuCoreIdleNs0, coreIndex);
 					g_coreRunQueueThreadCount[coreIndex].waitUntilNonZeroWithTimeout(kIdleCorePollInterval);
+				}
 			}
 			else
 			{
 				// wait for semaphore (only in multicore mode)
-				g_coreRunQueueThreadCount[t_assignedCoreIndex].waitUntilNonZero();
+				{
+					TLM_SCOPED_TIMER_CORE(Cpu, CpuCoreIdleNs0, t_assignedCoreIndex);
+					g_coreRunQueueThreadCount[t_assignedCoreIndex].waitUntilNonZero();
+				}
 				if (!sSchedulerActive.load(std::memory_order::relaxed))
 					Fiber::Switch(*t_schedulerFiber); // switch back to original thread to exit
 			}
@@ -1302,6 +1332,10 @@ namespace coreinit
 
 	void __OSThreadSwitchToNext()
 	{
+		// Counted here rather than in Fiber::Switch: CemuUtil links only CemuCommon, so
+		// reaching telemetry from the fiber layer would mean a new link edge. Every guest
+		// context switch originates here anyway.
+		TLM_INC(Cpu, CpuThreadSwitches);
 		cemu_assert_debug(__OSHasSchedulerLock());
 
 		OSHostThread* hostThread = (OSHostThread*)Fiber::GetFiberPrivateData();

@@ -12,6 +12,7 @@
 #include "Common/precompiled.h"
 #include "Common/cpu_features.h"
 #include "HW/Espresso/Interpreter/PPCInterpreterInternal.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "HW/Espresso/Interpreter/PPCInterpreterHelper.h"
 #include "HW/Espresso/PPCState.h"
 
@@ -866,6 +867,7 @@ void AArch64GenContext_t::conditionalJumpCycleCheck(IMLSegment* imlSegment)
 
 void* PPCRecompiler_virtualHLE(PPCInterpreter_t* ppcInterpreter, uint32 hleFuncId)
 {
+	TLM_INC(Cpu, CpuHleCalls);
 	void* prevRSPTemp = ppcInterpreter->rspTemp;
 	if (hleFuncId == 0xFFD0)
 	{

@@ -6,6 +6,7 @@
 #include "Cafe/OS/libs/coreinit/coreinit_CodeGen.h"
 #include "config/ActiveSettings.h"
 #include "config/LaunchSettings.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Common/ExceptionHandler/ExceptionHandler.h"
 #include "Common/cpu_features.h"
 #include "util/helpers/fspinlock.h"
@@ -132,9 +133,14 @@ void PPCRecompiler_enter(PPCInterpreter_t* hCPU, PPCREC_JUMP_ENTRY funcPtr)
 #else
 	PPCRecompiler_enterRecompilerCode((uint64)funcPtr, (uint64)hCPU);
 #endif
+	TLM_INC(Cpu, CpuRecompilerEnter);
 	// after leaving recompiler prematurely attempt to recompile the code at the new location
 	if (hCPU->remainingCycles > 0)
 	{
+		// Left with cycles to spare, i.e. the recompiler hit code it had not compiled.
+		// A high ratio of this to CpuRecompilerEnter means the guest spends its timeslice
+		// bouncing in and out of the JIT rather than running.
+		TLM_INC(Cpu, CpuRecompilerLeaveEarly);
 		PPCRecompiler_visitAddressNoBlock(hCPU->instructionPointer);
 	}
 }
