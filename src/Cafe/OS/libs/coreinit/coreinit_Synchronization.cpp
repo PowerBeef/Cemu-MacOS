@@ -1,4 +1,5 @@
 #include "Cafe/OS/common/OSCommon.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/OS/libs/coreinit/coreinit.h"
 #include "Cafe/OS/libs/coreinit/coreinit_Thread.h"
 #include "Cafe/OS/libs/coreinit/coreinit_Alarm.h"
@@ -44,6 +45,7 @@ namespace coreinit
 		else
 		{
 			// enter wait queue
+			TLM_INC(Cpu, CpuBlockEvent);
 			event->threadQueue.queueAndWait(OSGetCurrentThread());
 		}
 	}
@@ -101,6 +103,7 @@ namespace coreinit
 			data.threadQueue = &event->threadQueue;
 			data.hasTimeout = false;
 			auto hostAlarm = coreinit::OSHostAlarmCreate(OSGetTime() + coreinit::EspressoTime::ConvertNsToTimerTicks(timeout), 0, _OSWaitEventWithTimeoutHandler, &data);
+			TLM_INC(Cpu, CpuBlockEvent);
 			event->threadQueue.queueAndWait(OSGetCurrentThread());
 			coreinit::OSHostAlarmDestroy(hostAlarm);
 			if (data.hasTimeout)
@@ -254,6 +257,7 @@ namespace coreinit
 				if (failedAttempts >= 0x800)
 					cemuLog_log(LogType::Force, "Detected long-term contested OSLockMutex");
 				currentThread->waitingForMutex = mutex;
+				TLM_INC(Cpu, CpuBlockMutex);
 				mutex->threadQueue.queueAndWait(currentThread);
 				currentThread->waitingForMutex = nullptr;
 				failedAttempts++;
@@ -364,6 +368,7 @@ namespace coreinit
 		if (!mutex->threadQueue.isEmpty())
 			mutex->threadQueue.wakeupEntireWaitQueue(false);
 		// wait on condition
+		TLM_INC(Cpu, CpuBlockCond);
 		cond->threadQueue.queueAndWait(currentThread);
 		// reacquire mutex
 		OSLockMutexInternal(mutex);
@@ -400,6 +405,7 @@ namespace coreinit
 				semaphore->count = prevCount - 1;
 				return prevCount;
 			}
+			TLM_INC(Cpu, CpuBlockSemaphore);
 			semaphore->threadQueue.queueAndWait(OSGetCurrentThread());
 		}
 	}
@@ -608,6 +614,7 @@ namespace coreinit
 		if (!fastMutex->threadQueueSmall.isEmpty())
 			fastMutex->threadQueueSmall.wakeupEntireWaitQueue(false);
 		// wait on condition
+		TLM_INC(Cpu, CpuBlockCond);
 		fastCond->threadQueue.queueAndWait(OSGetCurrentThread());
 		// reacquire mutex
 		__OSUnlockScheduler();

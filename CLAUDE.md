@@ -132,13 +132,35 @@ command processor, not useful work.
 
 Two numbers stand out as suspects, neither yet acted on:
 
-- **52,330 HLE calls per frame** (1.05M/s). Each is charged a flat 500 guest cycles
-  `[BackendAArch64.cpp:872]`, so the charge alone is **524M cycles/s = 42% of one Espresso core's
-  entire nominal budget**, and it is a guess (accuracy gap 2.4). It inflates timeslice consumption
-  directly.
-- **3,156 guest thread switches per frame** (63k/s). Average timeslice is ~5,200 cycles against a
-  45,000 quantum, so threads are blocking early rather than running out — consistent with heavy
-  synchronisation churn.
+- **52,330 HLE calls per frame** (1.05M/s) that cost the guest **nothing**. The `-= 500` at
+  `BackendAArch64.cpp:874` applies *only* to the `0xFFD0` unresolved-import branch, which is 1.1% of
+  calls (0.47% of one core). Every real HLE call — including `FSReadFile`, which on hardware is an
+  IPC round trip to IOSU — advances guest time by zero cycles. That is a far larger timing
+  divergence than a wrong flat charge would be, and it is why guest threads can issue a million
+  library calls a second without consuming quantum.
+- **3,143 guest thread switches per frame** (63k/s), and the accounting closes:
+
+  | reason | per frame | share |
+  |---|---|---|
+  | **voluntary `OSYieldThread`** | **2,496** | **79.4%** |
+  | quantum exhausted | 330 | 10.5% |
+  | blocked on a primitive | 313 | 10.0% |
+  | unaccounted | 4 | 0.1% |
+
+  Of the blocks: sleep 52%, message queue 24%, event 15%, semaphore 9%. Almost nothing waits on
+  a mutex, and `GX2WaitForFlip` fires ~1/frame.
+
+  **Four out of five context switches are the guest voluntarily yielding.** That is BotW polling,
+  faithfully emulated — Cafe OS scheduling is cooperative (`docs/hardware/05`), so engine threads
+  poll and yield rather than block. On console a yield is a cheap scheduler call. Here every one is
+  a `ucontext` fiber switch, and `swapcontext` on Darwin/arm64 calls `sigprocmask` on both save and
+  restore. At the ~700 ns/switch estimate in `docs/porting/02-cpu-jit-memory.md` §4.2 that is
+  ~2.2 ms/frame, 4.4% of the frame, spent purely on switching.
+
+  That estimate is **not measured**, and cannot be measured with a scope timer: `Fiber::Switch` does
+  not return until the fiber is resumed, so timing around it captures descheduled time, not switch
+  cost — the same trap that produced 197 ms of "busy" in a 49.9 ms frame. Measuring it needs a probe
+  inside the fiber layer, which is in `CemuUtil` and cannot reach telemetry without a new link edge.
 
 `cpu.guest_cycles_retired` is reported but should not be read as a clean instruction count:
 `__OSStoreThread` zeroes it when `executedCycles < skippedCycles`, so it undercounts.

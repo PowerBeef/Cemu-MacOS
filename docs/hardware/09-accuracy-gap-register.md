@@ -138,13 +138,28 @@ correct answer.
 
 **Detectable:** no — it is a resolution floor, not an event.
 
-### 2.4 HLE calls cost a flat 500 guest cycles
+### 2.4 HLE calls advance guest time by nothing at all
 
-`[SRC BackendAArch64.cpp:872]`, regardless of whether the call is `OSGetTime` or a filesystem read.
-Titles that budget CPU time around library-call cost see a uniform, wrong figure.
+An earlier revision of this entry said HLE calls are "charged a flat 500 guest cycles". **That is
+wrong and the truth is worse.** The `remainingCycles -= 500` at `[SRC BackendAArch64.cpp:874]` sits
+*inside* the `hleFuncId == 0xFFD0` branch — the unresolved-import path. Every successfully resolved
+HLE call falls through to the `else` and is charged **zero**.
 
-**Detectable:** yes — the HLE histogram gives call counts per function; combined with host timing it
-shows where the flat charge is most wrong.
+Measured on BotW: 52,330 HLE calls per frame, of which 586 (1.1%) are unresolved. So the charge that
+does exist accounts for 0.47% of one Espresso core, not the 42% the flat-charge reading implied.
+
+The real divergence is that **a guest library call takes no emulated time**. `OSGetTime` costing
+nothing is harmless. `FSReadFile` costing nothing is not — on hardware that is an IPC round trip to
+IOSU on a separate processor (chapter 08), and a title that overlaps I/O with computation because it
+expects the call to be slow sees completely different behaviour here. The same applies to every
+`GX2` call, every `AX` call, and every socket operation.
+
+This also means guest threads can issue a million library calls a second without consuming any
+quantum, which distorts the scheduler: a thread that is *only* making HLE calls never runs out of
+timeslice.
+
+**Detectable:** yes, and now instrumented — `cpu.hle_calls` gives the rate and the per-function
+histogram gives the distribution. What is *not* yet modelled is any per-function cost.
 
 ### 2.5 Audio is paced by the idle loop, not a 3 ms clock — **measured, and not a problem here**
 

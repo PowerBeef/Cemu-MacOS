@@ -1,4 +1,5 @@
 #include "Cafe/OS/common/OSCommon.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "GX2_Command.h"
 #include "GX2_Event.h"
 #include "Cafe/HW/Latte/Core/LattePM4.h"
@@ -201,6 +202,7 @@ namespace GX2
 	void GX2WaitForVsync()
 	{
 		__OSLockScheduler();
+		TLM_INC(Cpu, CpuBlockGx2Vsync);
 		g_vsyncThreadQueue.GetPtr()->queueAndWait(coreinit::OSGetCurrentThread());
 		__OSUnlockScheduler();
 	}
@@ -210,6 +212,7 @@ namespace GX2
 		if ((sint32)(_swapEndianU32(LatteGPUState.sharedArea->flipRequestCountBE) == _swapEndianU32(LatteGPUState.sharedArea->flipExecuteCountBE)))
 			return; // dont wait if no flip is requested
 		__OSLockScheduler();
+		TLM_INC(Cpu, CpuBlockGx2Flip);
 		g_flipThreadQueue.GetPtr()->queueAndWait(coreinit::OSGetCurrentThread());
 		__OSUnlockScheduler();
 	}

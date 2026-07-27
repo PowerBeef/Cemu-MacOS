@@ -653,6 +653,7 @@ namespace coreinit
 
 	void OSYieldThread()
 	{
+		TLM_INC(Cpu, CpuYield);
 		PPCCore_switchToScheduler();
 	}
 
@@ -670,6 +671,7 @@ namespace coreinit
 		OSInitThreadQueue(_threadQueue.GetPointer());
 		__OSLockScheduler();
 		OSHostAlarm* hostAlarm = OSHostAlarmCreate(OSGetTime() + ticks, 0, _OSSleepTicks_alarmHandler, _threadQueue.GetPointer());
+		TLM_INC(Cpu, CpuBlockSleep);
 		_threadQueue.GetPointer()->queueAndWait(OSGetCurrentThread());
 		OSHostAlarmDestroy(hostAlarm);
 		__OSUnlockScheduler();
@@ -705,6 +707,7 @@ namespace coreinit
 		{
 			cemu_assert_debug(thread->joinQueue.isEmpty());
 			// thread still running, wait in join queue
+			TLM_INC(Cpu, CpuBlockJoin);
 			thread->joinQueue.queueAndWait(OSGetCurrentThread());
 		}
 		else if (thread->state != OSThread_t::THREAD_STATE::STATE_MORIBUND)
@@ -867,6 +870,7 @@ namespace coreinit
 	void OSSleepThread(OSThreadQueue* threadQueue)
 	{
 		__OSLockScheduler();
+		TLM_INC(Cpu, CpuBlockSleep);
 		threadQueue->queueAndWait(OSGetCurrentThread());
 		__OSUnlockScheduler();
 	}
@@ -1412,6 +1416,12 @@ namespace coreinit
 				while ((--hCPU->remainingCycles) >= 0)
 					PPCInterpreterSlim_executeInstruction(hCPU);
 			}
+
+			// Reached the bottom of the execution loop, i.e. the timeslice ran out rather
+			// than the thread blocking or yielding partway through. Closes the accounting
+			// against cpu.thread_switches.
+			if (hCPU->remainingCycles < 0)
+				TLM_INC(Cpu, CpuQuantumEnd);
 
 			// reset reservation
 			hCPU->reservedMemAddr = 0;

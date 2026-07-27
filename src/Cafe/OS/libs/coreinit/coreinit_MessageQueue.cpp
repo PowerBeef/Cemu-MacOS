@@ -1,4 +1,5 @@
 #include "Cafe/OS/common/OSCommon.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/OS/libs/coreinit/coreinit_MessageQueue.h"
 
 namespace coreinit
@@ -37,6 +38,7 @@ namespace coreinit
 		{
 			if ((flags & OS_MESSAGE_BLOCK))
 			{
+				TLM_INC(Cpu, CpuBlockMsgQueue);
 				msgQueue->threadQueueReceive.queueAndWait(OSGetCurrentThread());
 			}
 			else
@@ -86,6 +88,7 @@ namespace coreinit
 		{
 			if ((flags & OS_MESSAGE_BLOCK))
 			{
+				TLM_INC(Cpu, CpuBlockMsgQueue);
 				msgQueue->threadQueueSend.queueAndWait(OSGetCurrentThread());																  
 			}
 			else

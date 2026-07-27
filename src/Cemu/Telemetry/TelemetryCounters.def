@@ -54,6 +54,22 @@ TLM_COUNTER(CpuCoreBusyNs2,         "cpu.core2_busy_ns",         "ns",    Cpu)
 TLM_COUNTER(CpuCoreIdleNs0,         "cpu.core0_idle_ns",         "ns",    Cpu)
 TLM_COUNTER(CpuCoreIdleNs1,         "cpu.core1_idle_ns",         "ns",    Cpu)
 TLM_COUNTER(CpuCoreIdleNs2,         "cpu.core2_idle_ns",         "ns",    Cpu)
+// Why a guest thread stopped running. The cores sit ~80% idle in the open world, which
+// means threads are blocked rather than out of quantum -- these say on what. Counted at
+// OSThreadQueueInternal::queueAndWait call sites, the single choke point for blocking.
+TLM_COUNTER(CpuBlockEvent,          "cpu.block.event",           "count", Cpu)
+TLM_COUNTER(CpuBlockMutex,          "cpu.block.mutex",           "count", Cpu)
+TLM_COUNTER(CpuBlockCond,           "cpu.block.cond",            "count", Cpu)
+TLM_COUNTER(CpuBlockSemaphore,      "cpu.block.semaphore",       "count", Cpu)
+TLM_COUNTER(CpuBlockMsgQueue,       "cpu.block.msgqueue",        "count", Cpu)
+TLM_COUNTER(CpuBlockSleep,          "cpu.block.sleep",           "count", Cpu)
+TLM_COUNTER(CpuBlockJoin,           "cpu.block.join",            "count", Cpu)
+TLM_COUNTER(CpuBlockGx2Vsync,       "cpu.block.gx2_vsync",       "count", Cpu)
+TLM_COUNTER(CpuBlockGx2Flip,        "cpu.block.gx2_flip",        "count", Cpu)
+// Not a block: the guest voluntarily giving up the rest of its timeslice. Separated
+// because a yield-heavy workload and a block-heavy one need different fixes.
+TLM_COUNTER(CpuYield,               "cpu.yield",                 "count", Cpu)
+TLM_COUNTER(CpuQuantumEnd,          "cpu.quantum_end",           "count", Cpu)
 
 // -------------------------------------------------------------------- Memory / caches
 TLM_COUNTER(MemBufCacheScans,       "mem.bufcache.scans",        "count", Mem)
