@@ -574,6 +574,30 @@ LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 			// check if any GPU events happened
 			LatteTiming_HandleTimedVsync();
 			LatteAsyncCommands_checkAndExecute();
+
+			// Park rather than spin. Measured on BotW in Korok Forest: this loop turned
+			// 3.25 million times per frame -- 65 million/s -- for a single fence that
+			// stalls ~15.6ms every frame, burning a whole P-core. That core competes with
+			// the guest cores that have to write the value we are waiting for, so the
+			// spin plausibly lengthens its own wait.
+			//
+			// Same treatment as TCLGPUWaitForRBData: arm the exclusive monitor on the
+			// fence word with ldxr, then wfe until someone stores to it. Apple silicon
+			// implements a WFE timeout (~1.3us measured), so this cannot hang even if the
+			// guest never writes -- the loop still re-checks and still runs its periodic
+			// work, just ~1300x less often instead of at memory bandwidth.
+			//
+			// The compare at the top of this loop has already failed, so the wait
+			// condition is known unsatisfied here -- arm and sleep, no second compare
+			// needed. If the guest happens to write between that compare and the ldxr,
+			// the store is missed and we sleep until the WFE timeout instead; that costs
+			// at most ~1.3us once, against a wait that averages 15.6ms.
+			{
+				uint32 observed;
+				__asm__ volatile("ldxr %w0, [%1]" : "=r"(observed) : "r"(fencePtr) : "memory");
+				(void)observed;
+				__asm__ volatile("wfe" ::: "memory");
+			}
 		}
 		performanceMonitor.gpuTime_fenceTime.endMeasuring();
 	}
