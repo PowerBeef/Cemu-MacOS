@@ -90,6 +90,41 @@ def report(path, skip):
     print(f"    fps        median {1000/st['median']:7.2f}   mean {1000/st['mean']:7.2f}"
           f"   1%low {1000/st['p99']:7.2f}")
 
+    # Frame-time decomposition. The frame interval alone cannot distinguish "the work
+    # takes 50ms" from "the work takes 34ms and we missed a 33.3ms vsync deadline, so the
+    # pacer held the frame for a whole extra period". Those need opposite fixes, and the
+    # difference is the single most decision-relevant number in a run.
+    ser = series(header, frames, skip)
+    waits = ["gpu.cp_idle_ns", "gpu.cp_fence_ns", "gpu.wait_flip_ns", "gpu.drawable_wait_ns"]
+    have = [w for w in waits if w in ser and sum(ser[w]) > 0]
+    if have:
+        n = len(ms)
+        wait_ms = [sum(ser[w][i] for w in have) / 1e6 for i in range(n)]
+        work_ms = [max(0.0, ms[i] - wait_ms[i]) for i in range(n)]
+        wk = stats(work_ms)
+        print(f"\n    frame-time decomposition (median)")
+        print(f"      frame                          {st['median']:8.2f} ms")
+        for w in have:
+            s_w = stats([v / 1e6 for v in ser[w]])
+            print(f"      - {w:28s} {s_w['median']:8.2f} ms   p99 {s_w['p99']:8.2f} ms")
+        gpu = stats([v / 1e6 for v in ser.get("gpu.busy_ns", [0])])
+        print(f"      = work (frame minus waits)     {wk['median']:8.2f} ms   p99 {wk['p99']:8.2f} ms")
+        if gpu and gpu["median"]:
+            # NOT a subset of the line above: the GPU runs asynchronously, so its busy
+            # time overlaps the Latte thread's waits rather than nesting inside its work.
+            print(f"      (GPU busy, runs concurrently)  {gpu['median']:8.2f} ms")
+        # How far from the next vsync division? Wii U vsync is 59.94Hz.
+        vsync = 1000.0 / 59.94
+        for mult in (1, 2, 3, 4):
+            budget = vsync * mult
+            if wk["median"] <= budget:
+                head = (budget - wk["median"]) / budget * 100
+                print(f"      work fits in {mult} vsync period(s) = {budget:.2f} ms "
+                      f"with {head:.1f}% headroom")
+                break
+        else:
+            print(f"      work exceeds 4 vsync periods ({vsync*4:.2f} ms)")
+
     print("\n    per-frame counters (median, non-zero only)")
     for name, vals in series(header, frames, skip).items():
         s = stats(vals)

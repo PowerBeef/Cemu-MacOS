@@ -122,3 +122,44 @@ namespace tlm
 	} while (0)
 
 #define TLM_INC(area_, id_) TLM_ADD(area_, id_, 1)
+
+namespace tlm
+{
+	// Accumulates elapsed nanoseconds into a counter for the lifetime of the object.
+	//
+	// RAII rather than begin/end calls on purpose. The hand-rolled pair this replaces
+	// (LattePerfStatTimer in LatteCommandProcessor.cpp) brackets a region containing two
+	// early `return`s, so endMeasuring() is frequently never reached and the accumulated
+	// value is meaningless. A scope guard cannot be escaped that way.
+	class ScopedTimer
+	{
+	public:
+		ScopedTimer(Area area, CounterId id) : m_id(id), m_start(0)
+		{
+			if (AreaEnabled(area)) [[unlikely]]
+				m_start = ReadTick();
+		}
+		~ScopedTimer()
+		{
+			if (m_start) [[unlikely]]
+				t_slot[(size_t)m_id] += ReadTick() - m_start;
+		}
+		ScopedTimer(const ScopedTimer&) = delete;
+		ScopedTimer& operator=(const ScopedTimer&) = delete;
+
+	private:
+		// cntvct_el0 directly: ~0.44ns, versus ~18ns for clock_gettime_nsec_np. Scaled to
+		// nanoseconds by the same 125/3 Apple silicon timebase HighResolutionTimer uses.
+		static inline uint64_t ReadTick()
+		{
+			uint64_t c;
+			asm volatile("mrs %0, cntvct_el0" : "=r"(c));
+			return c * 125ull / 3ull;
+		}
+		CounterId m_id;
+		uint64_t m_start;
+	};
+}
+
+#define TLM_SCOPED_TIMER(area_, id_)                                                     \
+	::tlm::ScopedTimer tlmScopedTimer_##id_(::tlm::Area::area_, ::tlm::CounterId::id_)

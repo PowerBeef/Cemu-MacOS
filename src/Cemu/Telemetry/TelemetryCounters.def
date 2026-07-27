@@ -31,6 +31,11 @@ TLM_COUNTER(GpuShadersCompiledPS,   "gpu.shaders_compiled_ps",   "count", Gpu)
 TLM_COUNTER(GpuPipelinesCompiled,   "gpu.pipelines_compiled",    "count", Gpu)
 TLM_COUNTER(GpuCpIdleNs,            "gpu.cp_idle_ns",            "ns",    Gpu)
 TLM_COUNTER(GpuCpFenceNs,           "gpu.cp_fence_ns",           "ns",    Gpu)
+// Where a frame's wall-clock goes when the GPU is not busy. The reporter subtracts these
+// from the frame interval to get the underlying *work* time, which is what says how far
+// a scene is from the vsync quantisation cliff.
+TLM_COUNTER(GpuWaitFlipNs,          "gpu.wait_flip_ns",          "ns",    Gpu)
+TLM_COUNTER(GpuDrawableWaitNs,      "gpu.drawable_wait_ns",      "ns",    Gpu)
 
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)

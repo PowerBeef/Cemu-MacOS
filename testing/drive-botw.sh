@@ -1,6 +1,11 @@
 #!/bin/bash
-# Boot Breath of the Wild and drive it, unattended, to a fixed heavy scene:
-# Link standing still in the Shrine of Resurrection.
+# Boot Breath of the Wild and drive it, unattended, and load the most recent save.
+#
+# Which scene you land in depends on the save installed at
+#   ~/Library/Application Support/Cemu/mlc01/usr/save/00050000/101c9400/user/80000001
+# Two are useful:
+#   Shrine of Resurrection - 30 fps, GPU 14ms, the stable A/B reference
+#   Korok Forest           - 20 fps, GPU 18.7ms, dense foliage, the open-world case
 #
 #   ./testing/drive-botw.sh [seconds_to_settle]
 #
@@ -101,13 +106,17 @@ hold() {
 
 raise; sleep 2
 
-# 'z' is the key mapped to the A button above.
+# 'z' is A, 'x' is B (mappings 1 and 2 above).
 # title screen -> main menu
 press z; sleep 6
+# Installing the DLC adds a "Downloaded DLC" entry, and on a save with DLC progress the
+# blind A-press above lands on it instead of the menu. B backs out; harmless if we were
+# never there.
+press x; sleep 4
 # main menu: "Continue" is the default selection when a save exists
 press z; sleep 6
-# save-slot list: the autosave is preselected
-press z; sleep 10
+# save-slot list: the most recent save is preselected
+press z; sleep 20
 # dismiss anything that follows
 press z
 

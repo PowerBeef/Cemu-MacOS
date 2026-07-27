@@ -1,4 +1,5 @@
 #include "Cafe/HW/Latte/Renderer/Metal/MetalLayerHandle.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/HW/Latte/Renderer/Metal/MetalLayer.h"
 
 #include "gui/interface/WindowSystem.h"
@@ -29,7 +30,12 @@ bool MetalLayerHandle::AcquireDrawable()
     if (m_drawable)
         return true;
 
-    m_drawable = m_layer->nextDrawable();
+    {
+        // nextDrawable() blocks when every drawable is still in flight. Separated from the
+        // vsync wait because the two have completely different fixes.
+        TLM_SCOPED_TIMER(Gpu, GpuDrawableWaitNs);
+        m_drawable = m_layer->nextDrawable();
+    }
     if (!m_drawable)
     {
         cemuLog_log(LogType::Force, "layer {} failed to acquire next drawable", (void*)this);

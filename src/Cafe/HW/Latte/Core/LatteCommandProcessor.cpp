@@ -180,6 +180,10 @@ uint32 LatteCP_readU32Deprc()
 			return cmdWord;
 
 		g_renderer->NotifyLatteCommandProcessorIdle(); // let the renderer know in case it wants to flush any commands
+		// NOTE: the LattePerfStatTimer pair below is escaped by the two early returns in
+		// this block, so its accumulated value is not trustworthy. The scoped timer is,
+		// because the destructor runs on those paths too.
+		TLM_SCOPED_TIMER(Gpu, GpuCpIdleNs);
 		performanceMonitor.gpuTime_idleTime.beginMeasuring();
 		// no command data available -- park the core until the producer writes, rather than
 		// spinning on it (see TCLGPUWaitForRBData; wfe has its own timeout, so this still
@@ -475,6 +479,7 @@ LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 	if ((word0 & 0x10) != 0)
 	{
 		// wait for memory address
+		TLM_SCOPED_TIMER(Gpu, GpuCpFenceNs);
 		performanceMonitor.gpuTime_fenceTime.beginMeasuring();
 		while (true)
 		{
@@ -958,6 +963,7 @@ LatteCMDPtr LatteCP_itHLEWaitForFlip(LatteCMDPtr cmd, uint32 nWords)
 	cemu_assert_debug(nWords == 1);
 	MPTR reserved1 = LatteReadCMD(); // reserved
 	// wait for flip
+	TLM_SCOPED_TIMER(Gpu, GpuWaitFlipNs);
 	uint32 currentFlipCount = LatteGPUState.flipCounter;
 	while (true)
 	{
