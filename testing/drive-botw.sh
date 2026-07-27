@@ -9,11 +9,13 @@
 #
 #   ./testing/drive-botw.sh [seconds_to_settle]
 #
-# Prints the pid on success. That scene is the graphics measurement target for
-# this fork -- it is GPU-bound (108-147% of a 16.67ms budget) and exactly
-# repeatable (draws/frame holds at 4838.8 +/- 0.3), which no MK8 scene is.
+# Prints the pid on success. Either scene is far more repeatable than anything MK8
+# offers, which is why BotW is the measurement target. Note that NEITHER is
+# GPU-bound: measured GPU duty cycle is ~42% (shrine) and ~37% (forest). An
+# earlier version of this comment claimed 108-147% of budget; that divided by a
+# 60fps budget for a 30fps title. See docs/hardware/ and CLAUDE.md.
 #
-# No controller, no save file and no human input required. This works because:
+# No controller and no human input required. This works because:
 #   - controllerProfiles/ ships empty, so we write controller0.xml ourselves;
 #     the GUI combo boxes do not respond to accessibility scripting, the file does.
 #   - button values in that file are macOS virtual key codes, since
