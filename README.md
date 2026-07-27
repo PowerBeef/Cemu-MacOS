@@ -26,9 +26,10 @@ the Rosetta half is gone now that upstream builds for arm64, the MoltenVK half i
 This fork exists to delete those layers rather than apologise for them.
 
 > [!IMPORTANT]
-> **Status: early.** It builds, boots and plays. It has been verified against one commercial title
-> on one machine (Apple M2, macOS 26.5). Broad game compatibility has **not** been tested and
-> should not be assumed. There are no releases yet; build it yourself.
+> **Status: early.** It builds, boots and plays. It has been verified against two commercial titles
+> — Mario Kart 8 and Breath of the Wild — on one machine: an **8 GB M2 Mac mini**, macOS 26.5.
+> Broad game compatibility has **not** been tested and should not be assumed. There are no releases
+> yet; build it yourself.
 
 |                         | Upstream Cemu                  | TesseraEmu                       |
 | ----------------------- | ------------------------------ | -------------------------------- |
@@ -113,9 +114,11 @@ codebase structurally could not use.
 - **Realtime-safe audio.** The mixer took a mutex on CoreAudio's realtime thread — an unfixable
   priority inversion and a glitch source. Replaced with a lock-free SPSC ring, plus a latency
   request above the device's own floor.
-- **Two idle spins removed.** The scheduler stopped burning a P-core on clock reads, and the GPU
-  command thread now parks with `wfe` instead of spinning: **−20% total process CPU**
-  (205.9% → 165.0%) at an identical frame rate.
+- **Three idle spins removed.** The scheduler stopped burning a P-core on clock reads, and the GPU
+  command thread now parks on `wfe` instead of spinning for ring-buffer data: together **1.77× less
+  total process CPU** on Mario Kart 8 (183% → 104% of one core) at an identical 60 FPS. The third —
+  a busy-wait on a single guest fence — cut a further **20%** in Breath of the Wild, and is
+  [below](#measuring-instead-of-guessing).
 - **Native macOS integration.** Screensaver inhibition through `NSProcessInfo` — the SDL version
   was disabled on macOS because it initialised `SDL_INIT_VIDEO` inside a wx app that already owns
   `NSApplication`; SDL input moved off a 5 ms main-thread timer onto its own thread; a native
@@ -158,6 +161,10 @@ Every measurement lands in `testing/golden/baseline.tsv`, alongside a window-onl
 | BotW, shrine interior | `2c09604` | 28.63 |
 | BotW, Korok Forest    | `5933733` | 20.05 |
 
+Everything above was measured on one machine — an **8 GB M2 Mac mini** (4P+4E, 16 KB pages,
+macOS 26.5) — against each title's own target frame rate: 60 FPS for Mario Kart 8, 30 for Breath of
+the Wild. Numbers from a different Apple Silicon part are not comparable to these.
+
 Those open-world numbers are not good yet, and they are published rather than hidden. The harness
 exists so that the next change to them is attributable.
 
@@ -165,7 +172,7 @@ exists so that the next change to them is attributable.
 
 ## A hardware reference, not a wiki dump
 
-[`docs/hardware/`](/docs/hardware/) is a 16,000-word, ten-chapter reference on the Wii U's actual
+[`docs/hardware/`](/docs/hardware/) is a 16,000-word, nine-chapter reference on the Wii U's actual
 silicon and system software: the Espresso tri-core PowerPC 750CL at 1,243.125 MHz with its paired
 singles and locked cache, Latte's R700-derived GPU7, the GX2 write-gather → PM4 → ring-buffer
 command path, Cafe OS's *cooperative* scheduler, the audio DSP, and a register of every known
