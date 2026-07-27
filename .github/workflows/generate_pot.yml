@@ -26,9 +26,12 @@ jobs:
           sudo apt update -qq
           sudo apt install -y gettext
 
+      # The catalog is still named "cemu": renaming it would orphan every .mo
+      # file under bin/resources/ across 19 locales for no benefit, so CemuApp
+      # still loads the "cemu" catalog and this template has to match it.
       - name: "Generate POT file using xgettext"
         run: >
-          find src -name *.cpp -o -name *.hpp -o -name *.h | 
+          find src \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) |
           xargs xgettext --from-code=utf-8 -w 100
           --keyword="_" --keyword="wxTRANSLATE" --keyword="wxPLURAL:1,2"
           --keyword="_tr" --keyword="TR_NOOP"

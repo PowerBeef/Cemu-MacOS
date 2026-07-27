@@ -54,17 +54,34 @@ git submodule update --init --depth 1 \
 
 ### App bundle
 
-`-DMACOS_BUNDLE=ON` produces `bin/TesseraEmu_<config>.app` instead of a raw executable, and signs
-it as part of the build: hardened runtime, ad-hoc signature, and the
-`com.apple.security.cs.allow-jit` entitlement from `dist/macos/TesseraEmu.entitlements`
-(`TesseraEmu.debug.entitlements`, which adds `get-task-allow` so `lldb` can attach, for Debug and
-RelWithDebInfo).
+`-DMACOS_BUNDLE=ON` produces `bin/TesseraEmu.app` instead of a raw executable and signs it as part
+of the build: hardened runtime, ad-hoc signature by default, and `com.apple.security.cs.allow-jit`.
 
 **That entitlement is not optional.** The PowerPC recompiler emits code at runtime through
 `mmap(..., MAP_JIT)`, which the hardened runtime refuses without it. No Apple Developer Program
 membership is needed for local development — ad-hoc signing is sufficient. Set
 `CEMU_CODESIGN_IDENTITY` to a Developer ID for a distributable build, and
 `CEMU_CODESIGN_TIMESTAMP=--timestamp` to have it timestamped.
+
+Which of the three files in `dist/macos/` is used depends on **two independent** things, and the
+build prints its choice at configure time:
+
+| Configuration | File | Adds beyond `allow-jit` |
+|---|---|---|
+| Debug, RelWithDebInfo | `TesseraEmu.debug.entitlements` | `get-task-allow` (lets `lldb` attach) and `disable-library-validation` |
+| Release, ad-hoc identity | `TesseraEmu.adhoc.entitlements` | `disable-library-validation` |
+| Release, real identity | `TesseraEmu.entitlements` | nothing |
+
+`disable-library-validation` tracks the **signing identity**, not the build type. An ad-hoc
+signature has no Team ID, so library validation refuses the bundle's own
+`Contents/Frameworks/libusb-1.0.0.dylib` with *"mapping process and mapped file (non-platform) have
+different Team IDs"* and dyld kills the process at launch — a bundle that builds, signs and passes
+`codesign --verify` but will not start. A Developer ID build gives both the same Team ID and does
+not need it, which is why the distribution file omits it.
+
+When editing any of these: a double hyphen is illegal inside an XML comment, AMFI rejects the whole
+file rather than warning (`AMFIUnserializeXML: syntax error`), and `plutil -lint` does **not** catch
+it. `xmllint --noout dist/macos/*.entitlements` does, and CI runs exactly that.
 
 Use `MACOS_BUNDLE=OFF` for day-to-day work; bundle builds are for signing and entitlement testing.
 

@@ -197,11 +197,26 @@ if (MACOS_BUNDLE)
 	#     for ad-hoc builds and turned on by CI
 	set(CEMU_CODESIGN_IDENTITY "-" CACHE STRING "codesign identity; '-' means ad-hoc")
 	set(CEMU_CODESIGN_TIMESTAMP "--timestamp=none" CACHE STRING "codesign timestamp flag")
+	# Two independent axes decide the entitlements, and conflating them produces a
+	# bundle that builds, signs, verifies and then refuses to launch:
+	#   * get-task-allow depends on the BUILD TYPE (lldb needs it; it also fails
+	#     notarization outright, so it must never reach a distributed build)
+	#   * disable-library-validation depends on the SIGNING IDENTITY. An ad-hoc
+	#     signature carries no Team ID, so library validation rejects our own
+	#     Contents/Frameworks/libusb-1.0.0.dylib with "mapping process and mapped
+	#     file (non-platform) have different Team IDs" and dyld kills the process
+	#     at launch. A Developer ID build gives both the same Team ID and does not
+	#     need it.
+	# Selecting on build type alone meant an ad-hoc Release bundle -- exactly what
+	# CI produces -- could not start.
 	if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 		set(CEMU_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/dist/macos/TesseraEmu.debug.entitlements")
+	elseif (CEMU_CODESIGN_IDENTITY STREQUAL "-")
+		set(CEMU_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/dist/macos/TesseraEmu.adhoc.entitlements")
 	else()
 		set(CEMU_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/dist/macos/TesseraEmu.entitlements")
 	endif()
+	message(STATUS "codesign: identity '${CEMU_CODESIGN_IDENTITY}', entitlements ${CEMU_ENTITLEMENTS}")
 
 	if (ENABLE_LIBUSB)
 		add_custom_command(TARGET CemuBin POST_BUILD

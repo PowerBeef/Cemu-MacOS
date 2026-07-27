@@ -22,6 +22,10 @@ out/
 .cache/
 bin/TesseraEmu_*
 bin/TesseraEmu_*.exe
+# bundle builds: the .app is covered by *.app above, but the DMG that CI and a
+# local MACOS_BUNDLE=ON build produce is not, and it is 29 MB
+bin/*.dmg
+bin/dmg/
 
 # TesseraEmu bin files
 bin/otp.bin

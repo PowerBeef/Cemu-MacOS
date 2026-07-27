@@ -7,10 +7,15 @@
 	  entitlement is what permits mmap(..., MAP_JIT), which is how xbyak_aarch64
 	  allocates its code buffers.
 
+	  Note for editors: a double hyphen is illegal inside an XML comment, and
+	  AMFI's parser rejects the whole file rather than warning. One in the prose
+	  below is what made every bundle build fail with "AMFIUnserializeXML: syntax
+	  error near line 22", so keep punctuation to commas and semicolons here.
+
 	  Deliberately NOT present:
 	    com.apple.security.get-task-allow
 	        the debuggable-process entitlement. Its presence causes notarization to
-	        fail outright. See Cemu.debug.entitlements for local debugging.
+	        fail outright. See TesseraEmu.debug.entitlements for local debugging.
 	    com.apple.security.cs.allow-unsigned-executable-memory
 	        permits plain RWX mappings without MAP_JIT. On arm64 that is refused by
 	        the kernel regardless, so it grants nothing and only widens the attack
@@ -19,8 +24,8 @@
 	        existed to load an unsigned libMoltenVK.dylib. Vulkan is gone, and a
 	        Developer ID build signs the executable and libusb with the same Team
 	        ID, so library validation is satisfied without it. Note this does NOT
-	        hold for ad-hoc signing, which has no Team ID -- see
-	        Cemu.debug.entitlements.
+	        hold for ad-hoc signing, which has no Team ID; see
+	        TesseraEmu.debug.entitlements.
 	-->
 	<key>com.apple.security.cs.allow-jit</key>
 	<true/>

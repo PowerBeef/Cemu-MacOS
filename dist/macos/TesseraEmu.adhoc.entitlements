@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Release builds signed ad-hoc: CI artifacts, and any local MACOS_BUNDLE=ON
+	  build by someone without a Developer ID. Not for distribution; an ad-hoc
+	  signature is rejected by Gatekeeper on any machine but the one that built it.
+
+	  Note for editors: a double hyphen is illegal inside an XML comment and AMFI
+	  rejects the entire file rather than warning, so keep punctuation here to
+	  commas and semicolons. plutil -lint does not catch it; xmllint does.
+	-->
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+
+	<!--
+	  Required by ad-hoc signing specifically, not by the Release configuration.
+	  Library validation demands that a loaded dylib share the process's Team ID,
+	  and an ad-hoc signature has no Team ID at all, so
+	  Contents/Frameworks/libusb-1.0.0.dylib is refused with "mapping process and
+	  mapped file (non-platform) have different Team IDs" and dyld terminates the
+	  process at launch, even though the build signed that dylib itself moments
+	  earlier.
+
+	  TesseraEmu.entitlements, used when CEMU_CODESIGN_IDENTITY names a real
+	  identity, deliberately omits this: a Developer ID build gives the executable
+	  and the dylib the same Team ID and library validation is satisfied.
+	-->
+	<key>com.apple.security.cs.disable-library-validation</key>
+	<true/>
+
+	<!--
+	  Deliberately NOT present: com.apple.security.get-task-allow. It makes the
+	  process debuggable and fails notarization outright. It belongs only in
+	  TesseraEmu.debug.entitlements.
+	-->
+</dict>
+</plist>
