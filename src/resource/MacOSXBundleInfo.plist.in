@@ -35,10 +35,10 @@
 	     usage description macOS terminates the process on first access rather than
 	     merely denying it. -->
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Cemu uses Bluetooth to connect Wii Remotes.</string>
+	<string>TesseraEmu uses Bluetooth to connect Wii Remotes.</string>
 	<!-- DSU motion servers bind UDP on the local network, which is gated by TCC. -->
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Cemu uses the local network to receive motion data from DSU controller servers.</string>
+	<string>TesseraEmu uses the local network to receive motion data from DSU controller servers.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>${MACOSX_BUNDLE_COPYRIGHT}</string>
     	<key>LSApplicationCategoryType</key>

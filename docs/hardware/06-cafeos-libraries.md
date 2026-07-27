@@ -70,7 +70,7 @@ uint32 opcode = (1 << 26) | functionIndex;
 memory_write<uint32>(codeAddr, opcode);            // [SRC rpl.cpp:771-776]
 ```
 
-**PowerPC primary opcode 1 is unallocated on real hardware**, so Cemu repurposes it as the HLE trap
+**PowerPC primary opcode 1 is unallocated on real hardware**, so TesseraEmu repurposes it as the HLE trap
 (`Espresso::PrimaryOpcode::VIRTUAL_HLE = 1` `[SRC EspressoISA.h:29]`). The low 16 bits carry the
 table index. A guest `bl` into an imported function therefore executes exactly one instruction that
 does not exist on PowerPC, and both execution engines intercept it:

@@ -10,7 +10,9 @@
 #include "GameProfile/GameProfile.h"
 #include "util/helpers/helpers.h"
 
-#define METAL_AIR_CACHE_NAME "Cemu_AIR_cache"
+// names a RAM disk mounted at /Volumes/, so it is user-visible in Finder. Every use
+// below is currently inside a commented-out block, which is why renaming it is free.
+#define METAL_AIR_CACHE_NAME "TesseraEmu_AIR_cache"
 #define METAL_AIR_CACHE_PATH "/Volumes/" METAL_AIR_CACHE_NAME
 #define METAL_AIR_CACHE_SIZE (16 * 1024 * 1024)
 #define METAL_AIR_CACHE_BLOCK_COUNT (METAL_AIR_CACHE_SIZE / 512)

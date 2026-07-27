@@ -2,7 +2,7 @@
 # Boot Breath of the Wild and drive it, unattended, and load the most recent save.
 #
 # Which scene you land in depends on the save installed at
-#   ~/Library/Application Support/Cemu/mlc01/usr/save/00050000/101c9400/user/80000001
+#   ~/Library/Application Support/TesseraEmu/mlc01/usr/save/00050000/101c9400/user/80000001
 # Two are useful:
 #   Shrine of Resurrection - 30 fps, GPU 14ms, the stable A/B reference
 #   Korok Forest           - 20 fps, GPU 18.7ms, dense foliage, the open-world case
@@ -26,9 +26,9 @@ set -euo pipefail
 
 SETTLE="${1:-90}"
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
-CEMU_DIR="$HOME/Library/Application Support/Cemu"
+CEMU_DIR="$HOME/Library/Application Support/TesseraEmu"
 ROM="$REPO/Roms/Legend of Zelda, The - Breath of the Wild (USA) (En,Fr,Es).wux"
-BIN="$REPO/bin/Cemu_relwithdebinfo"
+BIN="$REPO/bin/TesseraEmu_relwithdebinfo"
 
 [ -f "$ROM" ] || { echo "missing ROM: $ROM" >&2; exit 1; }
 [ -x "$BIN" ] || { echo "missing binary: $BIN (build first)" >&2; exit 1; }
@@ -75,7 +75,7 @@ cat > "$CEMU_DIR/controllerProfiles/controller0.xml" <<'XML'
 </emulated_controller>
 XML
 
-pkill -f Cemu_relwithdebinfo 2>/dev/null || true
+pkill -f TesseraEmu_relwithdebinfo 2>/dev/null || true
 sleep 2
 : > "$CEMU_DIR/log.txt"
 
@@ -86,12 +86,12 @@ sleep 2
 nohup "$BIN" -g "$ROM" ${CEMU_EXTRA_ARGS:-} >/dev/null 2>&1 &
 sleep 100   # boot + initial shader compilation
 
-PID=$(pgrep -f Cemu_relwithdebinfo | head -1)
-[ -n "$PID" ] || { echo "Cemu failed to start" >&2; exit 1; }
+PID=$(pgrep -f TesseraEmu_relwithdebinfo | head -1)
+[ -n "$PID" ] || { echo "TesseraEmu failed to start" >&2; exit 1; }
 
 raise() { osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $PID) to true" >/dev/null 2>&1 || true; }
 
-# Press a mapped button. Must HOLD it: Cemu samples keystate once per emulated
+# Press a mapped button. Must HOLD it: TesseraEmu samples keystate once per emulated
 # frame (33ms at 30fps), so a bare `key code` tap is often shorter than one
 # sample and silently does nothing. This was the single biggest time sink in
 # getting scripted input to work.

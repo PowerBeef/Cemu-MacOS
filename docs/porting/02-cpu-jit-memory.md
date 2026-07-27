@@ -2,7 +2,7 @@
      Findings verified against the source tree at commit b8f2cf4 and the
      macOS 26.5.2 / Xcode 26.6 SDK on an Apple M2. See 00-master-plan.md. -->
 
-# CPU / JIT / MEMORY workstream — Cemu-MacOS arm64 hard fork
+# CPU / JIT / MEMORY workstream — TesseraEmu arm64 hard fork
 
 ## Verification notes from my own read
 
@@ -564,9 +564,9 @@ The `ldp`/`stp` fusion from 2.5 deliberately lives in the backend emit loop, not
 
 ### Critical Files for Implementation
 
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp`
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Espresso/Recompiler/PPCRecompilerImlGenFPU.cpp`
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Espresso/Recompiler/IML/IMLInstruction.h`
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Espresso/Recompiler/PPCRecompiler.cpp`
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Espresso/PPCTimer.cpp`
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/util/Fiber/FiberUnix.cpp`
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp`
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Espresso/Recompiler/PPCRecompilerImlGenFPU.cpp`
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Espresso/Recompiler/IML/IMLInstruction.h`
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Espresso/Recompiler/PPCRecompiler.cpp`
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Espresso/PPCTimer.cpp`
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/util/Fiber/FiberUnix.cpp`

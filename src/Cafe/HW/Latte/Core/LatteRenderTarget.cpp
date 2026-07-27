@@ -627,7 +627,7 @@ bool LatteMRT::UpdateCurrentFBO()
 	}
 	if (sLatteRenderTargetState.currentEffectiveSize.width == 0)
 	{
-		debug_printf("Render target effective size is 0. May indicate a bug in Cemu or invalid color/depth buffers\n");
+		debug_printf("Render target effective size is 0. May indicate a bug in TesseraEmu or invalid color/depth buffers\n");
 		return false;
 	}
 	return true;

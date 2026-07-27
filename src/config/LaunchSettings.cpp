@@ -70,7 +70,7 @@ bool LaunchSettings::HandleCommandline(const std::vector<std::wstring>& args)
 	po::options_description desc{ "Launch options" };
 	desc.add_options()
 		("help,h", "This help screen")
-		("version,v", "Displays the version of Cemu")
+		("version,v", "Displays the version of TesseraEmu")
 #if !BOOST_OS_WINDOWS
 		("verbose", "Log to stdout")
 #endif
@@ -90,7 +90,7 @@ bool LaunchSettings::HandleCommandline(const std::vector<std::wstring>& args)
 
 		("force-interpreter", po::value<bool>()->implicit_value(true), "Force interpreter CPU emulation, disables recompiler. Useful for debugging purposes where you want to get accurate memory accesses and stack traces.")
 		("force-multicore-interpreter", po::value<bool>()->implicit_value(true), "Force multi-core interpreter CPU emulation, disables recompiler. Only useful for getting stack traces, but slightly faster than the single-core interpreter mode.")
-		("enable-gdbstub", po::value<bool>()->implicit_value(true), "Enable GDB stub to debug executables inside Cemu using an external debugger")
+		("enable-gdbstub", po::value<bool>()->implicit_value(true), "Enable GDB stub to debug executables inside TesseraEmu using an external debugger")
 
 		("telemetry", po::value<std::string>(), "Record per-frame telemetry to the given file (JSONL). Off unless specified.")
 		("telemetry-label", po::value<std::string>(), "Scene label recorded in the telemetry run header, e.g. 'botw-shrine'")

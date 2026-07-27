@@ -1,6 +1,6 @@
-# Cemu-AS — Wii U emulator, native to Apple Silicon
+# TesseraEmu — Wii U emulator, native to Apple Silicon
 
-A hard fork of [Cemu](https://github.com/cemu-project/Cemu) retargeted exclusively at **Apple Silicon and macOS 26**.
+TesseraEmu is a hard fork of [Cemu](https://github.com/cemu-project/Cemu), retargeted exclusively at **Apple Silicon and macOS 26**. It is not affiliated with or endorsed by the Cemu project. Licensed under MPL-2.0, as Cemu is — see [LICENSE.txt](/LICENSE.txt).
 
 Upstream Cemu is portable across Windows, Linux and macOS, and its macOS build has historically shipped with a disclaimer about "degraded performance due to the use of MoltenVK and Rosetta for ARM Macs". This fork drops portability in order to remove exactly those compromises: it is arm64-only, Metal-only, and targets a single OS version.
 
@@ -60,10 +60,10 @@ See [BUILD.md](/BUILD.md) for more detail and [CLAUDE.md](/CLAUDE.md) for archit
 
 ## Running
 
-Cemu needs `keys.txt` in its data directory (`~/Library/Application Support/Cemu/`) containing the Wii U common key and the disc key for each title. These are derived from your own console and are not distributed here.
+TesseraEmu needs `keys.txt` in its data directory (`~/Library/Application Support/TesseraEmu/`) containing the Wii U common key and the disc key for each title. These are derived from your own console and are not distributed here.
 
 ```sh
-./bin/Cemu_relwithdebinfo --verbose -g /path/to/title.wux
+./bin/TesseraEmu_relwithdebinfo --verbose -g /path/to/title.wux
 ```
 
 ## Design notes
@@ -80,7 +80,7 @@ This is a hard fork and diverges deliberately. Bug fixes here that are not arm64
 
 ## License
 
-Cemu is licensed under [Mozilla Public License 2.0](/LICENSE.txt). Files in the `dependencies` directory are covered by the licenses of the original code, as are some individual files in `src` where noted in their headers.
+TesseraEmu, like the Cemu code it derives from, is licensed under the [Mozilla Public License 2.0](/LICENSE.txt). MPL-2.0 grants no trademark rights, which is why this fork carries its own name rather than Cemu's; copyright in the inherited code remains with its authors and the licence notices are unchanged. Files in the `dependencies` directory are covered by the licenses of the original code, as are some individual files in `src` where noted in their headers.
 
 ## Upstream links
 

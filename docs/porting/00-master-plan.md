@@ -1,8 +1,8 @@
-# Cemu-AS — an Apple Silicon / macOS 26 native fork of Cemu
+# TesseraEmu — an Apple Silicon / macOS 26 native fork of Cemu
 
 ## Context
 
-`/Users/patricedery/Coding_Projects/Cemu-MacOS` is a clone of PowerBeef/Cemu-MacOS — a macOS fork of the Cemu Wii U emulator (~333k LOC C++20). It carries a working AArch64 recompiler and a ~7,300-LOC Metal renderer, but it is fundamentally still a *port*: it builds for x86_64 and arm64, ships three renderer backends, defaults to Vulkan-over-MoltenVK on macOS, targets macOS 13.4, and shows a startup dialog telling the user the macOS build is "purely experimental… degraded performance due to the use of MoltenVk and Rosetta for ARM Macs."
+`/Users/patricedery/Coding_Projects/TesseraEmu` began as PowerBeef/Cemu-MacOS (renamed to PowerBeef/TesseraEmu once the fork had diverged enough to warrant its own identity) — a macOS fork of the Cemu Wii U emulator (~333k LOC C++20). It carries a working AArch64 recompiler and a ~7,300-LOC Metal renderer, but it is fundamentally still a *port*: it builds for x86_64 and arm64, ships three renderer backends, defaults to Vulkan-over-MoltenVK on macOS, targets macOS 13.4, and shows a startup dialog telling the user the macOS build is "purely experimental… degraded performance due to the use of MoltenVk and Rosetta for ARM Macs."
 
 The goal is a hard fork that stops being a port: **arm64-only, macOS 26.0 minimum, Metal-only**, with the Apple Silicon–specific work that the portable codebase structurally cannot do.
 
@@ -142,7 +142,7 @@ Argument buffers · `MTLResidencySet` · `MTLHeap` aliasing · EDR/HDR · MetalF
 
 **Per-stage gates** (each must pass before the next stage):
 
-1. **Bootstrap** — `./bin/Cemu_relwithdebinfo` opens, game list populates, a title boots and renders on Metal. Golden-scene screenshots captured as the baseline.
+1. **Bootstrap** — `./bin/TesseraEmu_relwithdebinfo` opens, game list populates, a title boots and renders on Metal. Golden-scene screenshots captured as the baseline.
 2. **R1 probe** — bundle + ad-hoc sign + hardened runtime + `allow-jit`; boot a title. Records whether `MAP_JIT` reordering is needed.
 3. **Purge** — `grep -rn "ARCH_X86_64\|__x86_64__\|__arm64__\|ENABLE_VULKAN"` returns only vendored third-party hits. `nm -u` shows no `vk`/`gl` symbols. Golden scenes render identically.
 4. **16 KB pages** — debug self-test round-trips every `MMURange` twice asserting `mprotect` success; boot title A → game list → title B with no stale-memory assertion; `lldb` shows `---` at `memory_base + 0xFFFFF000` after unmap.
@@ -320,7 +320,7 @@ Breath of the Wild (US v208, update installed) at the Shrine of Resurrection, Li
 
 No save file and no human input needed. Cemu's `controllerProfiles/` ships empty, which is why input appears not to work at all:
 
-1. Write `~/Library/Application Support/Cemu/controllerProfiles/controller0.xml` by hand — `<type>Wii U GamePad</type>`, `<api>Keyboard</api>`, `<uuid>keyboard</uuid>`. Button values are **macOS virtual key codes**, because `wxKeyEvent::GetRawKeyCode()` is a pass-through on macOS (`fix_raw_keycode`'s fixups are all inside `#if BOOST_OS_WINDOWS`). Mapping ids are `VPADController::ButtonId` (1=A, 2=B, 9=Plus, 11–14=dpad, 17–20=left stick).
+1. Write `~/Library/Application Support/TesseraEmu/controllerProfiles/controller0.xml` by hand — `<type>Wii U GamePad</type>`, `<api>Keyboard</api>`, `<uuid>keyboard</uuid>`. Button values are **macOS virtual key codes**, because `wxKeyEvent::GetRawKeyCode()` is a pass-through on macOS (`fix_raw_keycode`'s fixups are all inside `#if BOOST_OS_WINDOWS`). Mapping ids are `VPADController::ButtonId` (1=A, 2=B, 9=Plus, 11–14=dpad, 17–20=left stick).
 2. Those same virtual key codes are what `osascript` sends, so `tell application "System Events" to key code 6` presses the mapped A button. `key down "w"` / `key up "w"` also work, which is what makes walking possible.
 3. Boot BotW, raise the window, send a few `key code 6` presses to get through the title and the awakening cutscene. Link is then in control inside the Shrine.
 

@@ -172,6 +172,93 @@ void CemuApp::DeterminePaths(std::set<fs::path>& failedWriteAccess) // for Linux
 #endif
 
 #if BOOST_OS_MACOS
+// Set when a migration actually moved something, so OnInit can tell the user once. Kept
+// as a file-scope static rather than threaded through DeterminePaths, whose signature is
+// shared with two other platform bodies.
+static std::optional<std::string> s_dataMigrationNotice;
+
+// One-time move of the pre-rebrand user data directories from "Cemu" to "TesseraEmu".
+//
+// Both moves are a single fs::rename of the whole directory. Source and destination are
+// siblings under the same parent, so this is one rename(2): a directory-entry relink,
+// O(1), zero bytes copied, and inodes/modes/xattrs/ACLs survive for all 5 GB by
+// construction because the files are never touched. Critically it is also atomic -- a
+// kill at any instant leaves the data entirely at one name or entirely at the other. A
+// half-migrated state is not representable.
+//
+// There is deliberately NO copy fallback. Per-item moves or a recursive copy would be
+// non-atomic: a crash partway leaves some files at the new path, the next launch sees a
+// non-empty destination, concludes the migration is done, finds settings.xml so
+// isFirstStart is false, and CreateDefaultMLCFiles then builds a fresh empty mlc01
+// skeleton -- silently orphaning the save, the title update and the DLC while the app
+// looks healthy. That is the exact outcome this design exists to make impossible.
+//
+// On any failure we refuse to start rather than continue with the old path. Continuing
+// looks benign but produces the same orphaning: paths would point at the new empty
+// directory. Refusing costs one shell command; continuing costs an afternoon.
+static void MigrateOneDirectory(const fs::path& newPath, const char* what, bool fatal)
+{
+	const fs::path oldPath = newPath.parent_path() / "Cemu";
+	std::error_code ec;
+
+	// symlink_status, not exists(): exists() follows links, so a *broken* symlink at the
+	// destination would report false and the rename would then fail with ENOTDIR.
+	const auto newStatus = fs::symlink_status(newPath, ec);
+	const auto oldStatus = fs::symlink_status(oldPath, ec);
+
+	if (oldStatus.type() != fs::file_type::directory)
+		return; // nothing to migrate, or the old path is a symlink/file - leave it alone
+
+	if (newStatus.type() == fs::file_type::directory)
+	{
+		// An empty destination is the state left behind by running the renamed build once
+		// before this code existed. fs::remove on a directory is rmdir(2): it fails with
+		// ENOTEMPTY if anything is inside, so it is its own guard and cannot destroy data.
+		if (!fs::remove(newPath, ec))
+			return; // non-empty: already migrated, or something else lives there. Leave both.
+	}
+	else if (newStatus.type() != fs::file_type::not_found)
+	{
+		return; // a file or broken symlink is in the way; do not touch anything
+	}
+
+	fs::rename(oldPath, newPath, ec);
+	if (!ec)
+	{
+		s_dataMigrationNotice = fmt::format("{}:\n  {}\n  ->  {}", what, _pathToUtf8(oldPath), _pathToUtf8(newPath));
+		cemuLog_log(LogType::Force, "Migrated {} from {} to {}", what, _pathToUtf8(oldPath), _pathToUtf8(newPath));
+		return;
+	}
+
+	// Lost a race with another instance: destination is now a directory and the source is
+	// gone. That is success, not failure.
+	if (fs::is_directory(newPath, ec) && !fs::exists(oldPath, ec))
+		return;
+
+	cemuLog_log(LogType::Force, "Failed to migrate {}: {} ({})", what, ec.message(), ec.value());
+	if (!fatal)
+		return; // caches are regenerable; a failure there costs one slow launch, nothing more
+
+	wxMessageBox(
+		wxString::FromUTF8(fmt::format(
+			"TesseraEmu could not move your existing data directory and will not start, so that "
+			"nothing is lost.\n\nFrom:\n{}\n\nTo:\n{}\n\nError: {}\n\nYour data has not been "
+			"touched. Move it yourself with:\n\n  mv \"{}\" \"{}\"",
+			_pathToUtf8(oldPath), _pathToUtf8(newPath), ec.message(),
+			_pathToUtf8(oldPath), _pathToUtf8(newPath))),
+		"TesseraEmu", wxOK | wxCENTRE | wxICON_ERROR);
+	exit(0);
+}
+
+static void MigrateLegacyCemuDataDirectories(const fs::path& userDataPath, const fs::path& cachePath)
+{
+	MigrateOneDirectory(userDataPath, "user data directory", true);
+	// Order matters: user data first. If the cache move fails afterwards the two simply
+	// sit under different names, each with its own guard, and the next launch retries the
+	// cache. That split outcome is benign; the reverse order would not be.
+	MigrateOneDirectory(cachePath, "shader cache directory", false);
+}
+
 void CemuApp::DeterminePaths(std::set<fs::path>& failedWriteAccess) // for MacOS
 {
 	std::error_code ec;
@@ -192,12 +279,17 @@ void CemuApp::DeterminePaths(std::set<fs::path>& failedWriteAccess) // for MacOS
 	else
 #endif
 	{
-		SetAppName("Cemu");
+		SetAppName("TesseraEmu");
 		wxString appName = GetAppName();
 		user_data_path = config_path = standardPaths.GetUserDataDir().ToStdString();
 		data_path = standardPaths.GetDataDir().ToStdString();
 		cache_path = standardPaths.GetUserDir(wxStandardPaths::Dir::Dir_Cache).ToStdString();
 		cache_path /= appName.ToStdString();
+		// Must run before SetPaths: SetPaths create_directories() the destinations and
+		// write-tests them, so afterwards the "destination does not exist" precondition
+		// would no longer hold. Inside this else-arm on purpose, so portable mode is
+		// excluded by construction rather than by a runtime check.
+		MigrateLegacyCemuDataDirectories(user_data_path, cache_path);
 	}
 	ActiveSettings::SetPaths(isPortable, exePath, user_data_path, config_path, cache_path, data_path, failedWriteAccess);
 }
@@ -213,10 +305,10 @@ void CemuApp::InitializeNewMLCOrFail(fs::path mlc)
 	if(ActiveSettings::IsCommandLineMlcPath() || ActiveSettings::IsCustomMlcPath())
 	{
 		// tell user that the custom path is not writable
-		wxMessageBox(formatWxString(_("Cemu failed to write to the custom mlc directory.\nThe path is:\n{}"), wxHelper::FromPath(mlc)), _("Error"), wxOK | wxCENTRE | wxICON_ERROR);
+		wxMessageBox(formatWxString(_("TesseraEmu failed to write to the custom mlc directory.\nThe path is:\n{}"), wxHelper::FromPath(mlc)), _("Error"), wxOK | wxCENTRE | wxICON_ERROR);
 		exit(0);
 	}
-	wxMessageBox(formatWxString(_("Cemu failed to write to the mlc directory.\nThe path is:\n{}"), wxHelper::FromPath(mlc)), _("Error"), wxOK | wxCENTRE | wxICON_ERROR);
+	wxMessageBox(formatWxString(_("TesseraEmu failed to write to the mlc directory.\nThe path is:\n{}"), wxHelper::FromPath(mlc)), _("Error"), wxOK | wxCENTRE | wxICON_ERROR);
 	exit(0);
 }
 
@@ -231,11 +323,11 @@ void CemuApp::InitializeExistingMLCOrFail(fs::path mlc)
 		// if it's a command line path then just quit. Otherwise ask if user wants to reset the path
 		if(ActiveSettings::IsCommandLineMlcPath())
 		{
-			wxMessageBox(formatWxString(_("Cemu failed to write to the custom mlc directory.\nThe path is:\n{}"), wxHelper::FromPath(mlc)), _("Error"), wxOK | wxCENTRE | wxICON_ERROR);
+			wxMessageBox(formatWxString(_("TesseraEmu failed to write to the custom mlc directory.\nThe path is:\n{}"), wxHelper::FromPath(mlc)), _("Error"), wxOK | wxCENTRE | wxICON_ERROR);
 			exit(0);
 		}
 		// ask user if they want to reset the path
-		const wxString message = formatWxString(_("Cemu failed to write to the custom mlc directory.\n\nThe path is:\n{}\n\nCemu cannot start without a valid mlc path. Do you want to reset the path? You can later change it again in the General Settings."),
+		const wxString message = formatWxString(_("TesseraEmu failed to write to the custom mlc directory.\n\nThe path is:\n{}\n\nTesseraEmu cannot start without a valid mlc path. Do you want to reset the path? You can later change it again in the General Settings."),
 												_pathToUtf8(mlc));
 		wxMessageDialog dialog(nullptr, message, _("Error"), wxCENTRE | wxYES_NO | wxICON_WARNING);
 		dialog.SetYesNoLabels(_("Reset path"), _("Exit"));
@@ -251,7 +343,7 @@ void CemuApp::InitializeExistingMLCOrFail(fs::path mlc)
 	else
 	{
 		// default path is not writeable. Just let the user know and quit. Unsure if it would be a good idea to ask the user to choose an alternative path instead
-		wxMessageBox(formatWxString(_("Cemu failed to write to the default mlc directory.\nThe path is:\n{}"), wxHelper::FromPath(mlc)), _("Error"), wxOK | wxCENTRE | wxICON_ERROR);
+		wxMessageBox(formatWxString(_("TesseraEmu failed to write to the default mlc directory.\nThe path is:\n{}"), wxHelper::FromPath(mlc)), _("Error"), wxOK | wxCENTRE | wxICON_ERROR);
 		exit(0);
 	}
 }
@@ -309,9 +401,22 @@ bool CemuApp::OnInit()
 
 	for (auto&& path : failedWriteAccess)
 	{
-		wxMessageBox(formatWxString(_("Cemu can't write to {}!"), wxHelper::FromPath(path)),
+		wxMessageBox(formatWxString(_("TesseraEmu can't write to {}!"), wxHelper::FromPath(path)),
 					 _("Warning"), wxOK | wxCENTRE | wxICON_EXCLAMATION, nullptr);
 	}
+
+#if BOOST_OS_MACOS
+	// Shown here rather than in DeterminePaths because LocalizeUI has run by now and this
+	// is already a proven place to put a modal before m_mainFrame exists. Five gigabytes
+	// silently changing location is worth one click, once.
+	if (s_dataMigrationNotice)
+	{
+		wxMessageBox(wxString::FromUTF8("Your existing data was moved to the new TesseraEmu "
+										"location:\n\n" + *s_dataMigrationNotice),
+					 "TesseraEmu", wxOK | wxCENTRE | wxICON_INFORMATION, nullptr);
+		s_dataMigrationNotice.reset();
+	}
+#endif
 
 	if (isFirstStart)
 	{
@@ -600,7 +705,7 @@ void CemuApp::CreateDefaultCemuFiles()
 	}
 	catch (const std::exception& ex)
 	{
-		wxString errorMsg = formatWxString(_("Couldn't create a required cemu directory or file!\n\nError: {0}"), ex.what());
+		wxString errorMsg = formatWxString(_("Couldn't create a required TesseraEmu directory or file!\n\nError: {0}"), ex.what());
 
 #if BOOST_OS_WINDOWS
 		const DWORD lastError = GetLastError();

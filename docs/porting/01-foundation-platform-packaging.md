@@ -66,7 +66,7 @@ Two things will break, and both need a code fix, not a flag:
 | Link error `_glslang…` | glslang linked unconditionally | Phase 1.2 |
 | `cemu_assert` fires at startup on 16 KB pages | `MemMapperUnix` (§3) | Phase 2; app may *launch* fine and only fail on second title load |
 
-**Verify Phase 0:** `./bin/Cemu_relwithdebinfo` opens the wx main window, the game list appears, Settings dialog opens. Do **not** expect a game to boot yet.
+**Verify Phase 0:** `./bin/TesseraEmu_relwithdebinfo` opens the wx main window, the game list appears, Settings dialog opens. Do **not** expect a game to boot yet.
 
 **Effort: S–M (1 day, mostly waiting on vcpkg).**
 
@@ -630,7 +630,7 @@ with a comment pointing at `Carbon/HIToolbox/Events.h`. Delete the `<Carbon/Carb
 
 `WindowSystem::IsKeyDown(key)` presumably calls `CGEventSourceKeyState` — verify it does, and if it uses a Carbon API, switch to `CGEventSourceKeyState(kCGEventSourceStateCombinedSessionState, keycode)` from CoreGraphics.
 
-**Verify:** `otool -L bin/Cemu_release.app/Contents/MacOS/Cemu | grep -i carbon` returns nothing. Hotkeys still work.
+**Verify:** `otool -L bin/TesseraEmu_release.app/Contents/MacOS/Cemu | grep -i carbon` returns nothing. Hotkeys still work.
 
 ### 5.6 `_Exit()` teardown — keep it, but narrow it (S)
 
@@ -666,7 +666,7 @@ Current state is broken in five independent ways. Enumerating them, because each
 
 Replace `src/resource/cemu.macos.entitlements` with two files in a new `dist/macos/`:
 
-**`dist/macos/Cemu.entitlements`** (release + local dev):
+**`dist/macos/TesseraEmu.entitlements`** (release + local dev):
 ```xml
 <dict>
   <key>com.apple.security.cs.allow-jit</key><true/>
@@ -678,7 +678,7 @@ That's it. Reasoning for each removal:
 - **`com.apple.security.cs.allow-unsigned-executable-memory` → REMOVE.** Reasoning it out: this entitlement exists to permit `mmap(PROT_READ|PROT_WRITE|PROT_EXEC)` *without* `MAP_JIT`. On **arm64 macOS a plain anonymous RWX mapping always fails regardless of entitlements** — the hardware and kernel enforce that executable pages come from a `MAP_JIT` region or a signed mapping. So on arm64 this entitlement grants literally nothing. After Phase 3, all executable memory comes from one `MAP_JIT` region covered by `allow-jit`. It is dead weight that weakens the app's security posture and invites notarization scrutiny. **Delete it.** (If you delete it and JIT breaks, that means Phase 3 isn't actually using `MAP_JIT` — which is a Phase 3 bug, not a reason to restore the entitlement.)
 - **`com.apple.security.cs.disable-library-validation` → REMOVE.** This exists to load dylibs not signed by the same Team ID. Its only justification was `libMoltenVK.dylib` copied from `/usr/local/lib` (signed by Khronos, or unsigned). **MoltenVK is deleted in Phase 1.** The only remaining nested dylib is `libusb-1.0.0.dylib`, which *you* build and *you* sign with your own identity — so library validation passes. Delete it. **Caveat:** if you ever want to load user-supplied plugins (Cemuhook-style), you'd need it back; there's no such thing on macOS, so don't pre-emptively keep it.
 
-**`dist/macos/Cemu.debug.entitlements`** (local debugging only, never distributed):
+**`dist/macos/TesseraEmu.debug.entitlements`** (local debugging only, never distributed):
 ```xml
 <dict>
   <key>com.apple.security.cs.allow-jit</key><true/>
@@ -693,7 +693,7 @@ Add to `src/CMakeLists.txt` under `if(MACOS_BUNDLE)`:
 
 ```cmake
 set(CEMU_CODESIGN_IDENTITY "-" CACHE STRING "codesign identity; '-' = ad-hoc")
-set(CEMU_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/dist/macos/Cemu.$<IF:$<CONFIG:Debug,RelWithDebInfo>,debug.,>entitlements")
+set(CEMU_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/dist/macos/TesseraEmu.$<IF:$<CONFIG:Debug,RelWithDebInfo>,debug.,>entitlements")
 
 # sign inner-out: nested dylibs first, bundle last
 add_custom_command(TARGET CemuBin POST_BUILD
@@ -719,9 +719,9 @@ Rules encoded here:
 
 **Verify:**
 ```
-codesign -dv --entitlements - --verbose=4 bin/Cemu_release.app
-codesign --verify --strict --verbose=2 bin/Cemu_release.app
-spctl -a -vvv -t exec bin/Cemu_release.app     # expect "rejected" for ad-hoc; that's correct
+codesign -dv --entitlements - --verbose=4 bin/TesseraEmu_release.app
+codesign --verify --strict --verbose=2 bin/TesseraEmu_release.app
+spctl -a -vvv -t exec bin/TesseraEmu_release.app     # expect "rejected" for ad-hoc; that's correct
 ```
 And most importantly: launch it and confirm the JIT arena `mmap` succeeds.
 
@@ -772,7 +772,7 @@ This cannot work under a notarized, quarantined install:
 
 **If you later want real in-app updates, the only correct answer is Sparkle** (EdDSA-signed appcast, handles translocation, staged installs, and re-signing correctly). Do not hand-roll it. Note this as a deferred decision.
 
-**Verify:** `find bin/Cemu_release.app -name update.sh` → nothing. Check-for-updates opens a browser.
+**Verify:** `find bin/TesseraEmu_release.app -name update.sh` → nothing. Check-for-updates opens a browser.
 
 ### 6.6 DMG polish (S)
 
@@ -901,10 +901,10 @@ Every arrow is a buildable, runnable checkpoint. The two non-obvious dependencie
 
 ### Critical Files for Implementation
 
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/CMakeLists.txt` — deployment target, `CMAKE_OSX_ARCHITECTURES`, renderer option purge, vcpkg overlay simplification, IPO guard, arch gate deletion
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/CMakeLists.txt` — bundle rules, MoltenVK removal, `_XOPEN_SOURCE`, AppleClang warning bug, codesign integration, plist/entitlements wiring
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/util/MemMapper/MemMapperUnix.cpp` — the 16 KB page correctness fix (round base down *and* extend size, check return values)
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp` — `AArch64Allocator` replacement, the `JitCodeArena` seam, trampoline generation, `PPCRecompiler_cleanupAArch64Code`
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Espresso/Recompiler/PPCRecompiler.cpp` — x86 branch deletion, `PPCRecompilerInstanceData_t` shrink, `deleteFunction` free path, recompiler thread QoS, spinlock
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/util/helpers/helpers.cpp` — `SetThreadName` → `ConfigureThread` (QoS + sigaltstack central seam), `GetPhysicalCoreCount`/`GetPerformanceCoreCount`
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Common/ExceptionHandler/ExceptionHandler_posix.cpp` — `sigaltstack`/`SA_ONSTACK`, macOS demangled backtraces, arm64 PC recovery
+- `/Users/patricedery/Coding_Projects/TesseraEmu/CMakeLists.txt` — deployment target, `CMAKE_OSX_ARCHITECTURES`, renderer option purge, vcpkg overlay simplification, IPO guard, arch gate deletion
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/CMakeLists.txt` — bundle rules, MoltenVK removal, `_XOPEN_SOURCE`, AppleClang warning bug, codesign integration, plist/entitlements wiring
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/util/MemMapper/MemMapperUnix.cpp` — the 16 KB page correctness fix (round base down *and* extend size, check return values)
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Espresso/Recompiler/BackendAArch64/BackendAArch64.cpp` — `AArch64Allocator` replacement, the `JitCodeArena` seam, trampoline generation, `PPCRecompiler_cleanupAArch64Code`
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Espresso/Recompiler/PPCRecompiler.cpp` — x86 branch deletion, `PPCRecompilerInstanceData_t` shrink, `deleteFunction` free path, recompiler thread QoS, spinlock
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/util/helpers/helpers.cpp` — `SetThreadName` → `ConfigureThread` (QoS + sigaltstack central seam), `GetPhysicalCoreCount`/`GetPerformanceCoreCount`
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Common/ExceptionHandler/ExceptionHandler_posix.cpp` — `sigaltstack`/`SA_ONSTACK`, macOS demangled backtraces, arm64 PC recovery

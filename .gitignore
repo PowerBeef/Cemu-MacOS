@@ -20,16 +20,16 @@ build/
 cmake-build-*/
 out/
 .cache/
-bin/Cemu_*
-bin/Cemu_*.exe
+bin/TesseraEmu_*
+bin/TesseraEmu_*.exe
 
-# Cemu bin files
+# TesseraEmu bin files
 bin/otp.bin
 bin/seeprom.bin
 bin/log.txt
-bin/Cemu_*.pdb
-bin/Cemu_*.ilk
-bin/Cemu.exe.backup
+bin/TesseraEmu_*.pdb
+bin/TesseraEmu_*.ilk
+bin/TesseraEmu.exe.backup
 bin/mlc01/*
 bin/settings.xml
 bin/network_services.xml
@@ -60,3 +60,8 @@ bin/graphicPacks/*
 /Saves/
 
 /build*/
+
+# a global gitignore aimed at JS build output ignores dist/ everywhere, which
+# silently kept dist/macos/*.entitlements out of the repo -- the files the
+# bundle is signed with. A repo rule outranks the global one, so re-include it.
+!dist/

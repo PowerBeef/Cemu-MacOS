@@ -40,7 +40,7 @@ namespace
 				continue;
 			// only the main executable and our own dylibs are worth listing
 			const bool isMain = header->filetype == MH_EXECUTE;
-			if (!isMain && !strstr(name, "Cemu"))
+			if (!isMain && !strstr(name, "TesseraEmu"))
 				continue;
 
 			std::string uuidStr = "<none>";

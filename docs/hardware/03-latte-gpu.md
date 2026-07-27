@@ -86,7 +86,7 @@ The sampler count is a good example of `[RE]` guesswork being settled by `[HW]`:
 in `LatteReg.h:355` asks "is this 16 or 18?", and the SDK release notes answer it — 18, and the
 early SDK's 16 was the bug.
 
-Cemu adds its own texture-unit numbering on top, since Metal has one flat binding space per stage:
+TesseraEmu adds its own texture-unit numbering on top, since Metal has one flat binding space per stage:
 `LATTE_CEMU_PS_TEX_UNIT_BASE 0`, `VS 32`, `GS 64` `[SRC LatteConst.h:22-24]`.
 
 ## Surface tiling

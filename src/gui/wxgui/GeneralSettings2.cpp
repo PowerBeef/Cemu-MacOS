@@ -147,7 +147,7 @@ wxPanel* GeneralSettings2::AddGeneralPage(wxNotebook* notebook)
 			wxString language_choices[] = { _("Default") };
 			m_language = new wxChoice(box, wxID_ANY, wxDefaultPosition, wxDefaultSize, std::size(language_choices), language_choices);
 			m_language->SetSelection(0);
-			m_language->SetToolTip(_("Changes the interface language of Cemu\nAvailable languages are stored in the translation directory\nA restart will be required after changing the language"));
+			m_language->SetToolTip(_("Changes the interface language of TesseraEmu\nAvailable languages are stored in the translation directory\nA restart will be required after changing the language"));
 			for (const auto& language : wxGetApp().GetLanguages())
 			{
 				m_language->Append(language->DescriptionNative);
@@ -167,7 +167,7 @@ wxPanel* GeneralSettings2::AddGeneralPage(wxNotebook* notebook)
 			second_row->Add(new wxStaticText(box, wxID_ANY, _("Theme")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
 			m_msw_theme = new wxChoice(box, wxID_ANY);
-			m_msw_theme->SetToolTip(_("Changes the Windows theme used by Cemu\nThis only works on Windows 10 and later\nA restart will be required for any changes to take effect"));
+			m_msw_theme->SetToolTip(_("Changes the Windows theme used by TesseraEmu\nThis only works on Windows 10 and later\nA restart will be required for any changes to take effect"));
 
 			m_msw_theme->AppendString(_("Follow Windows theme"));
 			m_msw_theme->AppendString(_("Light Theme"));
@@ -206,7 +206,7 @@ wxPanel* GeneralSettings2::AddGeneralPage(wxNotebook* notebook)
 
 			const int topflag = wxALIGN_CENTER_VERTICAL | wxALL;
 			m_save_window_position_size = new wxCheckBox(box, wxID_ANY, _("Remember main window position"));
-			m_save_window_position_size->SetToolTip(_("Restores the last known window position and size when starting Cemu"));
+			m_save_window_position_size->SetToolTip(_("Restores the last known window position and size when starting TesseraEmu"));
 			third_row->Add(m_save_window_position_size, 0, topflag, 5);
 			CountRowElement();
 			//third_row->AddSpacer(10);
@@ -225,7 +225,7 @@ wxPanel* GeneralSettings2::AddGeneralPage(wxNotebook* notebook)
 #endif
 			// third_row->AddSpacer(10);
 			m_fullscreen_menubar = new wxCheckBox(box, wxID_ANY, _("Fullscreen menu bar"));
-			m_fullscreen_menubar->SetToolTip(_("Displays the menu bar when Cemu is running in fullscreen mode and the mouse cursor is moved to the top"));
+			m_fullscreen_menubar->SetToolTip(_("Displays the menu bar when TesseraEmu is running in fullscreen mode and the mouse cursor is moved to the top"));
 			third_row->Add(m_fullscreen_menubar, 0, botflag, 5);
 			CountRowElement();
 
@@ -278,7 +278,7 @@ wxPanel* GeneralSettings2::AddGeneralPage(wxNotebook* notebook)
 		auto* outerMlcBox = new wxStaticBox(panel, wxID_ANY, _("Custom MLC path"));
 
 		auto* box_sizer_mlc = new wxStaticBoxSizer(outerMlcBox, wxVERTICAL);
-		box_sizer_mlc->Add(new wxStaticText(box_sizer_mlc->GetStaticBox(), wxID_ANY, _("You can configure a custom path for the emulated internal Wii U storage (MLC).\nThis is where Cemu stores saves, accounts and other Wii U system files.")), 0, wxALL, 5);
+		box_sizer_mlc->Add(new wxStaticText(box_sizer_mlc->GetStaticBox(), wxID_ANY, _("You can configure a custom path for the emulated internal Wii U storage (MLC).\nThis is where TesseraEmu stores saves, accounts and other Wii U system files.")), 0, wxALL, 5);
 
 		auto* mlcPathLineSizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -454,13 +454,13 @@ wxPanel* GeneralSettings2::AddGraphicsPage(wxNotebook* notebook)
 		});
 
 		m_userDisplayisSRGB = new wxCheckBox(box, wxID_ANY, "sRGB");
-		m_userDisplayisSRGB->SetToolTip(_("Select this if Cemu is being displayed using a piecewise sRGB gamma curve.\n"
+		m_userDisplayisSRGB->SetToolTip(_("Select this if TesseraEmu is being displayed using a piecewise sRGB gamma curve.\n"
 										  "This is typically not the case so you can probably leave this unchecked.\n"
 										  "Exceptions include HDR displays (with HDR enabled), calibrated SDR displays with Windows 11's Auto Color Management enabled, "
 										  "or when using a display profile with a VCGT tag that targets piecewise sRGB.\n"
-										  "When this box is selected Cemu will compensate for the piecewise curve to approximate the pure gamma curve of a TV.\n"
+										  "When this box is selected TesseraEmu will compensate for the piecewise curve to approximate the pure gamma curve of a TV.\n"
 										  "Colors will be more accurate, especially in dark scenes, but this may result in banding or crushed shadows, "
-										  "so it is best if you display Cemu with pure gamma and do not use this setting."));
+										  "so it is best if you display TesseraEmu with pure gamma and do not use this setting."));
 		m_userDisplayisSRGB->Bind(wxEVT_CHECKBOX, &GeneralSettings2::OnUserDisplaySRGBSelected, this);
 
 		srgbCheckBoxSizer->Add(m_userDisplayGamma, 0, wxALL, 5);
@@ -759,7 +759,7 @@ wxPanel* GeneralSettings2::AddOverlayPage(wxNotebook* notebook)
 			settings2_row->Add(m_overlay_drawcalls, 0, wxALL, 5);
 
 			m_overlay_cpu = new wxCheckBox(box, wxID_ANY, _("CPU usage"));
-			m_overlay_cpu->SetToolTip(_("CPU usage of Cemu in percent"));
+			m_overlay_cpu->SetToolTip(_("CPU usage of TesseraEmu in percent"));
 			settings2_row->Add(m_overlay_cpu, 0, wxALL, 5);
 
 			m_overlay_cpu_per_core = new wxCheckBox(box, wxID_ANY, _("CPU per core usage"));
@@ -767,7 +767,7 @@ wxPanel* GeneralSettings2::AddOverlayPage(wxNotebook* notebook)
 			settings2_row->Add(m_overlay_cpu_per_core, 0, wxALL, 5);
 
 			m_overlay_ram = new wxCheckBox(box, wxID_ANY, _("RAM usage"));
-			m_overlay_ram->SetToolTip(_("Cemu RAM usage in MB"));
+			m_overlay_ram->SetToolTip(_("TesseraEmu RAM usage in MB"));
 			settings2_row->Add(m_overlay_ram, 0, wxALL, 5);
 
 			m_overlay_vram = new wxCheckBox(box, wxID_ANY, _("VRAM usage"));
@@ -778,14 +778,14 @@ wxPanel* GeneralSettings2::AddOverlayPage(wxNotebook* notebook)
 			RTL_OSVERSIONINFOW info{};
 			// Windows 8.1 	6.3*
 			if (pRtlGetVersion && pRtlGetVersion(&info) == 0 && ((info.dwMajorVersion == 6 && info.dwMinorVersion >= 3) || info.dwMajorVersion > 6))
-				m_overlay_vram->SetToolTip(_("The VRAM usage of Cemu in MB"));
+				m_overlay_vram->SetToolTip(_("The VRAM usage of TesseraEmu in MB"));
 			else
 			{
 				m_overlay_vram->SetToolTip(_("This option requires Win8.1+"));
 				m_overlay_vram->Disable();
 			}
 #else
-			m_overlay_vram->SetToolTip(_("The VRAM usage of Cemu in MB"));
+			m_overlay_vram->SetToolTip(_("The VRAM usage of TesseraEmu in MB"));
 #endif
 
 			settings2_row->Add(m_overlay_vram, 0, wxALL, 5);
@@ -1016,9 +1016,9 @@ wxPanel* GeneralSettings2::AddDebugPage(wxNotebook* notebook)
 		m_crash_dump = new wxChoice(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, std::size(dump_choices), dump_choices);
 		m_crash_dump->SetSelection(0);
 #if BOOST_OS_WINDOWS
-		m_crash_dump->SetToolTip(_("Creates a dump when Cemu crashes\nOnly enable when requested by a developer!\nThe Full option will create a very large dump file (includes a full RAM dump of the Cemu process)"));
+		m_crash_dump->SetToolTip(_("Creates a dump when TesseraEmu crashes\nOnly enable when requested by a developer!\nThe Full option will create a very large dump file (includes a full RAM dump of the TesseraEmu process)"));
 #elif BOOST_OS_UNIX
-		m_crash_dump->SetToolTip(_("Creates a core dump when Cemu crashes\nOnly enable when requested by a developer!"));
+		m_crash_dump->SetToolTip(_("Creates a core dump when TesseraEmu crashes\nOnly enable when requested by a developer!"));
 #endif
 		debug_row->Add(m_crash_dump, 0, wxALL | wxEXPAND, 5);
 		debug_panel_sizer->Add(debug_row, 0, wxALL | wxEXPAND, 5);
@@ -1032,7 +1032,7 @@ wxPanel* GeneralSettings2::AddDebugPage(wxNotebook* notebook)
 		debug_row->Add(new wxStaticText(panel, wxID_ANY, _("GDB Stub port")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
 		m_gdb_port = new wxSpinCtrl(panel, wxID_ANY, "1337", wxDefaultPosition, wxDefaultSize, 0, 1000, 65535);
-		m_gdb_port->SetToolTip(_("Changes the port that the GDB stub will use, which you can use by either starting Cemu with the --enable-gdbstub option or by enabling it the Debug tab."));
+		m_gdb_port->SetToolTip(_("Changes the port that the GDB stub will use, which you can use by either starting TesseraEmu with the --enable-gdbstub option or by enabling it the Debug tab."));
 
 		debug_row->Add(m_gdb_port, 0, wxALL | wxEXPAND, 5);
 		debug_panel_sizer->Add(debug_row, 0, wxALL | wxEXPAND, 5);
@@ -1048,7 +1048,7 @@ wxPanel* GeneralSettings2::AddDebugPage(wxNotebook* notebook)
 
 		m_gpu_capture_dir = new wxTextCtrl(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_DONTWRAP);
 		m_gpu_capture_dir->SetMinSize(wxSize(150, -1));
-		m_gpu_capture_dir->SetToolTip(_("Cemu will save the GPU captures done by selecting Debug -> GPU capture (Metal) in the menu bar in this directory. If a debugger with support for GPU captures (like Xcode) is attached, the capture will be opened in that debugger instead. If such debugger is not attached, METAL_CAPTURE_ENABLED must be set to 1 as an environment variable."));
+		m_gpu_capture_dir->SetToolTip(_("TesseraEmu will save the GPU captures done by selecting Debug -> GPU capture (Metal) in the menu bar in this directory. If a debugger with support for GPU captures (like Xcode) is attached, the capture will be opened in that debugger instead. If such debugger is not attached, METAL_CAPTURE_ENABLED must be set to 1 as an environment variable."));
 
 		debug_row->Add(m_gpu_capture_dir, 0, wxALL | wxEXPAND, 5);
 		debug_panel_sizer->Add(debug_row, 0, wxALL | wxEXPAND, 5);
@@ -2375,7 +2375,7 @@ void GeneralSettings2::OnMLCPathSelect(wxCommandEvent& event)
 	// update MLC path and store any other modified settings
 	GetConfig().SetMLCPath(newMlc);
 	StoreConfig();
-	wxMessageBox(_("Cemu needs to be restarted for the changes to take effect."), _("Information"), wxOK | wxCENTRE | wxICON_INFORMATION, this);
+	wxMessageBox(_("TesseraEmu needs to be restarted for the changes to take effect."), _("Information"), wxOK | wxCENTRE | wxICON_INFORMATION, this);
 	// close settings and then cemu
 	wxCloseEvent closeEvent(wxEVT_CLOSE_WINDOW);
 	wxPostEvent(this, closeEvent);
@@ -2396,7 +2396,7 @@ void GeneralSettings2::OnMLCPathClear(wxCommandEvent& event)
 	GetConfig().SetMLCPath("");
 	StoreConfig();
 	GetConfigHandle().Save();
-	wxMessageBox(_("Cemu needs to be restarted for the changes to take effect."), _("Information"), wxOK | wxCENTRE | wxICON_INFORMATION, this);
+	wxMessageBox(_("TesseraEmu needs to be restarted for the changes to take effect."), _("Information"), wxOK | wxCENTRE | wxICON_INFORMATION, this);
 	// close settings and then cemu
 	wxCloseEvent closeEvent(wxEVT_CLOSE_WINDOW);
 	wxPostEvent(this, closeEvent);
@@ -2421,12 +2421,12 @@ void GeneralSettings2::OnShowOnlineValidator(wxCommandEvent& event)
 	err << _("The following error(s) have been found:") << '\n';
 
 	if (validator.otp == OnlineValidator::FileState::Missing)
-		err << _("otp.bin missing in Cemu directory") << '\n';
+		err << _("otp.bin missing in TesseraEmu directory") << '\n';
 	else if(validator.otp == OnlineValidator::FileState::Corrupted)
 		err << _("otp.bin is invalid") << '\n';
 
 	if (validator.seeprom == OnlineValidator::FileState::Missing)
-		err << _("seeprom.bin missing in Cemu directory") << '\n';
+		err << _("seeprom.bin missing in TesseraEmu directory") << '\n';
 	else if(validator.seeprom == OnlineValidator::FileState::Corrupted)
 		err << _("seeprom.bin is invalid") << '\n';
 

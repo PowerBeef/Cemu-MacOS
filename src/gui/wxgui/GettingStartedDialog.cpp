@@ -32,7 +32,7 @@ wxPanel* GettingStartedDialog::CreatePage1()
 	{
 		auto* sizer = new wxBoxSizer(wxHORIZONTAL);
 		sizer->Add(new wxStaticBitmap(mainPanel, wxID_ANY, wxICON(M_WND_ICON128)), 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
-		m_page1.staticText11 = new wxStaticText(mainPanel, wxID_ANY, _("It looks like you're starting Cemu for the first time.\nThis quick setup assistant will help you get the best experience"));
+		m_page1.staticText11 = new wxStaticText(mainPanel, wxID_ANY, _("It looks like you're starting TesseraEmu for the first time.\nThis quick setup assistant will help you get the best experience"));
 		m_page1.staticText11->Wrap(-1);
 		sizer->Add(m_page1.staticText11, 0, wxALL, 5);
 		page1_sizer->Add(sizer, 0, wxALL | wxEXPAND, 5);
@@ -40,7 +40,7 @@ wxPanel* GettingStartedDialog::CreatePage1()
 
 	if(ActiveSettings::IsPortableMode())
 	{
-		m_page1.portableModeInfoText = new wxStaticText(mainPanel, wxID_ANY, _("Cemu is running in portable mode"));
+		m_page1.portableModeInfoText = new wxStaticText(mainPanel, wxID_ANY, _("TesseraEmu is running in portable mode"));
 		m_page1.portableModeInfoText->Show(true);
 		page1_sizer->Add(m_page1.portableModeInfoText, 0, wxALL, 5);
 
@@ -50,7 +50,7 @@ wxPanel* GettingStartedDialog::CreatePage1()
 #if 0
 	{
 		m_page1.languageBoxSizer = new wxStaticBoxSizer(wxVERTICAL, mainPanel, _("Language"));
-		m_page1.languageText = new wxStaticText(m_page1.languageBoxSizer->GetStaticBox(), wxID_ANY, _("Select the language you want to use in Cemu"));
+		m_page1.languageText = new wxStaticText(m_page1.languageBoxSizer->GetStaticBox(), wxID_ANY, _("Select the language you want to use in TesseraEmu"));
 		m_page1.languageBoxSizer->Add(m_page1.languageText, 0, wxALL, 5);
 
 		wxString language_choices[] = { _("Default") };
@@ -94,7 +94,7 @@ wxPanel* GettingStartedDialog::CreatePage1()
 
 	{
 		m_page1.gamePathBoxSizer = new wxStaticBoxSizer(wxVERTICAL, mainPanel, _("Game paths"));
-		m_page1.gamePathText = new wxStaticText(m_page1.gamePathBoxSizer->GetStaticBox(), wxID_ANY, _("The game path is scanned by Cemu to automatically locate your games, game updates and DLCs. We recommend creating a dedicated directory in which\nyou place all your Wii U game files. Additional paths can be set later in Cemu's general settings. All common Wii U game formats are supported by Cemu."));
+		m_page1.gamePathText = new wxStaticText(m_page1.gamePathBoxSizer->GetStaticBox(), wxID_ANY, _("The game path is scanned by TesseraEmu to automatically locate your games, game updates and DLCs. We recommend creating a dedicated directory in which\nyou place all your Wii U game files. Additional paths can be set later in TesseraEmu's general settings. All common Wii U game formats are supported by TesseraEmu."));
 		m_page1.gamePathBoxSizer->Add(m_page1.gamePathText, 0, wxALL, 5);
 
 		auto* game_path_sizer = new wxBoxSizer(wxHORIZONTAL);

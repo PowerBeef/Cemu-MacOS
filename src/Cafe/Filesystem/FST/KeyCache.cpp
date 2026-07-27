@@ -75,7 +75,7 @@ void KeyCache_Prepare()
 		}
 		else
 		{
-			WindowSystem::ShowErrorDialog(_tr("Unable to create file keys.txt\nThis can happen if Cemu does not have write permission to its own directory, the disk is full or if anti-virus software is blocking Cemu."), _tr("Error"), WindowSystem::ErrorCategory::KEYS_TXT_CREATION);
+			WindowSystem::ShowErrorDialog(_tr("Unable to create file keys.txt\nThis can happen if TesseraEmu does not have write permission to its own directory, the disk is full or if anti-virus software is blocking TesseraEmu."), _tr("Error"), WindowSystem::ErrorCategory::KEYS_TXT_CREATION);
 		}
 		mtxKeyCache.unlock();
 		return;

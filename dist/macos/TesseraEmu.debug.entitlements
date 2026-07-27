@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Local development only. Never submit a build signed with this file. -->
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+	<!-- lets lldb attach; causes notarization to fail outright -->
+	<key>com.apple.security.get-task-allow</key>
+	<true/>
+	<!--
+	  Required for ad-hoc signing specifically. Library validation demands that a
+	  loaded dylib share the process's Team ID, and an ad-hoc signature has no Team
+	  ID at all, so Contents/Frameworks/libusb-1.0.0.dylib is refused with
+	  "mapping process and mapped file (non-platform) have different Team IDs"
+	  even though we signed it ourselves moments earlier.
+
+	  A Developer ID build gives both the executable and the dylib the same Team ID,
+	  so the release entitlements deliberately omit this.
+	-->
+	<key>com.apple.security.cs.disable-library-validation</key>
+	<true/>
+</dict>
+</plist>

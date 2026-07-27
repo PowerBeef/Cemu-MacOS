@@ -877,7 +877,7 @@ void MainWindow::OpenSettings()
 		SetMenuVisible(false);
 
 	if (language != config.language)
-		wxMessageBox(_("Cemu must be restarted to apply the selected UI language."), _("Information"), wxOK | wxCENTRE, this); // TODO: change language to newly selected one
+		wxMessageBox(_("TesseraEmu must be restarted to apply the selected UI language."), _("Information"), wxOK | wxCENTRE, this); // TODO: change language to newly selected one
 }
 
 void MainWindow::OnOptionsInput(wxCommandEvent& event)
@@ -1870,7 +1870,7 @@ class CemuAboutDialog : public wxDialog
 {
 public:
 	CemuAboutDialog(wxWindow* parent = NULL)
-		: wxDialog(NULL, wxID_ANY, _("About Cemu"), wxDefaultPosition, wxSize(500, 700))
+		: wxDialog(NULL, wxID_ANY, _("About TesseraEmu"), wxDefaultPosition, wxSize(500, 700))
 	{
 		Create(parent);
 	}
@@ -1902,16 +1902,18 @@ public:
 
 	void AddHeaderInfo(wxWindow* parent, wxSizer* sizer)
 	{
-		auto versionString = formatWxString(_("Cemu\nVersion {0}\nCompiled on {1}\nOriginal authors: {2}"), BUILD_VERSION_STRING, BUILD_DATE, "Exzap, Petergov");
+		// TesseraEmu is a fork; both credits belong here. The original-authors line is not
+		// ours to remove, and stating the origin is the honest counterpart to renaming.
+		auto versionString = formatWxString(_("TesseraEmu\nVersion {0}\nCompiled on {1}\n\nA fork of Cemu by {2}"), BUILD_VERSION_STRING, BUILD_DATE, "Exzap, Petergov");
 
 		sizer->Add(new wxStaticText(parent, wxID_ANY, versionString), wxSizerFlags().Border(wxALL, 3).Border(wxTOP, 10));
-		sizer->Add(new wxHyperlinkCtrl(parent, wxID_ANY, "https://cemu.info", "https://cemu.info", wxDefaultPosition, wxDefaultSize, (wxHL_CONTEXTMENU|wxNO_BORDER|wxHL_ALIGN_LEFT)), wxSizerFlags().Expand().Border(wxTOP | wxBOTTOM, 3));
+		sizer->Add(new wxHyperlinkCtrl(parent, wxID_ANY, "https://github.com/cemu-project/Cemu", "https://github.com/cemu-project/Cemu", wxDefaultPosition, wxDefaultSize, (wxHL_CONTEXTMENU|wxNO_BORDER|wxHL_ALIGN_LEFT)), wxSizerFlags().Expand().Border(wxTOP | wxBOTTOM, 3));
 
 		sizer->AddSpacer(3);
 		sizer->Add(new wxStaticLine(parent), wxSizerFlags().Expand().Border(wxRIGHT, 4));
 		sizer->AddSpacer(5);
 
-		wxString extraInfo(_("Cemu is a Wii U emulator.\n\nWii and Wii U are trademarks of Nintendo.\nCemu is not affiliated with Nintendo."));
+		wxString extraInfo(_("TesseraEmu is a Wii U emulator for Apple Silicon, forked from Cemu.\nIt is not affiliated with or endorsed by the Cemu project.\n\nWii and Wii U are trademarks of Nintendo.\nTesseraEmu is not affiliated with Nintendo."));
 		sizer->Add(new wxStaticText(parent, wxID_ANY, extraInfo), wxSizerFlags());
 	}
 
@@ -2175,7 +2177,7 @@ void MainWindow::RecreateMenu()
 #endif
 	}
 
-	m_fileMenu->Append(MAINFRAME_MENU_ID_FILE_OPEN_CEMU_FOLDER, _("Open Cemu folder"));
+	m_fileMenu->Append(MAINFRAME_MENU_ID_FILE_OPEN_CEMU_FOLDER, _("Open TesseraEmu folder"));
 	m_fileMenu->Append(MAINFRAME_MENU_ID_FILE_OPEN_MLC_FOLDER, _("Open MLC folder"));
 	m_fileMenu->Append(MAINFRAME_MENU_ID_FILE_OPEN_SHADERCACHE_FOLDER, _("Open &shader cache folder"));
 	m_fileMenu->AppendSeparator();
@@ -2373,7 +2375,7 @@ void MainWindow::RecreateMenu()
 	m_check_update_menu->Enable(false);
 #endif
 	helpMenu->AppendSeparator();
-	helpMenu->Append(MAINFRAME_MENU_ID_HELP_ABOUT, _("&About Cemu"));
+	helpMenu->Append(MAINFRAME_MENU_ID_HELP_ABOUT, _("&About TesseraEmu"));
 
 	m_menuBar->Append(helpMenu, _("&Help"));
 

@@ -1,10 +1,10 @@
 #!/bin/bash
-# Capture a golden reference frame + runtime stats from a running Cemu instance.
+# Capture a golden reference frame + runtime stats from a running TesseraEmu instance.
 #
 #   ./testing/capture-scene.sh <pid> <scene-name>
 #
 # Writes testing/golden/<scene-name>.png and appends a line to
-# testing/golden/baseline.tsv. Captures only Cemu's own window, never the
+# testing/golden/baseline.tsv. Captures only TesseraEmu's own window, never the
 # whole screen.
 set -euo pipefail
 PID="${1:?usage: capture-scene.sh <pid> <scene-name>}"

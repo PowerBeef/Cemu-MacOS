@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  The PowerPC recompiler emits code at runtime. Under the hardened runtime this
+	  entitlement is what permits mmap(..., MAP_JIT), which is how xbyak_aarch64
+	  allocates its code buffers.
+
+	  Deliberately NOT present:
+	    com.apple.security.get-task-allow
+	        the debuggable-process entitlement. Its presence causes notarization to
+	        fail outright. See Cemu.debug.entitlements for local debugging.
+	    com.apple.security.cs.allow-unsigned-executable-memory
+	        permits plain RWX mappings without MAP_JIT. On arm64 that is refused by
+	        the kernel regardless, so it grants nothing and only widens the attack
+	        surface.
+	    com.apple.security.cs.disable-library-validation
+	        existed to load an unsigned libMoltenVK.dylib. Vulkan is gone, and a
+	        Developer ID build signs the executable and libusb with the same Team
+	        ID, so library validation is satisfied without it. Note this does NOT
+	        hold for ad-hoc signing, which has no Team ID -- see
+	        Cemu.debug.entitlements.
+	-->
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+</dict>
+</plist>

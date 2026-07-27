@@ -82,7 +82,7 @@ CubebInputAPI::CubebInputAPI(cubeb_devid devid, uint32 samplerate, uint32 channe
 
 	m_buffer.reserve((size_t)m_bytesPerBlock * kBlockCount);
 
-	if (cubeb_stream_init(s_context, &m_stream, "Cemu Cubeb input",
+	if (cubeb_stream_init(s_context, &m_stream, "TesseraEmu Cubeb input",
 	                      devid, &input_params,
                           nullptr, nullptr,
 	                      latency, data_cb, state_cb, this) != CUBEB_OK)
@@ -158,7 +158,7 @@ void CubebInputAPI::SetVolume(sint32 volume)
 
 bool CubebInputAPI::InitializeStatic()
 {
-	if (cubeb_init(&s_context, "Cemu Input Cubeb", nullptr))
+	if (cubeb_init(&s_context, "TesseraEmu Input Cubeb", nullptr))
 	{
 		cemuLog_log(LogType::Force, "can't create cubeb audio api");
 		return false;

@@ -20,7 +20,7 @@ Planning docs live in `docs/porting/`. `00-master-plan.md` is the staged plan an
 export VCPKG_DEFAULT_BINARY_CACHE="$HOME/.cache/vcpkg"        # first build is ~25 min without this
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMACOS_BUNDLE=OFF
 cmake --build build                                            # ~2 min clean on an M2
-./bin/Cemu_relwithdebinfo --verbose -g "Roms/<title>.wux"
+./bin/TesseraEmu_relwithdebinfo --verbose -g "Roms/<title>.wux"
 ```
 
 `MACOS_BUNDLE=OFF` for day-to-day work — bundle builds are for signing/entitlements. `RelWithDebInfo` deliberately has **LTO off**: it keeps relinks fast and keeps `.o` files as real Mach-O, so `llvm-objdump` can inspect generated code. `Release` turns ThinLTO on and the objects become LLVM bitcode.
@@ -37,9 +37,9 @@ A green build proves very little here. The real gate is booting a real title:
 ./testing/capture-scene.sh <pid> <scene-name>    # window-only frame + FPS/RSS/threads -> testing/golden/baseline.tsv
 ```
 
-`testing/golden/baseline.tsv` is the committed record of every measurement; the PNGs and traces are gitignored (large, machine-specific). Requires `~/Library/Application Support/Cemu/keys.txt` with the Wii U common key and the title's disc key — without it decryption fails and nothing boots. Game images live in `Roms/` (gitignored).
+`testing/golden/baseline.tsv` is the committed record of every measurement; the PNGs and traces are gitignored (large, machine-specific). Requires `~/Library/Application Support/TesseraEmu/keys.txt` with the Wii U common key and the title's disc key — without it decryption fails and nothing boots. Game images live in `Roms/` (gitignored).
 
-Cemu writes no `log.txt` until clean exit, and `CemuApp::OnExit` calls `_Exit()`, so **`kill -9` loses buffered log and shader-cache writes.** Use `--verbose` and read stdout instead.
+TesseraEmu writes no `log.txt` until clean exit, and `CemuApp::OnExit` calls `_Exit()`, so **`kill -9` loses buffered log and shader-cache writes.** Use `--verbose` and read stdout instead.
 
 When a launch appears to hang at low CPU, it is almost always a modal dialog. Read it without screenshotting the user's screen:
 
@@ -68,8 +68,8 @@ Two traps already caught in this repo — both produce confident, wrong numbers:
 
 Prefer `ps -p <pid> -o cputime=` deltas over `%cpu` (a decaying average) for headline numbers.
 
-- **`cemuLog_log` writes to `~/Library/Application Support/Cemu/log.txt`, not stdout.** Grepping the process's redirected stdout for errors, or for your own instrumentation, silently finds nothing and reads as "clean".
-- **`testing/capture-scene.sh` uses `screencapture -R`, which grabs a screen *region*** — Cemu must be frontmost or you capture whatever is on top of it. Raise it first (`set frontmost of ... to true`).
+- **`cemuLog_log` writes to `~/Library/Application Support/TesseraEmu/log.txt`, not stdout.** Grepping the process's redirected stdout for errors, or for your own instrumentation, silently finds nothing and reads as "clean".
+- **`testing/capture-scene.sh` uses `screencapture -R`, which grabs a screen *region*** — TesseraEmu must be frontmost or you capture whatever is on top of it. Raise it first (`set frontmost of ... to true`).
 - **A before/after pixel diff of the MK8 title screen proves nothing**: the "Press A to start" prompt pulses and the background animates, so ~22% of pixels differ between any two captures. Use targeted instrumentation to show a rendering change is live.
 
 ### Current baseline (2026-07-26, after the Stage 5 idle-wait fixes)
@@ -169,7 +169,7 @@ Two numbers stand out as suspects, neither yet acted on:
 
 ### Driving a game without a controller (needed for the above)
 
-`controllerProfiles/` ships empty, which is why input looks broken out of the box. Write `~/Library/Application Support/Cemu/controllerProfiles/controller0.xml` directly (the GUI combo boxes don't respond to accessibility scripting): `<type>Wii U GamePad</type>`, `<api>Keyboard</api>`, `<uuid>keyboard</uuid>`, and `<mappings>` of `VPADController::ButtonId` → **macOS virtual key code** (`fix_raw_keycode` is a pass-through outside Windows). Then `osascript -e 'tell application "System Events" to key code 6'` presses that button, and `key down "w"` / `key up "w"` hold it. That is enough to script BotW's whole intro — no save file and no human needed.
+`controllerProfiles/` ships empty, which is why input looks broken out of the box. Write `~/Library/Application Support/TesseraEmu/controllerProfiles/controller0.xml` directly (the GUI combo boxes don't respond to accessibility scripting): `<type>Wii U GamePad</type>`, `<api>Keyboard</api>`, `<uuid>keyboard</uuid>`, and `<mappings>` of `VPADController::ButtonId` → **macOS virtual key code** (`fix_raw_keycode` is a pass-through outside Windows). Then `osascript -e 'tell application "System Events" to key code 6'` presses that button, and `key down "w"` / `key up "w"` hold it. That is enough to script BotW's whole intro — no save file and no human needed.
 
 For Metal work: `MTL_HUD_ENABLED=1` for a frame-time overlay, `MTL_DEBUG_LAYER=1` + `MTL_SHADER_VALIDATION=1` for validation, and the in-app Debug menu has GPU capture wired to `MTL::CaptureManager`.
 

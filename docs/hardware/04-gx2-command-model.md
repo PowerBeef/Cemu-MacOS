@@ -163,7 +163,7 @@ GX2's timestamp API sits directly on top `[SRC GX2_Command.cpp:304-322]`:
 
 ### Emulator-private opcodes
 
-Cemu injects its own opcodes in the `0xEE`–`0xFB` range — these do **not** exist on hardware. They
+TesseraEmu injects its own opcodes in the `0xEE`–`0xFB` range — these do **not** exist on hardware. They
 are how HLE'd GX2 functions signal the command processor:
 
 | Opcode | Value | Emitted by |

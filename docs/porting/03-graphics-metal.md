@@ -2,19 +2,19 @@
      Findings verified against the source tree at commit b8f2cf4 and the
      macOS 26.5.2 / Xcode 26.6 SDK on an Apple M2. See 00-master-plan.md. -->
 
-# Cemu-MacOS — GRAPHICS / METAL workstream
+# TesseraEmu — GRAPHICS / METAL workstream
 
 ## Headline findings (read these first — three change the plan materially)
 
 ### F1. The `MetalRenderer.cpp:267` "garbage data" HACK is a fixed-size-array overflow. Root-caused.
 
-`/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h:117`
+`/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h:117`
 
 ```cpp
 size_t m_uniformBufferOffsets[METAL_GENERAL_SHADER_TYPE_TOTAL][MAX_MTL_BUFFERS];  // [3][31]
 ```
 
-`/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Latte/Renderer/Metal/MetalRenderer.cpp:240-243`
+`/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Latte/Renderer/Metal/MetalRenderer.cpp:240-243`
 
 ```cpp
 for (uint32 i = 0; i < METAL_SHADER_TYPE_TOTAL; i++)   // 4, not 3
@@ -500,8 +500,8 @@ NOT WORTH DOING: 4.4 MTLHeap · 4.5 argument buffers · 4.6 MTLResidencySet ·
 
 ### Critical Files for Implementation
 
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Latte/Renderer/Metal/MetalRenderer.cpp` — the ctor overflow (`:240-243`), encoder/commit architecture (`:1715-1952`), presentation (`:1954-1968`, `:2289-2295`), dead fast paths (`:773-810`, `:2257-2287`)
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h` — the array-bound mismatch (`:117` vs `:41`), device/CB ownership (`:288-295`, `:538-540`), XFB hack (`:419`), `GetOptimalTextureStorageMode` (`:387-390`)
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Latte/Renderer/Metal/MetalPipelineCache.cpp` + `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Latte/Renderer/Metal/MetalPipelineCompiler.cpp` — home of the `MTLBinaryArchive` cache (`MetalPipelineCompiler.cpp:268-285` scaffolding, `:346-375` pipeline creation), compile-thread sizing/QoS
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerAnalyzer.cpp` — the three interleaved `resourceMappingGL/VK/MTL` tables (`:490-660`); the riskiest edit in the GL/VK deletion
-- `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Latte/Renderer/Vulkan/CachedFBOVk.cpp` + `/Users/patricedery/Coding_Projects/Cemu-MacOS/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp` — **read before deleting**: `CheckForSelfDependency` (`CachedFBOVk.cpp:198-240`) and its consumer (`VulkanRendererCore.cpp:1187-1222`) are the reference design for the Metal barrier mechanism
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Latte/Renderer/Metal/MetalRenderer.cpp` — the ctor overflow (`:240-243`), encoder/commit architecture (`:1715-1952`), presentation (`:1954-1968`, `:2289-2295`), dead fast paths (`:773-810`, `:2257-2287`)
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h` — the array-bound mismatch (`:117` vs `:41`), device/CB ownership (`:288-295`, `:538-540`), XFB hack (`:419`), `GetOptimalTextureStorageMode` (`:387-390`)
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Latte/Renderer/Metal/MetalPipelineCache.cpp` + `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Latte/Renderer/Metal/MetalPipelineCompiler.cpp` — home of the `MTLBinaryArchive` cache (`MetalPipelineCompiler.cpp:268-285` scaffolding, `:346-375` pipeline creation), compile-thread sizing/QoS
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Latte/LegacyShaderDecompiler/LatteDecompilerAnalyzer.cpp` — the three interleaved `resourceMappingGL/VK/MTL` tables (`:490-660`); the riskiest edit in the GL/VK deletion
+- `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Latte/Renderer/Vulkan/CachedFBOVk.cpp` + `/Users/patricedery/Coding_Projects/TesseraEmu/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRendererCore.cpp` — **read before deleting**: `CheckForSelfDependency` (`CachedFBOVk.cpp:198-240`) and its consumer (`VulkanRendererCore.cpp:1187-1222`) are the reference design for the Metal barrier mechanism
