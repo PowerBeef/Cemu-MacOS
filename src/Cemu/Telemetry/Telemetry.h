@@ -95,15 +95,15 @@ namespace tlm
 	// Best-effort: writes the run summary. Safe to call when disabled or already shut down.
 	void Shutdown();
 
-	// Records a named accuracy signal so the report can list *what* was hit rather than
-	// only how often. `count` of 0 means "just name it"; a non-zero value replaces the
-	// recorded count for that name. Rare paths only.
+	// Records a named detail against a counter so the report can list *what* was hit
+	// rather than only how often. `count` of 0 means "just name it"; a non-zero value
+	// replaces the recorded count. Rare paths only -- not for use inside a hot loop.
 	void NoteAccuracyDetail(CounterId id, const std::string& detail, uint64_t count = 0);
 
 	// Installed from above (Telemetry lives below Cafe and must not call into it).
-	// Invoked just before accuracy details are emitted, so a subsystem that keeps its own
-	// histogram can push current counts in. Registration is not thread-safe; call it once
-	// at startup.
+	// Invoked just before details are emitted, so a subsystem that keeps its own histogram
+	// can push current counts in. Several producers may register. Not thread-safe; call
+	// at startup only.
 	void RegisterDetailFlushCallback(void (*fn)());
 
 	const char* CounterName(CounterId id);

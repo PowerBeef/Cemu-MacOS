@@ -158,7 +158,8 @@ namespace tlm
 		};
 		std::vector<AccuracyDetail> s_details;
 		bool s_detailsDirty = false;
-		void (*s_detailFlush)() = nullptr;
+		void (*s_detailFlush[8])() = {};
+		size_t s_detailFlushCount = 0;
 		constexpr size_t kMaxDetails = 256;
 
 		std::mutex s_metaMutex;
@@ -305,8 +306,8 @@ namespace tlm
 		// its findings at shutdown would in practice never write them at all.
 		void MaybeEmitAccuracyDetails()
 		{
-			if (s_detailFlush)
-				s_detailFlush();
+			for (size_t i = 0; i < s_detailFlushCount; i++)
+				s_detailFlush[i]();
 			std::string details;
 			{
 				std::lock_guard lock(s_detailMutex);
@@ -376,7 +377,7 @@ namespace tlm
 
 	void NoteAccuracyDetail(CounterId id, const std::string& detail, uint64_t count)
 	{
-		if (!AreaEnabled(Area::Accuracy))
+		if (!Enabled())
 			return;
 		std::lock_guard lock(s_detailMutex);
 		for (auto& d : s_details)
@@ -399,7 +400,8 @@ namespace tlm
 
 	void RegisterDetailFlushCallback(void (*fn)())
 	{
-		s_detailFlush = fn;
+		if (s_detailFlushCount < std::size(s_detailFlush))
+			s_detailFlush[s_detailFlushCount++] = fn;
 	}
 
 	void Shutdown()
@@ -408,8 +410,8 @@ namespace tlm
 			return;
 		g_areaMask = 0; // stop producers before draining
 
-		if (s_detailFlush)
-			s_detailFlush();
+		for (size_t i = 0; i < s_detailFlushCount; i++)
+			s_detailFlush[i]();
 		SumInto(s_totals);
 		const uint64_t wallNs = HighResolutionTimer::now().getTick() - s_runStart;
 

@@ -9,6 +9,7 @@
 #include "config/NetworkSettings.h"
 #include "config/LaunchSettings.h"
 #include "Cemu/Telemetry/Telemetry.h"
+void LatteCP_flushFenceStats();
 #include "input/InputManager.h"
 
 #include "Cafe/CafeSystem.h"
@@ -283,6 +284,7 @@ int main(int argc, char *argv[])
 	tlm::Init(LaunchSettings::GetTelemetryPath(), LaunchSettings::GetTelemetryLabel(),
 			  LaunchSettings::GetTelemetryAreas());
 	tlm::RegisterDetailFlushCallback(&PPCInterpreter_flushUnsupportedHLEStats);
+	tlm::RegisterDetailFlushCallback(&LatteCP_flushFenceStats);
 	WindowSystem::Create();
 	return 0;
 }

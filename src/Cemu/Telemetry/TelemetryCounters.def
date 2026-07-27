@@ -36,6 +36,12 @@ TLM_COUNTER(GpuCpFenceNs,           "gpu.cp_fence_ns",           "ns",    Gpu)
 // a scene is from the vsync quantisation cliff.
 TLM_COUNTER(GpuWaitFlipNs,          "gpu.wait_flip_ns",          "ns",    Gpu)
 TLM_COUNTER(GpuDrawableWaitNs,      "gpu.drawable_wait_ns",      "ns",    Gpu)
+// IT_WAIT_REG_MEM: the GPU command processor spinning until the guest CPU writes a
+// value. cp_fence_ns is 3.6ms/frame in the BotW shrine but 15.6ms in Korok Forest --
+// the largest single difference between a scene that holds 30fps and one that does not.
+TLM_COUNTER(GpuFenceTotal,          "gpu.fence_total",           "count", Gpu)
+TLM_COUNTER(GpuFenceStalls,         "gpu.fence_stalls",          "count", Gpu)
+TLM_COUNTER(GpuFenceSpins,          "gpu.fence_spins",           "count", Gpu)
 
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)

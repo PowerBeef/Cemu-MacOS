@@ -7,6 +7,8 @@
 #include "Cafe/HW/Latte/Core/LatteAsyncCommands.h"
 #include "Cafe/HW/Latte/Core/LattePerformanceMonitor.h"
 #include "Cemu/Telemetry/Telemetry.h"
+#include "util/highresolutiontimer/HighResolutionTimer.h"
+#include <unordered_map>
 #include "Cafe/HW/Latte/Core/LatteIndices.h"
 #include "Cafe/HW/Latte/Core/LatteBufferCache.h"
 #include "Cafe/HW/Latte/Core/LattePM4.h"
@@ -446,6 +448,39 @@ LatteCMDPtr LatteCP_itNumInstances(LatteCMDPtr cmd, uint32 nWords)
 	return cmd;
 }
 
+// Per-fence-address stall accounting. IT_WAIT_REG_MEM is the GPU command processor
+// blocking on a value the guest CPU has yet to write, and in Korok Forest it costs
+// 15.6ms of a 49.9ms frame. Counting in aggregate says how much; bucketing by the
+// address being waited on says *which* fence, which is what a fix needs.
+//
+// Touched only from LatteThread (LatteCP_* runs nowhere else), so no locking.
+namespace
+{
+	struct FenceStat
+	{
+		uint64 waits;
+		uint64 stalls;
+		uint64 stallNs;
+	};
+	std::unordered_map<uint32, FenceStat> s_fenceStats;
+}
+
+void LatteCP_flushFenceStats()
+{
+	for (const auto& [addr, st] : s_fenceStats)
+	{
+		if (!st.stalls)
+			continue;
+		// The detail string is the dedup KEY, so it must be stable across flushes -- an
+		// earlier version embedded the running wait count in it and produced a fresh
+		// entry every flush, making one fence look like 25 distinct ones. Varying data
+		// belongs in the count, not the key.
+		tlm::NoteAccuracyDetail(tlm::CounterId::GpuFenceStalls,
+								fmt::format("fence@{:08x}", addr),
+								st.stallNs / 1000);
+	}
+}
+
 LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 {
 	cemu_assert_debug(nWords == 6);
@@ -476,6 +511,9 @@ LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 	LatteCP_signalEnterWait();
 
 	bool stalls = false;
+	TLM_INC(Gpu, GpuFenceTotal);
+	const bool tlmFence = tlm::AreaEnabled(tlm::Area::Gpu);
+	const uint64 tlmFenceStart = tlmFence ? HighResolutionTimer::now().getTick() : 0;
 	if ((word0 & 0x10) != 0)
 	{
 		// wait for memory address
@@ -526,6 +564,7 @@ LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 			}
 			else
 				assert_dbg();
+			TLM_INC(Gpu, GpuFenceSpins);
 			if (!stalls)
 			{
 				g_renderer->NotifyLatteCommandProcessorIdle();
@@ -542,6 +581,17 @@ LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 	{
 		// wait for register
 		debugBreakpoint();
+	}
+	if (tlmFence) [[unlikely]]
+	{
+		auto& st = s_fenceStats[physAddr];
+		st.waits++;
+		if (stalls)
+		{
+			st.stalls++;
+			st.stallNs += HighResolutionTimer::now().getTick() - tlmFenceStart;
+			TLM_INC(Gpu, GpuFenceStalls);
+		}
 	}
 	return cmd;
 }
