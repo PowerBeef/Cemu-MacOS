@@ -80,7 +80,8 @@ jobs:
       # a translation lagging the source is normal and must not fail the build.
       - name: "Translation coverage"
         run: |
-          printf '%-6s %8s %8s %8s\n' locale translated fuzzy untranslated
+          echo "Against the template just generated. msgfmt reports its own wording;"
+          echo "'untranslated' includes strings this fork added and never had translated."
           for po in translations/*.po; do
             msgmerge --quiet --no-fuzzy-matching -o /tmp/merged.po "$po" cemu.pot
             stats=$(msgfmt --statistics -o /dev/null /tmp/merged.po 2>&1 | tr -d '\n')
