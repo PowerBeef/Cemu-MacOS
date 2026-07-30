@@ -2022,6 +2022,26 @@ void MetalRenderer::ProcessFinishedCommandBuffers()
                 if (gpuSeconds > 0.0)
                 {
                     TLM_ADD(Gpu, GpuBusyNs, (uint64)(gpuSeconds * 1e9));
+                    // Bubbles. Command buffers are serialised on m_event, so buffer N+1 cannot
+                    // start before N ends and the gap between them is time the GPU had nothing
+                    // to do. Summed per frame this separates "the GPU is busy 19 ms" from "the
+                    // GPU is busy 19 ms spread across 35 ms of wall clock", which need
+                    // completely different fixes and are indistinguishable in gpu.busy_ns.
+                    double start = commandBuffer->GPUStartTime();
+                    if (m_lastGpuEndTime > 0.0 && start > m_lastGpuEndTime)
+                    {
+                        // One 33 ms gap at the end of a frame is the GPU finishing early and
+                        // waiting for vsync, which is fine. Seven 5 ms gaps interleaved between
+                        // command buffers is the CPU failing to keep the GPU fed, which is not.
+                        // The sum alone cannot tell them apart, so count the large ones too.
+                        double gap = start - m_lastGpuEndTime;
+                        TLM_ADD(Gpu, GpuGapNs, (uint64)(gap * 1e9));
+                        TLM_INC(Gpu, GpuGapCount);
+                        if (gap > 0.004)
+                            TLM_INC(Gpu, GpuGapLarge);
+                    }
+                    if (commandBuffer->GPUEndTime() > m_lastGpuEndTime)
+                        m_lastGpuEndTime = commandBuffer->GPUEndTime();
                 }
                 // counted unconditionally, so busy_ns/buffers_done stays a valid average
                 TLM_INC(Gpu, GpuCommandBuffersDone);

@@ -69,6 +69,13 @@ TLM_COUNTER(GpuCpIdleCommits,       "gpu.cp_idle_commits",       "count", Gpu)
 TLM_COUNTER(GpuFenceVsyncDuring,    "gpu.fence_vsync_during",    "count", Gpu)
 TLM_COUNTER(GpuFenceFlipDuring,     "gpu.fence_flip_during",     "count", Gpu)
 TLM_COUNTER(GpuFenceReleaseLagNs,   "gpu.fence_release_lag_ns",  "ns",    Gpu)
+// GPU pipeline bubbles: summed gaps between one command buffer ending and the next
+// starting. Command buffers are serialised on an MTLEvent, so a gap is time the GPU had
+// nothing to run. gpu.busy_ns alone cannot tell "busy 19 ms" from "busy 19 ms spread over
+// 35 ms of wall clock", and those need opposite fixes.
+TLM_COUNTER(GpuGapNs,               "gpu.gap_ns",                "ns",    Gpu)
+TLM_COUNTER(GpuGapCount,            "gpu.gap_count",             "count", Gpu)
+TLM_COUNTER(GpuGapLarge,            "gpu.gap_large",             "count", Gpu)  // > 4 ms
 
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)

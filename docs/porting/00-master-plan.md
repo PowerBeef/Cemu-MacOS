@@ -664,3 +664,45 @@ frame is the title taking **three** grid slots.
 `cp_idle` is not a timer — it is the command processor genuinely out of work while the guest
 cores sit ~18% busy. Twenty milliseconds a frame of the GPU pipeline waiting for a CPU that is
 mostly idle is the next thing to explain, and unlike the fence it has no innocent explanation yet.
+
+### `cp_idle` and the GPU's 33 ms of dead air
+
+With the fence explained, `cp_idle` is the largest remaining term — 20.0 ms/frame of the command
+processor with an empty ring while the guest cores sit 18% busy. Measuring the GPU side of the same
+question (`gpu.gap_ns`: summed time between one command buffer ending and the next starting, which
+is real idle because the buffers are serialised on an `MTLEvent`):
+
+| gameplay, per frame | |
+|---|---|
+| frame | 49.90 ms (exactly 3 × 16.63 ms vsync, p99 49.97) |
+| **GPU busy** | **19.37 ms** |
+| **GPU gap** | **32.73 ms** |
+| gaps observed | **2** |
+| gaps over 4 ms | **2** |
+| command buffers | 7 |
+
+**The GPU is idle two thirds of every frame, and not in scattered stalls — in exactly two blocks of
+roughly 16.4 ms, one vsync period each.** Five of the six inter-buffer transitions are back-to-back;
+the GPU runs its seven buffers in a few contiguous bursts and then stops dead twice.
+
+What this says about the 20-vs-30 fps question:
+
+- GPU work is 19.37 ms. On its own that needs **two** 16.63 ms slots, not three.
+- Latte-thread work is 14.03 ms. On its own that needs **one**.
+- Fully overlapped the frame would be ~19 ms → 2 slots → 30 fps. Fully serialised it is
+  19.37 + 14.03 = **33.4 ms**, which misses a 33.27 ms two-slot deadline by 0.1 ms and slips to
+  three. **The frame is sitting exactly on the boundary, and the thing tipping it over is that CPU
+  and GPU are not overlapping.**
+
+That is the first quantitative account of why this scene is 20 fps rather than 30, and it points at
+pipelining rather than at any individual cost. Two structural candidates, neither yet tested:
+
+- `GetCommandBuffer` does `encodeWait(m_event, m_eventValue)` on every buffer, so command buffer
+  N+1 cannot begin on the GPU until N has fully completed. Nothing overlaps by construction.
+- The command processor only ever gets 7 buffers' worth of work per frame and spends 20 ms waiting
+  for the ring, so even without the event chain there would be little to overlap.
+
+**Attribution caveat, stated because it bounds the conclusion:** a completed buffer is credited to
+the frame it *completed* in, so a gap spanning a frame boundary lands in the later frame. One of
+the two gaps is plausibly that inter-frame idle, which would be benign. Distinguishing them needs a
+per-gap timeline rather than per-frame sums, and that has not been done.

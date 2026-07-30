@@ -539,6 +539,9 @@ private:
 	MetalEncoderType m_encoderType = MetalEncoderType::None;
 	MTL::CommandEncoder* m_commandEncoder = nullptr;
 
+    // GPUEndTime of the most recently completed command buffer, for the inter-buffer gap
+    // measurement in ProcessFinishedCommandBuffers. Mach absolute seconds, not a tick count.
+    double m_lastGpuEndTime = 0.0;
     uint32 m_recordedDrawcalls = 0;
     uint32 m_defaultCommitTreshlod = 0;
     uint32 m_commitTreshold = 0;
