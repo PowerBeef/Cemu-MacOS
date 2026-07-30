@@ -131,7 +131,7 @@ codebase structurally could not use.
 ## Measuring instead of guessing
 
 Most emulator optimisation is folklore. This fork ships a **telemetry harness compiled into the
-core**: 68 counters across CPU, GPU, memory and accuracy, `__thread`-local and cache-line striped,
+core**: 77 counters across CPU, GPU, memory and accuracy, `__thread`-local and cache-line striped,
 gated behind a single branch on a global mask so that a disabled build measurably costs nothing.
 
 ```sh
@@ -147,8 +147,15 @@ It earns its keep by **contradicting** things that seemed obvious:
 - That frame time was traced to a **single guest fence** at one address, spun on **65 million times
   per second**. Parking it removed **99.6% of the spins** and a fifth of all CPU — and moved the
   frame rate *not at all*, which is itself the result.
-- Breath of the Wild calls **31 distinct unimplemented imports, 557 times per frame**, 92% of them
-  a single alpha-to-coverage function: a measured accuracy target instead of a guess.
+- Breath of the Wild calls **31 distinct unimplemented imports**, and **91.7% of that volume was one
+  function** — `GX2SetAlphaToMaskReg`, 2.76 million calls in a single run. It looked like the largest
+  compatibility gap in the tree. Implementing it and then counting *draws that enable the feature*
+  rather than *calls to the setter* gives **zero, across 9,181 frames**: the game asks for the state
+  three hundred times a frame and never once turns it on. The renderer work was retired unbuilt.
+- A hand-written fibre-switch routine is **70x faster** than the `swapcontext` the guest scheduler
+  uses today (454 ns → 6.5 ns, measured). It would also **not move the frame rate**, because the
+  1.4 ms/frame it saves comes out of a stage that already has 20 ms of slack. Measuring the win and
+  measuring whether the win matters are different questions.
 - Two rounds of tile-based-deferred-rendering optimisations were designed, measured and
   **rejected**. An earlier conclusion turned out to have been measured on the wrong scene, and is
   recorded as a correction rather than quietly deleted.
