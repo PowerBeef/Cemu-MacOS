@@ -41,3 +41,11 @@ implementation detail nobody sees.
 - **The Arabic `.mo` also had no header entry**, so it declared no charset. Every gettext tool
   rejected it with `invalid multibyte sequence` and dropped all 17,000 Arabic code units on
   read. The data was intact the whole time; only the metadata was missing. Both are fixed.
+
+Because `msgunfmt` could not read it, Arabic's `.po` had to be extracted by reading the `.mo`
+directly. Two things that costs you, both of which bit here before being fixed: `.mo` stores a
+plural entry as `singular\0plural` → `form0\0form1`, so a naive extractor writes raw NUL bytes
+into the `.po` and destroys the two plural entries; and gettext needs a `Plural-Forms:` header
+to accept them back. The header this file now declares — `nplurals=2; plural=(n != 1)` — is
+gettext's own default, which is what the catalog was silently running under when it had no
+header at all.

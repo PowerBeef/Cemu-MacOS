@@ -55,9 +55,15 @@ jobs:
             # so a byte diff would fail on a difference nobody can act on. Round-tripping
             # both through msgcat --sort-output normalises ordering and wrapping and leaves
             # only the msgid/msgstr pairs, which is what actually has to match.
+            # sed: one such difference is already known -- this runner's msgfmt preserves
+            # `charset=utf-8` from the .po while Homebrew's normalises it to `UTF-8`, so the
+            # header alone differed and failed the whole check. Canonicalise it rather than
+            # reporting a mismatch a contributor cannot reproduce or act on.
             msgfmt --check-format -o "/tmp/$loc.mo" "$po"
-            msgunfmt "/tmp/$loc.mo" | msgcat --sort-output --no-wrap -o "/tmp/$loc.from-po" -
-            msgunfmt "$mo"          | msgcat --sort-output --no-wrap -o "/tmp/$loc.from-mo" -
+            msgunfmt "/tmp/$loc.mo" | msgcat --sort-output --no-wrap - \
+              | sed 's/charset=utf-8/charset=UTF-8/I' > "/tmp/$loc.from-po"
+            msgunfmt "$mo"          | msgcat --sort-output --no-wrap - \
+              | sed 's/charset=utf-8/charset=UTF-8/I' > "/tmp/$loc.from-mo"
             if ! cmp -s "/tmp/$loc.from-po" "/tmp/$loc.from-mo"; then
               echo "::error::$mo does not match $po -- run 'cmake --build build --target translations' and commit the result"
               diff "/tmp/$loc.from-mo" "/tmp/$loc.from-po" | head -20
