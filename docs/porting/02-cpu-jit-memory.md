@@ -340,6 +340,22 @@ Also fix the `__rdtsc()` shim (`precompiled.h:363-368`) — it should be `isb; m
 
 `swapcontext` on Darwin/arm64 saves the full callee-saved set **and calls `sigprocmask`** (a syscall, ~200-500 ns) on both save and restore. This is on the critical path of every guest thread switch.
 
+### Measured, 2026-07-30 — `tools/probes/fiber_switch_cost.c`
+
+The ~600-700 ns figure below was an estimate and is now replaced by a ping-pong microbenchmark (10⁶ switches, median of 5 interleaved runs):
+
+| | ns/switch |
+|---|---|
+| `swapcontext` (what `FiberUnix.cpp` does today) | **454.5** (range 454.1 – 474.4) |
+| hand-written AArch64, 176-byte frame | **6.5** (range 6.4 – 6.5) |
+| speedup | **70x** |
+
+At BotW's measured **3,143 switches/frame**, that is **1.43 ms/frame today → 0.02 ms**, a saving of 1.41 ms — 2.8% of a 49.9 ms frame, 4.3% of the 33.3 ms frame the shrine actually runs at. The estimate was ~35% high on `swapcontext` and pessimistic on the replacement.
+
+**It would not move the frame rate in the scene we can measure.** The frame decomposes as 12.64 ms of work (p99 22.05 ms) inside a 33.27 ms frame that is quantised to two vsync periods; the work already fits in *one* period with 24% headroom and is not what holds the frame at two. Taking 1.4 ms out of a stage with 20 ms of slack crosses no boundary. This is the same shape as the `DeviceShared` buffer-cache change: real, measurable, and worth doing for power and headroom rather than for fps. **Do not schedule it as a frame-rate fix.**
+
+Note the microbenchmark is the *right* instrument here and an in-process probe is not: `Fiber::Switch` does not return until the fiber is resumed, so a scope timer around it measures descheduled time. Two corrections to the text below, found while measuring: the `seq_cst` fences are at `FiberUnix.cpp:50` and `:52` (not `:52`/`:54`), and while it is true that `CemuUtil` cannot reach telemetry without a new link edge, the reason is not a dependency cycle — **nothing links `CemuUtil` except `CemuBin`**. The objection is that the edge would drag the fiber layer onto `CemuComponents` → `CemuGui` → `CemuWxGui` → wxWidgets.
+
 ### Register list
 
 Save/restore: **x19-x28, x29 (FP), x30 (LR), sp**, and **d8-d15** (only the *low 64 bits* of v8-v15 are callee-saved; the upper halves are caller-saved).

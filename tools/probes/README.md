@@ -11,6 +11,7 @@ from documentation. Each is self-contained; build with plain clang.
 | `sigaltstack_overflow.cpp` | Can a stack-overflow SIGSEGV be reported without an alternate signal stack? | **No.** Without `sigaltstack`+`SA_ONSTACK` the process dies with exit 139 and the handler never runs -- no crash log, no output. With it, the handler runs and captures 32 frames. |
 | `sdl_background_thread_gamepad.cpp` | Can SDL's gamepad subsystem be initialised and polled from a non-main thread on macOS? | **Yes.** `SDL_INIT_GAMEPAD \| SDL_INIT_HAPTIC` (no `SDL_INIT_VIDEO`) works off the main thread and enumerates connected pads. Only the *video* subsystem needs the main thread, which is why removing the SDL-based screensaver code unblocked moving the event pump to a dedicated thread. |
 | `gamecontroller_live_input.mm` | Does the GameController provider's bridge read a real pad correctly? | **Yes.** Enumerates the device, and reports face buttons, d-pad, shoulders, analog triggers (intermediate values, not just on/off) and both sticks across the full range. Note `GCController.controllers` is **empty until the run loop spins** -- the framework delivers devices by notification, not synchronously. |
+| `fiber_switch_cost.c` | What does a guest thread switch actually cost, and what would the hand-written AArch64 replacement save? | **454.5 ns** for `swapcontext`, **6.5 ns** hand-written — 70x. At BotW's 3,143 switches/frame that is 1.43 ms/frame today, 2.9% of a 49.9 ms frame. The `docs/porting/02` estimate of ~700 ns was ~35% high; its ~15 ns prediction for the replacement was pessimistic. |
 | `mmu_page_align.c` | Does the MemMapper commit/decommit cycle survive 16 KB pages? | **No, before the fix.** `HIGHMEM` (base `0xFFFFF000`) committed fine but decommitted with `EINVAL`, silently leaving guest memory writable across a title unload. `CORE*_LC` was never actually broken -- its base is 16 KB-aligned and the kernel rounds the length up. |
 
 ## Building and running
@@ -23,6 +24,7 @@ clang++ -std=c++20 -I ../../src -o gamecontroller_live_input gamecontroller_live
     -framework Foundation -framework GameController
 clang++ -O0 -std=c++20 -o sigaltstack_overflow sigaltstack_overflow.cpp   # run with and without the 'altstack' argument
 clang -O1 -o xbyak_jit_pattern    xbyak_jit_pattern.c
+clang -O2 -o fiber_switch_cost    fiber_switch_cost.c
 clang++ -std=c++20 -O2 -march=armv8-a+crypto -o aes_validation aes_armv8_validation.cpp
 
 # to test under the hardened runtime (the shipping configuration):
