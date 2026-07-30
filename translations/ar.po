@@ -1,0 +1,2828 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TesseraEmu\n"
+"PO-Revision-Date: 2024-12-07 00:00+0000\n"
+"Last-Translator: Cemu-Language contributors\n"
+"Language-Team: Arabic\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+
+msgid "&0.125x speed"
+msgstr "سرعة 0.125x"
+
+msgid "&0.25x speed"
+msgstr "سرعة 0.25x"
+
+msgid "&0.5x speed"
+msgstr "سرعة 0.5x"
+
+msgid "&1x speed"
+msgstr "سرعة 1x"
+
+msgid "&2x speed"
+msgstr "سرعة 2x"
+
+msgid "&4x speed"
+msgstr "سرعة 4x"
+
+msgid "&8x speed"
+msgstr "سرعة 8x"
+
+msgid "&About TesseraEmu"
+msgstr "حول TesseraEmu"
+
+msgid "&Accurate barriers (Vulkan)"
+msgstr "حواجز دقيقة (Vulkan)"
+
+msgid "&Active account"
+msgstr "الحساب النشط"
+
+msgid "&Add new entry"
+msgstr "إضافة إدخال جديد"
+
+msgid "&Audio AUX only"
+msgstr "الصوت المساعد فقط"
+
+msgid "&Breakpoints"
+msgstr "&نقاط التوقف"
+
+msgid "&CPU"
+msgstr "المعالج المركزي"
+
+msgid "&CafeOS modules logging"
+msgstr "سجل وحدات CafeOS"
+
+msgid "&Check for updates"
+msgstr "التحقق من التحديثات"
+
+msgid "&Chinese"
+msgstr "الصينية"
+
+msgid "&Console language"
+msgstr "لغة وحدة التحكم"
+
+msgid "&Copy"
+msgstr "&نسخ"
+
+msgid "&Copy Title ID"
+msgstr "نسخ معرف العنوان"
+
+msgid "&Copy Title Image"
+msgstr "نسخ صورة العنوان"
+
+msgid "&Copy Title Name"
+msgstr "نسخ اسم العنوان"
+
+msgid "&Coreinit Logging (OSReport/OSConsole)"
+msgstr "سجل Coreinit (OSReport/OSConsole)"
+
+msgid "&Create shortcut"
+msgstr "إنشاء اختصار"
+
+msgid "&DLC directory"
+msgstr "دليل المحتوى القابل للتنزيل (DLC)"
+
+msgid "&Debug"
+msgstr "تصحيح الأخطاء"
+
+msgid "&Decrement"
+msgstr "&نقص"
+
+msgid "&Delete"
+msgstr "حذف"
+
+msgid "&Download"
+msgstr "تنزيل"
+
+msgid "&Download Manager"
+msgstr "مدير التحميلات"
+
+msgid "&Dump"
+msgstr "تفريغ"
+
+msgid "&Dump current RAM"
+msgstr "تفريغ ذاكرة الوصول العشوائي الحالية"
+
+msgid "&Dutch"
+msgstr "الهولندية"
+
+msgid "&Edit game profile"
+msgstr "تحرير ملف تعريف اللعبة"
+
+msgid "&Edit graphic packs"
+msgstr "تحرير حزم الرسوميات"
+
+msgid "&Edit name"
+msgstr "تعديل الاسم"
+
+msgid "&Emulated USB Devices"
+msgstr "أجهزة USB المحاكية"
+
+msgid "&English"
+msgstr "الإنجليزية"
+
+msgid "&Exit"
+msgstr "خروج"
+
+msgid "&Favorite"
+msgstr "المفضلة"
+
+msgid "&File"
+msgstr "ملف"
+
+msgid "&French"
+msgstr "الفرنسية"
+
+msgid "&Fullscreen"
+msgstr "ملء الشاشة"
+
+msgid "&Game directory"
+msgstr "دليل اللعبة"
+
+msgid "&General settings"
+msgstr "الإعدادات العامة"
+
+msgid "&German"
+msgstr "الألمانية"
+
+msgid "&Goto Disasm"
+msgstr "&اذهب إلى تفكيك"
+
+msgid "&Graphic pack patches"
+msgstr "تعديلات حزم الرسومات"
+
+msgid "&Graphic packs"
+msgstr "حزم الرسومات"
+
+msgid "&Help"
+msgstr "مساعدة"
+
+msgid "&Increment"
+msgstr "&زيادة"
+
+msgid "&Input settings"
+msgstr "إعدادات الإدخال"
+
+msgid "&Install game title, update or DLC..."
+msgstr "تثبيت عنوان اللعبة، التحديث أو المحتوى القابل للتنزيل (DLC)..."
+
+msgid "&Invalid API usage"
+msgstr "استخدام API غير صالح"
+
+msgid "&Italian"
+msgstr "الإيطالية"
+
+msgid "&Japanese"
+msgstr "اليابانية"
+
+msgid "&Korean"
+msgstr "الكورية"
+
+msgid "&Launch title"
+msgstr "تشغيل العنوان"
+
+msgid "&Launch with GDB stub"
+msgstr "تشغيل مع GDB stub"
+
+msgid "&Load..."
+msgstr "تحميل..."
+
+msgid "&Log PPC context for API"
+msgstr "سجل سياق PPC لواجهة برمجة التطبيقات"
+
+msgid "&Logging"
+msgstr "تسجيل"
+
+msgid "&Memory Dump"
+msgstr "&تفريغ الذاكرة"
+
+msgid "&Memory searcher"
+msgstr "البحث عن الذاكرة"
+
+msgid "&NFC"
+msgstr "NFC"
+
+msgid "Open TesseraEmu folder"
+msgstr "فتح مجلد TesseraEmu"
+
+msgid "&Open MLC folder"
+msgstr "فتح مجلد MLC"
+
+msgid "&Open directory"
+msgstr "فتح الدليل"
+
+msgid "&Open logging window"
+msgstr "فتح نافذة التسجيل"
+
+msgid "&OpenGL debug output"
+msgstr "مخرجات تصحيح OpenGL"
+
+msgid "&Options"
+msgstr "خيارات"
+
+msgid "&Options below are for experts. Leave off if unsure"
+msgstr "الخيارات التالية للمحترفين فقط. اتركها معطلة إذا لم تكن متأكدًا"
+
+msgid "&Pin to main window"
+msgstr "&تثبيت على النافذة الرئيسية"
+
+msgid "&Portuguese"
+msgstr "البرتغالية"
+
+msgid "&Refresh game list"
+msgstr "تحديث قائمة الألعاب"
+
+msgid "&Registers"
+msgstr "&السجلات"
+
+msgid "&Remove entry"
+msgstr "إزالة الإدخال"
+
+msgid "&Remove shader caches"
+msgstr "إزالة مخابئ تظليل الرسومات"
+
+msgid "&Render upside-down"
+msgstr "عرض بشكل مقلوب"
+
+msgid "&Resume"
+msgstr "استئناف"
+
+msgid "&Retry"
+msgstr "إعادة المحاولة"
+
+msgid "&Russian"
+msgstr "الروسية"
+
+msgid "&Save directory"
+msgstr "دليل الحفظ"
+
+msgid "&Scan NFC tag from file"
+msgstr "مسح علامة NFC من ملف"
+
+msgid "&Separate GamePad view"
+msgstr "عرض منفصل لـ GamePad"
+
+msgid "&Shaders"
+msgstr "التظليل"
+
+msgid "&Spanish"
+msgstr "الإسبانية"
+
+msgid "&Start"
+msgstr "ابدأ"
+
+msgid "&Symbols"
+msgstr "&الرموز"
+
+msgid "&Taiwanese"
+msgstr "التايوانية"
+
+msgid "&Texture cache warnings"
+msgstr "تحذيرات ذاكرة التخزين المؤقت للنسيج"
+
+msgid "&Texture readback"
+msgstr "إعادة قراءة النسيج"
+
+msgid "&Textures"
+msgstr "نسيجيات"
+
+msgid "&Timer speed"
+msgstr "سرعة المؤقت"
+
+msgid "&Title Manager"
+msgstr "مدير العناوين"
+
+msgid "&Tools"
+msgstr "أدوات"
+
+msgid "&Unsupported API calls"
+msgstr "استدعاءات API غير مدعومة"
+
+msgid "&Update directory"
+msgstr "دليل التحديث"
+
+msgid "&Verify integrity of game files"
+msgstr "التحقق من سلامة ملفات اللعبة"
+
+msgid "&View PPC debugger"
+msgstr "عرض مصحح أخطاء PPC"
+
+msgid "&View PPC threads"
+msgstr "عرض خيوط PPC"
+
+msgid "&View audio debugger"
+msgstr "عرض مصحح أخطاء الصوت"
+
+msgid "&View texture cache info"
+msgstr "عرض معلومات ذاكرة التخزين المؤقت للنسيج"
+
+msgid "&Vulkan validation layer (slow)"
+msgstr "طبقة التحقق Vulkan (بطيئة)"
+
+msgid "&Wiki page"
+msgstr "صفحة الويكي"
+
+msgid "&Window"
+msgstr "&نافذة"
+
+msgid "&Zero"
+msgstr "&صفر"
+
+msgid "&nlibcurl HTTP/HTTPS requests"
+msgstr "طلبات HTTP/HTTPS عبر nlibcurl"
+
+msgid "0"
+msgstr "0"
+
+msgid "<profile name>"
+msgstr "<اسم الملف الشخصي>"
+
+msgid "> no modules loaded"
+msgstr "> لا توجد وحدات محملة"
+
+msgid "> unknown module"
+msgstr "> وحدة غير معروفة"
+
+msgid "API"
+msgstr "واجهة البرمجة API"
+
+msgid "AX voice viewer"
+msgstr "عارض صوت AX"
+
+msgid "About TesseraEmu"
+msgstr "حول TesseraEmu"
+
+msgid "Account"
+msgstr "الحساب"
+
+msgid "Account information"
+msgstr "معلومات الحساب"
+
+msgid "Account name may not be empty!"
+msgstr "لا يمكن أن يكون اسم الحساب فارغًا!"
+
+msgid "Account settings"
+msgstr "إعدادات الحساب"
+
+msgid "AccountId missing (The account is not connected to a NNID/PNID)"
+msgstr "معرف الحساب مفقود (الحساب غير متصل بـ NNID/PNID)"
+
+msgid "AccountPasswordCache is empty (The remember password option on your Wii U must be enabled for this account before dumping it)"
+msgstr "AccountPasswordCache فارغ (يجب تمكين خيار تذكر كلمة المرور على Wii U الخاصة بك لهذا الحساب قبل تفريغه)"
+
+msgid "Accurate barriers are off"
+msgstr "الحواجز الدقيقة معطلة"
+
+msgid "Active account"
+msgstr "الحساب النشط"
+
+msgid "Active preset"
+msgstr "التكوين النشط"
+
+msgid "Add"
+msgstr "إضافة"
+
+msgid "Add the root directory of your game(s). It will scan all directories in it for games"
+msgstr "أضف الدليل الجذري لألعابك. سيفحص جميع الأدلة الموجودة به للبحث عن الألعاب"
+
+msgid "Additional options"
+msgstr "خيارات إضافية"
+
+msgid "Address"
+msgstr "العنوان"
+
+msgid ""
+"Adds a game path to scan for games displayed in the game list\n"
+"If you have unpacked games, make sure to select the root folder of a game"
+msgstr ""
+"يضيف مسار لعبة للبحث عن الألعاب المعروضة في قائمة الألعاب\n"
+"إذا كانت الألعاب غير مضغوطة، تأكد من اختيار مجلد اللعبة الرئيسي"
+
+msgid "All Wii U files (*.wud, *.wux, *.wua, *.wuhb, *.iso, *.rpx, *.elf)"
+msgstr "جميع ملفات Wii U (*.wud, *.wux, *.wua, *.wuhb, *.iso, *.rpx, *.elf)"
+
+msgid "All files (*.*)"
+msgstr "جميع الملفات (*.*)"
+
+msgid "Applying update..."
+msgstr "جارٍ تطبيق التحديث..."
+
+msgid ""
+"Are you really sure that you want to delete the following file:\n"
+"{}"
+msgstr ""
+"هل أنت متأكد أنك تريد حذف الملف التالي:\n"
+"{}"
+
+msgid ""
+"Are you really sure that you want to delete the following folder:\n"
+"{}"
+msgstr ""
+"هل أنت متأكد أنك تريد حذف المجلد التالي:\n"
+"{}"
+
+msgid "Are you really sure that you want to delete the save entry for {}"
+msgstr "هل أنت متأكد من أنك تريد حذف إدخال الحفظ لـ {}"
+
+msgid "Are you sure you want to delete the account {} with id {:x}?"
+msgstr "هل أنت متأكد أنك تريد حذف الحساب {} بالمعرف {:x}؟"
+
+msgid "Async shader compile"
+msgstr "ترجمة التظليل غير المتزامنة"
+
+msgid ""
+"Async shader compile is enabled but not supported by the graphics driver\n"
+"Cemu will use synchronous compilation which can cause additional stutter"
+msgstr ""
+"تم تمكين ترجمة الظلال غير المتزامنة ولكن غير مدعومة بواسطة برنامج تشغيل الرسوميات\n"
+"سيستخدم Cemu الترجمة المتزامنة مما قد يتسبب في تلعثم إضافي"
+
+msgid "Audio"
+msgstr "الصوت"
+
+msgid "Audio API"
+msgstr "واجهة برمجة تطبيقات الصوت"
+
+msgid "Australia"
+msgstr "أستراليا"
+
+msgid "Auto"
+msgstr "تلقائي"
+
+msgid "Auto (recommended)"
+msgstr "تلقائي (موصى به)"
+
+msgid "Auto refresh"
+msgstr "تحديث تلقائي"
+
+msgid "Automatically check for updates"
+msgstr "التحقق من التحديثات تلقائيًا"
+
+msgid "Automatically checks for new cemu versions on startup"
+msgstr "يفحص تلقائيًا عن إصدارات جديدة من Cemu عند بدء التشغيل"
+
+msgid "Axis"
+msgstr "المحور"
+
+msgid "Base game"
+msgstr "اللعبة الأساسية"
+
+msgid ""
+"Base game:\n"
+"Not installed"
+msgstr ""
+"اللعبة الأساسية:\n"
+"غير مثبتة"
+
+msgid ""
+"Base game:\n"
+"{}"
+msgstr ""
+"اللعبة الأساسية:\n"
+"{}"
+
+msgid "Bicubic"
+msgstr "تكعيبي ثنائي"
+
+msgid "Bilinear"
+msgstr "ثنائي الخطية"
+
+msgid "Birthday"
+msgstr "عيد الميلاد"
+
+msgid "Boost priority (-1)"
+msgstr "زيادة الأولوية (-1)"
+
+msgid "Boost priority (-5)"
+msgstr "زيادة الأولوية (-5)"
+
+msgid "Bottom center"
+msgstr "أسفل الوسط"
+
+msgid "Bottom left"
+msgstr "أسفل اليسار"
+
+msgid "Bottom right"
+msgstr "أسفل اليمين"
+
+msgid "Break (F5)"
+msgstr "استراحة (F5)"
+
+msgid "Break on &entry point"
+msgstr "استراحة عند &نقطة الدخول"
+
+msgid "Breakpoints"
+msgstr "نقاط التوقف"
+
+msgid "Browse"
+msgstr "تصفح"
+
+msgid "CPU"
+msgstr "وحدة المعالجة المركزية"
+
+msgid "CPU per core usage"
+msgstr "استخدام المعالج لكل نواة"
+
+msgid "CPU usage"
+msgstr "استخدام المعالج (CPU)"
+
+msgid "CPU usage of TesseraEmu in percent"
+msgstr "استخدام المعالج (CPU) في TesseraEmu كنسبة مئوية"
+
+msgid "Calibrate"
+msgstr "معايرة"
+
+msgid "Can't change MLC path while a game is running!"
+msgstr "لا يمكن تغيير مسار MLC أثناء تشغيل لعبة!"
+
+msgid "Can't delete the only account!"
+msgstr "لا يمكن حذف الحساب الوحيد!"
+
+msgid "Can't open file to write!"
+msgstr "لا يمكن فتح الملف للكتابة!"
+
+msgid "Can't open file!"
+msgstr "لا يمكن فتح الملف!"
+
+msgid "Can't parse JSON file!"
+msgstr "لا يمكن تحليل ملف JSON!"
+
+msgid "Can't write to file: {}"
+msgstr "لا يمكن الكتابة إلى الملف: {}"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Cannot create file"
+msgstr "لا يمكن إنشاء الملف"
+
+msgid "Cannot open file"
+msgstr "لا يمكن فتح الملف"
+
+msgid "Cannot write file. Disk full?"
+msgstr "لا يمكن كتابة الملف. القرص ممتلئ؟"
+
+msgid "Capturing samples..."
+msgstr "جارٍ التقاط العينات..."
+
+msgid ""
+"Capturing samples... ({:})\n"
+"Results will be written to log.txt\n"
+msgstr ""
+"جارٍ التقاط العينات... ({:})\n"
+"سيتم كتابة النتائج في log.txt\n"
+
+msgid ""
+"Cemu\n"
+"Version {0}\n"
+"Compiled on {1}\n"
+"Original authors: {2}"
+msgstr ""
+"Cemu\n"
+"الإصدار {0}\n"
+"تم تجميعه في {1}\n"
+"المؤلفون الأصليون: {2}"
+
+msgid "TesseraEmu RAM usage in MB"
+msgstr "استخدام الذاكرة العشوائية (RAM) في TesseraEmu بوحدة MB"
+
+msgid "TesseraEmu can't write to {}!"
+msgstr "لا يمكن لـ TesseraEmu الكتابة إلى {}!"
+
+msgid ""
+"Cemu detected that the shader cache for this game is outdated.\n"
+"Only shader caches generated with Cemu 1.25.0 or above are supported.\n"
+"\n"
+"We recommend deleting the outdated cache file as it will no longer be used by Cemu."
+msgstr ""
+"كشف Cemu أن ذاكرة التخزين المؤقت للظلال لهذه اللعبة قديمة.\n"
+"يتم دعم فقط ذاكرات التخزين المؤقت للظلال التي تم إنشاؤها باستخدام Cemu 1.25.0 أو أعلى.\n"
+"\n"
+"نوصي بحذف ملف الذاكرة المؤقتة القديمة حيث لن يتم استخدامه بعد الآن بواسطة Cemu."
+
+msgid ""
+"TesseraEmu failed to write to the custom mlc directory.\n"
+"\n"
+"The path is:\n"
+"{}\n"
+"\n"
+"TesseraEmu cannot start without a valid mlc path. Do you want to reset the path? You can later change it again in the General Settings."
+msgstr ""
+"فشل TesseraEmu في الكتابة إلى دليل MLC المخصص.\n"
+"\n"
+"المسار هو:\n"
+"{}\n"
+"\n"
+"لا يمكن لـ TesseraEmu البدء بدون مسار MLC صالح. هل تريد إعادة تعيين المسار؟ يمكنك تغيير ذلك لاحقًا في الإعدادات العامة."
+
+msgid ""
+"TesseraEmu failed to write to the custom mlc directory.\n"
+"The path is:\n"
+"{}"
+msgstr ""
+"فشل TesseraEmu في الكتابة إلى دليل MLC المخصص.\n"
+"المسار هو:\n"
+"{}"
+
+msgid ""
+"TesseraEmu failed to write to the mlc directory.\n"
+"The path is:\n"
+"{}"
+msgstr ""
+"فشل TesseraEmu في الكتابة إلى دليل MLC.\n"
+"المسار هو:\n"
+"{}"
+
+msgid ""
+"Cemu is a Wii U emulator.\n"
+"\n"
+"Wii and Wii U are trademarks of Nintendo.\n"
+"Cemu is not affiliated with Nintendo."
+msgstr ""
+"Cemu هو محاكي لجهاز Wii U.\n"
+"\n"
+"Wii وWii U هي علامات تجارية لشركة نينتندو.\n"
+"Cemu غير مرتبط بشركة نينتندو."
+
+msgid "TesseraEmu is running in portable mode"
+msgstr "TesseraEmu يعمل في وضع النقل"
+
+msgid "TesseraEmu must be restarted to apply the selected UI language."
+msgstr "يجب إعادة تشغيل TesseraEmu لتطبيق لغة الواجهة المحددة."
+
+msgid "TesseraEmu needs to be restarted for the changes to take effect."
+msgstr "يجب إعادة تشغيل TesseraEmu لتأثير التغييرات."
+
+msgid "TesseraEmu update"
+msgstr "تحديث TesseraEmu"
+
+msgid "Changelog"
+msgstr "سجل التغييرات"
+
+msgid ""
+"Changes the interface language of TesseraEmu\n"
+"Available languages are stored in the translation directory\n"
+"A restart will be required after changing the language"
+msgstr ""
+"يغير لغة واجهة TesseraEmu\n"
+"اللغات المتاحة محفوظة في دليل الترجمة\n"
+"سيتطلب إعادة تشغيل بعد تغيير اللغة"
+
+msgid "Changes the port that the GDB stub will use, which you can use by either starting TesseraEmu with the --enable-gdbstub option or by enabling it the Debug tab."
+msgstr "يغير المنفذ الذي سيستخدمه GDB Stub، والذي يمكنك استخدامه إما عن طريق بدء TesseraEmu مع خيار --enable-gdbstub أو بتمكينه من علامة التبويب Debug."
+
+msgid "Channels"
+msgstr "القنوات"
+
+msgid "Checking"
+msgstr "جارٍ التحقق"
+
+msgid "Checking for latest version..."
+msgstr "جارٍ التحقق من أحدث إصدار..."
+
+msgid "Checking version..."
+msgstr "جارٍ التحقق من النسخة..."
+
+msgid "China"
+msgstr "الصين"
+
+msgid "Chinese"
+msgstr "صيني"
+
+msgid "Choose desktop entry location"
+msgstr "اختر موقع إدخال سطح المكتب"
+
+msgid "Choose shortcut location"
+msgstr "اختر موقع الاختصار"
+
+msgid "Classic"
+msgstr "كلاسيكي"
+
+msgid "Clear"
+msgstr "مسح"
+
+msgid "Click Skip button for early results with lower accuracy"
+msgstr "اضغط على زر التخطي للحصول على نتائج أولية بدقة أقل"
+
+msgid "Click Skip button to finish"
+msgstr "اضغط على زر التخطي للإنهاء"
+
+msgid "Click on Connect to load the list of downloadable titles"
+msgstr "انقر على اتصال لتحميل قائمة العناوين القابلة للتنزيل"
+
+msgid "Close"
+msgstr "إغلاق"
+
+msgid "Collecting list of files..."
+msgstr "جارٍ جمع قائمة الملفات..."
+
+msgid "Comment"
+msgstr "تعليق"
+
+msgid "Complete"
+msgstr "مكتمل"
+
+msgid "Configure input"
+msgstr "تكوين الإدخال"
+
+msgid "Confirmation"
+msgstr "تأكيد"
+
+msgid "Connect"
+msgstr "اتصال"
+
+msgid "Connect to a custom Network Service (configured via network_services.xml)"
+msgstr "الاتصال بخدمة الشبكة المخصصة (المعدة عبر network_services.xml)"
+
+msgid "Connect to the Pretendo Network Service"
+msgstr "الاتصال بخدمة الشبكة بريتندو"
+
+msgid "Connect to the official Nintendo Network Service"
+msgstr "الاتصال بخدمة الشبكة الرسمية لنينتندو"
+
+msgid "Connected extension"
+msgstr "الملحق المتصل"
+
+msgid "Connected. Right click entries in the list to start downloading"
+msgstr "متصل. انقر بزر الفأرة الأيمن على الإدخالات في القائمة للبدء بالتحميل"
+
+msgid "Connecting..."
+msgstr "جارٍ الاتصال..."
+
+msgid "Control"
+msgstr "التحكم"
+
+msgid "Controller"
+msgstr "وحدة التحكم"
+
+msgid "Controller profiles"
+msgstr "ملفات تعريف وحدة التحكم"
+
+msgid "Controller settings"
+msgstr "إعدادات وحدة التحكم"
+
+msgid "Controller {}"
+msgstr "وحدة التحكم {}"
+
+msgid ""
+"Controls the amount of buffered audio data\n"
+"Higher values will create a delay in audio playback, but may avoid audio problems when emulation is too slow"
+msgstr ""
+"يتحكم في كمية البيانات الصوتية المخزنة مؤقتًا\n"
+"القيم الأعلى ستسبب تأخيرًا في تشغيل الصوت، ولكنها قد تتجنب المشاكل الصوتية عندما تكون المحاكاة بطيئة للغاية"
+
+msgid "Controls the notification position while playing"
+msgstr "يتحكم في موضع الإشعارات أثناء اللعب"
+
+msgid "Controls the output aspect ratio when it doesn't match the ratio of the game"
+msgstr "يتحكم في نسبة العرض إلى الارتفاع للإخراج عندما لا تتطابق مع نسبة اللعبة"
+
+msgid "Controls the overlay which displays technical information while playing"
+msgstr "يتحكم في التراكب الذي يعرض المعلومات التقنية أثناء اللعب"
+
+msgid "Controls the vsync state"
+msgstr "يتحكم في حالة التزامن الرأسي (VSync)"
+
+msgid ""
+"Conversion failed\n"
+msgstr ""
+"فشل التحويل\n"
+
+msgid ""
+"Conversion finished\n"
+msgstr ""
+"اكتمل التحويل\n"
+
+msgid "Convert to compressed Wii U archive (.wua)"
+msgstr "تحويل إلى أرشيف Wii U مضغوط (.wua)"
+
+msgid "Converting files..."
+msgstr "جارٍ تحويل الملفات..."
+
+msgid "Could not decrypt title because title.tik is missing."
+msgstr "تعذر فك تشفير العنوان لعدم وجود ملف title.tik."
+
+msgid "Could not decrypt title. Make sure that keys.txt contains the correct disc key for this title."
+msgstr "تعذر فك تشفير العنوان. تأكد من أن ملف keys.txt يحتوي على مفتاح القرص الصحيح لهذا العنوان."
+
+msgid ""
+"Couldn't create a required TesseraEmu directory or file!\n"
+"\n"
+"Error: {0}"
+msgstr ""
+"لم يكن من الممكن إنشاء دليل أو ملف TesseraEmu المطلوب!\n"
+"\n"
+"خطأ: {0}"
+
+msgid "Couldn't download the update!"
+msgstr "تعذر تنزيل التحديث!"
+
+msgid "Counting files..."
+msgstr "جارٍ عد الملفات..."
+
+msgid "Country"
+msgstr "البلد"
+
+msgid "Crash dump"
+msgstr "تفريغ الأعطال"
+
+msgid "Create"
+msgstr "إنشاء"
+
+msgid "Create Infinity Figure file"
+msgstr "إنشاء ملف شخصية Infinity"
+
+msgid "Create Skylander file"
+msgstr "إنشاء ملف Skylander"
+
+msgid "Create execution breakpoint"
+msgstr "إنشاء نقطة توقف التنفيذ"
+
+msgid "Create logging breakpoint"
+msgstr "إنشاء نقطة توقف تسجيل"
+
+msgid "Create memory breakpoint (read)"
+msgstr "إنشاء نقطة توقف في الذاكرة (قراءة)"
+
+msgid "Create memory breakpoint (write)"
+msgstr "إنشاء نقطة توقف في الذاكرة (كتابة)"
+
+msgid "Create new account"
+msgstr "إنشاء حساب جديد"
+
+msgid ""
+"Creates a core dump when TesseraEmu crashes\n"
+"Only enable when requested by a developer!"
+msgstr ""
+"يتم إنشاء تفريغ أساسي عند تعطل TesseraEmu\n"
+"قم بتمكينه فقط عند الطلب من مطور!"
+
+msgid ""
+"Creates a dump when TesseraEmu crashes\n"
+"Only enable when requested by a developer!\n"
+"The Full option will create a very large dump file (includes a full RAM dump of the TesseraEmu process)"
+msgstr ""
+"يتم إنشاء تفريغ عند تعطل TesseraEmu\n"
+"قم بتمكينه فقط عند الطلب من مطور!\n"
+"سيؤدي خيار Full إلى إنشاء ملف تفريغ كبير جدًا (يشمل تفريغ كامل لذاكرة الوصول العشوائي لعملية TesseraEmu)"
+
+msgid "Current file:"
+msgstr "الملف الحالي:"
+
+msgid "Currently active downloads will continue in the background."
+msgstr "التنزيلات النشطة حاليًا ستستمر في الخلفية."
+
+msgid "Custom"
+msgstr "مخصص"
+
+msgid "Custom MLC path"
+msgstr "مسار MLC مخصص"
+
+msgid "D-pad"
+msgstr "لوحة الاتجاهات"
+
+msgid "DLC"
+msgstr "إضافات DLC"
+
+msgid ""
+"DLC:\n"
+"Not installed"
+msgstr ""
+"المحتوى القابل للتنزيل:\n"
+"غير مثبت"
+
+msgid ""
+"DLC:\n"
+"{}"
+msgstr ""
+"المحتوى القابل للتنزيل:\n"
+"{}"
+
+msgid "Deadzone"
+msgstr "المنطقة الميتة"
+
+msgid "Debug"
+msgstr "تصحيح الأخطاء"
+
+msgid "Decrease priority (+1)"
+msgstr "تقليل الأولوية (+1)"
+
+msgid "Decrease priority (+5)"
+msgstr "تقليل الأولوية (+5)"
+
+msgid "Default"
+msgstr "افتراضي"
+
+msgid "Delete"
+msgstr "حذف"
+
+msgid "Delete breakpoint"
+msgstr "حذف نقطة التوقف"
+
+msgid "Delete outdated cache file [recommended]"
+msgstr "احذف ملف الذاكرة المؤقتة القديمة [موصى به]"
+
+msgid "Demo"
+msgstr "نسخة تجريبية"
+
+msgid "Description"
+msgstr "الوصف"
+
+msgid "Details:"
+msgstr "التفاصيل:"
+
+msgid "Device"
+msgstr "الجهاز"
+
+msgid "Disable screen saver"
+msgstr "تعطيل شاشة التوقف"
+
+msgid "Disabled"
+msgstr "معطل"
+
+msgid "Discord Presence"
+msgstr "حالة Discord"
+
+msgid "Displays internal debug information (Vulkan only)"
+msgstr "يعرض معلومات تصحيح الأخطاء الداخلية (فقط Vulkan)"
+
+msgid "Displays the active controller profile when starting a game"
+msgstr "يعرض ملف تعريف وحدة التحكم النشط عند بدء اللعبة"
+
+msgid "Displays the menu bar when TesseraEmu is running in fullscreen mode and the mouse cursor is moved to the top"
+msgstr "يعرض شريط القائمة عندما يكون TesseraEmu في وضع ملء الشاشة ويتم نقل مؤشر الماوس إلى الأعلى"
+
+msgid ""
+"Do you really want to cancel the installation process?\n"
+"\n"
+"Canceling the process will delete the applied files."
+msgstr ""
+"هل تريد حقاً إلغاء عملية التثبيت؟\n"
+"\n"
+"إلغاء العملية سيؤدي إلى حذف الملفات المطبقة."
+
+msgid "Double buffering"
+msgstr "التخزين المؤقت المزدوج"
+
+msgid "Download Manager"
+msgstr "مدير التنزيلات"
+
+msgid "Download and configure graphic packs"
+msgstr "قم بتنزيل وتكوين حزم الرسومات"
+
+msgid "Download failed"
+msgstr "فشل في التحميل"
+
+msgid "Download latest community graphic packs"
+msgstr "تنزيل أحدث حزم الرسوميات من المجتمع"
+
+msgid "Downloading"
+msgstr "جارٍ التنزيل"
+
+msgid "Downloading account ticket"
+msgstr "تحميل تذكرة الحساب"
+
+msgid "Downloading graphic packs..."
+msgstr "جارٍ تنزيل حزم الرسوميات..."
+
+msgid "Downloading meta data"
+msgstr "تحميل البيانات الوصفية"
+
+msgid "Downloading system tickets..."
+msgstr "تحميل تذاكر النظام..."
+
+msgid "Downloading ticket"
+msgstr "تحميل التذكرة"
+
+msgid "Downloading update..."
+msgstr "جارٍ تنزيل التحديث..."
+
+msgid "Downscale filter"
+msgstr "فلتر التصغير"
+
+msgid "Downscaling filters are used when the game resolution is bigger than the window size"
+msgstr "تُستخدم فلاتر التصغير عندما تكون دقة اللعبة أكبر من حجم النافذة"
+
+msgid "Draw calls per frame"
+msgstr "نداءات الرسم لكل إطار"
+
+msgid "Dumped online files not found"
+msgstr "لم يتم العثور على ملفات الإنترنت المفرغة"
+
+msgid "Dutch"
+msgstr "هولندي"
+
+msgid ""
+"EXPERT OPTION\n"
+"Controls the accuracy of floating point multiplication in shaders.\n"
+"\n"
+"Recommended: true"
+msgstr ""
+"خيار الخبراء\n"
+"يتحكم في دقة ضرب الفاصلة العائمة في الظلال.\n"
+"\n"
+"موصى به: صحيح"
+
+msgid ""
+"EXPERT OPTION\n"
+"Set the maximum thread slice runtime (in virtual cycles)"
+msgstr ""
+"خيار الخبراء\n"
+"حدد الحد الأقصى لوقت تشغيل شريحة الخيط (بالدورات الافتراضية)"
+
+msgid ""
+"EXPERT OPTION\n"
+"This option will load libraries from the cafeLibs directory"
+msgstr ""
+"خيار الخبراء\n"
+"سيقوم هذا الخيار بتحميل المكتبات من دليل cafeLibs"
+
+msgid "Edit game profile"
+msgstr "تحرير ملف تعريف اللعبة"
+
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+msgid "Emulate Infinity Base"
+msgstr "محاكاة قاعدة Infinity"
+
+msgid "Emulate Skylander Portal"
+msgstr "محاكاة بوابة Skylander"
+
+msgid "Emulated USB Devices"
+msgstr "أجهزة USB المحاكية"
+
+msgid "Emulated controller"
+msgstr "وحدة تحكم محاكية"
+
+msgid "Enable Feral GameMode"
+msgstr "تمكين وضع الألعاب Feral"
+
+msgid "Enabled"
+msgstr "مفعل"
+
+msgid ""
+"Enables async shader and pipeline compilation. Reduces stutter at the cost of objects not rendering for a short time.\n"
+"Vulkan only"
+msgstr ""
+"يُمكن الترجمة غير المتزامنة للتظليل وخط الأنابيب. يقلل من التقطع على حساب عدم عرض بعض العناصر لفترة قصيرة.\n"
+"خاص بـ Vulkan فقط"
+
+msgid ""
+"Enables the Discord Rich Presence feature\n"
+"You will also need to enable it in the Discord settings itself!"
+msgstr ""
+"يُمكّن ميزة الحالة الغنية في Discord\n"
+"كما ستحتاج إلى تفعيلها في إعدادات Discord نفسها!"
+
+msgid "English"
+msgstr "إنجليزي"
+
+msgid "Enter a custom game title"
+msgstr "أدخل عنوانًا مخصصًا للعبة"
+
+msgid "Enter a memory address"
+msgstr "أدخل عنوان الذاكرة"
+
+msgid "Enter a new comment."
+msgstr "أدخل تعليقًا جديدًا."
+
+msgid "Enter a new instruction."
+msgstr "أدخل تعليمة جديدة."
+
+msgid "Enter a new value."
+msgstr "أدخل قيمة جديدة."
+
+msgid "Enter a target address."
+msgstr "أدخل عنوان الهدف."
+
+msgid "Error code"
+msgstr "رمز الخطأ"
+
+msgid "Error in keys.txt at line {}"
+msgstr "خطأ في keys.txt في السطر {}"
+
+msgid ""
+"Error when creating the extraction path:\n"
+"{}"
+msgstr ""
+"حدث خطأ عند إنشاء مسار الاستخراج:\n"
+"{}"
+
+msgid ""
+"Error when creating the zip for the save entry:\n"
+"{}"
+msgstr ""
+"خطأ عند إنشاء الملف المضغوط لإدخال الحفظ:\n"
+"{}"
+
+msgid ""
+"Error when initializing Vulkan renderer:\n"
+"{}"
+msgstr ""
+"خطأ عند تهيئة مُحرك العرض Vulkan:\n"
+"{}"
+
+msgid ""
+"Error when opening the import zip file:\n"
+"{}"
+msgstr ""
+"حدث خطأ عند فتح ملف الاستيراد المضغوط:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a directory to the zip:\n"
+"{}"
+msgstr ""
+"خطأ عند محاولة إضافة دليل إلى الملف المضغوط:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a file to the zip:\n"
+"{}"
+msgstr ""
+"خطأ عند محاولة إضافة ملف إلى الملف المضغوط:\n"
+"{}"
+
+msgid ""
+"Error when trying to add cemu_meta file to the zip:\n"
+"{}"
+msgstr ""
+"خطأ عند محاولة إضافة ملف cemu_meta إلى الملف المضغوط:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the entry:\n"
+"{}"
+msgstr ""
+"حدث خطأ عند محاولة حذف الإدخال:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the former save game:\n"
+"{}"
+msgstr ""
+"حدث خطأ عند محاولة حذف الملف المحفوظ السابق:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the save directory:\n"
+"{}"
+msgstr ""
+"خطأ عند محاولة حذف دليل الحفظ:\n"
+"{}"
+
+msgid ""
+"Error when trying to move former title installation:\n"
+"{}"
+msgstr ""
+"خطأ عند محاولة نقل التثبيت السابق للعنوان:\n"
+"{}"
+
+msgid ""
+"Error when trying to move the save game:\n"
+"{}"
+msgstr ""
+"حدث خطأ عند محاولة نقل الملف المحفوظ:\n"
+"{}"
+
+msgid "Error:"
+msgstr "خطأ:"
+
+msgid "Europe"
+msgstr "أوروبا"
+
+msgid "Exit"
+msgstr "خروج"
+
+msgid "Export"
+msgstr "تصدير"
+
+msgid "Export checksum entry"
+msgstr "تصدير إدخال قيمة التحقق"
+
+msgid "Export successful"
+msgstr "تم التصدير بنجاح"
+
+msgid "Export the title checksum data to a local JSON file"
+msgstr "تصدير بيانات التحقق من العنوان إلى ملف JSON محلي"
+
+msgid "Exported save entry (*.zip)"
+msgstr "إدخال الحفظ المصدر (*.zip)"
+
+msgid "Exports the selected save entry as zip file"
+msgstr "تصدير ملف الحفظ المحدد كملف مضغوط"
+
+msgid "Extensions:"
+msgstr "الإضافات:"
+
+msgid "Extracting failed!"
+msgstr "فشل في الاستخراج!"
+
+msgid "Extracting update..."
+msgstr "جارٍ استخراج التحديث..."
+
+msgid "Extracting..."
+msgstr "جارٍ الاستخراج..."
+
+msgid "FP view mode"
+msgstr "وضع عرض FP"
+
+msgid "FPS"
+msgstr "الإطارات في الثانية (FPS)"
+
+msgid "Failed to apply patches for graphic pack '{}'"
+msgstr "فشل تطبيق التصحيحات لحزمة الرسوميات '{}'"
+
+msgid "Failed to connect to server"
+msgstr "فشل الاتصال بالخادم"
+
+msgid "Failed to create default MLC files in the selected directory. The MLC path has not been changed"
+msgstr "فشل إنشاء ملفات MLC الافتراضية في الدليل المحدد. لم يتم تغيير مسار MLC"
+
+msgid "Failed to find a suitable Bluetooth radio."
+msgstr "فشل في العثور على وحدة بلوتوث مناسبة."
+
+msgid "Failed to launch executable. Path: "
+msgstr "فشل في تشغيل الملف التنفيذي. المسار: "
+
+msgid "Failed to launch game."
+msgstr "فشل في تشغيل اللعبة."
+
+msgid "Failed to load patches for graphic pack '{}'"
+msgstr "فشل تحميل التصحيحات لحزمة الرسوميات '{}'"
+
+msgid "Failed to pair with the found controller."
+msgstr "فشل في الاقتران بجهاز التحكم الذي تم العثور عليه."
+
+msgid "Failed to query account status"
+msgstr "فشل في استعلام حالة الحساب"
+
+msgid ""
+"Failed to remove the shader caches:\n"
+"{}"
+msgstr ""
+"فشل في إزالة مخابئ التظليل:\n"
+"{}"
+
+msgid "Failed to request tickets"
+msgstr "فشل في طلب التذاكر"
+
+msgid "Failed to run this title because the executable is damaged"
+msgstr "فشل تشغيل هذا العنوان لأن الملف التنفيذي تالف"
+
+msgid "Failed to save desktop entry to {}"
+msgstr "فشل في حفظ إدخال سطح المكتب إلى {}"
+
+msgid "Failed to save shortcut to {}"
+msgstr "فشل في حفظ الاختصار إلى {}"
+
+msgid "Failed to search for controllers."
+msgstr "فشل في البحث عن أجهزة التحكم."
+
+msgid "Female"
+msgstr "أنثى"
+
+msgid "Filter"
+msgstr "تصفية"
+
+msgid "Filter messages"
+msgstr "تصفية الرسائل"
+
+msgid "Finalizing..."
+msgstr "جارٍ الإنهاء..."
+
+msgid "Folder"
+msgstr "مجلد"
+
+msgid "Forces a given controller profile"
+msgstr "يفرض ملف تعريف وحدة التحكم المحدد"
+
+msgid "Format"
+msgstr "التنسيق"
+
+msgid "Found controller. Pairing..."
+msgstr "تم العثور على جهاز التحكم. جارٍ الاقتران..."
+
+msgid "Found {0} games, {1} updates, {2} DLCs and {3} save entries"
+msgstr "تم العثور على {0} لعبة، {1} تحديث، {2} إضافات DLC، و{3} إدخالات حفظ"
+
+msgid "Freeze"
+msgstr "تجميد"
+
+msgid "French"
+msgstr "فرنسي"
+
+msgid "Friend list"
+msgstr "قائمة الأصدقاء"
+
+msgid "Full"
+msgstr "كامل"
+
+msgid "Full sync at GX2DrawDone()"
+msgstr "التزامن الكامل عند GX2DrawDone()"
+
+msgid "Fullscreen menu bar"
+msgstr "شريط القائمة في وضع ملء الشاشة"
+
+msgid "Fullscreen scaling"
+msgstr "مقياس وضع ملء الشاشة"
+
+msgid "G&oto Dump"
+msgstr "اذهب إلى تفريغ"
+
+msgid "GDB Stub port"
+msgstr "منفذ GDB Stub"
+
+msgid "Game"
+msgstr "لعبة"
+
+msgid "Game Paths"
+msgstr "مسارات الألعاب"
+
+msgid "Game path"
+msgstr "مسار اللعبة"
+
+msgid "Game paths"
+msgstr "مسارات اللعبة"
+
+msgid "GamePad View"
+msgstr "عرض GamePad"
+
+msgid "Gamepad"
+msgstr "لوحة التحكم"
+
+msgid "Games will be launched with gamepad view toggled as default. The view can be toggled with CTRL + TAB"
+msgstr "سيتم بدء الألعاب مع تبديل عرض وحدة التحكم كافتراضي. يمكن تبديل العرض مع CTRL + TAB"
+
+msgid "Gender"
+msgstr "الجنس"
+
+msgid "General"
+msgstr "عام"
+
+msgid "General settings"
+msgstr "الإعدادات العامة"
+
+msgid "Generated checksum of game image: {}"
+msgstr "تم توليد قيمة التحقق لصورة اللعبة: {}"
+
+msgid "Generated checksum of {} game files"
+msgstr "تم توليد قيمة التحقق لـ {} ملفات اللعبة"
+
+msgid "Generating checksum of game image: {}"
+msgstr "جارٍ توليد قيمة التحقق لصورة اللعبة: {}"
+
+msgid "German"
+msgstr "ألماني"
+
+msgid "Getting installed title information..."
+msgstr "جارٍ الحصول على معلومات العنوان المثبت..."
+
+msgid "Getting started"
+msgstr "البدء"
+
+msgid "GoTo (CTRL + G)"
+msgstr "اذهب إلى (CTRL + G)"
+
+msgid "GoTo address"
+msgstr "اذهب إلى العنوان"
+
+msgid "Grabbing game files"
+msgstr "جارٍ التقاط ملفات اللعبة"
+
+msgid "Graphic"
+msgstr "الرسوميات"
+
+msgid "Graphic pack"
+msgstr "حزمة الرسوميات"
+
+msgid "Graphic pack error"
+msgstr "خطأ في حزمة الرسوميات"
+
+msgid "Graphic packs"
+msgstr "حزم الرسوميات"
+
+msgid "Graphic packs && mods"
+msgstr "حزم الرسومات && التعديلات"
+
+msgid "Graphic packs cannot be updated while a game is running."
+msgstr "لا يمكن تحديث حزم الرسوميات أثناء تشغيل اللعبة."
+
+msgid ""
+"Graphic packs improve games by offering the ability to change resolution, increase FPS, tweak visuals or add gameplay modifications.\n"
+"Get started by opening the graphic packs configuration window.\n"
+msgstr ""
+"تحسن حزم الرسومات الألعاب من خلال تقديم إمكانية تغيير الدقة، وزيادة FPS، وتعديل الرسوميات أو إضافة تعديلات على طريقة اللعب.\n"
+"ابدأ بفتح نافذة تكوين حزم الرسومات.\n"
+
+msgid "Graphics"
+msgstr "الرسومات"
+
+msgid "Graphics API"
+msgstr "واجهة رسوميات API"
+
+msgid "Graphics Device"
+msgstr "جهاز الرسوميات"
+
+msgid "Hashing game file: {}/{}"
+msgstr "تجزئة ملف اللعبة: {}/{}"
+
+msgid "Hermite"
+msgstr "هيرميت"
+
+msgid "I understand"
+msgstr "أفهم"
+
+msgid "IP"
+msgstr "IP"
+
+msgid "Icon"
+msgstr "أيقونة"
+
+msgid ""
+"If synchronization is requested by the game, the emulated CPU will wait for the GPU to finish all operations.\n"
+"This is more accurate behavior, but may cause lower performance"
+msgstr ""
+"إذا طلبت اللعبة التزامن، ستنتظر وحدة المعالجة المركزية المحاكاة أن تكمل وحدة معالجة الرسوميات جميع العمليات.\n"
+"هذا السلوك أكثر دقة، لكنه قد يسبب أداء أقل"
+
+msgid "Import"
+msgstr "استيراد"
+
+msgid "Import save entry"
+msgstr "استيراد الملف المحفوظ"
+
+msgid "Imports a zipped save entry"
+msgstr "استيراد ملف حفظ مضغوط"
+
+msgid "Infinity Base"
+msgstr "قاعدة Infinity"
+
+msgid "Infinity Figure Creator"
+msgstr "منشئ شخصية Infinity"
+
+msgid "Infinity Manager"
+msgstr "مدير Infinity"
+
+msgid "Info"
+msgstr "معلومة"
+
+msgid "Information"
+msgstr "معلومات"
+
+msgid "Initializing"
+msgstr "يتم التهيئة"
+
+msgid "Input API"
+msgstr "واجهة برمجة تطبيقات الإدخال"
+
+msgid "Input settings"
+msgstr "إعدادات الإدخال"
+
+msgid "Install title"
+msgstr "تثبيت العنوان"
+
+msgid "Installed"
+msgstr "تم التثبيت"
+
+msgid "Installed games"
+msgstr "الألعاب المثبتة"
+
+msgid "Installing"
+msgstr "جارٍ التثبيت"
+
+msgid "Installing DLC..."
+msgstr "جارٍ تثبيت إضافات DLC..."
+
+msgid "Installing system title..."
+msgstr "جارٍ تثبيت عنوان النظام..."
+
+msgid "Installing title..."
+msgstr "جارٍ تثبيت العنوان..."
+
+msgid "Installing update..."
+msgstr "جارٍ تثبيت التحديث..."
+
+msgid "Interface"
+msgstr "واجهة المستخدم"
+
+msgid "Invalid TMD"
+msgstr "TMD غير صالح"
+
+msgid "IsPasswordCacheEnabled is set to false (The remember password option on your Wii U must be enabled for this account before dumping it)"
+msgstr "IsPasswordCacheEnabled تم تعيينه على false (يجب تمكين خيار تذكر كلمة المرور على Wii U الخاصة بك لهذا الحساب قبل تفريغه)"
+
+msgid ""
+"It looks like you're starting TesseraEmu for the first time.\n"
+"This quick setup assistant will help you get the best experience"
+msgstr ""
+"يبدو أنك تبدأ TesseraEmu للمرة الأولى.\n"
+"سيساعدك مساعد الإعداد السريع هذا في الحصول على أفضل تجربة"
+
+msgid "It seems that a newer version is already installed, do you still want to install the older version?"
+msgstr "يبدو أن هناك إصداراً أحدث مثبت، هل لا تزال ترغب في تثبيت الإصدار الأقدم؟"
+
+msgid "It seems that the selected title is already installed, do you want to reinstall it?"
+msgstr "يبدو أن العنوان المحدد مثبت بالفعل، هل تريد إعادة تثبيته؟"
+
+msgid ""
+"It seems that there is already a title installed at the target location but it has a different type.\n"
+"Currently installed: '{}' Installing: '{}'\n"
+"\n"
+"This can happen for titles which were installed with very old Cemu versions.\n"
+"Do you still want to continue with the installation? It will replace the currently installed title."
+msgstr ""
+"يبدو أن هناك عنواناً مثبتاً في الموقع المستهدف ولكنه من نوع مختلف.\n"
+"مثبت حالياً: '{}' التثبيت: '{}'\n"
+"\n"
+"يمكن أن يحدث هذا للعناوين التي تم تثبيتها بواسطة إصدارات قديمة جداً من Cemu.\n"
+"هل تريد المتابعة مع التثبيت؟ سيحل هذا محل العنوان المثبت حالياً."
+
+msgid "Italian"
+msgstr "إيطالي"
+
+msgid "JSON file doesn't satisfy needed schema"
+msgstr "ملف JSON لا يلبي المخطط المطلوب"
+
+msgid "JSON parse error: {}"
+msgstr "خطأ في تحليل JSON: {}"
+
+msgid "Japan"
+msgstr "اليابان"
+
+msgid "Japanese"
+msgstr "ياباني"
+
+msgid "Keep aspect ratio"
+msgstr "الحفاظ على نسبة العرض إلى الارتفاع"
+
+msgid "Keep outdated cache file"
+msgstr "احتفظ بملف الذاكرة المؤقتة القديمة"
+
+msgid "Korea"
+msgstr "كوريا"
+
+msgid "Korean"
+msgstr "كوري"
+
+msgid "Language"
+msgstr "اللغة"
+
+msgid "Last played"
+msgstr "آخر لعب"
+
+msgid "Latency"
+msgstr "الكمون (التأخير)"
+
+msgid "Launch with gamepad view"
+msgstr "بدء اللعبة مع عرض وحدة التحكم"
+
+msgid "Left Axis"
+msgstr "المحور الأيسر"
+
+msgid "Lite"
+msgstr "خفيف"
+
+msgid "Load"
+msgstr "تحميل"
+
+msgid "Load shared libraries"
+msgstr "تحميل المكتبات المشتركة"
+
+msgid "Location"
+msgstr "الموقع"
+
+msgid "Logging in..."
+msgstr "جارٍ تسجيل الدخول..."
+
+msgid "Logging window"
+msgstr "نافذة السجلات"
+
+msgid "Login failed. Outdated or incomplete online files?"
+msgstr "فشل تسجيل الدخول. هل الملفات عبر الإنترنت قديمة أو غير مكتملة؟"
+
+msgid "Low battery"
+msgstr "بطارية منخفضة"
+
+msgid "MLC"
+msgstr "MLC"
+
+msgid "Male"
+msgstr "ذكر"
+
+msgid "Match emulated display (Experimental)"
+msgstr "مطابقة العرض المحاكى (تجريبي)"
+
+msgid "Memory Dump"
+msgstr "تفريغ الذاكرة"
+
+msgid "Memory Searcher"
+msgstr "أداة البحث في الذاكرة"
+
+msgid "Microphone (Experimental)"
+msgstr "الميكروفون (تجريبي)"
+
+msgid "Mii name"
+msgstr "اسم الـ Mii"
+
+msgid "Missing certificate and key files:"
+msgstr "ملفات الشهادة والمفتاح مفقودة:"
+
+msgid "Mode"
+msgstr "الوضع"
+
+msgid "Module"
+msgstr "الوحدة"
+
+msgid "Module&list"
+msgstr "قائمة&الوحدات"
+
+msgid "Modules"
+msgstr "الوحدات"
+
+msgid "Mono"
+msgstr "أحادي"
+
+msgid "MotionPlus"
+msgstr "موشن بلس"
+
+msgid "Multi-core recompiler"
+msgstr "معيد ترجمة النواة المتعددة"
+
+msgid ""
+"Multiple issues with your game files have been found!\n"
+"Do you want to export them to a file?"
+msgstr ""
+"تم العثور على مشكلات متعددة في ملفات اللعبة!\n"
+"هل تريد تصديرها إلى ملف؟"
+
+msgid "NUS"
+msgstr "NUS"
+
+msgid "Name"
+msgstr "الاسم"
+
+msgid "Nearest Neighbor"
+msgstr "أقرب جار"
+
+msgid "Network Service"
+msgstr "خدمة الشبكة"
+
+msgid "Network service"
+msgstr "خدمة الشبكة"
+
+msgid "Next"
+msgstr "التالي"
+
+msgid "Nintendo"
+msgstr "نينتندو"
+
+msgid "No"
+msgstr "لا"
+
+msgid "No account selected"
+msgstr "لا يوجد حساب محدد"
+
+msgid "No persistent id entered!"
+msgstr "لم يتم إدخال معرف دائم!"
+
+msgid "No update available!"
+msgstr "لا يوجد تحديث متاح!"
+
+msgid "No updates available."
+msgstr "لا توجد تحديثات متاحة."
+
+msgid "None"
+msgstr "لا يوجد"
+
+msgid "Not a valid NFC file"
+msgstr "ليس ملف NFC صالحاً"
+
+msgid ""
+"Not enough space available.\n"
+"Required: {0} MB\n"
+"Available: {1} MB"
+msgstr ""
+"المساحة المتاحة غير كافية.\n"
+"المطلوب: {0} ميجابايت\n"
+"المتوفر: {1} ميجابايت"
+
+msgid "Not installed"
+msgstr "غير مثبت"
+
+msgid "Not installed (Partially downloaded)"
+msgstr "غير مثبت (تم التنزيل جزئيًا)"
+
+msgid "Note that changing the MLC location will not transfer any accounts or save files. Are you sure you want to change the path?"
+msgstr "لاحظ أن تغيير موقع MLC لن ينقل أي حسابات أو ملفات حفظ. هل أنت متأكد أنك تريد تغيير المسار؟"
+
+msgid "Notifications"
+msgstr "الإشعارات"
+
+msgid "Nunchuck"
+msgstr "نونتشوك"
+
+msgid "OK"
+msgstr "حسنًا"
+
+msgid "OTP and SEEPROM present but no certificate files were found"
+msgstr "توجد OTP و SEEPROM ولكن لم يتم العثور على ملفات الشهادة"
+
+msgid "OTP.bin or SEEPROM.bin is missing"
+msgstr "OTP.bin أو SEEPROM.bin مفقود"
+
+msgid "Off"
+msgstr "إيقاف"
+
+msgid "Offline"
+msgstr "غير متصل"
+
+msgid "On"
+msgstr "تشغيل"
+
+msgid "Online Status"
+msgstr "حالة الإنترنت"
+
+msgid "Online functionality disabled for this account"
+msgstr "تم تعطيل الوظائف عبر الإنترنت لهذا الحساب"
+
+msgid "Online play is not set up. Follow the guide below to get started"
+msgstr "لم يتم إعداد اللعب عبر الإنترنت. اتبع الدليل أدناه للبدء"
+
+msgid "Online play requirements"
+msgstr "متطلبات اللعب عبر الإنترنت"
+
+msgid "Online play tutorial"
+msgstr "دليل اللعب عبر الإنترنت"
+
+msgid "Open Infinity Figure dump"
+msgstr "فتح تفريغ شخصية Infinity"
+
+msgid "Open Skylander dump"
+msgstr "فتح تفريغ Skylander"
+
+msgid "Open checksum entry"
+msgstr "فتح إدخال قيمة التحقق"
+
+msgid "Open directory"
+msgstr "فتح الدليل"
+
+msgid "Open file to launch"
+msgstr "فتح ملف للتشغيل"
+
+msgid "Open file to load"
+msgstr "فتح ملف للتحميل"
+
+msgid "Open separate pad screen"
+msgstr "فتح شاشة وحدة تحكم منفصلة"
+
+msgid "Open the directory of the save entry"
+msgstr "فتح دليل ملف الحفظ"
+
+msgid "Options"
+msgstr "الخيارات"
+
+msgid "Outdated shader cache"
+msgstr "ذاكرة التخزين المؤقت القديمة للظلال"
+
+msgid "Overlay"
+msgstr "التراكب"
+
+msgid "PPC Debugger"
+msgstr "مصحح PPC"
+
+msgid "PPC threads"
+msgstr "عمليات PPC"
+
+msgid "Packet delay"
+msgstr "تأخير الحزمة"
+
+msgid "Pair a Wii or Wii U controller"
+msgstr "إقران وحدة تحكم Wii أو Wii U"
+
+msgid "Pairing..."
+msgstr "جارٍ الاقتران..."
+
+msgid "Paused"
+msgstr "متوقف مؤقتًا"
+
+msgid "Permanently delete the save entry"
+msgstr "حذف ملف الحفظ نهائياً"
+
+msgid "Please use your system's Bluetooth manager instead."
+msgstr "يرجى استخدام مدير البلوتوث الخاص بنظامك."
+
+msgid "Port"
+msgstr "المنفذ"
+
+msgid "Portugese"
+msgstr "برتغالي"
+
+msgid "Position"
+msgstr "الموقع"
+
+msgid "Pressing the screenshot key (F12) will save a screenshot directly to the screenshots folder"
+msgstr "عند الضغط على مفتاح لقطة الشاشة (F12) سيتم حفظ لقطة الشاشة مباشرة في مجلد اللقطات"
+
+msgid "Pretendo"
+msgstr "بريتندو"
+
+msgid "Prevents the system from activating the screen saver or going to sleep while running a game."
+msgstr "يمنع النظام من تفعيل شاشة التوقف أو الدخول في وضع السكون أثناء تشغيل اللعبة."
+
+msgid "Preview version"
+msgstr "نسخة المعاينة"
+
+msgid "Previous"
+msgstr "السابق"
+
+msgid "PrincipalId missing"
+msgstr "معرف Principal مفقود"
+
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+msgid "Profile thread"
+msgstr "ملف تعريف العملية"
+
+msgid "Profiling thread"
+msgstr "تحليل الأداء للعمليات"
+
+msgid "Progress"
+msgstr "التقدم"
+
+msgid "Queued"
+msgstr "في قائمة الانتظار"
+
+msgid "RAM usage"
+msgstr "استخدام الذاكرة العشوائية (RAM)"
+
+msgid "Range"
+msgstr "النطاق"
+
+msgid "Reading game image: {0}/{1} kB"
+msgstr "جارٍ قراءة صورة اللعبة: {0}/{1} كيلوبايت"
+
+msgid "Reading game image: {}"
+msgstr "جارٍ قراءة صورة اللعبة: {}"
+
+msgid "Refresh"
+msgstr "تحديث"
+
+msgid "Region"
+msgstr "المنطقة"
+
+msgid "Registers"
+msgstr "السجلات"
+
+msgid "Reload edited shaders"
+msgstr "إعادة تحميل المظللات المعدلة"
+
+msgid "Remember main window position"
+msgstr "تذكر موقع نافذة الرئيسية"
+
+msgid "Remember pad window position"
+msgstr "تذكر موقع نافذة لوحة التحكم"
+
+msgid "Remove"
+msgstr "إزالة"
+
+msgid "Remove shader caches"
+msgstr "إزالة مخابئ التظليل"
+
+msgid "Remove the shader caches for {}?"
+msgstr "إزالة مخابئ التظليل للعبة {}؟"
+
+msgid "Removes the currently selected game path from the game list"
+msgstr "يزيل مسار اللعبة المحدد حاليًا من قائمة الألعاب"
+
+msgid "Reset &order"
+msgstr "إعادة ضبط الترتيب"
+
+msgid "Reset &width"
+msgstr "إعادة ضبط العرض"
+
+msgid "Reset path"
+msgstr "إعادة تعيين المسار"
+
+msgid "Restart"
+msgstr "إعادة التشغيل"
+
+msgid "Restart of TesseraEmu required for changes to take effect"
+msgstr "يتطلب إعادة تشغيل TesseraEmu لتطبيق التغييرات"
+
+msgid "Restores the last known pad window position and size when opening it"
+msgstr "يعيد الموقع والحجم الأخيرين المعروفين لنافذة لوحة التحكم عند فتحها"
+
+msgid "Restores the last known window position and size when starting TesseraEmu"
+msgstr "يعيد الموقع والحجم الأخير المعروفين للنافذة عند بدء تشغيل TesseraEmu"
+
+msgid "Results"
+msgstr "النتائج"
+
+msgid "Results ({0})"
+msgstr "النتائج ({0})"
+
+msgid "Resume"
+msgstr "استئناف"
+
+msgid "Retrieving update information..."
+msgstr "استرجاع معلومات التحديث..."
+
+msgid "Right Axis"
+msgstr "المحور الأيمن"
+
+msgid "Rotation"
+msgstr "الدوران"
+
+msgid "Rumble"
+msgstr "اهتزاز"
+
+msgid "Run (F5)"
+msgstr "تشغيل (F5)"
+
+msgid "Russian"
+msgstr "روسي"
+
+msgid "Save"
+msgstr "حفظ"
+
+msgid "Save Wii U game archive file"
+msgstr "احفظ ملف أرشيف لعبة Wii U"
+
+msgid "Save entry (*.zip)"
+msgstr "ملف محفوظ (*.zip)"
+
+msgid "Save folder"
+msgstr "حفظ المجلد"
+
+msgid "Save screenshot"
+msgstr "حفظ لقطة الشاشة"
+
+msgid "Save transfer"
+msgstr "نقل المحفوظات"
+
+msgid "Scale"
+msgstr "المقياس"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "Searching for controllers..."
+msgstr "جارٍ البحث عن وحدات التحكم..."
+
+msgid "Searching for titles..."
+msgstr "جارٍ البحث عن العناوين..."
+
+msgid "Select MLC directory"
+msgstr "اختر دليل MLC"
+
+msgid "Select a directory"
+msgstr "اختر دليلًا"
+
+msgid "Select a directory containing games."
+msgstr "اختر دليلًا يحتوي على الألعاب."
+
+msgid "Select a file"
+msgstr "اختر ملفًا"
+
+msgid "Select a file to export the errors"
+msgstr "اختر ملفًا لتصدير الأخطاء"
+
+msgid "Select a folder"
+msgstr "اختر مجلدًا"
+
+msgid "Select a target file to export the save entry"
+msgstr "اختر ملف الهدف لتصدير إدخال الحفظ"
+
+msgid "Select a zipped save file"
+msgstr "اختر ملف محفوظ مضغوط"
+
+msgid "Select an account and press Connect"
+msgstr "حدد حساباً واضغط على اتصال"
+
+msgid "Select folder of title to install"
+msgstr "حدد مجلد العنوان للتثبيت"
+
+msgid "Select one of the available audio back ends"
+msgstr "اختر أحد الخلفيات الصوتية المتاحة"
+
+msgid "Select one of the available graphic back ends"
+msgstr "اختر أحد واجهات الرسوميات الخلفية المتاحة"
+
+msgid "Select the active audio input device for Wii U GamePad"
+msgstr "اختر جهاز إدخال الصوت النشط للوحة تحكم Wii U"
+
+msgid "Select the active audio output device for Wii U GamePad"
+msgstr "اختر جهاز إخراج الصوت النشط للوحة تحكم Wii U"
+
+msgid "Select the active audio output device for Wii U TV"
+msgstr "اختر جهاز إخراج الصوت النشط لتلفاز Wii U"
+
+msgid "Select the folder that stores your update, DLC or base game files"
+msgstr "حدد المجلد الذي يحتوي على ملفات التحديث، المحتوى القابل للتنزيل (DLC)، أو ملفات اللعبة الأساسية"
+
+msgid "Select the language you want to use in TesseraEmu"
+msgstr "اختر اللغة التي تريد استخدامها في TesseraEmu"
+
+msgid "Select the used graphic device"
+msgstr "اختر جهاز الرسوميات المستخدم"
+
+msgid "Select title to install"
+msgstr "اختر العنوان للتثبيت"
+
+msgid "Selected account is a valid online account"
+msgstr "الحساب المحدد هو حساب عبر الإنترنت صالح"
+
+msgid "Selected account is not linked to a NNID or PNID"
+msgstr "الحساب المحدد غير مرتبط بـ NNID أو PNID"
+
+msgid "Set breakpoint"
+msgstr "تعيين نقطة توقف"
+
+msgid "Set comment for breakpoint at address %08x"
+msgstr "تعيين تعليق لنقطة التوقف عند العنوان %08x"
+
+msgid "Set the CPU emulation mode"
+msgstr "حدد وضع محاكاة وحدة المعالجة المركزية"
+
+msgid "Sets the scale of the notification text"
+msgstr "يضبط حجم نص الإشعارات"
+
+msgid "Sets the scale of the overlay text"
+msgstr "يضبط مقياس النص في التراكب"
+
+msgid "Sets the text color of notifications"
+msgstr "يضبط لون نص الإشعارات"
+
+msgid "Sets the text color of the overlay"
+msgstr "يضبط لون النص في التراكب"
+
+msgid "Settings"
+msgstr "الإعدادات"
+
+msgid "Shader caches removed"
+msgstr "تمت إزالة مخابئ التظليل"
+
+msgid "Shader compiler"
+msgstr "مترجم الظلال"
+
+msgid "Shader multiplication accuracy"
+msgstr "دقة ضرب الظلال"
+
+msgid "Show &dlc"
+msgstr "إظهار المحتوى القابل للتنزيل"
+
+msgid "Show &game time"
+msgstr "إظهار وقت اللعب"
+
+msgid "Show &icon"
+msgstr "إظهار الأيقونة"
+
+msgid "Show &last played"
+msgstr "إظهار آخر لعب"
+
+msgid "Show &name"
+msgstr "إظهار الاسم"
+
+msgid "Show &region"
+msgstr "إظهار المنطقة"
+
+msgid "Show &title ID"
+msgstr "إظهار معرف العنوان"
+
+msgid "Show &version"
+msgstr "إظهار الإصدار"
+
+msgid "Show available titles"
+msgstr "عرض العناوين المتاحة"
+
+msgid "Show available updates"
+msgstr "عرض التحديثات المتاحة"
+
+msgid "Show installed"
+msgstr "عرض المثبت"
+
+msgid "Show only active"
+msgstr "إظهار النشط فقط"
+
+msgid "Show views"
+msgstr "إظهار العرض"
+
+msgid "Shows a notification after shaders have been compiled"
+msgstr "يعرض إشعارًا بعد ترجمة الظلال"
+
+msgid "Shows a notification when a low controller battery has been detected"
+msgstr "يعرض إشعارًا عند اكتشاف بطارية منخفضة لوحدة التحكم"
+
+msgid "Shows friend list related data if online"
+msgstr "يعرض بيانات قائمة الأصدقاء إذا كان متصلاً بالإنترنت"
+
+msgid "Single-core interpreter"
+msgstr "مفسر النواة الواحدة"
+
+msgid "Single-core recompiler"
+msgstr "معيد ترجمة النواة الواحدة"
+
+msgid "Size"
+msgstr "الحجم"
+
+msgid "Skylander"
+msgstr "Skylander"
+
+msgid "Skylander Figure Creator"
+msgstr "منشئ شخصية Skylander"
+
+msgid "Skylanders Manager"
+msgstr "مدير Skylanders"
+
+msgid "Skylanders Portal"
+msgstr "بوابة Skylanders"
+
+msgid "Source"
+msgstr "المصدر"
+
+msgid "Spanish"
+msgstr "إسباني"
+
+msgid "Special thanks:"
+msgstr "شكر خاص:"
+
+msgid "Start games with fullscreen"
+msgstr "بدء الألعاب في وضع ملء الشاشة"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Step Into (F11)"
+msgstr "تقدم إلى الداخل (F11)"
+
+msgid "Step Over (F10)"
+msgstr "تقدم فوق (F10)"
+
+msgid "Stereo"
+msgstr "استريو"
+
+msgid "Stop emulation"
+msgstr "إيقاف المحاكاة"
+
+msgid "Stopping..."
+msgstr "جارٍ الإيقاف..."
+
+msgid "Stored Entries"
+msgstr "الإدخالات المخزنة"
+
+msgid "Stretch"
+msgstr "تمديد"
+
+msgid "Style: &Icons"
+msgstr "نمط: أيقونات"
+
+msgid "Style: &List"
+msgstr "نمط: قائمة"
+
+msgid "Style: &Small Icons"
+msgstr "نمط: أيقونات صغيرة"
+
+msgid "Success"
+msgstr "نجاح"
+
+msgid "Successfully paired the controller."
+msgstr "تم الاقتران بجهاز التحكم بنجاح."
+
+msgid "Surround"
+msgstr "صوت محيطي"
+
+msgid "Suspend"
+msgstr "إيقاف مؤقت"
+
+msgid "Symbols"
+msgstr "الرموز"
+
+msgid "System data title"
+msgstr "عنوان بيانات النظام"
+
+msgid "System title"
+msgstr "عنوان النظام"
+
+msgid "TMD download failed"
+msgstr "فشل في تحميل TMD"
+
+msgid "TV"
+msgstr "التلفاز"
+
+msgid "Taiwan"
+msgstr "تايوان"
+
+msgid "Taiwanese"
+msgstr "تايواني"
+
+msgid "Target"
+msgstr "الوجهة"
+
+msgid "Test if the controller is connected"
+msgstr "اختبر ما إذا كانت وحدة التحكم متصلة"
+
+msgid "Text Color"
+msgstr "لون النص"
+
+msgid "Texture cache"
+msgstr "ذاكرة التخزين المؤقت للنسيج"
+
+msgid ""
+"Thank you for testing the in-development build of Cemu for macOS.\n"
+" \n"
+"The macOS port is currently purely experimental and should not be considered stable or ready for issue-free gameplay. There are also known issues with degraded performance due to the use of MoltenVk and Rosetta for ARM Macs. We appreciate your patience while we improve Cemu for macOS."
+msgstr ""
+"شكرًا لك على اختبار الإصدار قيد التطوير من Cemu لنظام macOS.\n"
+" \n"
+"النسخة لنظام macOS حاليًا تجريبية بحتة ولا ينبغي اعتبارها مستقرة أو جاهزة للعب بدون مشاكل. هناك أيضًا مشكلات معروفة بانخفاض الأداء بسبب استخدام MoltenVk و Rosetta لأجهزة Mac ARM. نقدر صبرك بينما نقوم بتحسين Cemu لنظام macOS."
+
+msgid "Thanks to our Patreon supporters:"
+msgstr "شكرًا لداعمي Patreon لدينا:"
+
+msgid ""
+"The (parent) folder of the title you selected is missing at least one of the required subfolders (\"code\", \"content\" and \"meta\")\n"
+"Make sure that the files are complete."
+msgstr ""
+"المجلد الرئيسي للعنوان الذي اخترته يفتقد على الأقل أحد المجلدات الفرعية المطلوبة (\"code\"، \"content\" و\"meta\")\n"
+"تأكد من اكتمال الملفات."
+
+msgid "The VRAM usage of TesseraEmu in MB"
+msgstr "استخدام ذاكرة الفيديو (VRAM) في TesseraEmu بوحدة MB"
+
+msgid "The controller is already added!"
+msgstr "تمت إضافة وحدة التحكم بالفعل!"
+
+msgid "The currently selected account is not a valid or dumped online account:"
+msgstr "الحساب المحدد حاليًا ليس حسابًا صالحًا أو محمولًا عبر الإنترنت:"
+
+msgid "The file you are comparing with is for a different title."
+msgstr "الملف الذي تقارنه هو لعنوان مختلف."
+
+msgid "The folder you have selected cannot be found on your system."
+msgstr "لا يمكن العثور على المجلد الذي حددته على نظامك."
+
+msgid "The following content will be converted to a compressed Wii U archive file (.wua):"
+msgstr "سيتم تحويل المحتوى التالي إلى ملف أرشيف Wii U مضغوط (.wua):"
+
+msgid "The following error(s) have been found:"
+msgstr "تم العثور على الخطأ(الأخطاء) التالية:"
+
+msgid "The following files are damaged:"
+msgstr "الملفات التالية تالفة:"
+
+msgid "The following files are missing:"
+msgstr "الملفات التالية مفقودة:"
+
+msgid ""
+"The following prefixes are supported:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+msgstr ""
+"التسميات التالية مدعومة:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+
+msgid ""
+"The game path is scanned by TesseraEmu to automatically locate your games, game updates and DLCs. We recommend creating a dedicated directory in which\n"
+"you place all your Wii U game files. Additional paths can be set later in TesseraEmu's general settings. All common Wii U game formats are supported by TesseraEmu."
+msgstr ""
+"يتم فحص مسار اللعبة بواسطة TesseraEmu لتحديد موقع ألعابك وتحديثات الألعاب و DLCs تلقائيًا. نوصي بإنشاء دليل مخصص حيث\n"
+"تضع جميع ملفات ألعاب Wii U الخاصة بك. يمكن تعيين مسارات إضافية لاحقًا في الإعدادات العامة لـ TesseraEmu. يتم دعم جميع تنسيقات ألعاب Wii U الشائعة من قبل TesseraEmu."
+
+msgid ""
+"The given account id is not valid!\n"
+"It must be a hex number bigger or equal than {:08x}"
+msgstr ""
+"معرف الحساب المدخل غير صالح!\n"
+"يجب أن يكون رقمًا سداسيًا أكبر من أو يساوي {:08x}"
+
+msgid "The mii name is the profile name"
+msgstr "اسم Mii هو اسم الملف الشخصي"
+
+msgid "The mlc directory contains your save games and installed game update/dlc data"
+msgstr "يحتوي دليل mlc على بيانات الألعاب المحفوظة وتحديثات الألعاب المثبتة وبيانات المحتوى القابل للتنزيل"
+
+msgid "The number of draw calls per frame. Average over last 5 seconds"
+msgstr "عدد نداءات الرسم لكل إطار. المتوسط خلال آخر 5 ثوانٍ"
+
+msgid "The number of frames per second. Average over last 5 seconds"
+msgstr "عدد الإطارات في الثانية. المتوسط خلال آخر 5 ثوانٍ"
+
+msgid "The persistent id is the internal folder name used for your saves"
+msgstr "المعرف الدائم هو اسم المجلد الداخلي المستخدم لحفظاتك"
+
+msgid "The persistent id is the internal folder name used for your saves. Only change this if you are importing saves from a Wii U with a specific id"
+msgstr "المعرف الدائم هو اسم المجلد الداخلي المستخدم لحفظ ملفاتك. قم بتغييره فقط إذا كنت تقوم باستيراد ملفات محفوظة من جهاز Wii U بمعرف محدد"
+
+msgid "The persistent id must be greater than {:x}!"
+msgstr "يجب أن يكون المعرف الدائم أكبر من {:x}!"
+
+msgid "The persistent id {:x} is already in use by account {}!"
+msgstr "المعرف الدائم {:x} مستخدم بالفعل بواسطة الحساب {}!"
+
+msgid ""
+"The selected directory does not contain the expected MLC structure. Do you want to create a new MLC structure in this directory?\n"
+"Note that changing the MLC location will not transfer any accounts or save files."
+msgstr ""
+"الدليل المحدد لا يحتوي على الهيكل المتوقع لـ MLC. هل تريد إنشاء هيكل MLC جديد في هذا الدليل؟\n"
+"لاحظ أن تغيير موقع MLC لن ينقل أي حسابات أو ملفات حفظ."
+
+msgid "The shader caches were removed!"
+msgstr "تمت إزالة مخابئ التظليل!"
+
+msgid "The verification data doesn't include a WUD hash!"
+msgstr "بيانات التحقق لا تتضمن تجزئة WUD!"
+
+msgid ""
+"There's a new update available.\n"
+"Do you want to update?"
+msgstr ""
+"هناك تحديث جديد متاح.\n"
+"هل تريد التحديث؟"
+
+msgid ""
+"There's already a file at the target directory:\n"
+"{}"
+msgstr ""
+"يوجد بالفعل ملف في الدليل الهدف:\n"
+"{}"
+
+msgid ""
+"There's already a save game available for the target account, do you want to overwrite it?\n"
+"This will delete the existing save files for the account and replace them."
+msgstr ""
+"يوجد بالفعل ملف محفوظ للحساب الهدف، هل ترغب في استبداله؟\n"
+"سيتم حذف الملفات المحفوظة الحالية لهذا الحساب واستبدالها."
+
+msgid ""
+"This game entry seems to be either an update or the base game was merged with update data\n"
+"Broken game dumps cause various problems during emulation and may even stop working at all in future TesseraEmu versions\n"
+"Please make sure the base game is intact and install updates only with the File->Install Update/DLC option"
+msgstr ""
+"يبدو أن إدخال هذه اللعبة إما تحديث أو أن اللعبة الأساسية تم دمجها مع بيانات التحديث\n"
+"التخزينات التالفة تسبب مشاكل متعددة أثناء المحاكاة وقد تتوقف عن العمل تماماً في إصدارات TesseraEmu المستقبلية\n"
+"يرجى التأكد من أن اللعبة الأساسية سليمة وتثبيت التحديثات فقط باستخدام خيار ملف->تثبيت تحديث/DLC"
+
+msgid "This graphic pack has no description"
+msgstr "هذه الحزمة لا تحتوي على وصف"
+
+msgid "This option requires Win8.1+"
+msgstr "هذا الخيار يتطلب نظام ويندوز 8.1 أو أعلى"
+
+msgid "This update removed or renamed the following graphic packs:"
+msgstr "أزال هذا التحديث أو أعاد تسمية حزم الرسوميات التالية:"
+
+msgid "Thread quantum"
+msgstr "كمية الخيط"
+
+msgid "Title ID"
+msgstr "معرف العنوان"
+
+msgid "Title Manager"
+msgstr "مدير العناوين"
+
+msgid "Title checksum of {:08x}-{:08x}"
+msgstr "قيمة التحقق من العنوان لـ {:08x}-{:08x}"
+
+msgid "Title installation has been canceled!"
+msgstr "تم إلغاء تثبيت العنوان!"
+
+msgid "Title installed!"
+msgstr "تم تثبيت العنوان!"
+
+msgid "Toggle Breakpoint (F9)"
+msgstr "تبديل نقطة التوقف (F9)"
+
+msgid "Top center"
+msgstr "أعلى الوسط"
+
+msgid "Top left"
+msgstr "أعلى اليسار"
+
+msgid "Top right"
+msgstr "أعلى اليمين"
+
+msgid "Total CPU usage in percent for each core"
+msgstr "إجمالي استخدام المعالج كنسبة مئوية لكل نواة"
+
+msgid "Transfer"
+msgstr "نقل"
+
+msgid "Transfers the save entry to another persistent account id"
+msgstr "نقل ملف الحفظ إلى معرف حساب آخر"
+
+msgid "Trigger"
+msgstr "زر التفعيل"
+
+msgid "Triple buffering"
+msgstr "التخزين المؤقت الثلاثي"
+
+msgid "Type"
+msgstr "النوع"
+
+msgid "USA"
+msgstr "الولايات المتحدة"
+
+msgid "Unable to create file"
+msgstr "غير قادر على إنشاء الملف"
+
+msgid ""
+"Unable to create file keys.txt\n"
+"This can happen if TesseraEmu does not have write permission to its own directory, the disk is full or if anti-virus software is blocking TesseraEmu."
+msgstr ""
+"غير قادر على إنشاء ملف keys.txt\n"
+"يمكن أن يحدث ذلك إذا لم يكن لدى TesseraEmu إذن كتابة إلى دليله الخاص، أو إذا كان القرص ممتلئًا أو إذا كانت برامج مكافحة الفيروسات تمنع TesseraEmu."
+
+msgid "Unable to find the /meta/meta.xml file inside the selected folder."
+msgstr "غير قادر على العثور على ملف /meta/meta.xml داخل المجلد المحدد."
+
+msgid ""
+"Unable to launch game\n"
+"Path:\n"
+msgstr ""
+"غير قادر على تشغيل اللعبة\n"
+"المسار:\n"
+
+msgid "Unable to launch game because the base files were not found."
+msgstr "غير قادر على تشغيل اللعبة بسبب عدم العثور على الملفات الأساسية."
+
+msgid ""
+"Unable to launch title.\n"
+"Make sure the configured game paths are still valid and refresh the game list.\n"
+"\n"
+"Path which failed to load:\n"
+msgstr ""
+"غير قادر على تشغيل العنوان. تأكد من صحة مسارات الألعاب المكونة وقم بتحديث قائمة الألعاب. المسار الذي فشل في التحميل:\n"
+
+msgid ""
+"Unable to mount title.\n"
+"Make sure the configured game paths are still valid and refresh the game list.\n"
+"\n"
+"File which failed to load:\n"
+msgstr ""
+"غير قادر على تحميل العنوان. تأكد من صحة مسارات الألعاب المكونة وقم بتحديث قائمة الألعاب. الملف الذي فشل في التحميل:\n"
+
+msgid "Update"
+msgstr "تحديث"
+
+msgid "Update available"
+msgstr "تحديث متاح"
+
+msgid "Update available!"
+msgstr "تحديث متاح!"
+
+msgid "Update error"
+msgstr "خطأ في التحديث"
+
+msgid "Update installation has been canceled!"
+msgstr "تم إلغاء تثبيت التحديث!"
+
+msgid "Update notification"
+msgstr "إشعار تحديث"
+
+msgid ""
+"Update:\n"
+"Not installed"
+msgstr ""
+"التحديث:\n"
+"غير مثبت"
+
+msgid ""
+"Update:\n"
+"{}"
+msgstr ""
+"التحديث:\n"
+"{}"
+
+msgid "Updated graphic packs are available. Do you want to download and install them?"
+msgstr "حزم الرسوميات المحدثة متاحة. هل تريد تنزيلها وتثبيتها؟"
+
+msgid "Updating game list..."
+msgstr "جارٍ تحديث قائمة الألعاب..."
+
+msgid "Updating ticket cache"
+msgstr "تحديث ذاكرة التخزين المؤقت للتذاكر"
+
+msgid "Upscale filter"
+msgstr "فلتر التكبير"
+
+msgid "Upscaling filters are used when the game resolution is smaller than the window size"
+msgstr "تُستخدم فلاتر التكبير عندما تكون دقة اللعبة أصغر من حجم النافذة"
+
+msgid "Use FeralInteractive GameMode if installed."
+msgstr "استخدام وضع الألعاب من FeralInteractive إذا كان مثبتًا."
+
+msgid "Use motion"
+msgstr "استخدام الحركة"
+
+msgid "Used libraries and utilities:"
+msgstr "المكتبات والأدوات المستخدمة:"
+
+msgid "VRAM usage"
+msgstr "استخدام ذاكرة الفيديو (VRAM)"
+
+msgid "VSync"
+msgstr "التزامن الرأسي (VSync)"
+
+msgid "Valid online files are required to download eShop titles. For more information, go to the Account tab in the General Settings."
+msgstr "تتطلب تنزيل عناوين eShop ملفات صالحة عبر الإنترنت. لمزيد من المعلومات، انتقل إلى تبويب الحساب في الإعدادات العامة."
+
+msgid "Value"
+msgstr "القيمة"
+
+msgid "Verifies the checksum online"
+msgstr "يتحقق من قيمة التحقق عبر الإنترنت"
+
+msgid "Verifies the checksum with a local JSON file you can select"
+msgstr "يتحقق من قيمة التحقق باستخدام ملف JSON محلي يمكنك اختياره"
+
+msgid "Verify online"
+msgstr "التحقق عبر الإنترنت"
+
+msgid "Verify with local file"
+msgstr "التحقق باستخدام ملف محلي"
+
+msgid "Verifying"
+msgstr "جارٍ التحقق"
+
+msgid "Verifying integrity of game files..."
+msgstr "جارٍ التحقق من سلامة ملفات اللعبة..."
+
+msgid "Version"
+msgstr "الإصدار"
+
+msgid "Volume"
+msgstr "الصوت"
+
+msgid "WUA"
+msgstr "WUA"
+
+msgid "WUD"
+msgstr "WUD"
+
+msgid "WUHB"
+msgstr "WUHB"
+
+msgid "Warning"
+msgstr "تحذير"
+
+msgid "Warning: Disabling the accurate barriers option will lead to flickering graphics but may improve performance. It is highly recommended to leave it turned on."
+msgstr "تحذير: تعطيل خيار الحواجز الدقيقة قد يؤدي إلى وميض في الرسومات لكنه قد يحسن الأداء. يُنصح بشدة بتركه مفعلاً."
+
+msgid "Wii U NUS content"
+msgstr "محتوى Wii U NUS"
+
+msgid "Wii U archive (*.wua)"
+msgstr "أرشيف Wii U (*.wua)"
+
+msgid "Wii U executable (*.rpx, *.elf)"
+msgstr "ملف تنفيذي لـWii U (*.rpx, *.elf)"
+
+msgid "Wii U homebrew bundle (*.wuhb)"
+msgstr "حزمة Homebrew لـWii U (*.wuhb)"
+
+msgid "Wii U image (*.wud, *.wux, *.iso, *.wad)"
+msgstr "صورة Wii U (*.wud, *.wux, *.iso, *.wad)"
+
+msgid "Write stack trace to log"
+msgstr "كتابة تتبع المكدس إلى السجل"
+
+msgid "Wrong region: {}"
+msgstr "المنطقة غير صحيحة: {}"
+
+msgid "Wrong version: {}"
+msgstr "الإصدار غير صحيح: {}"
+
+msgid "Yes"
+msgstr "نعم"
+
+msgid ""
+"You are trying to import a savegame for a different title than your currently selected one: {:016x} vs {:016x}\n"
+"Are you sure that you want to continue?"
+msgstr ""
+"أنت تحاول استيراد ملف محفوظ للعبة مختلفة عن اللعبة الحالية المحددة: {:016x} مقابل {:016x}\n"
+"هل أنت متأكد من أنك تريد المتابعة؟"
+
+msgid ""
+"You can configure a custom path for the emulated internal Wii U storage (MLC).\n"
+"This is where TesseraEmu stores saves, accounts and other Wii U system files."
+msgstr ""
+"يمكنك تكوين مسار مخصص للتخزين الداخلي المحاكي لـ Wii U (MLC).\n"
+"هذا هو المكان الذي يخزن فيه TesseraEmu البيانات المحفوظة، الحسابات وملفات نظام Wii U الأخرى."
+
+msgid ""
+"You can configure one controller for each player.\n"
+"We advise you to always use GamePad as emulated input for the first player, since many games expect the GamePad to be present.\n"
+"It is also required for touch functionality.\n"
+"The default global hotkeys are:\n"
+"CTRL - show pad screen\n"
+"CTRL + TAB - toggle pad screen\n"
+"ALT + ENTER - toggle fullscreen\n"
+"ESC - leave fullscreen\n"
+"\n"
+"If you're having trouble configuring your controller, make sure to have it in idle state and press calibrate.\n"
+"Also don't set the axis deadzone too low."
+msgstr ""
+"يمكنك تكوين وحدة تحكم واحدة لكل لاعب.\n"
+"نوصي دائمًا باستخدام GamePad كإدخال محاكي للاعب الأول، حيث تتوقع العديد من الألعاب وجود GamePad.\n"
+"كما أنه مطلوب لوظيفة اللمس.\n"
+"مفاتيح الاختصار العالمية الافتراضية هي:\n"
+"CTRL - عرض شاشة الوحدة\n"
+"CTRL + TAB - تبديل شاشة الوحدة\n"
+"ALT + ENTER - تبديل الوضع ملء الشاشة\n"
+"ESC - مغادرة الوضع ملء الشاشة\n"
+"\n"
+"إذا كنت تواجه مشاكل في تكوين وحدة التحكم الخاصة بك، تأكد من أنها في حالة سكون واضغط على معايرة.\n"
+"أيضًا، لا تضبط منطقة الموت لمحور الإدخال منخفضة جدًا."
+
+msgid "You have to restart the game in order to apply the new settings."
+msgstr "يجب عليك إعادة تشغيل اللعبة لتطبيق الإعدادات الجديدة."
+
+msgid "You may need to set them up again."
+msgstr "قد تحتاج إلى إعدادها مجدداً."
+
+msgid "You've played"
+msgstr "لقد لعبت"
+
+msgid "Your entered value is not valid for the selected datatype."
+msgstr "القيمة التي أدخلتها غير صالحة لنوع البيانات المحدد."
+
+msgid "Your game files are valid"
+msgstr "ملفات اللعبة الخاصة بك صالحة"
+
+msgid ""
+"Your game image is invalid!\n"
+"\n"
+"Your hash:\n"
+"{}\n"
+"\n"
+"Expected hash:\n"
+"{}"
+msgstr ""
+"صورة اللعبة لديك غير صالحة!\n"
+"\n"
+"التجزئة لديك:\n"
+"{}\n"
+"\n"
+"التجزئة المتوقعة:\n"
+"{}"
+
+msgid "base"
+msgstr "قاعدة"
+
+msgid "blow mic"
+msgstr "نفخ الميكروفون"
+
+msgid "can't delete profile"
+msgstr "لا يمكن حذف الملف الشخصي"
+
+msgid "click"
+msgstr "نقرة"
+
+msgid "controller set by gameprofile. changes won't be saved permanently!"
+msgstr "وحدة التحكم تم ضبطها حسب ملف اللعبة. التغييرات لن تحفظ بشكل دائم!"
+
+msgid "coreinit File-Access API"
+msgstr "واجهة برمجة تطبيقات الوصول إلى الملفات coreinit"
+
+msgid "coreinit MP API"
+msgstr "واجهة برمجة تطبيقات MP coreinit"
+
+msgid "coreinit Memory API"
+msgstr "واجهة برمجة تطبيقات الذاكرة coreinit"
+
+msgid "coreinit Thread API"
+msgstr "واجهة برمجة تطبيقات الخيوط coreinit"
+
+msgid "coreinit Thread-Synchronization API"
+msgstr "واجهة برمجة تطبيقات تزامن الخيوط coreinit"
+
+msgid "couldn't load profile"
+msgstr "تعذر تحميل الملف الشخصي"
+
+msgid "couldn't save profile"
+msgstr "تعذر حفظ الملف الشخصي"
+
+msgid "cycles"
+msgstr "دورات"
+
+msgid "down"
+msgstr "أسفل"
+
+msgid "false"
+msgstr "خاطئ"
+
+msgid "gx2 API"
+msgstr "واجهة برمجة تطبيقات gx2"
+
+msgid "h264 API"
+msgstr "واجهة برمجة تطبيقات h264"
+
+msgid "home"
+msgstr "الرئيسية"
+
+msgid "invalid profile name"
+msgstr "اسم الملف الشخصي غير صالح"
+
+msgid "left"
+msgstr "يسار"
+
+msgid "many"
+msgstr "كثير"
+
+msgid "never"
+msgstr "أبدًا"
+
+msgid "nfc API"
+msgstr "واجهة برمجة تطبيقات nfc"
+
+msgid "nn_boss API"
+msgstr "واجهة برمجة تطبيقات nn_boss"
+
+msgid "nn_fp API"
+msgstr "واجهة برمجة تطبيقات nn_fp"
+
+msgid "nn_fp PRUDP"
+msgstr "nn_fp PRUDP"
+
+msgid "nn_nfp API"
+msgstr "واجهة برمجة تطبيقات nn_nfp"
+
+msgid "nn_save API"
+msgstr "واجهة برمجة تطبيقات nn_save"
+
+msgid "nsysnet API"
+msgstr "واجهة برمجة تطبيقات nsysnet"
+
+msgid "ntag API"
+msgstr "واجهة برمجة تطبيقات ntag"
+
+msgid "otp.bin is invalid"
+msgstr "otp.bin غير صالح"
+
+msgid "otp.bin missing in TesseraEmu directory"
+msgstr "otp.bin مفقود في دليل TesseraEmu"
+
+msgid "profile deleted"
+msgstr "تم حذف الملف الشخصي"
+
+msgid "profile loaded"
+msgstr "تم تحميل الملف الشخصي"
+
+msgid "profile saved"
+msgstr "تم حفظ الملف الشخصي"
+
+msgid "right"
+msgstr "يمين"
+
+msgid "save"
+msgstr "حفظ"
+
+msgid "seeprom.bin is invalid"
+msgstr "seeprom.bin غير صالح"
+
+msgid "seeprom.bin missing in TesseraEmu directory"
+msgstr "seeprom.bin مفقود في دليل TesseraEmu"
+
+msgid "show screen"
+msgstr "عرض الشاشة"
+
+msgid "system"
+msgstr "نظام"
+
+msgid "true"
+msgstr "صحيح"
+
+msgid "unknown"
+msgstr "غير معروف"
+
+msgid "up"
+msgstr "أعلى"
+
+msgid "update"
+msgstr "تحديث"
+
+msgid ""
+"{} files have an invalid hash!\n"
+"Do you want to export a list of them to a file?"
+msgstr ""
+"{} ملفات تحتوي على تجزئة غير صالحة!\n"
+"هل تريد تصدير قائمة بها إلى ملف؟"
+
+msgid "{} hour {} hours"
+msgstr "{} ساعة {} ساعات"
+
+msgid "{} minute {} minutes"
+msgstr "{} دقيقة {} دقائق"
+

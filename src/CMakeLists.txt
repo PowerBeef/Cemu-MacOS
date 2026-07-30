@@ -268,3 +268,22 @@ endif()
 if (BSD)
 	target_link_libraries(CemuBin PRIVATE execinfo SPIRV-Tools SPIRV-Tools-opt)
 endif()
+
+# Recompile every translation catalog from its .po source. Deliberately NOT part of ALL:
+# the .mo files are committed, so an ordinary build needs no gettext and cannot be broken by
+# its absence. Run this after editing translations/*.po, then commit both.
+#
+#   cmake --build build --target translations
+find_program(MSGFMT_EXECUTABLE msgfmt HINTS /opt/homebrew/opt/gettext/bin)
+if (MSGFMT_EXECUTABLE)
+	file(GLOB TRANSLATION_PO "${CMAKE_SOURCE_DIR}/translations/*.po")
+	set(TRANSLATION_COMMANDS "")
+	foreach(po ${TRANSLATION_PO})
+		get_filename_component(loc "${po}" NAME_WE)
+		list(APPEND TRANSLATION_COMMANDS
+			COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/bin/resources/${loc}"
+			COMMAND "${MSGFMT_EXECUTABLE}" --check-format -o "${CMAKE_SOURCE_DIR}/bin/resources/${loc}/cemu.mo" "${po}")
+	endforeach()
+	add_custom_target(translations ${TRANSLATION_COMMANDS}
+		COMMENT "Compiling translation catalogs from translations/*.po")
+endif()

@@ -1,0 +1,2378 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Cemu\n"
+"PO-Revision-Date: 2021-01-01 22:17+0100\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4.2\n"
+"Last-Translator: Gerard Nesta <gerardnll@gmail.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: ca\n"
+
+msgid "&About"
+msgstr "&Sobre"
+
+msgid "&Active account"
+msgstr "Compte &actiu"
+
+msgid "&Add new entry"
+msgstr "&Afegir nova entrada"
+
+msgid "&Audio API"
+msgstr "API d’&Àudio"
+
+msgid "&Breakpoints"
+msgstr "&Punts d’Interrupció"
+
+msgid "&CPU"
+msgstr "&CPU"
+
+msgid "&Check for updates"
+msgstr "&Comprovar actualitzacions"
+
+msgid "&Chinese"
+msgstr "&Xinès"
+
+msgid "&Console language"
+msgstr "&Idioma de la consola"
+
+msgid "&Copy"
+msgstr "&Copiar"
+
+msgid "&Coreinit File-Access"
+msgstr "&Coreinit File-Access"
+
+msgid "&Coreinit MP API"
+msgstr "&Coreinit MP API"
+
+msgid "&Coreinit Memory API"
+msgstr "&Coreinit Memory API"
+
+msgid "&Coreinit Thread API"
+msgstr "&Coreinit Thread API"
+
+msgid "&Coreinit Thread-Synchronization API"
+msgstr "&Coreinit Thread-Synchronization API"
+
+msgid "&DLC directory"
+msgstr "Directori de &DLC"
+
+msgid "&Debug"
+msgstr "&Depurar"
+
+msgid "&Decrement"
+msgstr "&Decrement"
+
+msgid "&Delete"
+msgstr "&Eliminar"
+
+msgid "&Dump"
+msgstr "&Bolcar"
+
+msgid "&Dump WUD filesystem"
+msgstr "Bolcar el sistema d’arxius &WUD"
+
+msgid "&Dump current RAM"
+msgstr "Bolcar la &RAM actual"
+
+msgid "&Dutch"
+msgstr "&Holandès"
+
+msgid "&Edit game profile"
+msgstr "&Editar perfil de joc"
+
+msgid "&Edit graphic packs"
+msgstr "&Editar paquets gràfics"
+
+msgid "&Edit name"
+msgstr "&Editar nom"
+
+msgid "&English"
+msgstr "&Anglès"
+
+msgid "&Exit"
+msgstr "&Sortir"
+
+msgid "&Favorite"
+msgstr "&Favorit"
+
+msgid "&File"
+msgstr "&Arxiu"
+
+msgid "&French"
+msgstr "&Francès"
+
+msgid "&Fullscreen"
+msgstr "&Pantalla completa"
+
+msgid "&GX2 API"
+msgstr "API G&X2"
+
+msgid "&Game directory"
+msgstr "Directori del &joc"
+
+msgid "&General settings"
+msgstr "&Configuració general"
+
+msgid "&German"
+msgstr "&Alemany"
+
+msgid "&Getting started"
+msgstr "&Introducció"
+
+msgid "&Goto Disasm"
+msgstr "&Anar a Disasm"
+
+msgid "&Graphic pack patches"
+msgstr "&Pegats de paquets gràfics"
+
+msgid "&Graphic packs"
+msgstr "Paquets &gràfics"
+
+msgid "&H264 API"
+msgstr "API &H264"
+
+msgid "&Help"
+msgstr "&Ajuda"
+
+msgid "&Increment"
+msgstr "&Increment"
+
+msgid "&Input API"
+msgstr "API d’&Entrada"
+
+msgid "&Input settings"
+msgstr "Configuració d’&Entrada"
+
+msgid "&Install game title, update or DLC"
+msgstr "&Instal·lar títol, actualització o DLC"
+
+msgid "&Italian"
+msgstr "&Italià"
+
+msgid "&Japanese"
+msgstr "&Japonès"
+
+msgid "&Korean"
+msgstr "&Coreà"
+
+msgid "&Launch title"
+msgstr "&Iniciar títol"
+
+msgid "&Load"
+msgstr "&Carregar"
+
+msgid "&Log PPC context for API"
+msgstr "&Registrar el context PPC per l’API"
+
+msgid "&Logging"
+msgstr "&Registre"
+
+msgid "&Memory Dump"
+msgstr "&Bolcat de Memòria"
+
+msgid "&Memory searcher"
+msgstr "&Rastrejador de memòria"
+
+msgid "&NFC"
+msgstr "&NFC"
+
+msgid "&NN NFP"
+msgstr "&NN NFP"
+
+msgid "&Open directory"
+msgstr "&Obrir directori"
+
+msgid "&Open logging window"
+msgstr "&Obrir la finestra del registre"
+
+msgid "&OpenGL debug output"
+msgstr "&Sortida de depuració d’OpenGL"
+
+msgid "&Options"
+msgstr "&Opcions"
+
+msgid "&Pin to main window"
+msgstr "A&nclar a la finestra principal"
+
+msgid "&Portuguese"
+msgstr "&Portugès"
+
+msgid "&Refresh game list"
+msgstr "&Actualitzar llista de jocs"
+
+msgid "&Registers"
+msgstr "&Registres"
+
+msgid "&Remove entry"
+msgstr "&Eliminar entrada"
+
+msgid "&Render upside-down"
+msgstr "Renderit&zar al revés"
+
+msgid "&Russian"
+msgstr "&Rús"
+
+msgid "&Save API"
+msgstr "API de &guardat"
+
+msgid "&Save directory"
+msgstr "Directori de partides &guardades"
+
+msgid "&Scan NFC tag from file"
+msgstr "&Escanejar etiqueta NFC des d’arxiu"
+
+msgid "&Separate GamePad view"
+msgstr "&Separar vista del GamePad"
+
+msgid "&Shaders"
+msgstr "&Shaders"
+
+msgid "&Show frame profiler"
+msgstr "Veure el &mesurador de fotogrames"
+
+msgid "&Socket API"
+msgstr "API de &Socket"
+
+msgid "&Spanish"
+msgstr "&Espanyol"
+
+msgid "&Start"
+msgstr "&Iniciar"
+
+msgid "&Taiwanese"
+msgstr "&Taiwanès"
+
+msgid "&Texture cache warnings"
+msgstr "&Advertències de cache de textures"
+
+msgid "&Textures"
+msgstr "&Textures"
+
+msgid "&Title Manager"
+msgstr "&Administrador de títols"
+
+msgid "&Tools"
+msgstr "&Eines"
+
+msgid "&Unsupported API calls"
+msgstr "&Trucades d’API no suportades"
+
+msgid "&Update directory"
+msgstr "Directori d’&actualitzacions"
+
+msgid "&Verify integrity of game files"
+msgstr "&Verificar integritat dels arxius del joc"
+
+msgid "&View PPC debugger"
+msgstr "Veure el &depurador del PPC"
+
+msgid "&View PPC threads"
+msgstr "Veure els &fils del PPC"
+
+msgid "&View audio debugger"
+msgstr "Veure el depurador d’&àudio"
+
+msgid "&View texture cache info"
+msgstr "&Veure informació sobre el cache de textures"
+
+msgid "&Vulkan validation layer (slow)"
+msgstr "&Capa de validació de Vulkan (lent)"
+
+msgid "&Wiki page"
+msgstr "&Pàgina de la Wiki"
+
+msgid "&Window"
+msgstr "&Finestra"
+
+msgid "&Zero"
+msgstr "&Zero"
+
+msgid "&nlibcurl HTTP/HTTPS requests"
+msgstr "Peticions &HTTP/HTTPS nlibcurl"
+
+msgid "(optional)"
+msgstr "(opcional)"
+
+msgid ""
+"A custom mlc path from a previous Cemu installation has been found and "
+"filled in."
+msgstr ""
+"S’ha trobat i s’utilitzarà una ruta mlc personalitzada d’una instal·lació "
+"anterior de Cemu."
+
+msgid "API"
+msgstr "API"
+
+msgid "Account"
+msgstr "Compte"
+
+msgid "Account information"
+msgstr "Informació del compte"
+
+msgid "Account name may not be empty!"
+msgstr "El nom del compte no pot estar buit!"
+
+msgid "Account settings"
+msgstr "Configuració del compte"
+
+msgid "AccountId missing (The account is not connected to a NNID)"
+msgstr "Falta Accountid (El compte no està connectat a un NNID)"
+
+msgid ""
+"AccountPasswordCache is empty (The remember password option on your Wii U "
+"must be enabled for this account before dumping it)"
+msgstr ""
+"AccountPasswordCache està buit (L’opció de recordar contrasenya a la seva "
+"Wii U ha d’estar habilitada per a aquest compte abans de bolcar-lo)"
+
+msgid "Active account"
+msgstr "Compte actiu"
+
+msgid "Active preset"
+msgstr "Preestablert actiu"
+
+msgid "Add"
+msgstr "Afegir"
+
+msgid ""
+"Add the root directory of your game(s). It will scan all directories in it "
+"for games"
+msgstr ""
+"Afegeix el directori arrel dels seu(s) joc(s). Es buscaran jocs en tots els "
+"subdirectoris"
+
+msgid "Additional options"
+msgstr "Opcions addicionals"
+
+msgid "Additional settings"
+msgstr "Configuració addicional"
+
+msgid "Address"
+msgstr "Adreça"
+
+msgid ""
+"Adds a game path to scan for games displayed in the game list\n"
+"If you have unpacked games, make sure to select the root folder of a game"
+msgstr ""
+"Afegeix una ruta de jocs per a buscar els jocs mostrats a la llista de jocs\n"
+"Si té jocs desempaquetats, asseguris de seleccionar la carpeta arrel del joc"
+
+msgid "Affinity"
+msgstr "Afinitat"
+
+msgid "All Wii U files (wud, wux, iso, wad, rpx, elf)"
+msgstr "Tots els arxius de Wii U (wud, wux, iso, wad, rpx, elf)"
+
+msgid "All files (*.*)"
+msgstr "Tots els arxius (*.*)"
+
+msgid ""
+"All files from the currently running game will be dumped to /dump/"
+"<gamefolder>. This process can take a few minutes."
+msgstr ""
+"Tots els arxius del joc que s’està executant actualment es bolcaran a /dump/"
+"<gamefolder>. Aquest procés pot prendre uns minuts."
+
+msgid "Applying update..."
+msgstr "Aplicant actualització…"
+
+msgid ""
+"Are you really sure that you want to delete the following file:\n"
+"{}"
+msgstr ""
+"Està segur de que desitja eliminar el següent arxiu:\n"
+"{}"
+
+msgid ""
+"Are you really sure that you want to delete the following folder:\n"
+"{}"
+msgstr ""
+"Està segur de que desitja eliminar la següent carpeta:\n"
+"{}"
+
+msgid "Are you really sure that you want to delete the save entry for {}"
+msgstr ""
+"Està segur de que desitja eliminar l’entrada de partida guardada per a {}"
+
+msgid "Are you sure you want to delete the account {} with id {:x}?"
+msgstr "Està segur de que desitja eliminar el compte {} amb ID {:x}?"
+
+msgid "Async shader compile"
+msgstr "Compilació asíncrona de shaders"
+
+msgid "At least one issue has been found"
+msgstr "S’ha trobat almenys un error"
+
+msgid "Audio"
+msgstr "Àudio"
+
+msgid "Australia"
+msgstr "Austràlia"
+
+msgid "Auto"
+msgstr "Selecció automàtica"
+
+msgid "Auto (recommended)"
+msgstr "Automàtic (recomanat)"
+
+msgid "Auto refresh"
+msgstr "Refrescar automàticament"
+
+msgid "Automatically check for updates"
+msgstr "Buscar actualitzacions automàticament"
+
+msgid "Automatically checks for new cemu versions on startup"
+msgstr "Busca noves versions de cemu al iniciar"
+
+msgid "Bicubic"
+msgstr "Bicúbic"
+
+msgid "Bilinear"
+msgstr "Bilineal"
+
+msgid "Birthday"
+msgstr "Aniversari"
+
+msgid "Boost priority (-1)"
+msgstr "Augmentar la prioritat (-1)"
+
+msgid "Boost priority (-5)"
+msgstr "Augmentar la prioritat (-5)"
+
+msgid "Bottom center"
+msgstr "Centre inferior"
+
+msgid "Bottom left"
+msgstr "Inferior esquerra"
+
+msgid "Bottom right"
+msgstr "Inferior dreta"
+
+msgid "Break (F5)"
+msgstr "Interrompre (F5)"
+
+msgid "Break on &entry point"
+msgstr "Interrompre al &punt d’entrada"
+
+msgid "Browse"
+msgstr "Examinar"
+
+msgid "Button Threshold"
+msgstr "Llindar de botons"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "CPU per core usage"
+msgstr "Ús de CPU per nucli"
+
+msgid "CPU usage"
+msgstr "Ús de CPU"
+
+msgid "CPU usage of TesseraEmu in percent"
+msgstr "Ús de CPU de TesseraEmu en percentatge"
+
+msgid "Calibrate"
+msgstr "Calibrar"
+
+msgid "Can't delete the only account!"
+msgstr "No es pot eliminar l’únic compte!"
+
+msgid "Can't open file to write!"
+msgstr "No es pot obrir l’arxiu per a escriptura!"
+
+msgid "Can't open file!"
+msgstr "No es pot obrir l’arxiu!"
+
+msgid "Can't parse json file!"
+msgstr "No es pot analitzar l’arxiu JSON!"
+
+msgid "Can't write to file: {}"
+msgstr "No es pot escriure al arxiu: {}"
+
+msgid "Cancel"
+msgstr "Cancel·lar"
+
+msgid "Cannot open file"
+msgstr "No es pot obrir l’arxiu"
+
+msgid "TesseraEmu RAM usage in MB"
+msgstr "Ús de RAM de TesseraEmu en MB"
+
+msgid ""
+"Cemu can't write to its directory.\n"
+"Please move it to a different location or run Cemu as administrator!"
+msgstr ""
+"Cemu no pot escriure al seu directori.\n"
+"Si us plau, mogui’l a una ubicació diferent o executi Cemu com a "
+"administrador!"
+
+msgid ""
+"Cemu can't write to the selected mlc path!\n"
+"Do you want to select another path?"
+msgstr ""
+"Cemu no pot escriure a la ruta mlc seleccionada!\n"
+"Desitja escollir una altra ruta?"
+
+msgid "TesseraEmu must be restarted to apply the selected UI language."
+msgstr "TesseraEmu ha de reiniciar-se per aplicar l’idioma d’interfície seleccionada."
+
+msgid ""
+"Cemu will remember your custom mlc path in %LOCALAPPDATA%/Cemu for new "
+"installations."
+msgstr ""
+"Cemu recordarà la seva ruta mlc personalitzada a %LOCALAPPDATA%/Cemu per a "
+"les noves instal·lacions."
+
+msgid "Changelog"
+msgstr "Registre de canvis"
+
+msgid ""
+"Changes the interface language of TesseraEmu\n"
+"Available languages are stored in the translation directory\n"
+"A restart will be required after changing the language"
+msgstr ""
+"Canvia l’idioma de la interfície de TesseraEmu\n"
+"Els idiomes disponibles s’emmagatzemen al directori de traducció\n"
+"Serà necessari reiniciar el programa després de canviar l’idioma"
+
+msgid "Channels"
+msgstr "Canals"
+
+msgid "Checking version..."
+msgstr "Comprovant versió…"
+
+msgid "China"
+msgstr "Xina"
+
+msgid "Chinese"
+msgstr "Xinès"
+
+msgid "Classic"
+msgstr "Clàssic"
+
+msgid "Clear"
+msgstr "Esborrar"
+
+msgid "Clear all currently set input settings"
+msgstr "Esborrar totes les configuracions d’entrada establertes actualment"
+
+msgid "Close"
+msgstr "Tancar"
+
+msgid "Comment"
+msgstr "Comentari"
+
+msgid "Configure input"
+msgstr "Configurar l’entrada"
+
+msgid "Confirmation"
+msgstr "Confirmació"
+
+msgid "Control"
+msgstr "Control"
+
+msgid "Controller"
+msgstr "Controlador"
+
+msgid "Controller API:"
+msgstr "API de controlador:"
+
+msgid "Controller profiles"
+msgstr "Perfils de controlador"
+
+msgid "Controller {}"
+msgstr "Controlador {}"
+
+msgid "Controller:"
+msgstr "Controlador:"
+
+msgid ""
+"Controls the amount of buffered audio data\n"
+"Higher values will create a delay in audio playback, but may avoid audio "
+"problems when emulation is too slow"
+msgstr ""
+"Controla la quantitat de dades d’àudio emmagatzemades en buffer\n"
+"Els valors més alts crearan un retràs en la reproducció de l’àudio, però "
+"poden evitar problemes d’àudio quan l’emulació és massa lenta"
+
+msgid "Controls the notification position while playing"
+msgstr "Controla la posició de la notificació mentre es juga"
+
+msgid ""
+"Controls the output aspect ratio when it doesn't match the ratio of the game"
+msgstr ""
+"Controla la relació d’aspecte de sortida quan no coincideix amb la relació "
+"del joc"
+
+msgid "Controls the overlay which displays technical information while playing"
+msgstr "Controla la superposició que mostra informació tècnica mentre es juga"
+
+msgid "Controls the vsync state"
+msgstr "Controla l’estat de la sincronització vertical (VSync)"
+
+msgid ""
+"Couldn't create a required TesseraEmu directory or file!\n"
+"\n"
+"Error: {0}"
+msgstr ""
+"No s’ha pogut crear una carpeta o un arxiu necessari per al funcionament\n"
+"de cemu!\n"
+"\n"
+"Error: {0}"
+
+msgid ""
+"Couldn't create a required mlc01 subfolder or file!\n"
+"\n"
+"Error: {0}\n"
+"Target path:\n"
+"{1}"
+msgstr ""
+"No s’ha pogut crear una subcarpeta necessària dins de\n"
+"la carpeta mlc01!\n"
+"\n"
+"Error: {0}\n"
+"Ruta de destí:\n"
+"{1}"
+
+msgid "Couldn't download the update!"
+msgstr "No s’ha pogut descarregar l’actualització!"
+
+msgid "Couldn't load the selected profile!"
+msgstr "No s’ha pogut carregar el perfil seleccionat!"
+
+msgid "Couldn't save settings for controller {0}"
+msgstr "No s’ha pogut guardar la configuració del controlador {0}"
+
+msgid "Couldn't save the profile!"
+msgstr "No s’ha pogut guardar el perfil!"
+
+msgid "Country"
+msgstr "País"
+
+msgid "Crash dump"
+msgstr "Bolcat de tancaments inesperats"
+
+msgid "Create"
+msgstr "Crear"
+
+msgid "Create memory breakpoint (read)"
+msgstr "Crear un punt d’interrupció de memòria (lectura)"
+
+msgid "Create memory breakpoint (write)"
+msgstr "Crear un punt d’interrupció de memòria (escriptura)"
+
+msgid "Create new account"
+msgstr "Crear un nou compte"
+
+msgid "Create new cache [recommended]"
+msgstr "Crear una nova cache [recomanat]"
+
+msgid ""
+"Creates a dump when Cemu crashes\n"
+"Only enable on demand!\n"
+"The Full option will create a big dump with the memory included"
+msgstr ""
+"Crea un bolcat quan Cemu es tanca inesperadament\n"
+"Activi-ho només quan ho necessiti!\n"
+"La opció Complet crearà grans bolcats amb els continguts de la memòria "
+"inclosa"
+
+msgid "Current file:"
+msgstr "Arxiu actual:"
+
+msgid "Custom mlc01 path"
+msgstr "Ruta mlc01 personalitzada"
+
+msgid "D-pad"
+msgstr "Creueta"
+
+msgid "DLC"
+msgstr "DLC"
+
+msgid "DSU client settings"
+msgstr "Configuració del client DSU"
+
+msgid "Deadzone"
+msgstr "Zona Morta"
+
+msgid "Debug"
+msgstr "Depuració"
+
+msgid "Decrease priority (+1)"
+msgstr "Disminuir la prioritat (+1)"
+
+msgid "Decrease priority (+5)"
+msgstr "Disminuir la prioritat (+5)"
+
+msgid "Default"
+msgstr "Valor Predeterminat"
+
+msgid "Delete"
+msgstr "Eliminar"
+
+msgid "Description"
+msgstr "Descripció"
+
+msgid "Device"
+msgstr "Dispositiu"
+
+msgid "Dim"
+msgstr "Dim"
+
+msgid "Disabled"
+msgstr "Deshabilitat"
+
+msgid "Discord Presence"
+msgstr "Presència enriquida de Discord"
+
+msgid "Displays internal debug information (Vulkan only)"
+msgstr "Mostra informació de depuració interna (només Vulkan)"
+
+msgid "Displays the active controller profile when starting a game"
+msgstr "Mostra el perfil de controlador actiu al iniciar un joc"
+
+msgid "Displays the menu bar when TesseraEmu is running in fullscreen mode and the mouse cursor is moved to the top"
+msgstr "Mostra la barra de menús quan TesseraEmu s’està executant en mode de pantalla completa i el cursor es mou a la part superior"
+
+msgid ""
+"Do you really want to cancel the installation process?\n"
+"\n"
+"Canceling the process will delete the applied files."
+msgstr ""
+"Desitja realment cancel·lar el procés d’instal·lació?\n"
+"\n"
+"La cancel·lació del procés eliminarà els arxius aplicats."
+
+msgid "Don't show this again"
+msgstr "No mostrar això de nou"
+
+msgid "Double buffering"
+msgstr "Emmagatzematge en buffer doble"
+
+msgid "Download community graphic packs"
+msgstr "Descarregar els paquets gràfics de la comunitat"
+
+msgid "Download latest community graphic packs"
+msgstr "Descarregar els últims paquets gràfics de la comunitat"
+
+msgid "Downloading graphic packs..."
+msgstr "Descarregant paquets gràfics…"
+
+msgid "Downloading update..."
+msgstr "Descarregant actualització…"
+
+msgid "Downscale filter"
+msgstr "Filtre de reducció d’escala"
+
+msgid ""
+"Downscaling filters are used when the game resolution is bigger than the "
+"window size"
+msgstr ""
+"Els filtres de reducció d’escala es fan servir quan la resolució del joc és "
+"major que el tamany de la finestra"
+
+msgid "Draw calls per frame"
+msgstr "Crides de dibuix (draw calls) per fotograma"
+
+msgid "Dump WUD"
+msgstr "Bolcar WUD"
+
+msgid "Dump complete"
+msgstr "Bolcat complet"
+
+msgid "Dutch"
+msgstr "Holandès"
+
+msgid ""
+"EXPERT OPTION\n"
+"Controls the accuracy of floating point multiplication in shaders.\n"
+"\n"
+"Recommended: true"
+msgstr ""
+"OPCIÓ PER A EXPERTS\n"
+"Controla la precisió de la multiplicació de números flotants als shaders.\n"
+"\n"
+"Recomanat: verdader"
+
+msgid ""
+"EXPERT OPTION\n"
+"Set the maximum thread slice runtime (in virtual cycles)"
+msgstr ""
+"OPCIÓ PER A EXPERTS\n"
+"Establir el temps d’execució màxim del segment de fil (en cicles virtuals)"
+
+msgid ""
+"EXPERT OPTION\n"
+"This option will load libraries from the cafeLibs directory"
+msgstr ""
+"OPCIÓ PER A EXPERTS\n"
+"Aquesta opció carregarà llibreries des del directori cafeLibs"
+
+msgid "Edit game profile"
+msgstr "Editar perfil de joc"
+
+msgid "Email"
+msgstr "Adreça electrònica"
+
+msgid "Emulate Controller"
+msgstr "Emular Controlador"
+
+msgid "Enable online mode"
+msgstr "Habilitar mode en línia"
+
+msgid ""
+"Enables async shader and pipeline compilation. Reduces stutter at the cost "
+"of objects not rendering for a short time.\n"
+"Vulkan only"
+msgstr ""
+"Activa la compilació asíncrona de shaders i canalitzacions. Redueix el "
+"tartamudeig a canvi de no renderitzar els objectes durant un curt període de "
+"temps.\n"
+"Només Vulkan"
+
+msgid ""
+"Enables the Discord Rich Presence feature\n"
+"You will also need to enable it in the Discord settings itself!"
+msgstr ""
+"Habilita la funcionalitat Presència Enriquida de Discord\n"
+"També necessitarà habilitar-la a la pròpia configuració de Discord!"
+
+msgid "End emulation"
+msgstr "Finalitzar l’emulació"
+
+msgid "English"
+msgstr "Anglès"
+
+msgid "Enter a memory address"
+msgstr "Introdueixi una adreça de memòria"
+
+msgid "Enter a new comment."
+msgstr "Escriu un nou comentari."
+
+msgid "Enter a new instruction."
+msgstr "Escriure una nova instrucció."
+
+msgid "Enter a new value."
+msgstr "Escriure un nou valor."
+
+msgid "Enter a target address."
+msgstr "Escriure una adreça de destí."
+
+msgid "Entry"
+msgstr "Entrada"
+
+msgid "Error"
+msgstr "Error"
+
+msgid "Error code"
+msgstr "Codi d’error"
+
+msgid ""
+"Error when creating the extraction path:\n"
+"{}"
+msgstr ""
+"Error al crear la ruta d’extracció:\n"
+"{}"
+
+msgid ""
+"Error when creating the zip for the save entry:\n"
+"{}"
+msgstr ""
+"Error al crear l’arxiu zip per a l’entrada de partida guardada:\n"
+"{}"
+
+msgid ""
+"Error when initializing Vulkan renderer:\n"
+"{}"
+msgstr ""
+"Error al inicialitzar el renderitzador Vulkan:\n"
+"{}"
+
+msgid ""
+"Error when opening the import zip file:\n"
+"{}"
+msgstr ""
+"Error al obrir l’arxiu zip importat:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a cemu_meta to the zip:\n"
+"{}"
+msgstr ""
+"Error al intentar afegir cemu_meta al zip:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a directory to the zip:\n"
+"{}"
+msgstr ""
+"Error al intentar afegir un directori al arxiu zip:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a file to the zip:\n"
+"{}"
+msgstr ""
+"Error al intentar afegir un arxiu al zip:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the entry:\n"
+"{}"
+msgstr ""
+"Error al intentar eliminar l’entrada:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the former save game:\n"
+"{}"
+msgstr ""
+"Error al intentar eliminar la partida guardada anterior:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the save directory:\n"
+"{}"
+msgstr ""
+"Error al intentar eliminar el directori de guardat:\n"
+"{}"
+
+msgid ""
+"Error when trying to move former title installation:\n"
+"{}"
+msgstr ""
+"Error al intentar moure la instal·lació del títol anterior:\n"
+"{}"
+
+msgid ""
+"Error when trying to move the entry to the correct location:\n"
+"{}"
+msgstr ""
+"Error al intentar moure l’entrada a la ubicació correcta:\n"
+"{}"
+
+msgid ""
+"Error when trying to move the save game:\n"
+"{}"
+msgstr ""
+"Error al intentar moure la partida guardada:\n"
+"{}"
+
+msgid "Europe"
+msgstr "Europa"
+
+msgid "Exit"
+msgstr "Sortir"
+
+msgid "Export"
+msgstr "Exportar"
+
+msgid "Export checksum entry"
+msgstr "Exportar una entrada de checksum"
+
+msgid "Export successful"
+msgstr "Exportació exitosa"
+
+msgid "Export the title checksum data to a local json file"
+msgstr "Exportar el checksum del títol a un arxiu JSON"
+
+msgid "Exports the selected save entry as zip file"
+msgstr "Exporta l’entrada de partida guardada com arxiu zip"
+
+msgid "Extensions:"
+msgstr "Extensions:"
+
+msgid "Extracting failed!"
+msgstr "Error d’extracció!"
+
+msgid "Extracting update..."
+msgstr "Extraient actualització…"
+
+msgid "Extracting..."
+msgstr "Extraient…"
+
+msgid "FPS"
+msgstr "FPS"
+
+msgid "Failed to connect to server"
+msgstr "Error al connectar amb el servidor"
+
+msgid "Failed to launch file."
+msgstr "Error al iniciar l’arxiu."
+
+msgid "Failed to run this title because at least one of the files is damaged."
+msgstr ""
+"No s’ha pogut executar aquest títol perquè almenys un dels arxius està "
+"danyat."
+
+msgid "Female"
+msgstr "Dona"
+
+msgid "Filter"
+msgstr "Filtrar"
+
+msgid "Filter messages"
+msgstr "Filtrar missatges"
+
+msgid "Fix entry"
+msgstr "Corregir entrada"
+
+msgid "Forces a given controller profile"
+msgstr "Força un determinat perfil del controlador"
+
+msgid "Format"
+msgstr "Format"
+
+msgid "Found {} titles, {} updates, {} DLCs and {} save entries"
+msgstr ""
+"S’han trobat: {} títols, {} actualitzacions, {} DLC i {} partides guardades"
+
+msgid "French"
+msgstr "Francès"
+
+msgid "Friend list"
+msgstr "Llista d’amics"
+
+msgid "Full"
+msgstr "Complet"
+
+msgid "Full sync at GX2DrawDone()"
+msgstr "Sincronització completa a GX2DrawDone()"
+
+msgid "Fullscreen menu bar"
+msgstr "Barra de menú de pantalla completa"
+
+msgid "Fullscreen scaling"
+msgstr "Escalat a pantalla completa"
+
+msgid "G&oto Dump"
+msgstr "A&nar al Bolcat"
+
+msgid "GPR"
+msgstr "GPR"
+
+msgid "Game"
+msgstr "Joc"
+
+msgid "Game Paths"
+msgstr "Rutes de jocs"
+
+msgid "Game path"
+msgstr "Ruta de jocs"
+
+msgid "Game paths"
+msgstr "Rutes de jocs"
+
+msgid "Gamepad"
+msgstr "GamePad"
+
+msgid ""
+"Games will be launched with gamepad view toggled as default. The view can be "
+"toggled with CTRL + TAB"
+msgstr ""
+"Els jocs s’iniciaran amb la vista del gamepad activada per defecte. La vista "
+"es pot alternar amb CTRL + TAB"
+
+msgid "General"
+msgstr "General"
+
+msgid "General settings"
+msgstr "Configuració general"
+
+msgid "Generated checksum of game image: {}"
+msgstr "Generat checksum de la imatge de joc: {}"
+
+msgid "Generated checksum of {} game files"
+msgstr "S’ha generat el checksum de {} arxius de joc"
+
+msgid "Generating checksum of game image: {}"
+msgstr "Generant checksum de la imatge de joc: {}"
+
+msgid "German"
+msgstr "Alemany"
+
+msgid "Getting started"
+msgstr "Introducció"
+
+msgid "GoTo (CTRL + G)"
+msgstr "Anar a (CTRL + G)"
+
+msgid "GoTo address"
+msgstr "Anar a l’adreça"
+
+msgid "Grabbing game files"
+msgstr "Recopilant els arxius del joc"
+
+msgid "Graphic"
+msgstr "Gràfics"
+
+msgid "Graphic pack"
+msgstr "Paquet gràfic"
+
+msgid "Graphic packs"
+msgstr "Paquets gràfics"
+
+msgid "Graphic packs cannot be updated while a game is running."
+msgstr ""
+"Els paquets gràfics no es poden actualitzar mentre el joc s’està executant."
+
+msgid ""
+"Graphic packs improve games by offering the possibility to change "
+"resolution, tweak FPS or add other visual or gameplay modifications.\n"
+"Download the community graphic packs to get started.\n"
+msgstr ""
+"Els paquets gràfics milloren els jocs al oferir la possibilitat de canviar "
+"la resolució, ajustar els FPS o aplicar altres modificacions visuals o de "
+"joc.\n"
+"Descarregui els paquets gràfics de la comunitat per a començar.\n"
+
+msgid "Graphics"
+msgstr "Gràfics"
+
+msgid "Graphics API"
+msgstr "API de gràfics"
+
+msgid "Graphics Device"
+msgstr "Dispositiu de gràfics"
+
+msgid "Hashing game file: {}/{}"
+msgstr "Creant hash per l’arxiu del joc: {}/{}"
+
+msgid "Hermite"
+msgstr "Hermite"
+
+msgid "IP"
+msgstr "IP"
+
+msgid ""
+"If synchronization is requested by the game, the emulated CPU will wait for "
+"the GPU to finish all operations.\n"
+"This is more accurate behavior, but may cause lower performance"
+msgstr ""
+"Si el joc sol·licita la sincronització, la CPU emulada esperarà a que la GPU "
+"finalitzi totes les operacions.\n"
+"Aquest és un comportament més precís, però pot causar un menor rendiment"
+
+msgid "Import"
+msgstr "Importar"
+
+msgid "Import save entry"
+msgstr "Importar entrada de partida guardada"
+
+msgid "Import save entry {}"
+msgstr "Entrada de partida guardada per a importar {}"
+
+msgid "Imports a zipped save entry"
+msgstr "Importa una entrada de partida guardada comprimida"
+
+msgid "Info"
+msgstr "Informació"
+
+msgid "Information"
+msgstr "Informació"
+
+msgid "Input Settings"
+msgstr "Configuració d’entrada"
+
+msgid "Input settings"
+msgstr "Configuració d’entrada"
+
+msgid "Install title"
+msgstr "Instal·lar títol"
+
+msgid "Installed games"
+msgstr "Jocs instal·lats"
+
+msgid "Installing DLC ..."
+msgstr "Instal·lant DLC …"
+
+msgid "Installing title ..."
+msgstr "Instal·lant títol …"
+
+msgid "Installing update ..."
+msgstr "Instal·lant actualització …"
+
+msgid "Interface"
+msgstr "Interfície"
+
+msgid "Invalid folder structure"
+msgstr "Estructura de directori invàlida"
+
+msgid "Irrevocable delete the save entry "
+msgstr "Elimina irrevocablement l’entrada de partida guardada "
+
+msgid ""
+"IsPasswordCacheEnabled is set to false (The remember password option on your "
+"Wii U must be enabled for this account before dumping it)"
+msgstr ""
+"IsPasswordCacheEnabled està establert a fals (L’opció de recordar "
+"contrasenya a la seva Wii U ha d’estar habilitada per a aquest compte abans "
+"de bolcar-lo)"
+
+msgid ""
+"It looks like you're starting TesseraEmu for the first time.\n"
+"This quick setup assistant will help you get the best experience"
+msgstr ""
+"Sembla que és la primera vegada que inicia TesseraEmu.\n"
+"Aquest assistent de configuració ràpida l’ajudarà a obtenir la millor experiència"
+
+msgid ""
+"It seems that a newer version is already installed, do you still want to "
+"install the older version?"
+msgstr ""
+"Sembla que hi ha una versió més nova ja instal·lada, desitja instal·lar la "
+"versió antiga de totes maneres?"
+
+msgid ""
+"It seems that the selected title is already installed, do you want to "
+"reinstall it?"
+msgstr ""
+"Sembla que el títol escollit ja està instal·lat, desitja reinstal·lar-lo?"
+
+msgid ""
+"It seems that there's a wrong title installed at the target location.\n"
+"Please use the title manager to fix it first!"
+msgstr ""
+"Sembla que hi ha un títol incorrecte instal·lat a la ubicació de destí.\n"
+"Si us plau, faci servir el gestor de títols primer per a arreglar-ho!"
+
+msgid "Italian"
+msgstr "Italià"
+
+msgid "JSON file doesn't satisfy needed schema"
+msgstr "L’arxiu JSON no satisfà l’esquema necessari"
+
+msgid "JSON parse error: {}"
+msgstr "Error d’anàlisis JSON: {}"
+
+msgid "Japan"
+msgstr "Japó"
+
+msgid "Japanese"
+msgstr "Japonès"
+
+msgid "Keep aspect ratio"
+msgstr "Mantenir relació d’aspecte"
+
+msgid "Korea"
+msgstr "Corea"
+
+msgid "Korean"
+msgstr "Coreà"
+
+msgid "LR"
+msgstr "LR"
+
+msgid "Language"
+msgstr "Idioma"
+
+msgid "Last access"
+msgstr "Últim accés"
+
+msgid "Last played"
+msgstr "Últim cop jugat"
+
+msgid "Latency"
+msgstr "Latència"
+
+msgid "Launch with gamepad view"
+msgstr "Iniciar amb la vista del gamepad"
+
+msgid "Left Axis"
+msgstr "Eix Esquerre"
+
+msgid "Lite"
+msgstr "Simple"
+
+msgid "Load"
+msgstr "Carregar"
+
+msgid "Load shared libraries"
+msgstr "Carregar llibreries compartides"
+
+msgid "Logging window"
+msgstr "Finestra de registre"
+
+msgid "Low battery"
+msgstr "Bateria baixa"
+
+msgid "MLC Path"
+msgstr "Ruta MLC"
+
+msgid "Male"
+msgstr "Home"
+
+msgid "Memory Searcher"
+msgstr "Rastrejador de memòria"
+
+msgid "Memory breakpoint"
+msgstr "Punt d’interrupció de memòria"
+
+msgid "Mii name"
+msgstr "Nom del Mii"
+
+msgid "MipRange"
+msgstr "MipRange"
+
+msgid "Mode"
+msgstr "Mode"
+
+msgid "Module&list"
+msgstr "Module&list"
+
+msgid "Mono"
+msgstr "Mono"
+
+msgid "MotionPlus"
+msgstr "MotionPlus"
+
+msgid "Multi-core recompiler"
+msgstr "Recompilador de múltiples nuclis"
+
+msgid ""
+"Multiple issues with your game files have been found!\n"
+"Do you want to export them to a file?"
+msgstr ""
+"S’han trobat múltiples problemes amb els seus arxius de joc!\n"
+"Desitja exportar-los a un arxiu?"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Nearest Neighbor"
+msgstr "Veí més proper"
+
+msgid "Next"
+msgstr "Següent"
+
+msgid "No"
+msgstr "No"
+
+msgid "No account selected"
+msgstr "Cap compte seleccionat"
+
+msgid "No persistent id entered!"
+msgstr "No s’ha introduït cap ID persistent!"
+
+msgid "No profile name entered!"
+msgstr "No s’ha introduït cap nom de perfil!"
+
+msgid "No profile name selected!"
+msgstr "No s’ha escollit cap nom de perfil!"
+
+msgid "No update available!"
+msgstr "No hi ha actualitzacions disponibles!"
+
+msgid "No updates available."
+msgstr "No hi ha actualitzacions disponibes."
+
+msgid "Not a valid NFC NTAG215 file"
+msgstr "No és un arxiu NFC NTAG215 vàlid"
+
+msgid ""
+"Not enough space available.\n"
+"Required: {0} MB\n"
+"Available: {1} MB"
+msgstr ""
+"No hi ha espai suficient.\n"
+"Necessari: {0} MB\n"
+"Disponible: {1} MB"
+
+msgid "Notifications"
+msgstr "Notificacions"
+
+msgid "Nunchuck"
+msgstr "Nunchuck"
+
+msgid "OK"
+msgstr "D’acord"
+
+msgid "Off"
+msgstr "Desactivat"
+
+msgid "On"
+msgstr "Actiu"
+
+msgid "Online Status"
+msgstr "Estat de mode en línia"
+
+msgid "Online play tutorial"
+msgstr "Guia de joc en línia"
+
+msgid "Online settings"
+msgstr "Configuració del mode en línia"
+
+msgid "Open checksum entry"
+msgstr "Obri una entrada de checksum"
+
+msgid "Open directory"
+msgstr "Obrir directori"
+
+msgid "Open file to launch"
+msgstr "Obri l’arxiu per a iniciar"
+
+msgid "Open file to load"
+msgstr "Obri l’arxiu per a carregar"
+
+msgid "Open separate pad screen"
+msgstr "Obrir el GamePad en una finestra separada"
+
+msgid "Open the directory of the save entry"
+msgstr "Obrir el directori de l’entrada de partida guardada"
+
+msgid ""
+"Outdated shader cache\n"
+"\n"
+"The stored shader cache for this game was created with a Cemu version prior "
+"to 1.16.0.\n"
+"\n"
+"There are no significant downsides to reusing an existing cache but it may "
+"contain bloat that is no longer used by current versions of Cemu.\n"
+"\n"
+"It is highly recommended to start a new cache. Note that a new cache means "
+"that you will experience additional stutter during the first minutes of "
+"gameplay."
+msgstr ""
+"Cache de shaders obsoleta\n"
+"\n"
+"La cache de shaders per aquest joc fou creada amb una versió de Cemu "
+"anterior a 1.16.0.\n"
+"\n"
+"No hi ha inconvenients significatius en la reutilització d’una cache "
+"existent, però pot contenir dades que ja no s’utilitzen en les versions "
+"actuals de Cemu.\n"
+"\n"
+"Es recomana fermament iniciar una nova cache. Tingui en compte que una nova "
+"cache significa que experimentarà tartamudejos (stutter) addicionals durant "
+"els primers minuts de joc."
+
+msgid "Overlay"
+msgstr "Superposició"
+
+msgid "OverwriteRes"
+msgstr "OverwriteRes"
+
+msgid "PC"
+msgstr "PC"
+
+msgid "PPC threads"
+msgstr "Fils del PPC"
+
+msgid "PhysAddr"
+msgstr "Adreça física"
+
+msgid "Pitch"
+msgstr "Pitch"
+
+msgid ""
+"Please be aware that online mode lets you connect to OFFICIAL servers and "
+"therefore there is a risk of getting banned.\n"
+"Only proceed if you are willing to risk losing online access with your Wii U "
+"and/or NNID."
+msgstr ""
+"Si us plau, tingui en compte que el mode en línia li permet conectar-se als "
+"servidors OFICIALS i, per tant, existeix un risc de que se li prohibeixi "
+"l’accés (ban).\n"
+"Només procedeixi si està disposat a arriscar-se a perdre l’accés en línia "
+"amb la seva Wii U i/o NNID."
+
+msgid "Port"
+msgstr "Port"
+
+msgid "Portugese"
+msgstr "Portuguès"
+
+msgid "Position"
+msgstr "Posició"
+
+msgid "Precompiled shaders"
+msgstr "Shaders precompilats"
+
+msgid ""
+"Precompiled shaders can speed up the load time on the shader loading "
+"screen.\n"
+"Auto will enable it for AMD/Intel but disable it for NVIDIA GPUs as a "
+"workaround for a driver bug.\n"
+"\n"
+"Recommended: Auto"
+msgstr ""
+"Els shaders precompilats poder accelerar el temps de càrrega a la finestra "
+"de càrrega de shaders.\n"
+"Automàtic ho habilitarà per a AMD/Intel però ho deshabilitarà per a les GPU "
+"d’NVIDIA com a solució per un error del controlador.\n"
+"\n"
+"Recomanat: Automàtic"
+
+msgid ""
+"Pressing the screenshot key (F12) will save a screenshot directly to the "
+"screenshots folder"
+msgstr ""
+"Al prémer la tecla de captura de pantalla (F12) es guardarà una captura de "
+"pantalla directament a la carpeta screenshots"
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "PrincipalId missing"
+msgstr "Falta PrincipalId"
+
+msgid "Priority"
+msgstr "Prioritat"
+
+msgid "Profile"
+msgstr "Perfil"
+
+msgid "RAM usage"
+msgstr "Ús de RAM"
+
+msgid "Range"
+msgstr "Rang"
+
+msgid "Reading game image: {}"
+msgstr "Llegint la imatge de joc: {}"
+
+msgid "Reading game image: {}/{}kb"
+msgstr "Llegint la imatge de joc: {} de {} KiB"
+
+msgid "Refresh"
+msgstr "Actualitzar"
+
+msgid "Region"
+msgstr "Regió"
+
+msgid "Remember main window position"
+msgstr "Recordar la posició de la finestra principal"
+
+msgid "Remember pad window position"
+msgstr "Recordar la posició de la finestra del GamePad"
+
+msgid "Remove"
+msgstr "Eliminar"
+
+msgid "Removes the currently selected game path from the game list"
+msgstr "Elimina la ruta de joc seleccionada de la llista de jocs"
+
+msgid "Reset &order"
+msgstr "Restablir &ordre"
+
+msgid "Reset &width"
+msgstr "Restablir a&mple"
+
+msgid "Reset the default state of the controller"
+msgstr "Restablir l’estat per defecte del controlador"
+
+msgid "Resolution"
+msgstr "Resolució"
+
+msgid "Restart"
+msgstr "Reiniciar"
+
+msgid "Restart of TesseraEmu required for changes to take effect"
+msgstr "Es requereix reiniciar TesseraEmu per a que els canvis tinguin efecte"
+
+msgid "Restores the last known pad window position and size when opening it"
+msgstr ""
+"Restaura l’última posició i tamany conegut de la finestra del GamePad al "
+"obrir-la"
+
+msgid "Restores the last known window position and size when starting TesseraEmu"
+msgstr "Restaura l’última posició i tamany conegut de la finestra al iniciar TesseraEmu"
+
+msgid "Results"
+msgstr "Resultats"
+
+msgid "Results ({0})"
+msgstr "Resultats ({0})"
+
+msgid "Resume"
+msgstr "Reprendre"
+
+msgid "Right Axis"
+msgstr "Eix Dret"
+
+msgid "Rumble"
+msgstr "Vibrar"
+
+msgid "Run (F5)"
+msgstr "Executar (F5)"
+
+msgid "Russian"
+msgstr "Rús"
+
+msgid "Save"
+msgstr "Guardar"
+
+msgid "Save screenshot"
+msgstr "Guardar captura de pantalla"
+
+msgid "Save transfer"
+msgstr "Transferència de partida guardada"
+
+msgid "Scale"
+msgstr "Escala"
+
+msgid "Search"
+msgstr "Buscar"
+
+msgid "Searching for controllers..."
+msgstr "Buscant controladors…"
+
+msgid "Searching for wiimotes..."
+msgstr "Buscant controladors de la Wii…"
+
+msgid ""
+"Select a custom mlc path\n"
+"The mlc path is used to store Wii U related files like save games, game "
+"updates and dlc data"
+msgstr ""
+"Seleccioni una ruta mlc personalitzada\n"
+"La ruta mlc s’utilitza per a guardar arxius relacionats amb Wii U com "
+"partides guardades, actualitzacions dels jocs i dades de DLC"
+
+msgid "Select a custom path"
+msgstr "Seleccioni una ruta personalitzada"
+
+msgid "Select a directory"
+msgstr "Seleccioni un directori"
+
+msgid "Select a directory containing games."
+msgstr "Seleccioni un directori que contigui jocs."
+
+msgid "Select a file"
+msgstr "Seleccioni un arxiu"
+
+msgid "Select a file to export the errors"
+msgstr "Seleccioni un arxiu per exportar els errors"
+
+msgid "Select a folder"
+msgstr "Seleccioni una carpeta"
+
+msgid "Select a mlc directory"
+msgstr "Seleccioni un directori mlc"
+
+msgid "Select a target file to export the save entry"
+msgstr ""
+"Seleccioni un arxiu de destí per a exportar l’entrada de partida guardada"
+
+msgid "Select a zipped save file"
+msgstr "Seleccioni un arxiu de partida guardada comprimida"
+
+msgid "Select one of the available audio back ends"
+msgstr "Seleccioni un dels backends d’àudio disponibles"
+
+msgid "Select one of the available graphic back ends"
+msgstr "Seleccioni un dels backends de gràfics disponibles"
+
+msgid "Select the active audio output device for Wii U GamePad"
+msgstr "Seleccioni el dispositiu de sortida d’àudio per al Wii U GamePad"
+
+msgid "Select the active audio output device for Wii U TV"
+msgstr "Seleccioni el dispositiu de sortida d’àudio actiu per a la Wii U TV"
+
+msgid "Select the used graphic device"
+msgstr "Seleccioni el dispositiu gràfic que desitja utilitzar"
+
+msgid "Select title to install"
+msgstr "Seleccioni el títol a instal·lar"
+
+msgid "Set comment for breakpoint at address %08x"
+msgstr "Establir comentari pel punt d’interrupció a l’adreça %08x"
+
+msgid "Set the CPU emulation mode"
+msgstr "Establir el mode d’emulació de la CPU"
+
+msgid "Sets the scale of the notification text"
+msgstr "Estableix l’escala del text de la notificació"
+
+msgid "Sets the scale of the overlay text"
+msgstr "Estableix l’escala del text de la superposició"
+
+msgid "Sets the text color of notifications"
+msgstr "Estableix el color del text de les notificacions"
+
+msgid "Sets the text color of the overlay"
+msgstr "Estableix el color del text de la superposició"
+
+msgid "Settings"
+msgstr "Configuració"
+
+msgid "Shader cache migration"
+msgstr "Migració de cache de shaders"
+
+msgid "Shader compiler"
+msgstr "Compilador de shaders"
+
+msgid "Shader mul accuracy"
+msgstr "Precisió multiplicació dels shaders"
+
+msgid "Show &dlc"
+msgstr "Mostrar &dlc"
+
+msgid "Show &game time"
+msgstr "Mostrar &temps de joc"
+
+msgid "Show &last played"
+msgstr "Mostrar &últim cop jugat"
+
+msgid "Show &name"
+msgstr "Mostrar &nom"
+
+msgid "Show &region"
+msgstr "Mostrar &regió"
+
+msgid "Show &version"
+msgstr "Mostrar &versió"
+
+msgid "Show only active"
+msgstr "Mostrar només actives"
+
+msgid "Show views"
+msgstr "Mostrar vistes"
+
+msgid "Shows a notification after shaders have been compiled"
+msgstr "Mostra una notificació després de que els shaders s’hagin compilat"
+
+msgid "Shows a notification when a low controller battery has been detected"
+msgstr "Mostra una notificació quan es detecta bateria baixa al controlador"
+
+msgid "Shows friend list related data if online"
+msgstr "Si està en línia, mostra les dades relacionades amb la llista d’amics"
+
+msgid "Single-core interpreter"
+msgstr "Intèrpret d’un únic nucli"
+
+msgid "Single-core recompiler"
+msgstr "Recompilador d’un únic nucli"
+
+msgid "Size"
+msgstr "Tamany"
+
+msgid "SliceRange"
+msgstr "SliceRange"
+
+msgid "SliceStart"
+msgstr "SliceStart"
+
+msgid "Source"
+msgstr "Orígen"
+
+msgid "Spanish"
+msgstr "Espanyol"
+
+msgid "Stack"
+msgstr "Pila"
+
+msgid "Start games with fullscreen"
+msgstr "Iniciar jocs en pantalla completa"
+
+msgid "State"
+msgstr "Estat"
+
+msgid "Step Into (F11)"
+msgstr "Entrar dins (F11)"
+
+msgid "Step Over (F10)"
+msgstr "Passar per sobre (F10)"
+
+msgid "Stereo"
+msgstr "Estèreo"
+
+msgid "Stored Entries"
+msgstr "Entrades guardades"
+
+msgid "Stretch"
+msgstr "Estirar"
+
+msgid "Style: &Icons"
+msgstr "Estil: &Icones"
+
+msgid "Style: &List"
+msgstr "Estil: &Llista"
+
+msgid "Style: &Small Icons"
+msgstr "Estil: Icones &Petites"
+
+msgid "Success"
+msgstr "Èxit"
+
+msgid "SumWakeTime"
+msgstr "SumWakeTime"
+
+msgid "Surround"
+msgstr "Envoltant"
+
+msgid "Suspend"
+msgstr "Suspendre"
+
+msgid "TV"
+msgstr "TV"
+
+msgid "Taiwan"
+msgstr "Taiwan"
+
+msgid "Taiwanese"
+msgstr "Taiwanès"
+
+msgid "Target"
+msgstr "Destí"
+
+msgid "Test if the controller is connected"
+msgstr "Provar si el controlador està connectat"
+
+msgid "Text Color"
+msgstr "Color del Text"
+
+msgid "Texture cache"
+msgstr "Cache de textures"
+
+msgid "The VRAM usage of TesseraEmu in MB"
+msgstr "Ús de VRAM de TesseraEmu en MB"
+
+msgid ""
+"The currently installed graphics driver does not support the Vulkan "
+"extension necessary for asynchronous shader compilation. Asynchronous "
+"compilation cannot be used.\n"
+" \n"
+"Required extension: VK_EXT_pipeline_creation_cache_control\n"
+"\n"
+"Installing the latest or beta graphics driver may solve this error."
+msgstr ""
+"El controlador de gràfics instal·lat actualment no admet l’extensió de "
+"Vulkan necessària per a la computació asíncrona de shaders. No s’ha pogut "
+"utilitzar la compilació asíncrona.\n"
+"\n"
+"Extensió necessària: VK_EXT_pipeline_creation_cache_control\n"
+"\n"
+"Instal·lar la versió més recent o beta dels controladors gràfics pot "
+"resoldre aquest error."
+
+msgid "The entered port must be between 1 and 65535"
+msgstr "El port introduït ha d’estar entre 1 i 65535"
+
+msgid "The following files are missing:"
+msgstr "Falten els següents arxius:"
+
+msgid ""
+"The following prefixes are supported:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+msgstr ""
+"S’admeten els següents prefixos:\n"
+"\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+
+msgid ""
+"The game path is scanned by Cemu to locate your games. We recommend creating "
+"a dedicated directory in which\n"
+"you place all your Wii U games. (example: C:\\wiiu\\games\\)\n"
+"\n"
+"You can also set additional paths in the general settings of Cemu."
+msgstr ""
+"Cemu escaneja les rutes de jocs per detectar els seus jocs. Li recomanem "
+"crear un directori dedicat en el que\n"
+"col·locar tots els seus jocs de Wii U. (per exemple: C:\\wiiu\\games\\)\n"
+"\n"
+"També pot establir rutes adicionals a la configuració general de Cemu."
+
+msgid ""
+"The given account id is not valid!\n"
+"It must be a hex number bigger or equal than {:08x}"
+msgstr ""
+"L’ID de compte proporcionat no és vàlid!\n"
+"Ha de ser un número hexadecimal major o igual a {:08x}"
+
+msgid "The given profile name is not valid!"
+msgstr "El nom de perfil proporcionat és invàlid!"
+
+msgid "The mii name is the profile name"
+msgstr "El nom del Mii és el nom del perfil"
+
+msgid ""
+"The mlc directory contains your save games and installed game update/dlc data"
+msgstr ""
+"El directori mlc conté les seves partides guardades i actualitzacions i "
+"dades de DLC instal·lats"
+
+msgid ""
+"The mlc path is the root folder of the emulated Wii U internal flash "
+"storage. It contains all your saves, installed updates and DLCs.\n"
+"It is strongly recommend that you create a dedicated folder for it (example: "
+"C:\\wiiu\\mlc\\) \n"
+"If left empty, the mlc folder will be created inside the Cemu folder."
+msgstr ""
+"La ruta mlc és la carpeta arrel del emmagatzament flash intern emulat de la "
+"Wii U. Conté totes les seves partides guardades, les actualitzacions "
+"instal·lades i els DLC.\n"
+"Es recomana fermament que creï una carpeta dedicada per ell (per exemple: C:"
+"\\wiiu\\mlc\\) \n"
+"Si es deixa buida, la carpeta mlc serà creada dins la carpeta de Cemu."
+
+msgid "The number of draw calls per frame. Average over last 5 seconds"
+msgstr ""
+"El número de crides de dibuix (draw calls) per fotograma. Mitjana dels "
+"últims 5 segons"
+
+msgid "The number of frames per second. Average over last 5 seconds"
+msgstr "El número de fotogrames per segon. Mitjana dels últims 5 segons"
+
+msgid "The persistent id is the internal folder name used for your saves"
+msgstr ""
+"L’ID persistent és el nom de la carpeta interna que s’utilitza per a les "
+"seves partides guardades"
+
+msgid ""
+"The persistent id is the internal folder name used for your saves. Only "
+"change this if you are importing saves from a Wii U with a specific id"
+msgstr ""
+"L’ID persistent és el nom de la carpeta interna que s’utilitza per a les "
+"seves partides guardades. Només canviï això si està important partides "
+"guardades des d’una Wii U amb una ID específica"
+
+msgid "The persistent id must be greater than {:x}!"
+msgstr "L’ID persistent ha de ser major que {:x}!"
+
+msgid "The persistent id {:x} is already in use by account {}!"
+msgstr "L’ID persistent {:x} ja està éssent utilitzat per el compte {}!"
+
+msgid ""
+"The threshold of a button to recognizes a press from a trigger/axis value"
+msgstr ""
+"El llindar d’un botó per reconèixer una pulsació des del valor d’un "
+"disparador/eix"
+
+msgid "The verification data doesn't include a wud hash!"
+msgstr "Les dades de verificació no inclouen un hash WUD!"
+
+msgid ""
+"There's a new update available.\n"
+"Do you want to update?"
+msgstr ""
+"Hi ha una nova actualització disponible.\n"
+"Desitja actualitzar?"
+
+msgid ""
+"There's already a file at the target directory:\n"
+"{}"
+msgstr ""
+"Ja hi ha un arxiu al directori de destí:\n"
+"{}"
+
+msgid ""
+"There's already a newer or equal version installed at the correct location, "
+"so the redundant version will be deleted:"
+msgstr ""
+"Ja hi ha una versió més recent o igual instal·lada a la ubicació correcta, "
+"per la qual cosa la versió redudant s’eliminarà:"
+
+msgid ""
+"There's already a save game available for the target account, do you want to "
+"overwrite it?\n"
+"This will delete the existing save files for the account and replace them."
+msgstr ""
+"Ja hi ha una partida guardada disponible per al compte destí, desitja "
+"sobrescriure-la?\n"
+"Això eliminarà els arxius de partida guardada existents per al compte i els "
+"sobreescriurà."
+
+msgid ""
+"There's already an older version installed at the correct location, so the "
+"older version will be overwritten:"
+msgstr ""
+"Ja hi ha una versió anterior instal·lada a la ubicació correcta, per la qual "
+"cosa la versió anterior serà sobreescrita:"
+
+msgid ""
+"There's an wrong title installed at the target location, should we fix that?"
+msgstr ""
+"Hi ha un títol incorrecte instal·lat a la ubicació de destí, hauríem "
+"d’arreglar-ho?"
+
+msgid "This DLC is installed at the wrong location."
+msgstr "Aquest DLC està instal·lat en una ubicació incorrecta."
+
+msgid "This base game is installed at the wrong location."
+msgstr "Aquest joc base està instal·lat en una ubicació incorrecta."
+
+msgid ""
+"This game entry seems to be either an update or the base game was merged with update data\n"
+"Broken game dumps cause various problems during emulation and may even stop working at all in future TesseraEmu versions\n"
+"Please make sure the base game is intact and install updates only with the File->Install Update/DLC option"
+msgstr ""
+"Aquest element de la llista sembla ser o bé una actualització o bé un joc base que s’ha fusionat amb les dades d’actualització\n"
+"Els bolcats de jocs corruptes poden causar varis problemes durant l’emulació i poden deixar de funcionar completament en futures versions de TesseraEmu.\n"
+"Asseguris de que el joc base està intacte i instal·li les actualitzacions només amb la opció Arxiu->Instal·lar actualització o dlc"
+
+msgid "This graphic pack has no description"
+msgstr "Aquest paquet gràfic no té descripció"
+
+msgid "This option requires Win8.1+"
+msgstr "Aquesta opció requereix Windows 8.1 o superior"
+
+msgid "This update is installed at the wrong location."
+msgstr "Aquesta actualització està instal·lada en una ubicació incorrecta."
+
+msgid "This update removed or renamed the following graphic packs:"
+msgstr ""
+"Aquesta actualització ha eliminat o renombrat els següents paquets gràfics:"
+
+msgid "Thread quantum"
+msgstr "Fil quàntic"
+
+msgid "ThreadName"
+msgstr "Nom del fil"
+
+msgid "Tilemode"
+msgstr "Tilemode"
+
+msgid "Title checksum of {:08x}-{:08x}"
+msgstr "Checksum del títol {:08x}-{:08x}"
+
+msgid "Title id"
+msgstr "ID de títol"
+
+msgid "Title installation has been canceled!"
+msgstr "La instal·lació del títol s’ha cancel·lat!"
+
+msgid "Title installed!"
+msgstr "Títol instal·lat!"
+
+msgid "Title manager"
+msgstr "Administrador de títols"
+
+msgid "Toggle Breakpoint (F9)"
+msgstr "Commutar Punt d’Interrupció (F9)"
+
+msgid "Top center"
+msgstr "Centre Superior"
+
+msgid "Top left"
+msgstr "Superior esquerra"
+
+msgid "Top right"
+msgstr "Superior dreta"
+
+msgid "Total cpu usage in percent for each core"
+msgstr "Ús total de CPU en percentatge per a cada nucli"
+
+msgid "Transfer"
+msgstr "Transferir"
+
+msgid "Transfers the save entry to another persistent account id"
+msgstr ""
+"Transfereix l’entrada de partida guardada a un altre ID de compte persistent"
+
+msgid "Triple buffering"
+msgstr "Emmagatzematge en buffer triple"
+
+msgid "Type"
+msgstr "Tipus"
+
+msgid "USA"
+msgstr "EUA"
+
+msgid "Unable to open file."
+msgstr "No s’ha pogut obrir l’arxiu."
+
+msgid "Unknown error occured"
+msgstr "Ha ocorregut un error desconegut"
+
+msgid "Unknown file type."
+msgstr "Tipus d’arxiu desconegut."
+
+msgid "Update"
+msgstr "Actualitzar"
+
+msgid "Update available!"
+msgstr "Actualització disponible!"
+
+msgid "Update error"
+msgstr "Error d’actualització"
+
+msgid "Update installation has been canceled!"
+msgstr "La instal·lació de l’actualització ha sigut cancel·lada!"
+
+msgid "Update notification"
+msgstr "Notificació d’actualització"
+
+msgid ""
+"Updated graphic packs are available. Do you want to download and install "
+"them?"
+msgstr ""
+"Hi ha paquets gràfics actualitzats disponibles. Desitja descarregar-los i "
+"instalar-los?"
+
+msgid "Updating game list..."
+msgstr "Actualitzant la llista de jocs…"
+
+msgid "Upscale filter"
+msgstr "Filtre d’augment d’escala"
+
+msgid ""
+"Upscaling filters are used when the game resolution is smaller than the "
+"window size"
+msgstr ""
+"Els filtres d’augment d’escala es fan servir quan la resolució del joc és "
+"menor que el tamany de la finestra"
+
+msgid "Use existing cache"
+msgstr "Utilitzar cache existent"
+
+msgid "Use permanent storage"
+msgstr "Utilitzar emmagatzematge permanent"
+
+msgid "VRAM usage"
+msgstr "Ús de VRAM"
+
+msgid "VSync"
+msgstr "Sincronització Vertical (VSync)"
+
+msgid "Verifies the checksum online"
+msgstr "Verifica el checksum en línia"
+
+msgid "Verifies the checksum with a local json file you can select"
+msgstr "Verifica el checksum amb un arxiu JSON local que pot escollir"
+
+msgid "Verify"
+msgstr "Verificar"
+
+msgid "Verify local"
+msgstr "Verificar localment"
+
+msgid "Verifying integrity of game files..."
+msgstr "Verificant la integritat dels arxius del joc…"
+
+msgid "Version"
+msgstr "Versió"
+
+msgid "Volume"
+msgstr "Volum"
+
+msgid "Waiting for"
+msgstr "Esperant a"
+
+msgid "Warning"
+msgstr "Advertència"
+
+msgid "Wii U executable (rpx, elf)"
+msgstr "Arxiu executable de Wii U (rpx, elf)"
+
+msgid "Wii U image (wud, wux, iso, wad)"
+msgstr "Imatge de Wii U (wud, wux, iso, wad)"
+
+msgid "Write stack trace to log"
+msgstr "Escriure la traça de pila al registre"
+
+msgid "Wrong region: {}"
+msgstr "Regió incorrecta: {}"
+
+msgid "Wrong title id: {}"
+msgstr "Id de títol incorrecte: {}"
+
+msgid "Wrong version: {}"
+msgstr "Versió incorrecta: {}"
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid ""
+"You are trying to import a savegame for a different title than your "
+"currently selected one: {:016x} vs {:016x}\n"
+"Are you sure that you want to continue?"
+msgstr ""
+"Està intentant importar una partida guardada d’un títol diferent al que té "
+"seleccionat actualment: {:016x} contra {:016x}\n"
+"Està segur de que vol continuar?"
+
+msgid "You can configure game paths in the general settings."
+msgstr "Pot configurar les rutes de jocs a la configuració general."
+
+msgid ""
+"You can configure one controller for each player.\n"
+"We advise you to always use GamePad as emulated input for the first player, "
+"since many games expect the GamePad to be present.\n"
+"It is also required for touch functionality.\n"
+"The default global hotkeys are:\n"
+"CTRL - show pad screen\n"
+"CTRL + TAB - toggle pad screen\n"
+"ALT + ENTER - toggle fullscreen\n"
+"ESC - leave fullscreen\n"
+"\n"
+"If you're having trouble configuring your controller, make sure to have it "
+"in idle state and press calibrate.\n"
+"Also don't set the axis deadzone too low."
+msgstr ""
+"Pot configurar un controlador per a cada jugador.\n"
+"Li recomanem utilitzar sempre el GamePad com a entrada emulada per al primer "
+"jugador, ja que molts jocs esperen que el GamePad estigui present.\n"
+"També és necessari per a la funcionalitat tàctil.\n"
+"Les tecles d’accés ràpid globals predeterminades són:\n"
+"CTRL - mostrar pantalla del GamePad\n"
+"CTRL + TAB - commutar la pantalla del GamePad\n"
+"ALT + ENTER - commutar la pantalla completa\n"
+"ESC - Sortir de la pantalla completa\n"
+"\n"
+"Si té problemes configurant el controlador, asseguris de que està inactiu i "
+"premi el botó calibrar.\n"
+"A més, eviti establir la zona morta dels eixos massa baixa."
+
+msgid "You can use the context menu to fix it."
+msgstr "Pot utilitzar el menú contextual per a corregir això."
+
+msgid "You have to restart the game in order to apply the new settings."
+msgstr "Ha de reiniciar el joc per tal d’aplicar la nova configuració."
+
+msgid "You may need to set them up again."
+msgstr "És possible que hagi de configurar-los de nou."
+
+msgid "You've played"
+msgstr "Hi has jugat"
+
+msgid "Your account is a valid online account"
+msgstr "El seu compte és un compte en línia vàlid"
+
+msgid "Your entered value is not valid for the selected datatype."
+msgstr "El valor introduït no és vàlid pel tipus de dada seleccionat."
+
+msgid "Your game files are valid"
+msgstr "Els seus arxius de joc són vàlids"
+
+msgid ""
+"Your game image is invalid!\n"
+"\n"
+"Your hash:\n"
+"{}\n"
+"\n"
+"Expected hash:\n"
+"{}"
+msgstr ""
+"La seva imatge de joc és invàlida!\n"
+"\n"
+"El seu hash:\n"
+"{}\n"
+"\n"
+"Hash esperat:\n"
+"{}"
+
+msgid ""
+"Your mlc01 folder seems to be missing.\n"
+"\n"
+"This is where Cemu stores save files, game updates and other Wii U files.\n"
+"\n"
+"The expected path is:\n"
+"{}\n"
+"\n"
+"Do you want to create the folder at the expected path?"
+msgstr ""
+"Sembla que la seva carpeta mlc01 ha desaparegut.\n"
+"\n"
+"Cemu emmagatzema els arxius de partides guardades, actualitzacions de jocs i "
+"altres\n"
+"arxius de la Wii U en aquesta carpeta.\n"
+"\n"
+"La ruta esperada és:\n"
+"{}\n"
+"\n"
+"Desitja crear la carpeta a la ruta esperada?"
+
+msgid "address"
+msgstr "adreça"
+
+msgid "auto"
+msgstr "automàtic"
+
+msgid "base"
+msgstr "joc base"
+
+msgid "blow mic"
+msgstr "bufar micròfon"
+
+msgid "cycles"
+msgstr "cicles"
+
+msgid "description"
+msgstr "descripció"
+
+msgid "disable"
+msgstr "deshabilitar"
+
+msgid "dlc"
+msgstr "dlc"
+
+msgid "enable"
+msgstr "habilitar"
+
+msgid "false"
+msgstr "fals"
+
+msgid "freeze"
+msgstr "congelar"
+
+msgid "many"
+msgstr "varis"
+
+msgid "minimal"
+msgstr "mínim"
+
+msgid "mlc01 path"
+msgstr "Ruta mlc01"
+
+msgid "never"
+msgstr "mai"
+
+msgid "otp.bin could not be found"
+msgstr "No s’ha trobat l’arxiu otp.bin"
+
+msgid "otp.bin is corrupted or has invalid size"
+msgstr "L’arxiu otp.bin està danyat o té un tamany invàlid"
+
+msgid "save"
+msgstr "partida guardada"
+
+msgid "seeprom.bin could not be found"
+msgstr "No s’ha trobat l’arxiu seeprom.bin"
+
+msgid "seeprom.bin is corrupted or has invalid size"
+msgstr "L’arxiu seeprom.bin està danyat o té un tamany invàlid"
+
+msgid "show screen"
+msgstr "mostrar pantalla"
+
+msgid "true"
+msgstr "verdader"
+
+msgid "type"
+msgstr "tipus"
+
+msgid "unknown"
+msgstr "desconegut"
+
+msgid "update"
+msgstr "actualització"
+
+msgid "value"
+msgstr "valor"
+
+msgid ""
+"{} files are missing!\n"
+"Do you want to export a list of them to a file?"
+msgstr ""
+"Falten {} arxius!\n"
+"Desitja exportar una llista dels mateixos a un arxiu?"
+
+msgid ""
+"{} files have an invalid hash!\n"
+"Do you want to export a list of them to a file?"
+msgstr ""
+"{} arxius tenen un hash invàlid!\n"
+"Desitja exportar una llista dels mateixos a un arxiu?"

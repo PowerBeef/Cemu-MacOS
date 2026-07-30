@@ -1,0 +1,2501 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Cemu\n"
+"PO-Revision-Date: 2022-08-30 21:37+0900\n"
+"Last-Translator: Patrick Lofstrom <patricklofstrom@gmail.com>\n"
+"Language-Team: \n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.1.1\n"
+
+msgid "&About"
+msgstr "Cemu について(&A)"
+
+msgid "&Active account"
+msgstr "有効なアカウント(&A)"
+
+msgid "&Add new entry"
+msgstr "新しいエントリを追加する(&A)"
+
+msgid "&Audio API"
+msgstr "オーディオ API(&A)"
+
+msgid "&Breakpoints"
+msgstr "ブレーク ポイント(&B)"
+
+msgid "&CPU"
+msgstr "CPU(&C)"
+
+msgid "&Check for updates"
+msgstr "アップデートを確認する(&C)"
+
+msgid "&Chinese"
+msgstr "中国語(&C)"
+
+msgid "&Console language"
+msgstr "システム言語(&C)"
+
+msgid "&Copy"
+msgstr "コピー(&C)"
+
+msgid "&Coreinit File-Access"
+msgstr "Coreinit ファイル アクセス(&C)"
+
+msgid "&Coreinit Logging (OSReport/OSConsole)"
+msgstr "Coreinit ログ (OSReport/OSConsole)(&C)"
+
+msgid "&Coreinit MP API"
+msgstr "Coreinit MP API(&C)"
+
+msgid "&Coreinit Memory API"
+msgstr "Coreinit メモリー API(&C)"
+
+msgid "&Coreinit Thread API"
+msgstr "Coreinit スレッド API(&C)"
+
+msgid "&Coreinit Thread-Synchronization API"
+msgstr "Coreinit スレッド同期 API(&C)"
+
+msgid "&DLC directory"
+msgstr "DLC の保存先を開く(&D)"
+
+msgid "&Debug"
+msgstr "デバッグ(&D)"
+
+msgid "&Decrement"
+msgstr "減額(&D)"
+
+msgid "&Delete"
+msgstr "削除(&D)"
+
+msgid "&Download"
+msgstr "ダウンロード(&D)"
+
+msgid "&Download Manager"
+msgstr "ダウンロード マネージャー(&D)"
+
+msgid "&Dump"
+msgstr "ダンプ(&D)"
+
+msgid "&Dump current RAM"
+msgstr "現在の RAM をダンプする(&D)"
+
+msgid "&Dutch"
+msgstr "オランダ語(&D)"
+
+msgid "&Edit game profile"
+msgstr "ゲームプロファイルの編集(&E)"
+
+msgid "&Edit graphic packs"
+msgstr "グラフィック パックの編集(&E)"
+
+msgid "&Edit name"
+msgstr "名前を編集する(&E)"
+
+msgid "&English"
+msgstr "英語(&E)"
+
+msgid "&Exit"
+msgstr "終了(&E)"
+
+msgid "&Favorite"
+msgstr "お気に入り(&F)"
+
+msgid "&File"
+msgstr "ファイル(&F)"
+
+msgid "&French"
+msgstr "フランス語(&F)"
+
+msgid "&Fullscreen"
+msgstr "全画面表示(&F)"
+
+msgid "&GX2 API"
+msgstr "GX2 API(&G)"
+
+msgid "&Game directory"
+msgstr "ゲーム ディレクトリ(&G)"
+
+msgid "&General settings"
+msgstr "一般設定(&G)"
+
+msgid "&German"
+msgstr "ドイツ語(&G)"
+
+msgid "&Getting started"
+msgstr "はじめに(&G)"
+
+msgid "&Goto Disasm"
+msgstr "Goto Disasm(&G)"
+
+msgid "&Graphic pack patches"
+msgstr "グラフィック パック パッチ(&G)"
+
+msgid "&Graphic packs"
+msgstr "グラフィック パック(&G)"
+
+msgid "&H264 API"
+msgstr "H264 API(&H)"
+
+msgid "&Help"
+msgstr "ヘルプ(&H)"
+
+msgid "&Increment"
+msgstr "増分(&I)"
+
+msgid "&Input API"
+msgstr "入力 API(&I)"
+
+msgid "&Input settings"
+msgstr "入力設定(&I)"
+
+msgid "&Install game title, update or DLC"
+msgstr "ゲームタイトル、アップデート、DLC をインストールする(&I)"
+
+msgid "&Italian"
+msgstr "イタリア語(&I)"
+
+msgid "&Japanese"
+msgstr "日本語(&J)"
+
+msgid "&Korean"
+msgstr "韓国語(&K)"
+
+msgid "&Launch title"
+msgstr "タイトル起動(&L)"
+
+msgid "&Load"
+msgstr "読み込む(&L)"
+
+msgid "&Log PPC context for API"
+msgstr "API 用に PPCコンテキスト をログする(&L)"
+
+msgid "&Logging"
+msgstr "ログ(&L)"
+
+msgid "&Memory Dump"
+msgstr "メモリ ダンプ(&M)"
+
+msgid "&Memory searcher"
+msgstr "メモリ検索(&M)"
+
+msgid "&NFC"
+msgstr "NFC(&N)"
+
+msgid "&NN NFP"
+msgstr "NN NFP(&N)"
+
+msgid "&Open directory"
+msgstr "ディレクトリを開く(&O)"
+
+msgid "&Open logging window"
+msgstr "ログ ウィンドウを開く(&O)"
+
+msgid "&OpenGL debug output"
+msgstr "OpenGL デバッグ出力(&O)"
+
+msgid "&Options"
+msgstr "設定(&O)"
+
+msgid "&Pin to main window"
+msgstr "メイン ウィンドウにピン留めする(&P)"
+
+msgid "&Portuguese"
+msgstr "ポルトガル語(&P)"
+
+msgid "&Refresh game list"
+msgstr "ゲームリストを更新する(&R)"
+
+msgid "&Registers"
+msgstr "レジスター(&R)"
+
+msgid "&Remove entry"
+msgstr "エントリの削除(&R)"
+
+msgid "&Render upside-down"
+msgstr "上下逆さまにレンダーする(&R)"
+
+msgid "&Resume"
+msgstr "再開(&R)"
+
+msgid "&Retry"
+msgstr "再試行(&R)"
+
+msgid "&Russian"
+msgstr "ロシア語(&R)"
+
+msgid "&Save API"
+msgstr "保存 API(&S)"
+
+msgid "&Save directory"
+msgstr "保存ディレクトリ(&S)"
+
+msgid "&Scan NFC tag from file"
+msgstr "ファイルから NFC タグを読み取る(&S)"
+
+msgid "&Separate GamePad view"
+msgstr "GamePad を別ウィンドウに表示する(&S)"
+
+msgid "&Shaders"
+msgstr "シェーダー(&S)"
+
+msgid "&Show frame profiler"
+msgstr "フレーム プロファイラを表示する(&S)"
+
+msgid "&Socket API"
+msgstr "ソケット API(&S)"
+
+msgid "&Spanish"
+msgstr "スペイン語(&S)"
+
+msgid "&Start"
+msgstr "開始(&S)"
+
+msgid "&Taiwanese"
+msgstr "台湾語(&T)"
+
+msgid "&Texture cache warnings"
+msgstr "テクスチャ キャッシュの警告(&T)"
+
+msgid "&Textures"
+msgstr "テクスチャ(&T)"
+
+msgid "&Title Manager"
+msgstr "タイトル マネージャー(&T)"
+
+msgid "&Tools"
+msgstr "ツール(&T)"
+
+msgid "&Unsupported API calls"
+msgstr "未対応の API コール(&U)"
+
+msgid "&Update directory"
+msgstr "アップデートディレクトリ(&U)"
+
+msgid "&Verify integrity of game files"
+msgstr "ゲーム ファイルの整合性を検査(&V)"
+
+msgid "&View PPC debugger"
+msgstr "PPC デバッガーを表示する(&V)"
+
+msgid "&View PPC threads"
+msgstr "PPC スレッドを表示する(&V)"
+
+msgid "&View audio debugger"
+msgstr "オーディオ デバッガーを表示する(&V)"
+
+msgid "&View texture cache info"
+msgstr "テクスチャキャッシュ情報を表示する(&V)"
+
+msgid "&Vulkan validation layer (slow)"
+msgstr "Vulkan 検証レイヤー（遅い）(&V)"
+
+msgid "&Wiki page"
+msgstr "ウィキ ページ(&W)"
+
+msgid "&Window"
+msgstr "ウィンドウ(&W)"
+
+msgid "&Zero"
+msgstr "ゼロ(&Z)"
+
+msgid "&nlibcurl HTTP/HTTPS requests"
+msgstr "nlibcurl HTTP/HTTPS リクエスト(&N)"
+
+msgid "(optional)"
+msgstr "(オプション)"
+
+msgid ""
+"A custom mlc path from a previous Cemu installation has been found and "
+"filled in."
+msgstr ""
+"以前の Cemu インストールからのカスタム mlc パスが見つかり、記入されました。"
+
+msgid "API"
+msgstr "API"
+
+msgid "Account"
+msgstr "アカウント"
+
+msgid "Account information"
+msgstr "アカウント情報"
+
+msgid "Account name may not be empty!"
+msgstr "アカウント名は空であってはいけません！"
+
+msgid "Account settings"
+msgstr "アカウント設定"
+
+msgid "AccountId missing (The account is not connected to a NNID)"
+msgstr "AccountId がありません（ NNID に接続されていない）"
+
+msgid ""
+"AccountPasswordCache is empty (The remember password option on your Wii U "
+"must be enabled for this account before dumping it)"
+msgstr ""
+"AccountPasswordCache は空です（ダンプする前に、このアカウントの Wii U のパス"
+"ワード記憶オプションが有効になっている必要があります）"
+
+msgid "Active account"
+msgstr "有効なアカウント"
+
+msgid "Active preset"
+msgstr "アクティブプリセット"
+
+msgid "Add"
+msgstr "追加"
+
+msgid ""
+"Add the root directory of your game(s). It will scan all directories in it "
+"for games"
+msgstr ""
+"ゲームのルートディレクトリを追加します。その中のすべてのディレクトリをスキャ"
+"ンして、ゲームを探します"
+
+msgid "Additional options"
+msgstr "追加オプション"
+
+msgid "Additional settings"
+msgstr "その他の設定"
+
+msgid "Address"
+msgstr "アドレス"
+
+msgid ""
+"Adds a game path to scan for games displayed in the game list\n"
+"If you have unpacked games, make sure to select the root folder of a game"
+msgstr ""
+"ゲームリストに表示されるゲームのスキャンにゲームパスを追加する\n"
+"ゲームを解凍している場合は、必ずゲームのルートフォルダを選択してください"
+
+msgid "Affinity"
+msgstr "アフィニティ"
+
+msgid "All Wii U files (wud, wux, iso, wad, rpx, elf)"
+msgstr "すべての Wii U ファイル（wud、wux、iso、wad、rpx、elf）"
+
+msgid "All files (*.*)"
+msgstr "すべてのファイル (*.*)"
+
+msgid "Applying update..."
+msgstr "アップデートの適用中..."
+
+msgid ""
+"Are you really sure that you want to delete the following file:\n"
+"{}"
+msgstr ""
+"本当に以下のファイルを削除してよいのでしょうか？\n"
+"{}"
+
+msgid ""
+"Are you really sure that you want to delete the following folder:\n"
+"{}"
+msgstr ""
+"本当に以下のフォルダを削除してよいのでしょうか？\n"
+"{}"
+
+msgid "Are you really sure that you want to delete the save entry for {}"
+msgstr "本当に{}の保存エントリを削除してよいのですか？"
+
+msgid "Are you sure you want to delete the account {} with id {:x}?"
+msgstr "本当に ID {:x} のアカウント {} を削除しますか？"
+
+msgid "Async shader compile"
+msgstr "非同期シェーダーコンパイル"
+
+msgid "At least one issue has been found"
+msgstr "少なくとも1つの問題が発見されました"
+
+msgid "Audio"
+msgstr "オーディオ"
+
+msgid "Australia"
+msgstr "オーストラリア"
+
+msgid "Auto"
+msgstr "自動"
+
+msgid "Auto (recommended)"
+msgstr "オート（おすすめ）"
+
+msgid "Auto refresh"
+msgstr "自動更新"
+
+msgid "Automatically check for updates"
+msgstr "自動でアップデートを確認する"
+
+msgid "Automatically checks for new cemu versions on startup"
+msgstr "起動時に新しいバージョンの Cemu を自動的にチェックします"
+
+msgid "Bicubic"
+msgstr "バイキュービック"
+
+msgid "Bilinear"
+msgstr "バイリニア"
+
+msgid "Birthday"
+msgstr "誕生日"
+
+msgid "Boost priority (-1)"
+msgstr "優先度を上げる (-1)"
+
+msgid "Boost priority (-5)"
+msgstr "優先度を上げる (-5)"
+
+msgid "Bottom center"
+msgstr "中央下"
+
+msgid "Bottom left"
+msgstr "左下"
+
+msgid "Bottom right"
+msgstr "右下"
+
+msgid "Break (F5)"
+msgstr "中断  (F5)"
+
+msgid "Break on &entry point"
+msgstr "エントリ ポイントで中断(&E)"
+
+msgid "Browse"
+msgstr "参照"
+
+msgid "Button Threshold"
+msgstr "ボタンのしきい値"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "CPU per core usage"
+msgstr "コアあたりの CPU 使用率"
+
+msgid "CPU usage"
+msgstr "CPU の使用率"
+
+msgid "CPU usage of TesseraEmu in percent"
+msgstr "TesseraEmu の CPU 使用率（％）"
+
+msgid "Calibrate"
+msgstr "調整"
+
+msgid "Can't delete the only account!"
+msgstr "唯一のアカウントを削除できません！"
+
+msgid "Can't open file to write!"
+msgstr "書き込みのためのファイルを開くことができません！"
+
+msgid "Can't open file!"
+msgstr "ファイルを開けません！"
+
+msgid "Can't parse json file!"
+msgstr "JSON ファイルを解析できません！"
+
+msgid "Can't write to file: {}"
+msgstr "ファイルに書き込めません: {}"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Cannot create file"
+msgstr "ファイルを作成できません"
+
+msgid "Cannot open file"
+msgstr "ファイルを開けません"
+
+msgid "Cannot write file. Disk full?"
+msgstr "ファイルの書き込みができません。ディスクに空き容量がありますか？"
+
+msgid "TesseraEmu RAM usage in MB"
+msgstr "TesseraEmu RAM 使用量（MB）"
+
+msgid ""
+"Cemu can't write to its directory.\n"
+"Please move it to a different location or run Cemu as administrator!"
+msgstr ""
+"Cemu はそのディレクトリに書き込むことができません。\n"
+"別の場所に移動するか、 Cemu を管理者として実行してください！"
+
+msgid ""
+"Cemu can't write to the selected mlc path!\n"
+"Do you want to select another path?"
+msgstr ""
+"Cemu は選択された mlc パスに書き込むことができません！\n"
+"他のパスを選択しますか？"
+
+msgid ""
+"Cemu detected that it is being launched through Steam.\n"
+"There is currently an issue where Steam shader pre-caching in combination "
+"with Vulkan async shader compilation causes graphic bugs.\n"
+"We highly recommend that you turn off Steam shader pre-caching in the "
+"settings of Steam or simply launch Cemu manually."
+msgstr ""
+"Cemu は Steam 経由で起動されていることを検出しました。\n"
+"現在、 Vulkan 非同期シェーダーコンパイルと組み合わせた Steam シェーダープリ"
+"キャッシュがグラフィックバグを引き起こすという問題があります。\n"
+"Steam の設定で シェーダープリキャッシュ を無効にするか、Cemu を手動で起動する"
+"ことを強くお勧めします。"
+
+msgid "TesseraEmu must be restarted to apply the selected UI language."
+msgstr "選択した UI 言語を適用するには、 TesseraEmu を再起動する必要があります。"
+
+msgid ""
+"Cemu will remember your custom mlc path in %LOCALAPPDATA%/Cemu for new "
+"installations."
+msgstr ""
+"Cemu が新規インストール時に %LOCALAPPDATA%/Cemu にあるカスタム mlc パスを記憶"
+"します。"
+
+msgid "Changelog"
+msgstr "変更ログ"
+
+msgid ""
+"Changes the interface language of TesseraEmu\n"
+"Available languages are stored in the translation directory\n"
+"A restart will be required after changing the language"
+msgstr ""
+"TesseraEmu のインターフェース言語を変更します。\n"
+"利用可能な言語は翻訳ディレクトリに保存されます\n"
+"言語の変更後は再起動が必要です"
+
+msgid "Channels"
+msgstr "チャンネル"
+
+msgid "Checking"
+msgstr "確認中"
+
+msgid "Checking version..."
+msgstr "バージョン確認中..."
+
+msgid "China"
+msgstr "中国"
+
+msgid "Chinese"
+msgstr "中国語"
+
+msgid "Classic"
+msgstr "クラシック"
+
+msgid "Clear"
+msgstr "クリア"
+
+msgid "Clear all currently set input settings"
+msgstr "現在設定されているすべての入力設定をクリアする"
+
+msgid "Close"
+msgstr "閉じる"
+
+msgid "Comment"
+msgstr "コメント"
+
+msgid "Configure input"
+msgstr "入力を設定する"
+
+msgid "Confirmation"
+msgstr "確認"
+
+msgid "Connect"
+msgstr "接続"
+
+msgid "Connected. Right click entries in the list to start downloading"
+msgstr ""
+"接続しました。ダウンロードを開始するには、リスト内のエントリを右クリックして"
+"ください"
+
+msgid "Control"
+msgstr "コントロール"
+
+msgid "Controller"
+msgstr "コントローラー"
+
+msgid "Controller API:"
+msgstr "コントローラー API:"
+
+msgid "Controller profiles"
+msgstr "コントローラープロファイル"
+
+msgid "Controller {}"
+msgstr "コントローラー  {}"
+
+msgid "Controller:"
+msgstr "コントローラー:"
+
+msgid ""
+"Controls the amount of buffered audio data\n"
+"Higher values will create a delay in audio playback, but may avoid audio "
+"problems when emulation is too slow"
+msgstr ""
+"バッファーされるオーディオデータ量を制御します\n"
+"値を大きくすると、オーディオ再生に遅延が生じますが、エミュレーションが遅すぎ"
+"る場合にオーディオの問題を回避できる場合があります"
+
+msgid "Controls the notification position while playing"
+msgstr "ゲーム中の通知位置の制御"
+
+msgid ""
+"Controls the output aspect ratio when it doesn't match the ratio of the game"
+msgstr "出力のアスペクト比がゲームの比率と一致しない場合に制御する"
+
+msgid "Controls the overlay which displays technical information while playing"
+msgstr "ゲーム中に技術情報を表示するオーバーレイを制御します"
+
+msgid "Controls the vsync state"
+msgstr "垂直同期の状態を制御する"
+
+msgid ""
+"Couldn't create a required TesseraEmu directory or file!\n"
+"\n"
+"Error: {0}"
+msgstr ""
+"必要な TesseraEmu ディレクトリまたはファイルを作成できませんでした！\n"
+"\n"
+"エラー: {0}"
+
+msgid ""
+"Couldn't create a required mlc01 subfolder or file!\n"
+"\n"
+"Error: {0}\n"
+"Target path:\n"
+"{1}"
+msgstr ""
+"必要な mlc01 のサブフォルダまたはファイルを作成できませんでした！\n"
+"\n"
+"エラー: {0}\n"
+"ターゲットパス\n"
+"{1}"
+
+msgid "Couldn't download the update!"
+msgstr "アップデートのダウンロードができませんでした！"
+
+msgid "Couldn't load the selected profile!"
+msgstr "選択したプロファイルを読み込むことができませんでした！"
+
+msgid "Couldn't save settings for controller {0}: {1}"
+msgstr "コントローラー {0} の設定を保存できませんでした: {1}"
+
+msgid "Couldn't save the profile!"
+msgstr "プロファイルを保存できませんでした！"
+
+msgid "Country"
+msgstr "国名"
+
+msgid "Crash dump"
+msgstr "クラッシュ ダンプ"
+
+msgid "Create"
+msgstr "作成"
+
+msgid "Create memory breakpoint (read)"
+msgstr "メモリブレークポイントの作成（読み込み）"
+
+msgid "Create memory breakpoint (write)"
+msgstr "メモリブレークポイントの作成（書き込み）"
+
+msgid "Create new account"
+msgstr "新規アカウント作成"
+
+msgid "Create new cache [recommended]"
+msgstr "新しいキャッシュを作成する [おすすめ]"
+
+msgid ""
+"Creates a dump when TesseraEmu crashes\n"
+"Only enable when requested by a developer!\n"
+"The Full option will create a very large dump file (includes a full RAM dump of the TesseraEmu process)"
+msgstr ""
+"TesseraEmu がクラッシュしたときにダンプを作成する\n"
+"開発者から要求があった場合のみ有効にしてください\n"
+"完全オプションは、非常に大きなダンプファイルを作成します（TesseraEmu プロセスの完全な RAM ダンプを含む）。"
+
+msgid "Current file:"
+msgstr "現在のファイル:"
+
+msgid "Currently active downloads will continue in the background."
+msgstr "現在進行中のダウンロードはバックグラウンドで継続されます。"
+
+msgid "Custom mlc01 path"
+msgstr "カスタム mlc01 パス"
+
+msgid "D-pad"
+msgstr "十字キー"
+
+msgid "DLC"
+msgstr "DLC"
+
+msgid "DSU client settings"
+msgstr "DSU クライアントの設定"
+
+msgid "Deadzone"
+msgstr "デッドゾーン"
+
+msgid "Debug"
+msgstr "デバッグ"
+
+msgid "Decrease priority (+1)"
+msgstr "優先度を下げる (+1)"
+
+msgid "Decrease priority (+5)"
+msgstr "優先度を下げる (+5)"
+
+msgid "Default"
+msgstr "デフォルト"
+
+msgid "Delete"
+msgstr "削除"
+
+msgid "Description"
+msgstr "説明"
+
+msgid "Device"
+msgstr "デバイス"
+
+msgid "Dim"
+msgstr "暗く​​"
+
+msgid "Disabled"
+msgstr "無効"
+
+msgid "Discord Presence"
+msgstr "Discord にプレイ状況を表示"
+
+msgid "Displays internal debug information (Vulkan only)"
+msgstr "内部デバッグ情報を表示する（Vulkan のみ）"
+
+msgid "Displays the active controller profile when starting a game"
+msgstr "ゲーム起動時にアクティブのコントローラープロファイルを表示します"
+
+msgid "Displays the menu bar when TesseraEmu is running in fullscreen mode and the mouse cursor is moved to the top"
+msgstr "TesseraEmu が全画面表示で動作しているときに、マウスカーソルを上部に動かすとメニューバーを表示する"
+
+msgid ""
+"Do you really want to cancel the installation process?\n"
+"\n"
+"Canceling the process will delete the applied files."
+msgstr ""
+"本当にアップデート作業をキャンセルしますか？\n"
+"\n"
+"処理をキャンセルすると、適用されたアップデートは削除されます。"
+
+msgid "Don't show this again"
+msgstr "次回から表示しない"
+
+msgid "Double buffering"
+msgstr "ダブル バッファー"
+
+msgid "Download Manager"
+msgstr "ダウンロード マネージャー"
+
+msgid "Download community graphic packs"
+msgstr "コミュニティ グラフィック パックをダウンロードする"
+
+msgid "Download failed"
+msgstr "ダウンロード失敗"
+
+msgid "Download latest community graphic packs"
+msgstr "最新のコミュニティ グラフィック パックをダウンロードする"
+
+msgid "Downloading"
+msgstr "ダウンロード中"
+
+msgid "Downloading account ticket"
+msgstr "アカウント チケットのダウンロード中"
+
+msgid "Downloading graphic packs..."
+msgstr "グラフィック パックのダウンロード中..."
+
+msgid "Downloading meta data"
+msgstr "メタデータのダウンロード中"
+
+msgid "Downloading system tickets..."
+msgstr "システム チケットのダウンロード中..."
+
+msgid "Downloading ticket"
+msgstr "チケットのダウンロード中"
+
+msgid "Downloading update..."
+msgstr "アップデートのダウンロード中..."
+
+msgid "Downscale filter"
+msgstr "ダウン スケール フィルター"
+
+msgid ""
+"Downscaling filters are used when the game resolution is bigger than the "
+"window size"
+msgstr ""
+"ダウン スケール フィルタは、ゲームの解像度がウィンドウ サイズより大きい場合に"
+"使用されます"
+
+msgid "Draw calls per frame"
+msgstr "１フレームあたりの描画コール数"
+
+msgid "Dutch"
+msgstr "オランダ語"
+
+msgid ""
+"EXPERT OPTION\n"
+"Controls the accuracy of floating point multiplication in shaders.\n"
+"\n"
+"Recommended: true"
+msgstr ""
+"エキスパート オプション\n"
+"シェーダーにおける浮動小数点数の乗算の精度を制御します。\n"
+"\n"
+"おすすめ: true"
+
+msgid ""
+"EXPERT OPTION\n"
+"Set the maximum thread slice runtime (in virtual cycles)"
+msgstr ""
+"エキスパート オプション\n"
+"スレッド スライスの最大実行時間（仮想サイクル）の設定"
+
+msgid ""
+"EXPERT OPTION\n"
+"This option will load libraries from the cafeLibs directory"
+msgstr ""
+"エキスパート オプション\n"
+"このオプションは、cafeLibs ディレクトリからライブラリをロードします"
+
+msgid "Edit game profile"
+msgstr "ゲームプロフィールを編集する"
+
+msgid "Email"
+msgstr "メールアドレス"
+
+msgid "Emulate Controller"
+msgstr "コントローラーをエミュレート"
+
+msgid "Enable online mode"
+msgstr "オンライン モードを有効にする"
+
+msgid ""
+"Enables async shader and pipeline compilation. Reduces stutter at the cost "
+"of objects not rendering for a short time.\n"
+"Vulkan only"
+msgstr ""
+"非同期シェーダとパイプラインのコンパイルを可能にする。オブジェクトが短時間レ"
+"ンダリングされないという代償を払って、途切れを低減します。\n"
+"Vulkan のみ"
+
+msgid ""
+"Enables the Discord Rich Presence feature\n"
+"You will also need to enable it in the Discord settings itself!"
+msgstr ""
+"Discord リッチ プレゼンス 機能を有効にします。\n"
+"Discord の設定自体でも有効にする必要があります！"
+
+msgid "End emulation"
+msgstr "エミュレーションを終了する"
+
+msgid "English"
+msgstr "英語"
+
+msgid "Enter a memory address"
+msgstr "メモリアドレスの入力"
+
+msgid "Enter a new comment."
+msgstr "新しいコメントを入力してください。"
+
+msgid "Enter a new instruction."
+msgstr "新しいインストラクションを入力してください。"
+
+msgid "Enter a new value."
+msgstr "新しい値を入力してください。"
+
+msgid "Enter a target address."
+msgstr "ターゲットアドレスを入力してください。"
+
+msgid "Entry"
+msgstr "エントリ"
+
+msgid "Error"
+msgstr "エラー"
+
+msgid "Error code"
+msgstr "エラーコード"
+
+msgid ""
+"Error when creating the extraction path:\n"
+"{}"
+msgstr ""
+"抽出パスの作成時にエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when creating the zip for the save entry:\n"
+"{}"
+msgstr ""
+"保存エントリの ZIP を作成する際にエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when initializing Vulkan renderer:\n"
+"{}"
+msgstr ""
+"Vulkan レンダラーの初期化時にエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when opening the import zip file:\n"
+"{}"
+msgstr ""
+"インポート ZIP ファイルを開く際エラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a cemu_meta to the zip:\n"
+"{}"
+msgstr ""
+"ZIP に cemu_meta 追加中にエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a directory to the zip:\n"
+"{}"
+msgstr ""
+"ZIP にディレクトリを追加しようとするとエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a file to the zip:\n"
+"{}"
+msgstr ""
+"ZIP にファイルを追加しようとするとエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the entry:\n"
+"{}"
+msgstr ""
+"エントリを削除しようとするとエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the former save game:\n"
+"{}"
+msgstr ""
+"旧セーブゲームを削除しようとするとエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the save directory:\n"
+"{}"
+msgstr ""
+"保存ディレクトリを削除しようとするとエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when trying to move former title installation:\n"
+"{}"
+msgstr ""
+"旧タイトルインストールを移動しようとするとエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when trying to move the entry to the correct location:\n"
+"{}"
+msgstr ""
+"エントリを正しい位置に移動させようとするとエラーが発生しました:\n"
+"{}"
+
+msgid ""
+"Error when trying to move the save game:\n"
+"{}"
+msgstr ""
+"セーブゲームを移動しようとするとエラーが発生しました:\n"
+"{}"
+
+msgid "Error:"
+msgstr "エラー:"
+
+msgid "Europe"
+msgstr "ヨーロッパ"
+
+msgid "Exit"
+msgstr "終了"
+
+msgid "Export"
+msgstr "エクスポート"
+
+msgid "Export checksum entry"
+msgstr "チェックサム エントリのエクスポート"
+
+msgid "Export successful"
+msgstr "エクスポートに成功"
+
+msgid "Export the title checksum data to a local json file"
+msgstr ""
+"タイトル チェックサム データをローカルの json ファイルにエクスポートする"
+
+msgid "Exports the selected save entry as zip file"
+msgstr "選択した保存項目を ZIP ファイルとしてエクスポートする"
+
+msgid "Extensions:"
+msgstr "拡張機能:"
+
+msgid "Extra info"
+msgstr "追加情報"
+
+msgid "Extracting failed!"
+msgstr "解凍に失敗しました！"
+
+msgid "Extracting update..."
+msgstr "アップデートを展開中..."
+
+msgid "Extracting..."
+msgstr "展開中..."
+
+msgid "FPS"
+msgstr "FPS"
+
+msgid "Failed to connect to server"
+msgstr "サーバーへの接続に失敗しました"
+
+msgid "Failed to launch file."
+msgstr "ファイルの起動に失敗しました。"
+
+msgid "Failed to query account status. Invalid account information?"
+msgstr ""
+"アカウント ステータスの照会に失敗しました。アカウント情報は有効ですか？"
+
+msgid "Failed to request tickets (invalid NNID?)"
+msgstr "チケットのリクエストに失敗しました（無効な NNID ？）"
+
+msgid "Failed to run this title because at least one of the files is damaged."
+msgstr ""
+"少なくとも1つのファイルが破損しているため、このタイトルの実行に失敗しました。"
+
+msgid "Failed. Account does not have password set"
+msgstr "失敗しました。アカウントにパスワードが設定されていません"
+
+msgid "Female"
+msgstr "女性"
+
+msgid "Filter"
+msgstr "フィルター"
+
+msgid "Filter messages"
+msgstr "メッセージのフィルター"
+
+msgid "Fix entry"
+msgstr "エントリの修正"
+
+msgid "Forces a given controller profile"
+msgstr "指定されたコントローラー プロファイルを強制的に実行する"
+
+msgid "Format"
+msgstr "形式"
+
+msgid "Found {} titles, {} updates, {} DLCs and {} save entries"
+msgstr "{} タイトル発見、{} アップデート発見、{} DLC、{} セーブエントリ"
+
+msgid "French"
+msgstr "フランス語"
+
+msgid "Friend list"
+msgstr "お友達リスト"
+
+msgid "Full"
+msgstr "完全"
+
+msgid "Full sync at GX2DrawDone()"
+msgstr "GX2DrawDoneで完全同期()"
+
+msgid "Fullscreen menu bar"
+msgstr "全画面表示メニューバー"
+
+msgid "Fullscreen scaling"
+msgstr "全画面表示の拡大縮小"
+
+msgid "G&oto Dump"
+msgstr "Goto ダンプ(&O)"
+
+msgid "GPR"
+msgstr "GPR"
+
+msgid "Game"
+msgstr "ゲーム"
+
+msgid "Game Paths"
+msgstr "ゲームパス"
+
+msgid "Game path"
+msgstr "ゲームパス"
+
+msgid "Game paths"
+msgstr "ゲームパス"
+
+msgid "Gamepad"
+msgstr "GamePad"
+
+msgid ""
+"Games will be launched with gamepad view toggled as default. The view can be "
+"toggled with CTRL + TAB"
+msgstr ""
+"ゲームは、既定で GamePad ビューが有効状態で起動します。CTRL  +  TAB でビュー"
+"を切り替えることができます"
+
+msgid "General"
+msgstr "一般"
+
+msgid "General settings"
+msgstr "一般設定"
+
+msgid "Generated checksum of game image: {}"
+msgstr "ゲーム イメージのチェックサムを作成しました: {}"
+
+msgid "Generated checksum of {} game files"
+msgstr "{} 件のゲームファイルのチェックサムを生成しました"
+
+msgid "Generating checksum of game image: {}"
+msgstr "ゲーム イメージのチェックサムを作成中: {}"
+
+msgid "German"
+msgstr "ドイツ語"
+
+msgid "Getting installed title information..."
+msgstr "インストールされたタイトル情報を取得中..."
+
+msgid "Getting started"
+msgstr "はじめに"
+
+msgid "GoTo (CTRL + G)"
+msgstr "GoTo (CTRL + G)"
+
+msgid "GoTo address"
+msgstr "GoTo アドレス"
+
+msgid "Grabbing game files"
+msgstr "ゲーム ファイル取得中"
+
+msgid "Graphic"
+msgstr "グラフィック"
+
+msgid "Graphic pack"
+msgstr "グラフィック パック"
+
+msgid "Graphic packs"
+msgstr "グラフィック パック"
+
+msgid "Graphic packs cannot be updated while a game is running."
+msgstr "ゲーム実行中はグラフィック パックの更新はできません。"
+
+msgid ""
+"Graphic packs improve games by offering the possibility to change "
+"resolution, tweak FPS or add other visual or gameplay modifications.\n"
+"Download the community graphic packs to get started.\n"
+msgstr ""
+"グラフィック パックは、解像度の変更、FPSの調整、その他の視覚的またはゲームプ"
+"レイの修正を提供することで、ゲームを向上させます。\n"
+"まずは、コミュニティーのグラフィック パックをダウンロードしましょう。\n"
+
+msgid "Graphics"
+msgstr "グラフィック"
+
+msgid "Graphics API"
+msgstr "グラフィックス API"
+
+msgid "Graphics Device"
+msgstr "グラフィックス デバイス"
+
+msgid "Hashing game file: {}/{}"
+msgstr "ゲームファイルをハッシュ化中: {}/{}"
+
+msgid "Hermite"
+msgstr "エルミート"
+
+msgid "IP"
+msgstr "IP"
+
+msgid ""
+"If synchronization is requested by the game, the emulated CPU will wait for "
+"the GPU to finish all operations.\n"
+"This is more accurate behavior, but may cause lower performance"
+msgstr ""
+"ゲームによって同期が要求された場合、エミュレートされた CPU は GPU がすべての"
+"処理を終えるまで待ちます。\n"
+"これはより正確な動作ですが、性能が低下する可能性があります"
+
+msgid "Import"
+msgstr "インポート"
+
+msgid "Import save entry"
+msgstr "セーブ エントリのインポート"
+
+msgid "Import save entry {}"
+msgstr "セーブ エントリのインポート {}"
+
+msgid "Imports a zipped save entry"
+msgstr "ZIP 形式の保存エントリをインポートする"
+
+msgid "Info"
+msgstr "情報"
+
+msgid "Information"
+msgstr "情報"
+
+msgid "Initializing"
+msgstr "初期化中"
+
+msgid "Input Settings"
+msgstr "入力設定"
+
+msgid "Input settings"
+msgstr "入力設定"
+
+msgid "Install title"
+msgstr "タイトルをインストール"
+
+msgid "Installed"
+msgstr "インストール済み"
+
+msgid "Installed games"
+msgstr "インストール済みのゲーム"
+
+msgid "Installing"
+msgstr "インストール中"
+
+msgid "Installing DLC ..."
+msgstr "DLC をインストール中..."
+
+msgid "Installing title ..."
+msgstr "タイトルをインストール中..."
+
+msgid "Installing update ..."
+msgstr "更新データをインストール中..."
+
+msgid "Interface"
+msgstr "インターフェース"
+
+msgid "Invalid TMD"
+msgstr "無効な TMD"
+
+msgid "Invalid folder structure"
+msgstr "無効なフォルダ構造"
+
+msgid "Irrevocable delete the save entry "
+msgstr "保存エントリを取り消し不能で削除する "
+
+msgid ""
+"IsPasswordCacheEnabled is set to false (The remember password option on your "
+"Wii U must be enabled for this account before dumping it)"
+msgstr ""
+"IsPasswordCacheEnabled が false に設定されています（ダンプする前に、この Wii "
+"U アカウントのパスワード記憶オプションが有効になっている必要があります）"
+
+msgid ""
+"It looks like you're starting TesseraEmu for the first time.\n"
+"This quick setup assistant will help you get the best experience"
+msgstr ""
+"TesseraEmu を初めて起動するようです。\n"
+"このクイック セットアップ アシスタントは、最高のエクスペリエンスを得るために役立ちます"
+
+msgid ""
+"It seems that a newer version is already installed, do you still want to "
+"install the older version?"
+msgstr ""
+"より新しいバージョンがすでにインストールされているようですが、古いバージョン"
+"のインストールを続行しますか？"
+
+msgid ""
+"It seems that the selected title is already installed, do you want to "
+"reinstall it?"
+msgstr ""
+"選択中のタイトルは既にインストールされているようですが、再インストールします"
+"か？"
+
+msgid ""
+"It seems that there's a wrong title installed at the target location.\n"
+"Please use the title manager to fix it first!"
+msgstr ""
+"対象の場所に間違ったタイトルがインストールされているようです。\n"
+"まずはタイトル マネージャーで修正してください！"
+
+msgid "Italian"
+msgstr "イタリア語"
+
+msgid "JSON file doesn't satisfy needed schema"
+msgstr "JSON ファイルが必要なスキーマを満たしていません"
+
+msgid "JSON parse error: {}"
+msgstr "JSON パースエラー: {}"
+
+msgid "Japan"
+msgstr "日本"
+
+msgid "Japanese"
+msgstr "日本語"
+
+msgid "Keep aspect ratio"
+msgstr "縦横比を維持"
+
+msgid "Korea"
+msgstr "韓国"
+
+msgid "Korean"
+msgstr "韓国語"
+
+msgid "LR"
+msgstr "LR"
+
+msgid "Language"
+msgstr "UI の言語"
+
+msgid "Last access"
+msgstr "最終アクセス"
+
+msgid "Last played"
+msgstr "最終プレイ日"
+
+msgid "Latency"
+msgstr "待機時間"
+
+msgid "Launch with gamepad view"
+msgstr "GamePad ビューで起動"
+
+msgid "Left Axis"
+msgstr "左軸"
+
+msgid "Lite"
+msgstr "ライト"
+
+msgid "Load"
+msgstr "読み込む"
+
+msgid "Load shared libraries"
+msgstr "共有ライブラリを読み込む"
+
+msgid "Logging in.."
+msgstr "ログイン中..."
+
+msgid "Logging window"
+msgstr "ログ ウィンドウ"
+
+msgid "Login failed. Outdated or incomplete online files?"
+msgstr "ログインに失敗しました。オンライン ファイルが古いか、不完全ですか？"
+
+msgid "Low battery"
+msgstr "バッテリ低下"
+
+msgid "MLC Path"
+msgstr "MLC パス"
+
+msgid "Male"
+msgstr "男性"
+
+msgid "Match emulated display (Experimental)"
+msgstr "エミュレートされたディスプレイを合わせる（試験的）"
+
+msgid "Memory Searcher"
+msgstr "メモリ検索"
+
+msgid "Memory breakpoint"
+msgstr "メモリ ブレークポイント"
+
+msgid "Mii name"
+msgstr "Mii の名前"
+
+msgid "MipRange"
+msgstr "MipRange"
+
+msgid "Mode"
+msgstr "モード"
+
+msgid "Module&list"
+msgstr "モジュール リスト(&L)"
+
+msgid "Mono"
+msgstr "モノラル"
+
+msgid "MotionPlus"
+msgstr "モーションプラス"
+
+msgid "Multi-core recompiler"
+msgstr "マルチコア リコンパイラ"
+
+msgid ""
+"Multiple issues with your game files have been found!\n"
+"Do you want to export them to a file?"
+msgstr ""
+"ゲームファイルに複数の問題が見つかりました！\n"
+"ファイルにエクスポートしますか？"
+
+msgid "Name"
+msgstr "名前"
+
+msgid "Nearest Neighbor"
+msgstr "最近傍"
+
+msgid "Next"
+msgstr "次へ"
+
+msgid "No"
+msgstr "いいえ"
+
+msgid "No account selected"
+msgstr "アカウントが選択されていません"
+
+msgid "No persistent id entered!"
+msgstr "永続的な ID が入力されていません！"
+
+msgid "No profile name entered!"
+msgstr "プロファイル名を入力してください！"
+
+msgid "No profile name selected!"
+msgstr "プロファイルを選択してください！"
+
+msgid "No update available!"
+msgstr "アップデートがありません！"
+
+msgid "No updates available."
+msgstr "アップデートはありません。"
+
+msgid "Not a valid NFC NTAG215 file"
+msgstr "有効な NFC NTAG215 ファイルではありません"
+
+msgid ""
+"Not enough space available.\n"
+"Required: {0} MB\n"
+"Available: {1} MB"
+msgstr ""
+"ディスク容量が不足しています\n"
+"必要な容量: {0} MB\n"
+"現在の空き容量: {1} MB"
+
+msgid "Not installed"
+msgstr "インストールされていません"
+
+msgid "Not installed (Partially downloaded)"
+msgstr "インストールされていません（部分的にダウンロードされました）"
+
+msgid "Notifications"
+msgstr "通知"
+
+msgid "Nunchuck"
+msgstr "ヌンチャク"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Off"
+msgstr "オフ"
+
+msgid "On"
+msgstr "オン"
+
+msgid "Online Status"
+msgstr "オンライン ステータス"
+
+msgid "Online play tutorial"
+msgstr "オンライン プレイのチュートリアル"
+
+msgid "Online settings"
+msgstr "オンライン設定"
+
+msgid "Open checksum entry"
+msgstr "チェックサム エントリを開く"
+
+msgid "Open directory"
+msgstr "ディレクトリを開く"
+
+msgid "Open file to launch"
+msgstr "起動するファイルを開く"
+
+msgid "Open file to load"
+msgstr "読み込むファイルを開く"
+
+msgid "Open separate pad screen"
+msgstr "別の GamePad 画面を開く"
+
+msgid "Open the directory of the save entry"
+msgstr "保存エントリのディレクトリを開く"
+
+msgid ""
+"Outdated shader cache\n"
+"\n"
+"The stored shader cache for this game was created with a Cemu version prior "
+"to 1.16.0.\n"
+"\n"
+"There are no significant downsides to reusing an existing cache but it may "
+"contain bloat that is no longer used by current versions of Cemu.\n"
+"\n"
+"It is highly recommended to start a new cache. Note that a new cache means "
+"that you will experience additional stutter during the first minutes of "
+"gameplay."
+msgstr ""
+"古いシェーダー キャッシュ\n"
+"\n"
+"このゲームの保存されたシェーダー キャッシュは、1.16.0 より前の Cemu バージョ"
+"ンで作成されたものです。\n"
+"\n"
+"既存のキャッシュを再利用することに大きなデメリットはありませんが、現在のバー"
+"ジョンの Cemu ではもう使用されない肥大化したものが含まれている可能性がありま"
+"す。\n"
+"\n"
+"新しいキャッシュを開始することを強くお勧めします。新しいキャッシュは、ゲーム"
+"プレイの最初の数分間、さらなる途切れが発生しますので注意してください。"
+
+msgid "Overlay"
+msgstr "オーバーレイ"
+
+msgid "OverwriteRes"
+msgstr "OverwriteRes"
+
+msgid "PC"
+msgstr "PC"
+
+msgid "PPC threads"
+msgstr "PPC スレッド"
+
+msgid "Paused"
+msgstr "一時停止"
+
+msgid "PhysAddr"
+msgstr "PhysAddr"
+
+msgid "Pitch"
+msgstr "ピッチ"
+
+msgid ""
+"Please be aware that online mode lets you connect to OFFICIAL servers and "
+"therefore there is a risk of getting banned.\n"
+"Only proceed if you are willing to risk losing online access with your Wii U "
+"and/or NNID."
+msgstr ""
+"オンライン モードを有効にすると、任天堂の【公式】サーバーに接続するためアカウ"
+"ント停止される危険性があります。\n"
+"所持している WiiU・NNID を失うリスクを理解できた場合にのみ有効にしてくださ"
+"い。"
+
+msgid "Port"
+msgstr "ポート"
+
+msgid "Portugese"
+msgstr "ポルトガル語"
+
+msgid "Position"
+msgstr "位置"
+
+msgid "Precompiled shaders"
+msgstr "プリコンパイルされたシェーダー"
+
+msgid ""
+"Precompiled shaders can speed up the load time on the shader loading "
+"screen.\n"
+"Auto will enable it for AMD/Intel but disable it for NVIDIA GPUs as a "
+"workaround for a driver bug.\n"
+"\n"
+"Recommended: Auto"
+msgstr ""
+"プリコンパイルされたシェーダーは、シェーダー ロード画面での読み込み速度を速め"
+"ることができます。\n"
+"自動 は AMD・IntelのGPU では有効ですが、NVIDIA の GPU ではドライバーのバグの"
+"回避策として無効となります。\n"
+"\n"
+"おすすめ: 自動"
+
+msgid ""
+"Pressing the screenshot key (F12) will save a screenshot directly to the "
+"screenshots folder"
+msgstr ""
+"スクリーン ショットキー（F12）を押すと、スクリーン ショットが直接スクリーン "
+"ショットフォルダに保存されます"
+
+msgid "Previous"
+msgstr "前へ"
+
+msgid "PrincipalId missing"
+msgstr "PrincipalId がありません"
+
+msgid "Priority"
+msgstr "優先順位"
+
+msgid "Profile"
+msgstr "プロファイル"
+
+msgid "Progress"
+msgstr "進行状況"
+
+msgid "Queued"
+msgstr "キューに入っています"
+
+msgid "RAM usage"
+msgstr "RAM 使用量"
+
+msgid "Range"
+msgstr "範囲"
+
+msgid "Reading game image: {}"
+msgstr "ゲーム イメージの読み込み: {}"
+
+msgid "Reading game image: {}/{}kb"
+msgstr "ゲーム イメージの読み込み: {}/{}kb"
+
+msgid "Refresh"
+msgstr "更新​​"
+
+msgid "Region"
+msgstr "国や地域"
+
+msgid "Reload edited shaders"
+msgstr "編集したシェーダーを再読み込み"
+
+msgid "Remember main window position"
+msgstr "メイン ウィンドウの位置を記憶する"
+
+msgid "Remember pad window position"
+msgstr "GamePad ウィンドウの位置を記憶する"
+
+msgid "Remove"
+msgstr "削除"
+
+msgid "Removes the currently selected game path from the game list"
+msgstr "現在選択されているゲーム パスをゲーム リストから削除します"
+
+msgid "Reset &order"
+msgstr "順番をリセットする(&O)"
+
+msgid "Reset &width"
+msgstr "幅をリセットする(&W)"
+
+msgid "Reset the default state of the controller"
+msgstr "コントローラーの初期状態をリセットする"
+
+msgid "Resolution"
+msgstr "解像度"
+
+msgid "Restart"
+msgstr "再起動"
+
+msgid "Restart of TesseraEmu required for changes to take effect"
+msgstr "変更を有効にするには TesseraEmu の再起動が必要です"
+
+msgid "Restores the last known pad window position and size when opening it"
+msgstr "GamePad ウィンドウを開く際に、最後に認識された位置とサイズを復元します"
+
+msgid "Restores the last known window position and size when starting TesseraEmu"
+msgstr "TesseraEmu の起動時に、最後に確認したウィンドウの位置とサイズを復元します"
+
+msgid "Results"
+msgstr "結果"
+
+msgid "Results ({0})"
+msgstr "結果 ({0})"
+
+msgid "Resume"
+msgstr "再開"
+
+msgid "Retrieving update information..."
+msgstr "アップデート情報の取得..."
+
+msgid "Right Axis"
+msgstr "右軸"
+
+msgid "Rumble"
+msgstr "振動"
+
+msgid "Run (F5)"
+msgstr "実行（F5）"
+
+msgid "Russian"
+msgstr "ロシア語"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Save screenshot"
+msgstr "スクリーン ショットを保存"
+
+msgid "Save transfer"
+msgstr "転送を保存"
+
+msgid "Scale"
+msgstr "スケール"
+
+msgid "Search"
+msgstr "検索"
+
+msgid "Searching for controllers..."
+msgstr "コントローラーを探しています..."
+
+msgid ""
+"Select a custom mlc path\n"
+"The mlc path is used to store Wii U related files like save games, game "
+"updates and dlc data"
+msgstr ""
+"カスタム mlc パスの選択\n"
+"mlc パスは、セーブゲーム、ゲームアップデート、DLC データなど、 Wii U 関連の"
+"ファイルを保存するために使用されます"
+
+msgid "Select a custom path"
+msgstr "カスタムパスを選択してください"
+
+msgid "Select a directory"
+msgstr "ディレクトリを選択してください"
+
+msgid "Select a directory containing games."
+msgstr "ゲームの入っているディレクトリを選択してください。"
+
+msgid "Select a file"
+msgstr "ファイルを選択してください"
+
+msgid "Select a file to export the errors"
+msgstr "エラーをエクスポートするファイルを選択してください"
+
+msgid "Select a folder"
+msgstr "フォルダーを選択してください"
+
+msgid "Select a mlc directory"
+msgstr "mlc ディレクトリを選択してください"
+
+msgid "Select a target file to export the save entry"
+msgstr "保存エントリをエクスポートするファイルを選択してください"
+
+msgid "Select a zipped save file"
+msgstr "ZIP 形式の保存ファイルを選択してください"
+
+msgid "Select an account and press Connect"
+msgstr "アカウントを選択し、Connect を押してください"
+
+msgid "Select one of the available audio back ends"
+msgstr "利用可能なオーディオ バックエンドを１つ選択してください"
+
+msgid "Select one of the available graphic back ends"
+msgstr "利用可能なグラフィック バックエンドを選択してください"
+
+msgid "Select the active audio output device for Wii U GamePad"
+msgstr "Wii U GamePad のアクティブ オーディオ出力デバイスを選択してください"
+
+msgid "Select the active audio output device for Wii U TV"
+msgstr "Wii U TV のアクティブ オーディオ出力デバイスを選択してください"
+
+msgid "Select the used graphic device"
+msgstr "使用したいグラフィック デバイスを選択してください"
+
+msgid "Select title to install"
+msgstr "インストールするタイトルを選択してください"
+
+msgid "Set comment for breakpoint at address %08x"
+msgstr "アドレス %08x にブレーク ポイントのコメントを設定してください"
+
+msgid "Set the CPU emulation mode"
+msgstr "CPU エミュレーション モードの設定"
+
+msgid "Sets the scale of the notification text"
+msgstr "通知テキストのスケールを設定する"
+
+msgid "Sets the scale of the overlay text"
+msgstr "オーバーレイ テキストのスケールを設定する"
+
+msgid "Sets the text color of notifications"
+msgstr "通知の文字色を設定する"
+
+msgid "Sets the text color of the overlay"
+msgstr "オーバーレイの文字色を設定する"
+
+msgid "Settings"
+msgstr "設定"
+
+msgid "Shader cache migration"
+msgstr "シェーダーキャッシュの移行"
+
+msgid "Shader compiler"
+msgstr "シェーダー コンパイラー"
+
+msgid "Shader mul accuracy"
+msgstr "シェーダ mul 精度"
+
+msgid "Show &dlc"
+msgstr "DLC を表示する(&D)"
+
+msgid "Show &game time"
+msgstr "ゲーム時間を表示する(&G)"
+
+msgid "Show &last played"
+msgstr "前回遊んだ日を表示する(&L)"
+
+msgid "Show &name"
+msgstr "名前を表示する(&N)"
+
+msgid "Show &region"
+msgstr "国や地域を表示する(&R)"
+
+msgid "Show &version"
+msgstr "バージョンを表示する(&V)"
+
+msgid "Show available titles"
+msgstr "利用可能なタイトルを表示する"
+
+msgid "Show available updates"
+msgstr "利用可能なアップデートを表示する"
+
+msgid "Show installed"
+msgstr "インストール済みを表示"
+
+msgid "Show only active"
+msgstr "アクティブのみ表示する"
+
+msgid "Show views"
+msgstr "ビューを表示する"
+
+msgid "Shows a notification after shaders have been compiled"
+msgstr "シェーダーがコンパイルされた後に通知を表示する"
+
+msgid "Shows a notification when a low controller battery has been detected"
+msgstr "コントローラーのバッテリー残量低下を検出した場合に通知を表示する"
+
+msgid "Shows friend list related data if online"
+msgstr "オンラインの場合、フレンド リスト関連のデータを表示する"
+
+msgid "Single-core interpreter"
+msgstr "シングルコアのインタープリター"
+
+msgid "Single-core recompiler"
+msgstr "シングルコアのリコンパイラ"
+
+msgid "Size"
+msgstr "サイズ"
+
+msgid "SliceRange"
+msgstr "SliceRange"
+
+msgid "SliceStart"
+msgstr "SliceStart"
+
+msgid "Source"
+msgstr "ソース"
+
+msgid "Spanish"
+msgstr "スペイン語"
+
+msgid "Stack"
+msgstr "スタック"
+
+msgid "Start games with fullscreen"
+msgstr "全画面表示でゲームを開始する"
+
+msgid "State"
+msgstr "ステート"
+
+msgid "Status"
+msgstr "ステータス"
+
+msgid "Step Into (F11)"
+msgstr "ステップ イン (F11)"
+
+msgid "Step Over (F10)"
+msgstr "ステップ オーバー (F10)"
+
+msgid "Stereo"
+msgstr "ステレオ"
+
+msgid "Stored Entries"
+msgstr "保管されたエントリ"
+
+msgid "Stretch"
+msgstr "引き伸ばす"
+
+msgid "Style: &Icons"
+msgstr "スタイル: アイコン(&I)"
+
+msgid "Style: &List"
+msgstr "スタイル: リスト(&L)"
+
+msgid "Style: &Small Icons"
+msgstr "スタイル: 小さいアイコン(&S)"
+
+msgid "Success"
+msgstr "成功"
+
+msgid "SumWakeTime"
+msgstr "SumWakeTime"
+
+msgid "Surround"
+msgstr "サラウンド"
+
+msgid "Suspend"
+msgstr "中断"
+
+msgid "TMD download failed"
+msgstr "TMD のダウンロードに失敗しました"
+
+msgid "TV"
+msgstr "TV"
+
+msgid "Taiwan"
+msgstr "台湾"
+
+msgid "Taiwanese"
+msgstr "台湾語"
+
+msgid "Target"
+msgstr "ターゲット"
+
+msgid "Test if the controller is connected"
+msgstr "コントローラーが接続されているか確認する"
+
+msgid "Text Color"
+msgstr "文字色"
+
+msgid "Texture cache"
+msgstr "テクスチャ キャッシュ"
+
+msgid "The VRAM usage of TesseraEmu in MB"
+msgstr "TesseraEmu の VRAM 使用量（MB）"
+
+msgid ""
+"The currently installed graphics driver does not support the Vulkan "
+"extension necessary for asynchronous shader compilation. Asynchronous "
+"compilation cannot be used.\n"
+" \n"
+"Required extension: VK_EXT_pipeline_creation_cache_control\n"
+"\n"
+"Installing the latest graphics driver may solve this error."
+msgstr ""
+"現在インストールされているグラフィック ドライバーは、非同期シェーダー コンパ"
+"イルに必要な Vulkan 拡張機能をサポートしていません。非同期コンパイルは使用で"
+"きません。\n"
+" \n"
+"必要な拡張子 VK_EXT_pipeline_creation_cache_control\n"
+"\n"
+"最新のグラフィック ドライバをインストールすることで、このエラーが解決する場合"
+"があります。"
+
+msgid "The entered port must be between 1 and 65535"
+msgstr "入力されたポートは1～65535の間でなければなりません"
+
+msgid "The following files are missing:"
+msgstr "以下のファイルが欠落しています:"
+
+msgid ""
+"The following prefixes are supported:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+msgstr ""
+"以下の接頭番号をサポートしています。\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+
+msgid ""
+"The game path is scanned by Cemu to locate your games. We recommend creating "
+"a dedicated directory in which\n"
+"you place all your Wii U games. (example: C:\\wiiu\\games\\)\n"
+"\n"
+"You can also set additional paths in the general settings of Cemu."
+msgstr ""
+"ゲーム パスは Cemu によってスキャンされ、ゲームの場所が特定されます。専用の"
+"ディレクトリを作成し、\n"
+"そこに Wii U ゲームを置くことをお勧めします。(例: C:\\wiiu\\games)\n"
+"\n"
+"また、Cemu の一般設定でパスを追加することも可能です。"
+
+msgid ""
+"The given account id is not valid!\n"
+"It must be a hex number bigger or equal than {:08x}"
+msgstr ""
+"指定されたアカウント ID は有効ではありません！\n"
+"{:08x} よりも大きいか等しい16進数でなければなりません。"
+
+msgid "The given profile name is not valid!"
+msgstr "指定されたプロファイル名が有効ではありません！"
+
+msgid "The mii name is the profile name"
+msgstr "Mii の 名前はプロファイル名です"
+
+msgid ""
+"The mlc directory contains your save games and installed game update/dlc data"
+msgstr ""
+"mlc ディレクトリには、セーブゲームとインストールされたゲームのアップデート・"
+"DLC データが格納されています"
+
+msgid ""
+"The mlc path is the root folder of the emulated Wii U internal flash "
+"storage. It contains all your saves, installed updates and DLCs.\n"
+"It is strongly recommend that you create a dedicated folder for it (example: "
+"C:\\wiiu\\mlc\\) \n"
+"If left empty, the mlc folder will be created inside the Cemu folder."
+msgstr ""
+"mlc パスは、エミュレートされた Wii U の内蔵フラッシュ ストレージのルートフォ"
+"ルダです。セーブ データ、インストール済みのアップデート、DLC がすべて格納され"
+"ています。\n"
+"専用のフォルダを作成することを強くお勧めします (例: C:\\wiiu\\mlc)。\n"
+"空のままだと、Cemu フォルダの中に mlc フォルダが作成されます。"
+
+msgid "The number of draw calls per frame. Average over last 5 seconds"
+msgstr "１フレームあたりの描画呼び出し数。過去5秒間の平均値"
+
+msgid "The number of frames per second. Average over last 5 seconds"
+msgstr "１秒あたりのフレーム数です。過去5秒間の平均値"
+
+msgid "The persistent id is the internal folder name used for your saves"
+msgstr "永続的な ID は、保存に使用する内部フォルダー名です"
+
+msgid ""
+"The persistent id is the internal folder name used for your saves. Only "
+"change this if you are importing saves from a Wii U with a specific id"
+msgstr ""
+"永続的な ID は、セーブに使用される内部フォルダー名です。特定の ID を持つ Wii "
+"U からセーブをインポートする場合のみ変更してください"
+
+msgid "The persistent id must be greater than {:x}!"
+msgstr "永続的な ID は {:x} より大きくなければなりません！"
+
+msgid "The persistent id {:x} is already in use by account {}!"
+msgstr "永続的な ID  {:x} はアカウント {} によってすでに使用されています！"
+
+msgid ""
+"The threshold of a button to recognizes a press from a trigger/axis value"
+msgstr "トリガー/軸の値からボタンが押されたことを認識するための閾値"
+
+msgid "The verification data doesn't include a wud hash!"
+msgstr "検証データに wud ハッシュが含まれていません！"
+
+msgid ""
+"There's a new update available.\n"
+"Do you want to update?"
+msgstr ""
+"新しいアップデートがあります。\n"
+"アップデートしますか？"
+
+msgid ""
+"There's already a file at the target directory:\n"
+"{}"
+msgstr ""
+"対象ディレクトリに既にファイルが存在します:\n"
+"{}"
+
+msgid ""
+"There's already a newer or equal version installed at the correct location, "
+"so the redundant version will be deleted:"
+msgstr ""
+"正しい場所に新しいバージョンまたは同等のバージョンが既にインストールされてい"
+"るため、冗長なバージョンは削除されます:"
+
+msgid ""
+"There's already a save game available for the target account, do you want to "
+"overwrite it?\n"
+"This will delete the existing save files for the account and replace them."
+msgstr ""
+"対象のアカウントにはすでにセーブ ゲームが用意されていますが、それを上書きしま"
+"すか？\n"
+"そのアカウントの既存のセーブ ファイルを削除し、置き換えます。"
+
+msgid ""
+"There's already an older version installed at the correct location, so the "
+"older version will be overwritten:"
+msgstr ""
+"正しい場所にすでに古いバージョンがインストールされているので、古いバージョン"
+"は上書きされます:"
+
+msgid ""
+"There's an wrong title installed at the target location, should we fix that?"
+msgstr ""
+"ターゲットの場所に誤ったタイトルがインストールされているのですが、修正します"
+"か？"
+
+msgid "This DLC is installed at the wrong location."
+msgstr "この DLC は間違った場所にインストールされています。"
+
+msgid "This account is not linked with an NNID"
+msgstr "このアカウントは NNID と連動していません"
+
+msgid "This base game is installed at the wrong location."
+msgstr "このベース ゲームは間違った場所にインストールされています。"
+
+msgid ""
+"This game entry seems to be either an update or the base game was merged with update data\n"
+"Broken game dumps cause various problems during emulation and may even stop working at all in future TesseraEmu versions\n"
+"Please make sure the base game is intact and install updates only with the File->Install Update/DLC option"
+msgstr ""
+"このゲーム エントリは、アップデートされたものか、ベースとなるゲームにアップデート データが結合されたもののどちらかと思われます\n"
+"壊れたゲーム ダンプはエミュレーション時に様々な問題を引き起こし、将来の TesseraEmu バージョンでは全く動作しなくなる可能性もあります。\n"
+"ベースとなるゲームがそのままであることを確認し、アップデートは「ファイル → アップデート/DLC をインストールする」のみでインストールしてください"
+
+msgid "This graphic pack has no description"
+msgstr "このグラフィックパックに説明はありません"
+
+msgid "This option requires Win8.1+"
+msgstr "このオプションを使用するには、Windows 8.1 以上が必要です"
+
+msgid ""
+"This title is encrypted. To run this application open keys.txt and add the "
+"disc title key"
+msgstr ""
+"このタイトルは暗号化されています。このアプリケーションを実行するには、"
+"keys.txt を開き、ディスクタイトルのキーを追加してください"
+
+msgid "This update is installed at the wrong location."
+msgstr "このアップデートは間違った場所にインストールされています。"
+
+msgid "This update removed or renamed the following graphic packs:"
+msgstr ""
+"このアップデートにより、以下のグラフィック パックが削除または名称変更されまし"
+"た:"
+
+msgid "Thread quantum"
+msgstr "スレッド量子"
+
+msgid "ThreadName"
+msgstr "ThreadName"
+
+msgid "Tilemode"
+msgstr "Tilemode"
+
+msgid "Title Manager"
+msgstr "タイトルマネージャー"
+
+msgid "Title checksum of {:08x}-{:08x}"
+msgstr "タイトルチェックサムは {:08x}-{:08x}"
+
+msgid "Title id"
+msgstr "タイトル ID"
+
+msgid "Title installation has been canceled!"
+msgstr "タイトル インストールをキャンセルしました！"
+
+msgid "Title installed!"
+msgstr "タイトルをインストールしました！"
+
+msgid "Title manager"
+msgstr "タイトルマネージャー"
+
+msgid "Toggle Breakpoint (F9)"
+msgstr "ブレークポイントの設定/解除 (F9)"
+
+msgid "Top center"
+msgstr "中央上"
+
+msgid "Top left"
+msgstr "左上"
+
+msgid "Top right"
+msgstr "右上"
+
+msgid "Total cpu usage in percent for each core"
+msgstr "各コアの総 CPU 使用率（％）"
+
+msgid "Transfer"
+msgstr "転送"
+
+msgid "Transfers the save entry to another persistent account id"
+msgstr "保存エントリを別の永続的なアカウント ID に転送します"
+
+msgid "Trigger rumble"
+msgstr "振動をトリガー"
+
+msgid "Triple buffering"
+msgstr "トリプル バッファー"
+
+msgid "Type"
+msgstr "タイプ"
+
+msgid "USA"
+msgstr "米国"
+
+msgid "Unable to open file."
+msgstr "ファイルを開くことができません。"
+
+msgid "Unknown error occured"
+msgstr "不明なエラーが発生しました"
+
+msgid "Unknown file type."
+msgstr "不明なファイル形式です。"
+
+msgid "Update"
+msgstr "アップデート"
+
+msgid "Update available!"
+msgstr "アップデートがあります！"
+
+msgid "Update error"
+msgstr "アップデート エラー"
+
+msgid "Update installation has been canceled!"
+msgstr "アップデートのインストールが中止されました！"
+
+msgid "Update notification"
+msgstr "アップデート通知"
+
+msgid ""
+"Updated graphic packs are available. Do you want to download and install "
+"them?"
+msgstr ""
+"更新されたグラフィック パックを利用できます。ダウンロードしてインストールしま"
+"すか？"
+
+msgid "Updating game list..."
+msgstr "ゲームリストを更新中..."
+
+msgid "Updating ticket cache"
+msgstr "チケット キャッシュの更新"
+
+msgid "Upscale filter"
+msgstr "アップスケールフィルター"
+
+msgid ""
+"Upscaling filters are used when the game resolution is smaller than the "
+"window size"
+msgstr ""
+"アップスケーリフィルターは、ゲームの解像度がウィンドウ サイズより小さい場合に"
+"使用されます"
+
+msgid "Use existing cache"
+msgstr "既存のキャッシュを利用する"
+
+msgid "Use permanent storage"
+msgstr "永続記憶域を利用する"
+
+msgid "VRAM usage"
+msgstr "VRAM 使用量"
+
+msgid "VSync"
+msgstr "垂直同期"
+
+msgid "Verifies the checksum online"
+msgstr "オンラインでチェック サムを検証する"
+
+msgid "Verifies the checksum with a local json file you can select"
+msgstr "選択可能なローカル JSON ファイルでチェック サムを検証します"
+
+msgid "Verify online"
+msgstr "オンラインで整合性を検査"
+
+msgid "Verify with file"
+msgstr "ファイルで整合性を検査"
+
+msgid "Verifying"
+msgstr "整合性を検査中"
+
+msgid "Verifying integrity of game files..."
+msgstr "ゲーム ファイルの整合性を検査中.."
+
+msgid "Version"
+msgstr "バージョン"
+
+msgid "Volume"
+msgstr "音量"
+
+msgid "WGI settings"
+msgstr "WGI 設定"
+
+msgid "Warning"
+msgstr "警告"
+
+msgid "Wii U executable (rpx, elf)"
+msgstr "Wii U の実行ファイル（rpx、elf）"
+
+msgid "Wii U image (wud, wux, iso, wad)"
+msgstr "Wii U イメージ (wud、wux、iso、wad)"
+
+msgid "Write stack trace to log"
+msgstr "スタックトレースをログに書き込む"
+
+msgid "Wrong region: {}"
+msgstr "国や地域が違います: {}"
+
+msgid "Wrong title id: {}"
+msgstr "タイトル ID が違います: {}"
+
+msgid "Wrong version: {}"
+msgstr "バージョンが違います: {}"
+
+msgid "Yes"
+msgstr "はい"
+
+msgid ""
+"You are trying to import a savegame for a different title than your "
+"currently selected one: {:016x} vs {:016x}\n"
+"Are you sure that you want to continue?"
+msgstr ""
+"現在選択されているタイトルとは異なるタイトルのセーブ ゲームをインポートしよう"
+"としています。{016x} 対 {:016x} です。\n"
+"続行しますか?"
+
+msgid "You can configure game paths in the general settings."
+msgstr "ゲーム パスの設定は、一般設定で行えます。"
+
+msgid ""
+"You can configure one controller for each player.\n"
+"We advise you to always use GamePad as emulated input for the first player, "
+"since many games expect the GamePad to be present.\n"
+"It is also required for touch functionality.\n"
+"The default global hotkeys are:\n"
+"CTRL - show pad screen\n"
+"CTRL + TAB - toggle pad screen\n"
+"ALT + ENTER - toggle fullscreen\n"
+"ESC - leave fullscreen\n"
+"\n"
+"If you're having trouble configuring your controller, make sure to have it "
+"in idle state and press calibrate.\n"
+"Also don't set the axis deadzone too low."
+msgstr ""
+"各プレイヤーにコントローラーを設定することができます。\n"
+"多くのゲームは GamePad を使用するため、プレイヤー１は常に GamePad をエミュ"
+"レートされた入力を使用することをお勧めします。\n"
+"また、タッチ機能を使用する場合にも必要です。\n"
+"既定のグローバル ホットキーは以下の通りです:\n"
+"CTRL - 画面を表示\n"
+"CTRL + TAB - 画面の切り替え\n"
+"ALT + ENTER - 全画面表示の切り替え\n"
+"ESC - 全画面表示を解除\n"
+"\n"
+"コントローラーの設定に問題がある場合は、必ずアイドル状態にしてから調整を押し"
+"てください。\n"
+"また、軸のデッドゾーンを低く設定し過ぎないようにしてください。"
+
+msgid "You can use the context menu to fix it."
+msgstr "コンテキスト メニューで修正することができます。"
+
+msgid "You have to restart the game in order to apply the new settings."
+msgstr "新しい設定を適用するには、ゲームを再起動する必要があります。"
+
+msgid "You may need to set them up again."
+msgstr "再度設定する必要があるかもしれません。"
+
+msgid "You've played"
+msgstr "プレイ時間"
+
+msgid "Your account is a valid online account"
+msgstr "このアカウントは、有効なオンライン アカウントです"
+
+msgid "Your entered value is not valid for the selected datatype."
+msgstr "入力された値は、選択されたデータ型に対して有効ではありません。"
+
+msgid "Your game files are valid"
+msgstr "ゲームファイルは有効です"
+
+msgid ""
+"Your game image is invalid!\n"
+"\n"
+"Your hash:\n"
+"{}\n"
+"\n"
+"Expected hash:\n"
+"{}"
+msgstr ""
+"ゲーム イメージは無効です！\n"
+"\n"
+"ハッシュを入力してください。\n"
+"{}\n"
+"\n"
+"必要なハッシュ:\n"
+"{}"
+
+msgid ""
+"Your mlc01 folder seems to be missing.\n"
+"\n"
+"This is where Cemu stores save files, game updates and other Wii U files.\n"
+"\n"
+"The expected path is:\n"
+"{}\n"
+"\n"
+"Do you want to create the folder at the expected path?"
+msgstr ""
+"mlc01 フォルダが見当たりません。\n"
+"\n"
+"これは Cemu がセーブ ファイル、ゲーム アップデート、その他の Wii U ファイルを"
+"保存する場所です。\n"
+"\n"
+"期待されるパスは:\n"
+"{}\n"
+"\n"
+"期待されるパスにフォルダを作成しますか？"
+
+msgid "address"
+msgstr "アドレス"
+
+msgid "auto"
+msgstr "自動"
+
+msgid "base"
+msgstr "ベース"
+
+msgid "blow mic"
+msgstr "ブローマイク"
+
+msgid "cycles"
+msgstr "サイクル"
+
+msgid "description"
+msgstr "説明"
+
+msgid "disable"
+msgstr "無効"
+
+msgid "dlc"
+msgstr "dlc"
+
+msgid "enable"
+msgstr "有効にする"
+
+msgid "false"
+msgstr "false"
+
+msgid "freeze"
+msgstr "凍結"
+
+msgid "many"
+msgstr "多"
+
+msgid "minimal"
+msgstr "最小"
+
+msgid "mlc01 path"
+msgstr "mlc01 パス"
+
+msgid "never"
+msgstr "未プレイ"
+
+msgid "otp.bin could not be found"
+msgstr "otp.bin が見つかりませんでした"
+
+msgid "otp.bin is corrupted or has invalid size"
+msgstr "otp.bin が破損しているか、サイズが無効です"
+
+msgid "save"
+msgstr "保存"
+
+msgid "seeprom.bin could not be found"
+msgstr "seeprom.bin が見つかりませんでした"
+
+msgid "seeprom.bin is corrupted or has invalid size"
+msgstr "seeprom.bin が破損しているか、サイズが無効です"
+
+msgid "show screen"
+msgstr "画面を表示する"
+
+msgid "true"
+msgstr "true"
+
+msgid "type"
+msgstr "タイプ"
+
+msgid "unknown"
+msgstr "不明"
+
+msgid "update"
+msgstr "アップデート"
+
+msgid "value"
+msgstr "値"
+
+msgid ""
+"{} files are missing!\n"
+"Do you want to export a list of them to a file?"
+msgstr ""
+"{} 個のファイルが見つかりませんでした！\n"
+"そのリストをファイルにエクスポートしますか？"
+
+msgid ""
+"{} files have an invalid hash!\n"
+"Do you want to export a list of them to a file?"
+msgstr ""
+"{} 個のファイルには無効なハッシュがあります!\n"
+"そのリストをファイルにエクスポートしますか？"

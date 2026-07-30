@@ -38,6 +38,49 @@ jobs:
           --check=space-ellipsis --omit-header
           -o cemu.pot
 
+      # The .po sources and the .mo files the app loads are both committed, because an
+      # ordinary build must not require gettext. Both being in the tree means they can
+      # drift, so check they cannot: every .mo must be exactly what its .po compiles to.
+      - name: "Catalogs match their sources"
+        run: |
+          fail=0
+          for po in translations/*.po; do
+            loc=$(basename "$po" .po)
+            mo="bin/resources/$loc/cemu.mo"
+            if [ ! -f "$mo" ]; then
+              echo "::error::$po has no compiled catalog at $mo"; fail=1; continue
+            fi
+            # Compare CONTENT, not bytes. msgfmt output is not guaranteed identical across
+            # gettext versions, and this runner's is not the one a contributor on macOS has,
+            # so a byte diff would fail on a difference nobody can act on. Round-tripping
+            # both through msgcat --sort-output normalises ordering and wrapping and leaves
+            # only the msgid/msgstr pairs, which is what actually has to match.
+            msgfmt --check-format -o "/tmp/$loc.mo" "$po"
+            msgunfmt "/tmp/$loc.mo" | msgcat --sort-output --no-wrap -o "/tmp/$loc.from-po" -
+            msgunfmt "$mo"          | msgcat --sort-output --no-wrap -o "/tmp/$loc.from-mo" -
+            if ! cmp -s "/tmp/$loc.from-po" "/tmp/$loc.from-mo"; then
+              echo "::error::$mo does not match $po -- run 'cmake --build build --target translations' and commit the result"
+              diff "/tmp/$loc.from-mo" "/tmp/$loc.from-po" | head -20
+              fail=1
+            fi
+          done
+          for mo in bin/resources/*/cemu.mo; do
+            loc=$(basename "$(dirname "$mo")")
+            [ -f "translations/$loc.po" ] || { echo "::error::$mo has no source at translations/$loc.po"; fail=1; }
+          done
+          exit $fail
+
+      # Reports which msgids the catalogs are missing or carrying stale. Informational:
+      # a translation lagging the source is normal and must not fail the build.
+      - name: "Translation coverage"
+        run: |
+          printf '%-6s %8s %8s %8s\n' locale translated fuzzy untranslated
+          for po in translations/*.po; do
+            msgmerge --quiet --no-fuzzy-matching -o /tmp/merged.po "$po" cemu.pot
+            stats=$(msgfmt --statistics -o /dev/null /tmp/merged.po 2>&1 | tr -d '\n')
+            printf '%-6s %s\n' "$(basename "$po" .po)" "$stats"
+          done
+
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:

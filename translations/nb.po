@@ -1,0 +1,1833 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Cemu\n"
+"PO-Revision-Date: 2020-05-01 13:47+0200\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.3\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: no\n"
+
+msgid "&About"
+msgstr "&Om"
+
+msgid "&Active account"
+msgstr "&Aktiv konto"
+
+msgid "&Add new entry"
+msgstr "&Legg til ny oppføring"
+
+msgid "&Audio API"
+msgstr "&Lyd API"
+
+msgid "&Auto"
+msgstr "&Auto"
+
+msgid "&Breakpoints"
+msgstr "&Breakpoints"
+
+msgid "&CPU"
+msgstr "&CPU"
+
+msgid "&Check for updates"
+msgstr "&Se etter oppdateringer"
+
+msgid "&China"
+msgstr "&Kina"
+
+msgid "&Chinese"
+msgstr "&Kinesisk"
+
+msgid "&Console language"
+msgstr "&Konsollspråk"
+
+msgid "&Console region"
+msgstr "&Konsollregion"
+
+msgid "&Copy"
+msgstr "&Kopi"
+
+msgid "&Coreinit File-Access"
+msgstr "&Coreinit Fil-Tilgang"
+
+msgid "&Coreinit MP API"
+msgstr "&Coreinit MP API"
+
+msgid "&Coreinit Memory API"
+msgstr "&Coreinit Minne API"
+
+msgid "&Coreinit Thread-Synchronization API"
+msgstr "&Coreinit Trådsynkroniserings-API"
+
+msgid "&DLC directory"
+msgstr "&Utvidelsespakke katalog"
+
+msgid "&Debug"
+msgstr "&Feilsøk"
+
+msgid "&Decrement"
+msgstr "&Dekrement"
+
+msgid "&Dump"
+msgstr "&Dump"
+
+msgid "&Dump WUD filesystem"
+msgstr "&Dump WUD filsystem"
+
+msgid "&Dump current RAM"
+msgstr "&Dump nåværende RAM"
+
+msgid "&Dutch"
+msgstr "&Nederlandsk"
+
+msgid "&Edit game profile"
+msgstr "&Rediger spillprofil"
+
+msgid "&Edit graphic packs"
+msgstr "&Rediger Grafikk pakker"
+
+msgid "&Edit name"
+msgstr "&Rediger navn"
+
+msgid "&English"
+msgstr "&Engelsk"
+
+msgid "&Europe"
+msgstr "&Europa"
+
+msgid "&Exit"
+msgstr "&Avslutt"
+
+msgid "&Experimental"
+msgstr "&Eksperimentell"
+
+msgid "&Favorite"
+msgstr "&Favoritt"
+
+msgid "&File"
+msgstr "&Fil"
+
+msgid "&French"
+msgstr "&Fransk"
+
+msgid "&Fullscreen"
+msgstr "&Fullskjerm"
+
+msgid "&GX2 API"
+msgstr "&GX2 API"
+
+msgid "&Game directory"
+msgstr "&Spill katalog"
+
+msgid "&General settings"
+msgstr "&Generelle innstillinger"
+
+msgid "&German"
+msgstr "&Tysk"
+
+msgid "&Getting started"
+msgstr "&Kom i gang"
+
+msgid "&Goto Disasm"
+msgstr "&Goto Disasm"
+
+msgid "&Graphic pack patches"
+msgstr "&Grafikk pakke oppdateringer"
+
+msgid "&Graphic packs"
+msgstr "&Grafikk pakke"
+
+msgid "&H264 API"
+msgstr "&H264 API"
+
+msgid "&Help"
+msgstr "&Hjelp"
+
+msgid "&Increment"
+msgstr "&Inkrement"
+
+msgid "&Input API"
+msgstr "&Inngang API"
+
+msgid "&Input settings"
+msgstr "&Inngang Innstillinger"
+
+msgid "&Install game update or DLC"
+msgstr "&Installer fpilloppdatering eller Utvidelsespakke"
+
+msgid "&Italian"
+msgstr "&Italiensk"
+
+msgid "&Japan"
+msgstr "&Japan"
+
+msgid "&Japanese"
+msgstr "&Japansk"
+
+msgid "&Korea"
+msgstr "&Korea"
+
+msgid "&Korean"
+msgstr "&Koreansk"
+
+msgid "&Load"
+msgstr "&Last inn"
+
+msgid "&Log PPC context for API"
+msgstr "&Logg PPC kontekst for API"
+
+msgid "&Logging"
+msgstr "&Logger"
+
+msgid "&Memory Dump"
+msgstr "&Minnedump"
+
+msgid "&Memory searcher"
+msgstr "&Minnesøker"
+
+msgid "&NFC"
+msgstr "&NFC"
+
+msgid "&NN NFP"
+msgstr "&NN NFP"
+
+msgid "&Open logging window"
+msgstr "&Åpne loggvindu"
+
+msgid "&OpenGL debug output"
+msgstr "&OpenGL feilsøk utgang"
+
+msgid "&Optimize shader SPIR-V"
+msgstr "&Optimaliser shader SPIR-V"
+
+msgid "&Options"
+msgstr "&Valg"
+
+msgid "&Pin to main window"
+msgstr "&Pin til hovedvindu"
+
+msgid "&Portuguese"
+msgstr "&Portugisisk"
+
+msgid "&Refresh game list"
+msgstr "&Oppdater spillisten"
+
+msgid "&Registers"
+msgstr "&Registre"
+
+msgid "&Remove entry"
+msgstr "&Fjern oppføring"
+
+msgid "&Render upside-down"
+msgstr "&Gjengi opp ned"
+
+msgid "&Russian"
+msgstr "&Russisk"
+
+msgid "&Save API"
+msgstr "&Lagre API"
+
+msgid "&Save directory"
+msgstr "&Lagre katalog"
+
+msgid "&Scan NFC tag from file"
+msgstr "&Skann NFC kode fra fil"
+
+msgid "&Separate GamePad view"
+msgstr "&Seperat GamePad visning"
+
+msgid "&Shaders"
+msgstr "&Shaders"
+
+msgid "&Show frame profiler"
+msgstr "&Vis rammeprofil"
+
+msgid "&Socket API"
+msgstr "&Socket API"
+
+msgid "&Spanish"
+msgstr "&Spansk"
+
+msgid "&Start"
+msgstr "&Start"
+
+msgid "&Taiwan"
+msgstr "&Taiwan"
+
+msgid "&Taiwanese"
+msgstr "&Taiwansk"
+
+msgid "&Texture cache warnings"
+msgstr "&Teksturbuffer advarsler"
+
+msgid "&Textures"
+msgstr "&Texturer"
+
+msgid "&Tools"
+msgstr "&Verktøy"
+
+msgid "&USA"
+msgstr "&USA"
+
+msgid "&Unsupported API calls"
+msgstr "&Ikke-støttede API-anrop"
+
+msgid "&Update directory"
+msgstr "&Oppdater katalog"
+
+msgid "&View PPC debugger"
+msgstr "&Vis PPC feilsøker"
+
+msgid "&View PPC threads"
+msgstr "&Vis PPC Tråder"
+
+msgid "&View audio debugger"
+msgstr "&Vis lyd feilsøker"
+
+msgid "&View texture cache info"
+msgstr "&Vis Teksturbuffer info"
+
+msgid "&Vulkan validation layer (slow)"
+msgstr "&Vulkan valideringslag (treg)"
+
+msgid "&Window"
+msgstr "&Vindu"
+
+msgid "&Zero"
+msgstr "&Null"
+
+msgid "&nlibcurl HTTP/HTTPS requests"
+msgstr "&nlibcurl HTTP/HTTPS forespørsler"
+
+msgid "(optional)"
+msgstr "(valgfritt)"
+
+msgid "API"
+msgstr "API"
+
+msgid "Account"
+msgstr "Konto"
+
+msgid "Account information"
+msgstr "Kontoinformasjon"
+
+msgid "Account name may not be empty!"
+msgstr "Kontonavnet kan ikke stå tomt!"
+
+msgid "Account settings"
+msgstr "Kontoinnstillinger"
+
+msgid "Active account"
+msgstr "Aktiv konto"
+
+msgid "Active preset"
+msgstr "Aktiv forhåndsinnstilling"
+
+msgid "Add"
+msgstr "Legg til"
+
+msgid ""
+"Add the root directory of your game(s). It will scan all directories in it "
+"for games"
+msgstr ""
+"Legg til rotmappen for spillene dine. Den vil skanne alle mapper i den etter "
+"spill"
+
+msgid "Additional options"
+msgstr "Tilleggsinnstillinger"
+
+msgid "Additional settings"
+msgstr "Tilleggsinnstillinger"
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid ""
+"Adds a game path to scan for games displayed in the game list\n"
+"If you have unpacked games, make sure to select the root folder of a game"
+msgstr ""
+"Legger til en spillbane for å søke etter spill som vises i spillelisten\n"
+"Hvis du har uåpnede spill, sørg for å velge rot mappen til et spill"
+
+msgid "Affinity"
+msgstr "Affinitet"
+
+msgid ""
+"All files from the currently running game will be dumped to /dump/"
+"<gamefolder>. This process can take a few minutes."
+msgstr ""
+"Alle filer fra spillet som for øyeblikket kjøres, blir dumpet til /dump/"
+"<gamefolder>. Denne prosessen kan ta noen minutter."
+
+msgid "Applying update..."
+msgstr "Bruker oppdatering…"
+
+msgid "Are you sure you want to delete the account {} with id {:x}?"
+msgstr "Er du sikker på at du vil slette kontoen {} med id {:x}?"
+
+msgid "Audio"
+msgstr "Lyd"
+
+msgid "Auto refresh"
+msgstr "Auto oppdater"
+
+msgid "Automatically check for updates"
+msgstr "Sjekk automatisk for oppdateringer"
+
+msgid "Automatically checks for new cemu versions on startup"
+msgstr "Søker automatisk etter nye Cemu versjoner ved oppstart"
+
+msgid "Bicubic"
+msgstr "Bikubisk"
+
+msgid "Bilinear"
+msgstr "Bilineær"
+
+msgid "Birthday"
+msgstr "Bursdag"
+
+msgid "Boost priority (-1)"
+msgstr "Øk prioritet (-1)"
+
+msgid "Boost priority (-5)"
+msgstr "Øk prioritet (-5)"
+
+msgid "Bottom center"
+msgstr "Nederst sentrum"
+
+msgid "Bottom left"
+msgstr "Nederst til venstre"
+
+msgid "Bottom right"
+msgstr "Nederst til Høyre"
+
+msgid "Break (F5)"
+msgstr "Break (F5)"
+
+msgid "Button Threshold"
+msgstr "Knappens terskel"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "CPU per core usage"
+msgstr "CPU per kjernebruk"
+
+msgid "CPU usage"
+msgstr "CPU-bruk"
+
+msgid "CPU usage of TesseraEmu in percent"
+msgstr "CPU-bruk av TesseraEmu i prosent"
+
+msgid "Calibrate"
+msgstr "Kallibrer"
+
+msgid "Can't delete the only account!"
+msgstr "Kan ikke slette den eneste kontoen!"
+
+msgid "Can't find the \"longname_en\" in the given \"meta.xml\" file."
+msgstr "Finner ikke \"longname_en\" i den gitte \"meta.xml\" filen."
+
+msgid "Can't find the \"product_code\" in the given \"meta.xml\" file."
+msgstr "Kan ikke finne \"product_code» i den gitte \"meta.xml\" filen."
+
+msgid "Can't find the \"title_id\" in the given \"meta.xml\" file."
+msgstr "Finner ikke «title_id» i den gitte «meta.xml» -filen."
+
+msgid "Can't find the \"title_version\" in the given \"meta.xml\" file."
+msgstr "Finner ikke «title_version» i den gitte «meta.xml» -filen."
+
+msgid "Can't open the file."
+msgstr "Kan ikke åpne file."
+
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgid "Cannot open file"
+msgstr "Kan ikke åpne fil"
+
+msgid "TesseraEmu RAM usage in MB"
+msgstr "TesseraEmu RAM bruk i MB"
+
+msgid ""
+"Cemu detected a DLC installed at a wrong or outdated location:\n"
+"{}\n"
+"\n"
+"Do you want to move it to the correct location:\n"
+"{}"
+msgstr ""
+"Cemu oppdaget en tilleggspakke installert på et feil eller utdatert sted:\n"
+"{}\n"
+"\n"
+"Vil du flytte den til riktig sted:\n"
+"{}"
+
+msgid "TesseraEmu must be restarted to apply the selected UI language."
+msgstr "TesseraEmu må startes på nytt for å bruke det valgte UI språket."
+
+msgid "Changelog"
+msgstr "Endringslogg"
+
+msgid ""
+"Changes the interface language of TesseraEmu\n"
+"Available languages are stored in the translation directory\n"
+"A restart will be required after changing the language"
+msgstr ""
+"Endrer grensesnittspråket til TesseraEmu\n"
+"Tilgjengelige språk lagres i oversettelseskatalogen\n"
+"En omstart vil være nødvendig etter endring av språk"
+
+msgid "Channels"
+msgstr "Kanaler"
+
+msgid "Checking version..."
+msgstr "Sjekker versjon…"
+
+msgid "Classic"
+msgstr "Klassisk"
+
+msgid "Clear"
+msgstr "Tøm"
+
+msgid "Clear all currently set input settings"
+msgstr "Fjern alle nåværende innstilte innstillinger"
+
+msgid "Close"
+msgstr "Lukk"
+
+msgid "Comment"
+msgstr "Kommentar"
+
+msgid "Configure input"
+msgstr "Konfigurer inngang"
+
+msgid "Confirmation"
+msgstr "Bekreftelse"
+
+msgid "Control"
+msgstr "Kontroll"
+
+msgid "Controller"
+msgstr "Kontroller"
+
+msgid "Controller API:"
+msgstr "Kontroller API:"
+
+msgid "Controller profiles"
+msgstr "Kontrollerprofiler"
+
+msgid "Controller {}"
+msgstr "Kontroller {}"
+
+msgid "Controller:"
+msgstr "Kontroller:"
+
+msgid ""
+"Controls the amount of buffered audio data\n"
+"Higher values will create a delay in audio playback, but may avoid audio "
+"problems when emulation is too slow"
+msgstr ""
+"Kontrollerer mengden buffrede lyddata\n"
+"Høyere verdier vil skape en forsinkelse i lydavspillingen, men kan unngå "
+"lydproblemer når emuleringen er for langsom"
+
+msgid "Controls the notification position while playing"
+msgstr "Kontrollerer varslingsposisjonen mens du spiller"
+
+msgid ""
+"Controls the output aspect ratio when it doesn't match the ratio of the game"
+msgstr ""
+"Kontrollerer utgang aspekt forholdet når det ikke samsvarer med forholdet på "
+"spillet"
+
+msgid "Controls the overlay which displays technical information while playing"
+msgstr "Kontrollerer overlegget som viser teknisk informasjon mens du spiller"
+
+msgid "Controls the vsync state"
+msgstr "Kontrollerer vsync tilstand"
+
+msgid ""
+"Couldn't create a required TesseraEmu directory or file!\n"
+"\n"
+"Error: {0}"
+msgstr ""
+"Kunne ikke lage en obligatorisk cemu mappe eller fil!\n"
+"\n"
+"Feil: {0}"
+
+msgid ""
+"Couldn't create a required mlc01 subfolder or file!\n"
+"\n"
+"Error: {0}\n"
+"Target path:\n"
+"{1}"
+msgstr ""
+"Kunne ikke opprette en nødvendig mlc01 undermappe eller fil!\n"
+"\n"
+"Feil: {0}\n"
+"Målsti:\n"
+"{1}"
+
+msgid "Couldn't download the update!"
+msgstr "Kunne ikke laste ned oppdateringen!"
+
+msgid "Couldn't load the selected profile!"
+msgstr "Kunne ikke laste den valgte profilen!"
+
+msgid "Couldn't save settings for controller {0}"
+msgstr "Kunne ikke lagre innstillingene for kontroller {0}"
+
+msgid "Couldn't save the profile!"
+msgstr "Kunne ikke lagre profilen!"
+
+msgid "Country"
+msgstr "Nasjon"
+
+msgid "Crash dump"
+msgstr "Krasj dump"
+
+msgid "Create"
+msgstr "Opprett"
+
+msgid "Create memory breakpoint (read)"
+msgstr "Opprett minne stoppunkt (les)"
+
+msgid "Create memory breakpoint (write)"
+msgstr "Opprett minne stoppunkt (skriv)"
+
+msgid "Create new account"
+msgstr "Opprett ny konto"
+
+msgid "Create new cache [recommended]"
+msgstr "Lag ny cache [anbefalt]"
+
+msgid ""
+"Creates a dump when Cemu crashes\n"
+"Only enable on demand!\n"
+"The Full option will create a big dump with the memory included"
+msgstr ""
+"Oppretter en dump når Cemu krasjer\n"
+"Aktiver bare på forespørsel!\n"
+"Alternativet Fullstendig vil skape en stor dump med minnet inkludert"
+
+msgid "Current file:"
+msgstr "Gjeldene Fil:"
+
+msgid "Custom mlc01 path"
+msgstr "Egendefinert mlc01 bane"
+
+msgid "D-pad"
+msgstr "Styrepluss"
+
+msgid "DLC"
+msgstr "Utvidelsespakke"
+
+msgid "DSU client settings"
+msgstr "DSU klient innstillinger"
+
+msgid "Deadzone"
+msgstr "Dødsone"
+
+msgid "Debug"
+msgstr "Feilsøk"
+
+msgid "Decrease priority (+1)"
+msgstr "Reduser prioritet (+1)"
+
+msgid "Decrease priority (+5)"
+msgstr "Reduser prioritet (+5)"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "Delete"
+msgstr "Slett"
+
+msgid "Description"
+msgstr "Beskrivelse"
+
+msgid "Device"
+msgstr "Enhet"
+
+msgid "Dim"
+msgstr "Dim"
+
+msgid "Disabled"
+msgstr "Slått av"
+
+msgid "Discord Presence"
+msgstr "Discord Tilstedeværelse"
+
+msgid "Displays internal debug information (Vulkan only)"
+msgstr "Viser intern feilsøkingsinformasjon (bare Vulkan)"
+
+msgid "Displays the active controller profile when starting a game"
+msgstr "Viser den aktive kontrollerprofilen når du starter et spill"
+
+msgid "Displays the menu bar when TesseraEmu is running in fullscreen mode and the mouse cursor is moved to the top"
+msgstr "Viser menylinjen når TesseraEmu kjører i fullskjermmodus og musemarkøren flyttes til toppen"
+
+msgid ""
+"Do you really want to cancel the update process?\n"
+"\n"
+"Canceling the process will delete the applied update."
+msgstr ""
+"Vil du virkelig avbryte oppdateringsprosessen?\n"
+"\n"
+"Hvis du avbryter prosessen, blir den gjeldende oppdateringen slettet."
+
+msgid "Don't show this again"
+msgstr "Ikke vis dette igjen"
+
+msgid "Double buffering"
+msgstr "Dobbelt buffring"
+
+msgid "Download community graphic packs"
+msgstr "Last ned grafikk pakker fra samfunnet"
+
+msgid "Download latest community graphic packs"
+msgstr "Last ned siste grafikk pakker fra samfunnet"
+
+msgid "Downloading graphic packs..."
+msgstr "Laster ned grafikk pakker…"
+
+msgid "Downloading update..."
+msgstr "Laster ned oppdatering…"
+
+msgid "Downscale filter"
+msgstr "Nedskaleringsfilter"
+
+msgid ""
+"Downscaling filters are used when the game resolution is bigger than the "
+"window size"
+msgstr ""
+"Nedskaleringsfilter brukes når spilloppløsningen er større enn "
+"vindusstørrelsen"
+
+msgid "Draw calls per frame"
+msgstr "Bilde anrop per bildefrekvens"
+
+msgid "Dualcore-Recompiler"
+msgstr "Dobbelkjerne-Omkompilator"
+
+msgid "Dump WUD"
+msgstr "Dumpe WUD"
+
+msgid "Dump complete"
+msgstr "Dump fullført"
+
+msgid ""
+"EXPERT OPTION\n"
+"Controls the accuracy of floating point multiplication in shaders.\n"
+"\n"
+"Recommended: true"
+msgstr ""
+"EKSPERT VALG\n"
+"Kontrollerer nøyaktigheten av multiplikasjon med flytende punkter i "
+"shadere.\n"
+"\n"
+"Anbefalt: sant"
+
+msgid ""
+"EXPERT OPTION\n"
+"Set the maximum thread slice runtime (in virtual cycles)"
+msgstr ""
+"EKSPERT VALG\n"
+"Set maksimum thread slice runtime (i virtuelle sykluser)"
+
+msgid ""
+"EXPERT OPTION\n"
+"This option will load libraries from the cafeLibs directory"
+msgstr ""
+"EKSPERT VALG\n"
+"Dette alternativet vil laste inn biblioteker fra cafeLibs-katalogen"
+
+msgid "Edit game profile"
+msgstr "Rediger spillprofil"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Emulate Controller"
+msgstr "Emulere Kontroller"
+
+msgid "Enable online mode"
+msgstr "Aktiver online modus"
+
+msgid ""
+"Enables the Discord Rich Presence feature\n"
+"You will also need to enable it in the Discord settings itself!"
+msgstr ""
+"Aktiverer funksjonen Discord Rich Presence\n"
+"Du må også aktivere det i selve Discord-innstillingene!"
+
+msgid "End emulation"
+msgstr "Avslutt Emuleringen"
+
+msgid "English"
+msgstr "Engelsk"
+
+msgid "Enter a memory address"
+msgstr "Skriv inn en minneadresse"
+
+msgid "Enter a new comment."
+msgstr "Skriv en ny kommenter."
+
+msgid "Enter a new instruction."
+msgstr "Legg inn en ny instruksjon."
+
+msgid "Enter a new value."
+msgstr "Angi en ny verdi."
+
+msgid "Enter a target address."
+msgstr "Skriv inn en måladresse."
+
+msgid "Entry"
+msgstr "Oppføring"
+
+msgid "Error"
+msgstr "Feil"
+
+msgid "Error code"
+msgstr "Feilkode"
+
+msgid ""
+"Error when initializing Vulkan renderer:\n"
+"{}"
+msgstr ""
+"Feil ved initialisering av Vulkan-gjengiver:\n"
+"{}"
+
+msgid "Exit"
+msgstr "Avslutt"
+
+msgid "Extended texture readback"
+msgstr "Utvidet tekstur readback"
+
+msgid "Extensions:"
+msgstr "Utvidelser:"
+
+msgid "Extracting failed!"
+msgstr "Utpakking misslyktes!"
+
+msgid "Extracting update..."
+msgstr "Pakker ut oppdatering…"
+
+msgid "Extracting..."
+msgstr "Pakker ut…"
+
+msgid "FPS"
+msgstr "FPS"
+
+msgid "Failed to connect to server"
+msgstr "Kunne ikke koble til serveren"
+
+msgid "Failed to launch file."
+msgstr "Kunne ikke starte filen."
+
+msgid "Failed to run this title because at least one of the files is damaged."
+msgstr "Kunne ikke kjøre denne tittelen fordi minst en av filene er skadet."
+
+msgid "Female"
+msgstr "Kvinne"
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "Filter messages"
+msgstr "Filter meldinger"
+
+msgid "Forces a given controller profile"
+msgstr "Tvinger en gitt kontrollerprofil"
+
+msgid "Format"
+msgstr "Format"
+
+msgid "Friend list"
+msgstr "Venneliste"
+
+msgid "Full"
+msgstr "Fullstendig"
+
+msgid "Full sync at GX2DrawDone()"
+msgstr "Full sync at GX2DrawDone()"
+
+msgid "Fullscreen menu bar"
+msgstr "Fullskjerm menylinjen"
+
+msgid "Fullscreen scaling"
+msgstr "Fullskjermskalering"
+
+msgid "G&oto Dump"
+msgstr "G&oto Dump"
+
+msgid "GPR"
+msgstr "GPR"
+
+msgid "GPU buffer cache accuracy"
+msgstr "GPU buffer cache nøyaktighet"
+
+msgid "Game"
+msgstr "Spill"
+
+msgid "Game Paths"
+msgstr "Spillbaner"
+
+msgid "Game path"
+msgstr "Spill bane"
+
+msgid "Game paths"
+msgstr "Spill baner"
+
+msgid "Gamepad"
+msgstr "Håndkontroller"
+
+msgid ""
+"Games will be launched with gamepad view toggled as default. The view can be "
+"toggled with CTRL + TAB"
+msgstr ""
+"Spill vil bli lansert med gamepad-visning som standard. Visningen kan "
+"veksles med CTRL + TAB"
+
+msgid "General"
+msgstr "Generelt"
+
+msgid "General settings"
+msgstr "Generelle innstillinger"
+
+msgid "Getting started"
+msgstr "Kom i gang"
+
+msgid "GoTo (CTRL + G)"
+msgstr "Gå til (CTRL + G)"
+
+msgid "GoTo address"
+msgstr "Gå Til adresse"
+
+msgid "Graphic"
+msgstr "Grafikk"
+
+msgid "Graphic pack"
+msgstr "Grafikk pakke"
+
+msgid "Graphic packs"
+msgstr "Grafikk pakker"
+
+msgid "Graphic packs cannot be updated while a game is running."
+msgstr "Grafikk pakker kan ikke oppdateres mens et spill kjører."
+
+msgid ""
+"Graphic packs improve games by offering the possibility to change "
+"resolution, tweak FPS or add other visual or gameplay modifications.\n"
+"Download the community graphic packs to get started.\n"
+msgstr ""
+"Grafikk pakker forbedrer spill ved å tilby muligheten til å endre "
+"oppløsning, justere FPS eller legge til andre visuelle eller spill "
+"modifikasjoner.\n"
+"Last ned grafikk pakker fra samfunnet for å komme i gang.\n"
+
+msgid "Graphics"
+msgstr "Grafikk"
+
+msgid "Graphics API"
+msgstr "Grafikk API"
+
+msgid "Graphics Device"
+msgstr "Grafikk Enhet"
+
+msgid "Hermite"
+msgstr "Hermite"
+
+msgid "IP"
+msgstr "IP"
+
+msgid ""
+"If synchronization is requested by the game, the emulated CPU will wait for "
+"the GPU to finish all operations.\n"
+"This is more accurate behavior, but may cause lower performance"
+msgstr ""
+"Hvis spillet ber om synkronisering, vil den emulerte CPU vente på at GPUen "
+"skal fullføre alle operasjoner.\n"
+"Dette er mer nøyaktig oppførsel, men kan føre til lavere ytelse"
+
+msgid ""
+"Improves emulation accuracy of CPU to GPU memory access at the cost of "
+"performance. Required for some games."
+msgstr ""
+"Forbedrer emuleringsnøyaktigheten av CPU til GPU minnetilgang til på "
+"bekostning a ytelsen. Påkrevd for noen spill."
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Information"
+msgstr "Informasjon"
+
+msgid "Input Settings"
+msgstr "Inngangsinnstillinger"
+
+msgid "Input settings"
+msgstr "Inndatainnstillingene"
+
+msgid "Installed games"
+msgstr "Installerte Spill"
+
+msgid "Installing DLC ..."
+msgstr "Installerer DLC ..."
+
+msgid "Installing update ..."
+msgstr "Installerer update ..."
+
+msgid "Interface"
+msgstr "Grensesnitt"
+
+msgid "Invalid \"meta.xml\" file."
+msgstr "Ugyldig \"meta.xml\" fil."
+
+msgid "Invalid folder structure"
+msgstr "Ugyldig fil structure"
+
+msgid ""
+"It looks like you're starting TesseraEmu for the first time.\n"
+"This quick setup assistant will help you get the best experience"
+msgstr ""
+"Det ser ut som om du starter TesseraEmu for første gang.\n"
+"Denne hurtigoppsettassistenten hjelper deg å få den beste opplevelsen"
+
+msgid ""
+"It seems that a newer update is already installed, do you still want to "
+"install the older version?"
+msgstr ""
+"Det ser ut til at en nyere oppdatering allerede er installert, vil du "
+"fortsatt installere den eldre versjonen?"
+
+msgid ""
+"It seems that the selected update is already installed, do you want to "
+"reinstall it?"
+msgstr ""
+"Det ser ut til at den valgte oppdateringen allerede er installert, vil du "
+"installere den på nytt?"
+
+msgid "Keep aspect ratio"
+msgstr "Beholde aspektforhold"
+
+msgid "LR"
+msgstr "LR"
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "Last access"
+msgstr "Siste tilgang"
+
+msgid "Last played"
+msgstr "Sist spilt"
+
+msgid "Latency"
+msgstr "Ventetid"
+
+msgid "Launch with gamepad view"
+msgstr "Start med gamepad-visning"
+
+msgid "Left Axis"
+msgstr "Venstre Akse"
+
+msgid "Lite"
+msgstr "Enkel"
+
+msgid "Load"
+msgstr "Last inn"
+
+msgid "Load shared libraries"
+msgstr "Last inn delte biblioteker"
+
+msgid "Logging window"
+msgstr "logg vindu"
+
+msgid "Low battery"
+msgstr "Lite batteri"
+
+msgid ""
+"Lower value results in higher performance, but may cause graphical issues"
+msgstr "Lavere verdi gir høyere ytelse, men kan forårsake grafiske problemer"
+
+msgid "MLC Path"
+msgstr "MLC Sti"
+
+msgid "Male"
+msgstr "Mann"
+
+msgid "Memory Searcher"
+msgstr "Minnesøker"
+
+msgid "Memory breakpoint"
+msgstr "Minne stoppunkt"
+
+msgid "Mii name"
+msgstr "Mii navn"
+
+msgid "MipRange"
+msgstr "MipRange"
+
+msgid "Mode"
+msgstr "Modues"
+
+msgid "Module&list"
+msgstr "Modul&liste"
+
+msgid "Mono"
+msgstr "Mono"
+
+msgid "MotionPlus"
+msgstr "MotionPlus"
+
+msgid "Name"
+msgstr "Navn"
+
+msgid "Nearest Neighbor"
+msgstr "Nærmeste nabo"
+
+msgid "Next"
+msgstr "Neste"
+
+msgid "No"
+msgstr "Nei"
+
+msgid "No persistent id entered!"
+msgstr "Ingen vedvarende id lagt inn!"
+
+msgid "No profile name entered!"
+msgstr "Ingen profilnavn oppgitt!"
+
+msgid "No profile name selected!"
+msgstr "Ingen profilnavn valgt!"
+
+msgid "No update available!"
+msgstr "Ingen oppdatering tilgjengelig!"
+
+msgid "No updates available."
+msgstr "Ingen oppdatering tilgjengelig."
+
+msgid "Not a valid NFC NTAG215 file"
+msgstr "Ikke en gyldig NFC NTAG215 fil"
+
+msgid ""
+"Not enough space available.\n"
+"Required: {0} MB\n"
+"Available: {1} MB"
+msgstr ""
+"Ikke nok plass tilgjengelig.\n"
+"Påkrevd: {0} MB\n"
+"Tilgjengelig: {1} MB"
+
+msgid "Notifications"
+msgstr "Notifikasjoner"
+
+msgid "Nunchuck"
+msgstr "Nunchuck"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Off"
+msgstr "Av"
+
+msgid "On"
+msgstr "På"
+
+msgid "Online Status"
+msgstr "Online Status"
+
+msgid "Open file to launch"
+msgstr "Åpne fil for å starte"
+
+msgid "Open file to load"
+msgstr "Åpne fil for å laste inn"
+
+msgid "Open separate pad screen"
+msgstr "Åpne seperat pad skjerm"
+
+msgid ""
+"Outdated shader cache\n"
+"\n"
+"The stored shader cache for this game was created with a Cemu version prior "
+"to 1.16.0.\n"
+"\n"
+"There are no significant downsides to reusing an existing cache but it may "
+"contain bloat that is no longer used by current versions of Cemu.\n"
+"\n"
+"It is highly recommended to start a new cache. Note that a new cache means "
+"that you will experience additional stutter during the first minutes of "
+"gameplay."
+msgstr ""
+"Utdatert shader-buffer\n"
+"\n"
+"Den lagrede shader-cachen for dette spillet ble opprettet med en Cemu-"
+"versjon før 1.16.0.\n"
+"\n"
+"Det er ingen betydelige ulemper med å gjenbruke en eksisterende cachen, men "
+"den kan inneholde unødvendig kode som ikke lenger brukes av nåværende "
+"versjoner av Cemu.\n"
+"\n"
+"Det anbefales på det sterkeste å starte en ny cache. Merk at en ny cache "
+"betyr at du vil oppleve ytterligere stamming i løpet av de første minuttene "
+"av spillingen."
+
+msgid "Overlay"
+msgstr "Overlegg"
+
+msgid "OverwriteRes"
+msgstr "OverwriteRes"
+
+msgid "PC"
+msgstr "PC"
+
+msgid "PPC threads"
+msgstr "PPC tråder"
+
+msgid "PhysAddr"
+msgstr "PhysAddr"
+
+msgid "Pitch"
+msgstr "Pitch"
+
+msgid ""
+"Please be aware that online mode lets you connect to OFFICIAL servers and "
+"therefore there is a risk of getting banned.\n"
+"Only proceed if you are willing to risk losing online access with your Wii U "
+"and/or NNID."
+msgstr ""
+"Vær oppmerksom på at online-modus lar deg koble til de offisielle serverene, "
+"og at det derfor er fare for å bli utestengt.\n"
+"Fortsett bare hvis du er villig til å risikere å miste tilgang til Internett "
+"med Wii U og/eller NNID."
+
+msgid "Port"
+msgstr "Port"
+
+msgid "Position"
+msgstr "Posisjon"
+
+msgid "Precompiled shaders"
+msgstr "Forkompilerte shaders"
+
+msgid ""
+"Precompiled shaders can speed up the load time on the shader loading "
+"screen.\n"
+"Auto will enable it for AMD/Intel but disable it for NVIDIA GPUs as a "
+"workaround for a driver bug.\n"
+"\n"
+"Recommended: Auto"
+msgstr ""
+"Forkompilerte shaders kan øke hastigheten på lastetiden på shader "
+"lasteskjerm.\n"
+"Auto vil aktiverer det for AMD/Intel, men deaktiverer det for NVIDIA GPUer "
+"som en løsning for en driverfeil.\n"
+"\n"
+"Anbefalt: Auto"
+
+msgid ""
+"Pressing the screenshot key (F12) will save a screenshot directly to the "
+"screenshots folder"
+msgstr ""
+"Ved å trykke på skjermdump tasten (F12) vil du lagre et skjermbilde direkte "
+"i skjermbilde-mappen"
+
+msgid "Previous"
+msgstr "Forrige"
+
+msgid "Priority"
+msgstr "Prioritet"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "RAM usage"
+msgstr "RAM-bruk"
+
+msgid "Range"
+msgstr "Område"
+
+msgid "Refresh"
+msgstr "Oppdater"
+
+msgid "Remember main window position"
+msgstr "Husk hoved vindu posisjon"
+
+msgid "Remember pad window position"
+msgstr "Husk pad vindu posisjon"
+
+msgid "Remove"
+msgstr "Fjern"
+
+msgid "Removes the currently selected game path from the game list"
+msgstr "Fjerner den valgte spillbanen fra spillelisten"
+
+msgid "Reset &order"
+msgstr "Tilbakestill &rekkefølge"
+
+msgid "Reset &width"
+msgstr "Tilbakestill &bredde"
+
+msgid "Reset the default state of the controller"
+msgstr "Tilbakestill standardtilstanden til kontrolleren"
+
+msgid "Resolution"
+msgstr "Oppløsning"
+
+msgid "Restart"
+msgstr "Omstart"
+
+msgid "Restart of TesseraEmu required for changes to take effect"
+msgstr "Start TesseraEmu på nytt for at endringene skal tre i kraft"
+
+msgid "Restores the last known pad window position and size when opening it"
+msgstr ""
+"Gjenoppretter den siste kjente pad vindu posisjon og størrelse når du åpner "
+"den"
+
+msgid "Restores the last known window position and size when starting TesseraEmu"
+msgstr "Gjenoppretter den sist kjente vindusposisjonen og størrelsen når du starter TesseraEmu"
+
+msgid "Results"
+msgstr "Resultater"
+
+msgid "Results ({0})"
+msgstr "Resultater ({0})"
+
+msgid "Resume"
+msgstr "Gjenoppta"
+
+msgid "Right Axis"
+msgstr "Høyre Akse"
+
+msgid "Rumble"
+msgstr "Vibrering"
+
+msgid "Run (F5)"
+msgstr "Kjør (F5)"
+
+msgid "Save"
+msgstr "Lagre"
+
+msgid "Save screenshot"
+msgstr "Lagre Skjermbilde"
+
+msgid "Scale"
+msgstr "Skala"
+
+msgid "Search"
+msgstr "Søk"
+
+msgid "Searching for controllers..."
+msgstr "Søker etter kontrollere…"
+
+msgid "Searching for wiimotes..."
+msgstr "Søker etter wiimotes…"
+
+msgid ""
+"Select a custom mlc path\n"
+"The mlc path is used to store Wii U related files like save games, game "
+"updates and dlc data"
+msgstr ""
+"Velg en tilpasset mlc-bane\n"
+"Mlc-banen brukes til å lagre Wii U-relaterte filer som lagre spill, "
+"spilloppdateringer og tilleggspakke-data"
+
+msgid "Select a custom path"
+msgstr "Velg en egendefinert bane"
+
+msgid "Select a directory containing games."
+msgstr "Velg en katalog som inneholder spill."
+
+msgid "Select a folder"
+msgstr "Velg en mappe"
+
+msgid "Select a mlc directory"
+msgstr "Velg en mlc-mappe"
+
+msgid "Select one of the available audio back ends"
+msgstr "Velg en av de tilgjengelige lydendene"
+
+msgid "Select one of the available graphic back ends"
+msgstr "Velg en av de tilgjengelige grafiske bakendene"
+
+msgid "Select the active audio output device for Wii U GamePad"
+msgstr "Velge den aktive lydutgangsenheten for Wii U GamePad"
+
+msgid "Select the active audio output device for Wii U TV"
+msgstr "Velg den aktive lydutgangsenheten for Wii U TV"
+
+msgid "Select the used graphic device"
+msgstr "Velg ønsket grafikk enhet"
+
+msgid "Set comment for breakpoint at address %08x"
+msgstr "Angi kommentar for stoppunkt på adresse %08x"
+
+msgid "Set the CPU emulation mode"
+msgstr "Sett CPU emuleringsmodus"
+
+msgid "Sets the scale of the notification text"
+msgstr "Angir størrelsen på varslingsteksten"
+
+msgid "Sets the scale of the overlay text"
+msgstr "Setter skalaen til overlegg tekst"
+
+msgid "Sets the text color of notifications"
+msgstr "Angir tekstfargen på varslinger"
+
+msgid "Sets the text color of the overlay"
+msgstr "Angir tekstfargen på overlegget"
+
+msgid "Settings"
+msgstr "Innstillinger"
+
+msgid "Shader cache migration"
+msgstr "Stader buffer migrering"
+
+msgid "Shader compiler"
+msgstr "Shader-kompilator"
+
+msgid "Shader mul accuracy"
+msgstr "Shader mul presisjon"
+
+msgid "Show &dlc"
+msgstr "Vis &dlc"
+
+msgid "Show &game time"
+msgstr "Vis &spilletid"
+
+msgid "Show &last played"
+msgstr "Vis &sist split"
+
+msgid "Show &name"
+msgstr "Vis &navn"
+
+msgid "Show &version"
+msgstr "Vis &Versjon"
+
+msgid "Show only active"
+msgstr "Vis bare aktive"
+
+msgid "Show views"
+msgstr "Vis Visninger"
+
+msgid "Shows a notification after shaders have been compiled"
+msgstr "Viser et varsel etter at shaderne har blitt kompilert"
+
+msgid "Shows a notification when a low controller battery has been detected"
+msgstr "Viser et varsel når et lite lavt kontroller batteri har blitt oppdaget"
+
+msgid "Shows friend list related data if online"
+msgstr "Viser venneliste relatert data hvis de er online"
+
+msgid "Singlecore-Interpreter"
+msgstr "Enkeltkjerner-tolk"
+
+msgid "Singlecore-Recompiler"
+msgstr "Enkelkjerne-Omkompilator"
+
+msgid "Size"
+msgstr "Størrelse"
+
+msgid "SliceRange"
+msgstr "SliceRange"
+
+msgid "SliceStart"
+msgstr "SliceStart"
+
+msgid "Stack"
+msgstr "Stabel"
+
+msgid "Start games with fullscreen"
+msgstr "Start spill i fullskjermmodus"
+
+msgid "State"
+msgstr "Tilstand"
+
+msgid "Step Into (F11)"
+msgstr "Step Into (F11)"
+
+msgid "Step Over (F10)"
+msgstr "Step Over (F10)"
+
+msgid "Stereo"
+msgstr "Stereo"
+
+msgid "Stored Entries"
+msgstr "Lagrede oppføringer"
+
+msgid "Stretch"
+msgstr "Strekk"
+
+msgid "Style: &Icons"
+msgstr "Stil: &Ikoner"
+
+msgid "Style: &List"
+msgstr "Stil: &Liste"
+
+msgid "Style: &Small Icons"
+msgstr "Stil: &Små Ikoner"
+
+msgid "Success"
+msgstr "Suksess"
+
+msgid "SumWakeTime"
+msgstr "SumWakeTime"
+
+msgid "Surround"
+msgstr "Surround"
+
+msgid "Suspend"
+msgstr "Suspender"
+
+msgid "TV"
+msgstr "TV"
+
+msgid "Test if the controller is connected"
+msgstr "Test om kontrolleren er tilkoblet"
+
+msgid "Text Color"
+msgstr "Textfarge"
+
+msgid "Texture cache"
+msgstr "Teksturbuffer"
+
+msgid "The VRAM usage of TesseraEmu in MB"
+msgstr "VRAM TesseraEmu bruk i MB"
+
+msgid "The entered port must be between 1 and 65535"
+msgstr "Den angitte porten må være mellom 1 og 65535"
+
+msgid ""
+"The game path is scanned by Cemu to locate your games. We recommend creating "
+"a dedicated directory in which\n"
+"you place all your Wii U games. (example: C:\\wiiu\\games\\)\n"
+"\n"
+"You can also set additional paths in the general settings of Cemu."
+msgstr ""
+"Spillbanen blir skannet av Cemu for å finne spillene dine. Vi anbefaler å "
+"lage en dedikert katalog der\n"
+"du plasserer alle Wii U spillene dine. (eksempel: C:\\wiiu\\games\\)\n"
+"\n"
+"Du kan også angi flere baner i de generelle innstillingene til Cemu."
+
+msgid "The given \"meta.xml\" file is no update or DLC."
+msgstr "Den gitte \"meta.xml\" filen er ingen oppdatering eller tilleggspakke."
+
+msgid "The given profile name is not valid!"
+msgstr "Det gitte profilnavnet er ikke gyldig!"
+
+msgid "The mii name is the profile name"
+msgstr "Mii navnet er profil navnet"
+
+msgid ""
+"The mlc directory contains your save games and installed game update/dlc data"
+msgstr ""
+"Mappen mlc inneholder lagre spill og installert spilloppdatering/"
+"tilleggspakke-data"
+
+msgid ""
+"The mlc path is the root folder of the emulated Wii U internal flash "
+"storage. It contains all your saves, installed updates and DLCs.\n"
+"It is strongly recommend that you create a dedicated folder for it (example: "
+"C:\\wiiu\\mlc\\) \n"
+"If left empty, the mlc folder will be created inside the Cemu folder."
+msgstr ""
+"MLC-banen er rotmappen til den emulerte Wii U’s interne flash lagringen. Den "
+"inneholder alle lagringene dine, installerte oppdateringer og "
+"utvidelsespakker.\n"
+"Det anbefales på det sterkeste at du lager en dedikert mappe for den "
+"(eksempel: C:\\wiiu\\mlc\\) \n"
+"Hvis den blir tom, opprettes mlc-mappen i Cemu-mappen."
+
+msgid "The number of draw calls per frame. Average over last 5 seconds"
+msgstr ""
+"Antall bilde anrop per bildefrekvens. Gjennomsnitt over siste 5 sekunder"
+
+msgid "The number of frames per second. Average over last 5 seconds"
+msgstr "Antall bilder per sekund. Gjennomsnitt over siste 5 sekunder"
+
+msgid "The persistent id is the internal folder name used for your saves"
+msgstr "Den vedvarende IDen er det interne mappenavnet som brukes til lagring"
+
+msgid ""
+"The persistent id is the internal folder name used for your saves. Only "
+"change this if you are importing saves from a Wii U with a specific id"
+msgstr ""
+"Den vedvarende IDen er det interne mappenavnet som brukes til lagring. Endre "
+"dette bare hvis du importerer lagringer fra en Wii U med en spesifikk ID"
+
+msgid "The persistent id must be greater than {:x}!"
+msgstr "Den vedvarende IDen må være større enn {:x}!"
+
+msgid "The persistent id {:x} is already in use by account {}!"
+msgstr "Den vedvarende ID {:x} er allerede i bruk av kontoen {}!"
+
+msgid ""
+"The threshold of a button to recognizes a press from a trigger/axis value"
+msgstr ""
+"Terskelen til en knapp for å gjenkjenne et trykk fra en trigger/akseverdi"
+
+msgid ""
+"There's a new update available.\n"
+"Do you want to update?"
+msgstr ""
+"Det er en ny oppdatering tilgjengelig.\n"
+"Vil du oppdatere?"
+
+msgid ""
+"This game entry seems to be either an update or the base game was merged with update data\n"
+"Broken game dumps cause various problems during emulation and may even stop working at all in future TesseraEmu versions\n"
+"Please make sure the base game is intact and install updates only with the File->Install Update/DLC option"
+msgstr ""
+"Denne spilloppføringen ser ut til å være enten en oppdatering, eller så ble basisspillet slått sammen med oppdateringsdata\n"
+"Ødelagte spilldumper forårsaker forskjellige problemer under emulering og kan til og med slutte å fungere i det hele tatt i fremtidige TesseraEmu-versjoner\n"
+"Forsikre deg om at basisspillet er intakt og installer oppdateringer bare med alternativet Fil->Installer Oppdatering/utvidelsespakke valget"
+
+msgid "This graphic pack has no description"
+msgstr "Denne Grafikk pakken har ingen beskrivelse"
+
+msgid "This option requires Win8.1+"
+msgstr "Dette alternativet krever Win8.1+"
+
+msgid "This update removed or renamed the following graphic packs:"
+msgstr ""
+"Denne oppdateringen fjernet eller endret navn til følgende grafikk pakker:"
+
+msgid "Thread quantum"
+msgstr "Tråd kvante"
+
+msgid "ThreadName"
+msgstr "Trådnavn"
+
+msgid "Tilemode"
+msgstr "Tilemode"
+
+msgid "Toggle Breakpoint (F9)"
+msgstr "Veksle Stoppunkt (F9)"
+
+msgid "Top center"
+msgstr "Øverst sentrum"
+
+msgid "Top left"
+msgstr "Øverst til venstre"
+
+msgid "Top right"
+msgstr "Øverst til høyre"
+
+msgid "Total cpu usage in percent for each core"
+msgstr "Den totale CPU bruken i prosent for hver kjerne"
+
+msgid "Triple buffering"
+msgstr "Trippel buffring"
+
+msgid "Triplecore-Recompiler"
+msgstr "Trippelkjerne-Omkompilator"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Unable to open file."
+msgstr "Kan ikke åpne fil."
+
+msgid "Unknown error occured"
+msgstr "Ukjent feil oppstod"
+
+msgid "Unknown file type."
+msgstr "Ukjent fil type."
+
+msgid "Update"
+msgstr "Oppdater"
+
+msgid "Update available!"
+msgstr "Oppdatering tilgjengelig!"
+
+msgid "Update error"
+msgstr "Oppdateringsfeil"
+
+msgid "Update installation has been canceled!"
+msgstr "Oppdateringen er avbrutt!"
+
+msgid "Update installed!"
+msgstr "Oppdatering installert!"
+
+msgid "Update notification"
+msgstr "Oppdaterings varsel"
+
+msgid ""
+"Updated graphic packs are available. Do you want to download and install "
+"them?"
+msgstr ""
+"Oppdaterte grafikk pakker er tilgjengelige. Vil du laste ned og installere "
+"dem?"
+
+msgid "Updating game list..."
+msgstr "Oppdatere spillisten…"
+
+msgid "Upscale filter"
+msgstr "Oppskaleringsfilter"
+
+msgid ""
+"Upscaling filters are used when the game resolution is smaller than the "
+"window size"
+msgstr ""
+"Oppskaleringsfilter brukes når spilloppløsningen er mindre enn "
+"vindusstørrelsen"
+
+msgid "Use existing cache"
+msgstr "Bruk eksisterende hurtigbuffer"
+
+msgid "VRAM usage"
+msgstr "VRAM bruk"
+
+msgid "VSync"
+msgstr "VSync"
+
+msgid "Version"
+msgstr "Versjon"
+
+msgid "Volume"
+msgstr "Volum"
+
+msgid "Warning"
+msgstr "Advarsel"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "You can configure game paths in the general settings."
+msgstr "Du kan konfigurere spillbane i de generelle innstillingene."
+
+msgid ""
+"You can configure one controller for each player.\n"
+"We advise you to always use GamePad as emulated input for the first player, "
+"since many games expect the GamePad to be present.\n"
+"It is also required for touch functionality.\n"
+"The default global hotkeys are:\n"
+"CTRL - show pad screen\n"
+"CTRL + TAB - toggle pad screen\n"
+"ALT + ENTER - toggle fullscreen\n"
+"ESC - leave fullscreen\n"
+"\n"
+"If you're having trouble configuring your controller, make sure to have it "
+"in idle state and press calibrate.\n"
+"Also don't set the axis deadzone too low."
+msgstr ""
+"Du kan konfigurere en kontroller for hver spiller.\n"
+"Vi anbefaler deg å alltid bruke GamePad som emulert input for den første "
+"spilleren, siden mange spill forventer at GamePad vil være til stede.\n"
+"Det kreves også for berøringsfunksjonalitet.\n"
+"Standard globale hurtigtaster er:\n"
+"CTRL - Vis pad skjerm\n"
+"CTRL + TAB - for å skifte pad-skjerm\n"
+"ALT + ENTER - veksle på fullskjerm\n"
+"ESC - gå ut av fullskjerm\n"
+"\n"
+"Hvis du har problemer med å konfigurere kontrolleren din, må du sørge for at "
+"den er i hviletilstand og trykk på kalibrer.\n"
+"Sett heller ikke aksens dødzone for lavt."
+
+msgid "You have to restart the game in order to apply the new settings."
+msgstr "Du må starte spillet på nytt for å kunne bruke de nye innstillingene."
+
+msgid "You may need to set them up again."
+msgstr "Du må kanskje konfigurere dem igjen."
+
+msgid "You've played"
+msgstr "Du har spilt"
+
+msgid "Your entered value is not valid for the selected datatype."
+msgstr "Den angitte verdien er ikke gyldig for den valgte datatypen."
+
+msgid ""
+"Your mlc01 folder seems to be missing.\n"
+"\n"
+"This is where Cemu stores save files, game updates and other Wii U files.\n"
+"\n"
+"The expected path is:\n"
+"{}\n"
+"\n"
+"Do you want to create the folder at the expected path?"
+msgstr ""
+"Det virker som om mlc01 mappen din mangler.\n"
+"\n"
+"Det er her Cemu lagrer saves filer, spilloppdateringer og andre Wii U-"
+"filer.\n"
+"\n"
+"Den forventede banen er:\n"
+"{}\n"
+"\n"
+"Vil du opprette mappen på den forventede banen?"
+
+msgid "address"
+msgstr "adresse"
+
+msgid "auto"
+msgstr "auto"
+
+msgid "blow mic"
+msgstr "blås Mikrofon"
+
+msgid "cycles"
+msgstr "sykluser"
+
+msgid "description"
+msgstr "beskrivelse"
+
+msgid "disable"
+msgstr "deaktiver"
+
+msgid "enable"
+msgstr "aktiver"
+
+msgid "false"
+msgstr "falsø"
+
+msgid "freeze"
+msgstr "frys"
+
+msgid "high"
+msgstr "høy"
+
+msgid "low"
+msgstr "lav"
+
+msgid "medium"
+msgstr "medium"
+
+msgid "minimal"
+msgstr "minimalt"
+
+msgid "mlc01 path"
+msgstr "mlc01 bane"
+
+msgid "never"
+msgstr "aldri"
+
+msgid "otp.bin could not be found"
+msgstr "otp.bin ble ikke funnet"
+
+msgid "otp.bin is corrupted or has invalid size"
+msgstr "otp.bin er korrupt eller har ugyldig størrelse"
+
+msgid "seeprom.bin could not be found"
+msgstr "seeprom.bin ble ikke funnet"
+
+msgid "seeprom.bin is corrupted or has invalid size"
+msgstr "seeprom.bin er korrupt eller har ugyldig størrelse"
+
+msgid "show screen"
+msgstr "vis skjerm"
+
+msgid "true"
+msgstr "sant"
+
+msgid "type"
+msgstr "type"
+
+msgid "value"
+msgstr "verdi"

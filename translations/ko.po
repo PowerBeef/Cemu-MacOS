@@ -1,0 +1,2935 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Cemu\n"
+"PO-Revision-Date: 2024-08-28 15:00+0900\n"
+"Last-Translator: Hack茶ん <http://blog.naver.com/jhacker>\n"
+"Language-Team: TNC\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.4.4\n"
+
+msgid "&0.125x speed"
+msgstr "&0.125배속"
+
+msgid "&0.25x speed"
+msgstr "&0.25배속"
+
+msgid "&0.5x speed"
+msgstr "&0.5배속"
+
+msgid "&1x speed"
+msgstr "&1배속"
+
+msgid "&2x speed"
+msgstr "&2배속"
+
+msgid "&4x speed"
+msgstr "&4배속"
+
+msgid "&8x speed"
+msgstr "&8배속"
+
+msgid "&About TesseraEmu"
+msgstr "TesseraEmu 정보(&A)"
+
+msgid "&Accurate barriers (Vulkan)"
+msgstr "정밀 방벽(&A) [Vulkan]"
+
+msgid "&Active account"
+msgstr "활성 계정(&A)"
+
+msgid "&Add new entry"
+msgstr "새 항목 추가(&A)"
+
+msgid "&Audio AUX only"
+msgstr "음향 AUX만(&A)"
+
+msgid "&Breakpoints"
+msgstr "브레이크 포인트(&B)"
+
+msgid "&CPU"
+msgstr "&CPU"
+
+msgid "&CafeOS modules logging"
+msgstr "&CafeOS 모듈 기록"
+
+msgid "&Check for updates"
+msgstr "업데이트 확인(&C)"
+
+msgid "&Chinese"
+msgstr "중국어(&C)"
+
+msgid "&Console language"
+msgstr "콘솔 언어(&C)"
+
+msgid "&Copy"
+msgstr "복사(&C)"
+
+msgid "&Copy Title ID"
+msgstr "타이틀 ID 복사(&C)"
+
+msgid "&Copy Title Image"
+msgstr "제목 이미지 복사(&C)"
+
+msgid "&Copy Title Name"
+msgstr "제목 이름 복사(&C)"
+
+msgid "&Coreinit Logging (OSReport/OSConsole)"
+msgstr "코어이니트 로깅(&C) [OSReport/OSConsole]"
+
+msgid "&Create shortcut"
+msgstr "바로 가기 만들기(&C)"
+
+msgid "&DLC directory"
+msgstr "&DLC 디렉터리"
+
+msgid "&Debug"
+msgstr "디버그(&D)"
+
+msgid "&Decrement"
+msgstr "감ㅅ(&D)"
+
+msgid "&Delete"
+msgstr "삭제(&D)"
+
+msgid "&Download"
+msgstr "내려받기(&D)"
+
+msgid "&Download Manager"
+msgstr "내려받기 관리자(&D)"
+
+msgid "&Dump"
+msgstr "덤프(&D)"
+
+msgid "&Dump current RAM"
+msgstr "현재 RAM 덤프(&D)"
+
+msgid "&Dutch"
+msgstr "네덜란드어(&D)"
+
+msgid "&Edit game profile"
+msgstr "게임 프로필 수정(&E)"
+
+msgid "&Edit graphic packs"
+msgstr "그래픽 팩 수정(&E)"
+
+msgid "&Edit name"
+msgstr "이름 수정(&E)"
+
+msgid "&Emulated USB Devices"
+msgstr "에뮬레이트된 USB 장치(&E)"
+
+msgid "&English"
+msgstr "영어(&E)"
+
+msgid "&Exit"
+msgstr "종료(&E)"
+
+msgid "&Favorite"
+msgstr "즐겨찾기(&F)"
+
+msgid "&File"
+msgstr "파일(&F)"
+
+msgid "&French"
+msgstr "프랑스어(&F)"
+
+msgid "&Fullscreen"
+msgstr "전체 화면(&F)"
+
+msgid "&Game directory"
+msgstr "게임 디렉터리(&G)"
+
+msgid "&General settings"
+msgstr "일반 설정(&G)"
+
+msgid "&German"
+msgstr "독일어(G)"
+
+msgid "&Goto Disasm"
+msgstr "디스 어셈블으로 이동(&G)"
+
+msgid "&Graphic pack patches"
+msgstr "그래픽 팩 패치(&G)"
+
+msgid "&Graphic packs"
+msgstr "그래픽 팩(&G)"
+
+msgid "&Help"
+msgstr "도움말(&H)"
+
+msgid "&Increment"
+msgstr "증가(&I)"
+
+msgid "&Input settings"
+msgstr "입력 설정(&I)"
+
+msgid "&Install game title, update or DLC..."
+msgstr "게임 타이틀/업데이트/DLC 설치(&I)"
+
+msgid "&Invalid API usage"
+msgstr "유효하지 않은 API 사용(&I)"
+
+msgid "&Italian"
+msgstr "이탈리아어(&I)"
+
+msgid "&Japanese"
+msgstr "일본어(&J)"
+
+msgid "&Korean"
+msgstr "한국어(&K)"
+
+msgid "&Launch title"
+msgstr "실행 타이틀(&L)"
+
+msgid "&Launch with GDB stub"
+msgstr "GDB 스텁으로 실행(&L)"
+
+msgid "&Load..."
+msgstr "불러오기(&L)..."
+
+msgid "&Log PPC context for API"
+msgstr "API용 PPC 컨텍스트 로그(&L)"
+
+msgid "&Logging"
+msgstr "로그 기록(&L)"
+
+msgid "&Memory Dump"
+msgstr "메모리 덤프(&M)"
+
+msgid "&Memory searcher"
+msgstr "메모리 검색기(&M)"
+
+msgid "&NFC"
+msgstr "&NFC"
+
+msgid "Open TesseraEmu folder"
+msgstr "TesseraEmu 폴더 열기(&O)"
+
+msgid "&Open MLC folder"
+msgstr "MLC 폴더 열기(&O)"
+
+msgid "&Open directory"
+msgstr "디렉터리 열기(&O)"
+
+msgid "&Open logging window"
+msgstr "로깅 창 열기(&O)"
+
+msgid "&OpenGL debug output"
+msgstr "&OpenGL 디버그 출력"
+
+msgid "&Options"
+msgstr "옵션(&O)"
+
+msgid "&Options below are for experts. Leave off if unsure"
+msgstr "아래 옵션(&O)은 전문가용입니다. 모르겠으면 건드리지마"
+
+msgid "&Pin to main window"
+msgstr "기본 창에 고정(&P)"
+
+msgid "&Portuguese"
+msgstr "포르투칼어(&P)"
+
+msgid "&Refresh game list"
+msgstr "게임 목록 새로 고침(&R)"
+
+msgid "&Registers"
+msgstr "레지스터(&R)"
+
+msgid "&Remove entry"
+msgstr "항목 제거(&R)"
+
+msgid "&Remove shader caches"
+msgstr "셰이더 캐시 제거(&R)"
+
+msgid "&Render upside-down"
+msgstr "뒤집어 렌더링(&R)"
+
+msgid "&Resume"
+msgstr "이력(&R)"
+
+msgid "&Retry"
+msgstr "다시 시도(&R)"
+
+msgid "&Russian"
+msgstr "러시아어(&R)"
+
+msgid "&Save directory"
+msgstr "디렉터리 저장(&V)"
+
+msgid "&Scan NFC tag from file"
+msgstr "파일에서 NFC 태그 스캔(&S)"
+
+msgid "&Separate GamePad view"
+msgstr "별도의 게임패드 보기(&S)"
+
+msgid "&Shaders"
+msgstr "셰이더(&S)"
+
+msgid "&Spanish"
+msgstr "스페인어(&S)"
+
+msgid "&Start"
+msgstr "시작(&S)"
+
+msgid "&Symbols"
+msgstr "기호(&S)"
+
+msgid "&Taiwanese"
+msgstr "대만어(&T)"
+
+msgid "&Texture cache warnings"
+msgstr "텍스처 캐시 경고(&T)"
+
+msgid "&Texture readback"
+msgstr "텍스처 리드백(&T)"
+
+msgid "&Textures"
+msgstr "텍스처(&T)"
+
+msgid "&Timer speed"
+msgstr "타이머 속도(&T)"
+
+msgid "&Title Manager"
+msgstr "타이틀 관리자(&T)"
+
+msgid "&Tools"
+msgstr "도구(&T)"
+
+msgid "&Unsupported API calls"
+msgstr "미지원 API 호출(&U)"
+
+msgid "&Update directory"
+msgstr "디렉터리 업데이트(&U)"
+
+msgid "&Verify integrity of game files"
+msgstr "게임 파일의 무결성 확인"
+
+msgid "&View PPC debugger"
+msgstr "PPC 디버거 보기(&V)"
+
+msgid "&View PPC threads"
+msgstr "PPC 스레드 보기(&V)"
+
+msgid "&View audio debugger"
+msgstr "음향 디버거 보기(&V)"
+
+msgid "&View texture cache info"
+msgstr "텍스처 캐시 정보 표시(&V)"
+
+msgid "&Vulkan validation layer (slow)"
+msgstr "&Vulkan 유효성 검사 계층(느림)"
+
+msgid "&Wiki page"
+msgstr "위키 문서(&W)"
+
+msgid "&Window"
+msgstr "창(&W)"
+
+msgid "&Zero"
+msgstr "제로(&Z)"
+
+msgid "&nlibcurl HTTP/HTTPS requests"
+msgstr "&nlibcurl HTTP/HTTPS 요청"
+
+msgid "0"
+msgstr "0"
+
+msgid "<profile name>"
+msgstr "<프로필 이름>"
+
+msgid "> no modules loaded"
+msgstr "> 불러온 모듈 없음"
+
+msgid "> unknown module"
+msgstr "> 알 수 없는 모듈"
+
+msgid "API"
+msgstr "API"
+
+msgid "AX voice viewer"
+msgstr "AX 음성 뷰어"
+
+msgid "About TesseraEmu"
+msgstr "TesseraEmu 정보"
+
+msgid "Account"
+msgstr "계정"
+
+msgid "Account information"
+msgstr "계정 정보"
+
+msgid "Account name may not be empty!"
+msgstr "계정 이름이 비어 있지 않을 수 있습니다!"
+
+msgid "Account settings"
+msgstr "계정 설정"
+
+msgid "AccountId missing (The account is not connected to a NNID/PNID)"
+msgstr "AccountId 누락(계정이 NNID/PNID에 연결되지 않음)"
+
+msgid ""
+"AccountPasswordCache is empty (The remember password option on your Wii U "
+"must be enabled for this account before dumping it)"
+msgstr ""
+"계정 비밀번호 캐시가 비어 있음(덤프하기 전에 이 계정에 대해 Wii U의 비밀번호 "
+"기억 옵션이 활성화되어 있어야 함)"
+
+msgid "Accurate barriers are off"
+msgstr "정밀 방벽 해제"
+
+msgid "Active account"
+msgstr "활성 계정"
+
+msgid "Active preset"
+msgstr "활성 프리셋"
+
+msgid "Add"
+msgstr "추가"
+
+msgid ""
+"Add the root directory of your game(s). It will scan all directories in it "
+"for games"
+msgstr ""
+"게임의 루트 디렉터리를 추가합니다. 그 안에 있는 모든 디렉터리에서 게임 검색"
+
+msgid "Additional options"
+msgstr "추가 옵션"
+
+msgid "Address"
+msgstr "주소"
+
+msgid ""
+"Adds a game path to scan for games displayed in the game list\n"
+"If you have unpacked games, make sure to select the root folder of a game"
+msgstr ""
+"게임 목록에 표시된 게임을 검색할 게임 경로를 추가\n"
+"압축을 푼 게임이 있는 경우, 게임의 루트 폴더를 선택"
+
+msgid "All Wii U files (*.wud, *.wux, *.wua, *.wuhb, *.iso, *.rpx, *.elf)"
+msgstr "모든 Wii U 파일(*.wud, *.wux, *.wua, *.wuhb, *.iso, *.rpx, *.elf)"
+
+msgid "All files (*.*)"
+msgstr "모든 파일(*.*)"
+
+msgid "Applying update..."
+msgstr "업데이트 적용..."
+
+msgid ""
+"Are you really sure that you want to delete the following file:\n"
+"{}"
+msgstr ""
+"정말 다음 파일을 삭제하시겠습니까?\n"
+"{}"
+
+msgid ""
+"Are you really sure that you want to delete the following folder:\n"
+"{}"
+msgstr ""
+"정말 다음 폴더를 삭제하시겠습니까?\n"
+"{}"
+
+msgid "Are you really sure that you want to delete the save entry for {}"
+msgstr "{}에 대한 저장 항목을 정말 삭제하시겠습니까?"
+
+msgid "Are you sure you want to delete the account {} with id {:x}?"
+msgstr "아이디 {:x}의 {} 계정을 삭제하시겠습니까?"
+
+msgid "Async shader compile"
+msgstr "비동기 셰이더 컴파일"
+
+msgid ""
+"Async shader compile is enabled but not supported by the graphics driver\n"
+"Cemu will use synchronous compilation which can cause additional stutter"
+msgstr ""
+"비동기 셰이더 컴파일이 활성화되었지만 그래픽 드라이버에서 지원하지 않는 경"
+"우\n"
+"Cemu는 동기 컴파일을 사용하므로 추가적인 버벅거림이 발생할 수 있습니다."
+
+msgid "Audio"
+msgstr "음향"
+
+msgid "Audio API"
+msgstr "음향 API"
+
+msgid "Australia"
+msgstr "호주"
+
+msgid "Auto"
+msgstr "자동"
+
+msgid "Auto (recommended)"
+msgstr "자동(권장)"
+
+msgid "Auto refresh"
+msgstr "자동 새로 고침"
+
+msgid "Automatically check for updates"
+msgstr "업데이트 자동 확인"
+
+msgid "Automatically checks for new cemu versions on startup"
+msgstr "시작 시, 새로운 cemu 버전 자동 확인"
+
+msgid "Axis"
+msgstr "축"
+
+msgid "Base game"
+msgstr "베이스 게임"
+
+msgid ""
+"Base game:\n"
+"Not installed"
+msgstr ""
+"베이스 게임 :\n"
+"설치되지 않음"
+
+msgid ""
+"Base game:\n"
+"{}"
+msgstr ""
+"베이스 게임 :\n"
+"{}"
+
+msgid "Bicubic"
+msgstr "쌍입방"
+
+msgid "Bilinear"
+msgstr "쌍선형"
+
+msgid "Birthday"
+msgstr "생일"
+
+msgid "Boost priority (-1)"
+msgstr "우선순위 강화(-1)"
+
+msgid "Boost priority (-5)"
+msgstr "우선순위 강화(-5)"
+
+msgid "Bottom center"
+msgstr "하단 중앙"
+
+msgid "Bottom left"
+msgstr "좌측 하단"
+
+msgid "Bottom right"
+msgstr "우측 하단"
+
+msgid "Break (F5)"
+msgstr "중단(F5)"
+
+msgid "Break on &entry point"
+msgstr "진입 지점 중단(&E)"
+
+msgid "Breakpoints"
+msgstr "브레이크 포인트"
+
+msgid "Browse"
+msgstr "찾아보기"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "CPU per core usage"
+msgstr "코어당 CPU 사용량"
+
+msgid "CPU usage"
+msgstr "CPU 사용량"
+
+msgid "CPU usage of TesseraEmu in percent"
+msgstr "TesseraEmu의 CPU 사용량(%)"
+
+msgid "Calibrate"
+msgstr "보정"
+
+msgid "Can't change MLC path while a game is running!"
+msgstr "게임이 실행 중일 때는 MLC 경로를 변경할 수 없습니다!"
+
+msgid "Can't delete the only account!"
+msgstr "유일한 계정을 삭제할 수 없습니다!"
+
+msgid "Can't open file to write!"
+msgstr "쓰기 위해 파일을 열 수 없습니다!"
+
+msgid "Can't open file!"
+msgstr "파일을 열 수 없습니다!"
+
+msgid "Can't parse JSON file!"
+msgstr "JSON 파일을 구문 분석할 수 없습니다!"
+
+msgid "Can't write to file: {}"
+msgstr "파일에 쓸 수 없음 : {}"
+
+msgid "Cancel"
+msgstr "취소"
+
+msgid "Cannot create file"
+msgstr "파일을 만들 수 없음"
+
+msgid "Cannot open file"
+msgstr "파일을 열 수 없음"
+
+msgid "Cannot write file. Disk full?"
+msgstr "파일을 쓸 수 없습니다. 디스크가 가득 찼나요?"
+
+msgid "Capturing samples..."
+msgstr "표본 캡처 중..."
+
+msgid ""
+"Capturing samples... ({:})\n"
+"Results will be written to log.txt\n"
+msgstr ""
+"샘플 캡처 중... ({:})\n"
+"결과는 log.txt에 기록됩니다.\n"
+
+msgid ""
+"Cemu\n"
+"Version {0}\n"
+"Compiled on {1}\n"
+"Original authors: {2}"
+msgstr ""
+"Cemu\n"
+"버전 {0}\n"
+"{1}에 컴파일됨\n"
+"원작자 : {2}"
+
+msgid "TesseraEmu RAM usage in MB"
+msgstr "TesseraEmu RAM 사용량(MB)"
+
+msgid "TesseraEmu can't write to {}!"
+msgstr "TesseraEmu가 {}에 쓸 수 없습니다!"
+
+msgid ""
+"Cemu detected that the shader cache for this game is outdated.\n"
+"Only shader caches generated with Cemu 1.25.0 or above are supported.\n"
+"\n"
+"We recommend deleting the outdated cache file as it will no longer be used "
+"by Cemu."
+msgstr ""
+"이 게임의 셰이더 캐시가 오래된 것으로 감지되었습니다.\n"
+"Cemu 1.25.0 이상에서 생성된 셰이더 캐시만 지원됩니다.\n"
+"\n"
+"오래된 캐시 파일은 더 이상 Cemu에서 사용되지 않으므로 삭제하는 것이 좋습니다."
+
+msgid ""
+"TesseraEmu failed to write to the custom mlc directory.\n"
+"\n"
+"The path is:\n"
+"{}\n"
+"\n"
+"TesseraEmu cannot start without a valid mlc path. Do you want to reset the path? You can later change it again in the General Settings."
+msgstr ""
+"TesseraEmu가 사용자 지정 mlc 디렉터리에 쓰지 못했습니다.\n"
+"\n"
+"경로 :\n"
+"{}\n"
+"\n"
+"유효한 mlc 경로가 없으면 TesseraEmu를 시작할 수 없습니다. 경로를 재설정하시겠습니까? 나중에 일반 설정에서 다시 변경할 수 있습니다."
+
+msgid ""
+"TesseraEmu failed to write to the custom mlc directory.\n"
+"The path is:\n"
+"{}"
+msgstr ""
+"TesseraEmu가 사용자 지정 mlc 디렉터리에 쓰지 못했습니다.\n"
+"경로 :\n"
+"{}"
+
+msgid ""
+"TesseraEmu failed to write to the mlc directory.\n"
+"The path is:\n"
+"{}"
+msgstr ""
+"TesseraEmu가 mlc 디렉터리에 쓰지 못했습니다.\n"
+"경로 :\n"
+"{}"
+
+msgid ""
+"Cemu is a Wii U emulator.\n"
+"\n"
+"Wii and Wii U are trademarks of Nintendo.\n"
+"Cemu is not affiliated with Nintendo."
+msgstr ""
+"Cemu는 Wii U 에뮬레이터입니다.\n"
+"\n"
+"Wii 및 Wii U는 Nintendo의 상표입니다.\n"
+"Cemu는 닌텐도와 제휴한 바 없습니다."
+
+msgid "TesseraEmu is running in portable mode"
+msgstr "TesseraEmu가 포터블 모드로 실행 중"
+
+msgid "TesseraEmu must be restarted to apply the selected UI language."
+msgstr "선택한 UI 언어를 적용하려면 TesseraEmu를 다시 시작해야 합니다."
+
+msgid "TesseraEmu needs to be restarted for the changes to take effect."
+msgstr "변경 사항을 적용하려면 TesseraEmu를 다시 시작해야 합니다."
+
+msgid "TesseraEmu update"
+msgstr "TesseraEmu 업데이트"
+
+msgid "Changelog"
+msgstr "변경 로그"
+
+msgid ""
+"Changes the interface language of TesseraEmu\n"
+"Available languages are stored in the translation directory\n"
+"A restart will be required after changing the language"
+msgstr ""
+"TesseraEmu의 인터페이스 언어 변경\n"
+"사용 가능한 언어는 번역 디렉토리에 저장\n"
+"언어 변경 후, 다시 시작 필요"
+
+msgid "Changes the port that the GDB stub will use, which you can use by either starting TesseraEmu with the --enable-gdbstub option or by enabling it the Debug tab."
+msgstr "GDB 스터브가 사용할 포트를 변경하며, --enable-gdbstub 옵션으로 TesseraEmu를 시작하거나 디버그 탭에서 활성화하여 사용할 수 있습니다."
+
+msgid "Channels"
+msgstr "채널"
+
+msgid "Checking"
+msgstr "확인"
+
+msgid "Checking for latest version..."
+msgstr "최신 버전 확인 중..."
+
+msgid "Checking version..."
+msgstr "버전 확인 중..."
+
+msgid "China"
+msgstr "중국"
+
+msgid "Chinese"
+msgstr "중국어"
+
+msgid "Choose desktop entry location"
+msgstr "데스크톱 입력 위치 선택"
+
+msgid "Choose shortcut location"
+msgstr "바로 가기 위치 선택"
+
+msgid "Classic"
+msgstr "클래식"
+
+msgid "Clear"
+msgstr "지우기"
+
+msgid "Click Skip button for early results with lower accuracy"
+msgstr "정확도가 낮은 초기 결과를 보려면 건너뛰기 버튼을 클릭"
+
+msgid "Click Skip button to finish"
+msgstr "건너뛰기 버튼을 클릭하여 완료"
+
+msgid "Click on Connect to load the list of downloadable titles"
+msgstr "연결을 클릭하여 내려받기 가능한 타이틀 목록 불러오기"
+
+msgid "Close"
+msgstr "닫기"
+
+msgid "Collecting list of files..."
+msgstr "파일 목록 수집..."
+
+msgid "Comment"
+msgstr "주석"
+
+msgid "Complete"
+msgstr "완료"
+
+msgid "Configure input"
+msgstr "입력 설정"
+
+msgid "Confirmation"
+msgstr "확인"
+
+msgid "Connect"
+msgstr "연결"
+
+msgid ""
+"Connect to a custom Network Service (configured via network_services.xml)"
+msgstr "맞춤형 네트워크 서비스에 연결(network_services.xml을 통해 구성)"
+
+msgid "Connect to the Pretendo Network Service"
+msgstr "프리텐도 네트워크 서비스에 연결"
+
+msgid "Connect to the official Nintendo Network Service"
+msgstr "공식 닌텐도 네트워크 서비스에 연결"
+
+msgid "Connected extension"
+msgstr "연결된 확장"
+
+msgid "Connected. Right click entries in the list to start downloading"
+msgstr ""
+"연결되었습니다. 목록에서 항목을 마우스 오른쪽 버튼으로 클릭하여 내려받기 시작"
+
+msgid "Connecting..."
+msgstr "연결하기..."
+
+msgid "Control"
+msgstr "컨트롤"
+
+msgid "Controller"
+msgstr "컨트롤러"
+
+msgid "Controller profiles"
+msgstr "컨트롤러 프로필"
+
+msgid "Controller settings"
+msgstr "컨트롤러 설정"
+
+msgid "Controller {}"
+msgstr "컨트롤러 {}"
+
+msgid ""
+"Controls the amount of buffered audio data\n"
+"Higher values will create a delay in audio playback, but may avoid audio "
+"problems when emulation is too slow"
+msgstr ""
+"버퍼링되는 음향 데이터의 양을 제어\n"
+"값이 클수록 오디오 재생이 지연되지만 에뮬레이션이 너무 느릴 때 오디오 문제를 "
+"방지할 수 있음"
+
+msgid "Controls the notification position while playing"
+msgstr "재생 중 알림 위치 제어"
+
+msgid ""
+"Controls the output aspect ratio when it doesn't match the ratio of the game"
+msgstr "출력 종횡비가 게임 비율과 일치하지 않을 때 제어"
+
+msgid "Controls the overlay which displays technical information while playing"
+msgstr "플레이하는 동안 기술 정보를 표시하는 중첩 제어"
+
+msgid "Controls the vsync state"
+msgstr "수직 동기화 상태 제어"
+
+msgid "Conversion failed\n"
+msgstr "변환 실패\n"
+
+msgid "Conversion finished\n"
+msgstr "변환 완료\n"
+
+msgid "Convert to compressed Wii U archive (.wua)"
+msgstr "압축된 Wii U 아카이브(.wua)로 변환"
+
+msgid "Converting files..."
+msgstr "파일 변환..."
+
+msgid "Could not decrypt title because title.tik is missing."
+msgstr "title.tik이 없기 때문에 제목을 해독할 수 없습니다."
+
+msgid ""
+"Could not decrypt title. Make sure that keys.txt contains the correct disc "
+"key for this title."
+msgstr ""
+"타이틀을 해독할 수 없습니다. keys.txt에 이 타이틀에 대한 올바른 디스크 키가 "
+"포함되어 있는지 확인하세요."
+
+msgid ""
+"Couldn't create a required TesseraEmu directory or file!\n"
+"\n"
+"Error: {0}"
+msgstr ""
+"필수 cemu 디렉토리 또는 파일을 만들 수 없습니다!\n"
+"\n"
+"오류 : {0}"
+
+msgid "Couldn't download the update!"
+msgstr "업데이트를 내려받을 수 없습니다!"
+
+msgid "Counting files..."
+msgstr "파일 계산 중..."
+
+msgid "Country"
+msgstr "국가"
+
+msgid "Crash dump"
+msgstr "충돌 덤프"
+
+msgid "Create"
+msgstr "만들기"
+
+msgid "Create Infinity Figure file"
+msgstr "인피니티 피규어 파일 생성"
+
+msgid "Create Skylander file"
+msgstr "스카이랜더 파일 생성"
+
+msgid "Create execution breakpoint"
+msgstr "브레이크 포인트 만들기"
+
+msgid "Create logging breakpoint"
+msgstr "로그 기록 브레이크 포인트 만들기"
+
+msgid "Create memory breakpoint (read)"
+msgstr "메모리 브레이크 포인트 만들기(읽기)"
+
+msgid "Create memory breakpoint (write)"
+msgstr "메모리 브레이크 포인트 만들기(쓰기)"
+
+msgid "Create new account"
+msgstr "신규 계정 만들기"
+
+msgid ""
+"Creates a core dump when TesseraEmu crashes\n"
+"Only enable when requested by a developer!"
+msgstr ""
+"TesseraEmu 충돌 시, 코어 덤프 생성\n"
+"개발자가 요청할 때만 활성화하세요!"
+
+msgid ""
+"Creates a dump when TesseraEmu crashes\n"
+"Only enable when requested by a developer!\n"
+"The Full option will create a very large dump file (includes a full RAM dump of the TesseraEmu process)"
+msgstr ""
+"TesseraEmu 충돌 시, 덤프 생성\n"
+"개발자가 요청할 때만 활성화하세요!\n"
+"전체 옵션은 매우 큰 덤프 파일 생성(TesseraEmu 프로세스의 전체 RAM 덤프 포함)"
+
+msgid "Current file:"
+msgstr "현재 파일 :"
+
+msgid "Currently active downloads will continue in the background."
+msgstr "현재 진행 중인 내려받기는 백그라운드에서 계속 진행됩니다."
+
+msgid "Custom"
+msgstr "커스텀"
+
+msgid "Custom MLC path"
+msgstr "커스텀 MLC 경로"
+
+msgid "D-pad"
+msgstr "십자 버튼"
+
+msgid "DLC"
+msgstr "DLC"
+
+msgid ""
+"DLC:\n"
+"Not installed"
+msgstr ""
+"DLC :\n"
+"설치되지 않음"
+
+msgid ""
+"DLC:\n"
+"{}"
+msgstr ""
+"DLC :\n"
+"{}"
+
+msgid "Deadzone"
+msgstr "데드 존"
+
+msgid "Debug"
+msgstr "디버그"
+
+msgid "Decrease priority (+1)"
+msgstr "우선순위 감소(+1)"
+
+msgid "Decrease priority (+5)"
+msgstr "우선순위 감소(+5)"
+
+msgid "Default"
+msgstr "기본값"
+
+msgid "Delete"
+msgstr "삭제"
+
+msgid "Delete breakpoint"
+msgstr "메모리 브레이크 삭제"
+
+msgid "Delete outdated cache file [recommended]"
+msgstr "오래된 캐시 파일 삭제 [권장]"
+
+msgid "Demo"
+msgstr "데모"
+
+msgid "Description"
+msgstr "설명"
+
+msgid "Details:"
+msgstr "디테일 :"
+
+msgid "Device"
+msgstr "장치"
+
+msgid "Disable screen saver"
+msgstr "화면보호기 비활성화"
+
+msgid "Disabled"
+msgstr "비활성화"
+
+msgid "Discord Presence"
+msgstr "디스코드 상태"
+
+msgid "Displays internal debug information (Vulkan only)"
+msgstr "내부 디버그 정보 표시(Vulkan 전용)"
+
+msgid "Displays the active controller profile when starting a game"
+msgstr "게임 시작 시, 활성 컨트롤러 프로필 표시"
+
+msgid "Displays the menu bar when TesseraEmu is running in fullscreen mode and the mouse cursor is moved to the top"
+msgstr "TesseraEmu가 전체 화면 모드로 실행 중이고 마우스 커서가 상단으로 이동한 경우 메뉴 표시줄을 표시"
+
+msgid ""
+"Do you really want to cancel the installation process?\n"
+"\n"
+"Canceling the process will delete the applied files."
+msgstr ""
+"정말 설치 프로세스를 취소하시겠습니까?\n"
+"\n"
+"프로세스를 취소하면 적용된 파일이 삭제됩니다."
+
+msgid "Double buffering"
+msgstr "이중 버퍼링"
+
+msgid "Download Manager"
+msgstr "내려받기 관리자"
+
+msgid "Download and configure graphic packs"
+msgstr "그래픽 팩 내려받기 및 구성하기"
+
+msgid "Download failed"
+msgstr "내려받기 실패"
+
+msgid "Download latest community graphic packs"
+msgstr "최신 커뮤니티 그래픽 팩 내려받기"
+
+msgid "Downloading"
+msgstr "내려받기"
+
+msgid "Downloading account ticket"
+msgstr "계정 티켓 내려받기"
+
+msgid "Downloading graphic packs..."
+msgstr "그래픽 팩 내려받기..."
+
+msgid "Downloading meta data"
+msgstr "메타 데이터 내려받기"
+
+msgid "Downloading system tickets..."
+msgstr "시스템 티켓 내려받기..."
+
+msgid "Downloading ticket"
+msgstr "티켓 내려받기"
+
+msgid "Downloading update..."
+msgstr "업데이트 내려받기..."
+
+msgid "Downscale filter"
+msgstr "다운스케일 필터"
+
+msgid ""
+"Downscaling filters are used when the game resolution is bigger than the "
+"window size"
+msgstr "다운스케일링 필터는 게임 해상도가 창 크기보다 클 때 사용"
+
+msgid "Draw calls per frame"
+msgstr "프레임당 호출 그리기"
+
+msgid "Dumped online files not found"
+msgstr "덤프된 온라인 파일을 찾을 수 없음"
+
+msgid "Dutch"
+msgstr "네덜란드어"
+
+msgid ""
+"EXPERT OPTION\n"
+"Controls the accuracy of floating point multiplication in shaders.\n"
+"\n"
+"Recommended: true"
+msgstr ""
+"전문가 옵션\n"
+"셰이더에서 부동 소수점 곱셈의 정확도를 제어합니다.\n"
+"\n"
+"권장 : 수용"
+
+msgid ""
+"EXPERT OPTION\n"
+"Set the maximum thread slice runtime (in virtual cycles)"
+msgstr ""
+"전문가 옵션\n"
+"최대 스레드 슬라이스 런타임 설정(가상 사이클 단위)"
+
+msgid ""
+"EXPERT OPTION\n"
+"This option will load libraries from the cafeLibs directory"
+msgstr ""
+"전문가 옵션\n"
+"이 옵션은 카페 라이브러리 디렉토리에서 라이브러리를 불러옵니다."
+
+msgid "Edit game profile"
+msgstr "게임 프로필 수정"
+
+msgid "Email"
+msgstr "이메일"
+
+msgid "Emulate Infinity Base"
+msgstr "인피니티 베이스 에뮬레이"
+
+msgid "Emulate Skylander Portal"
+msgstr "스카이랜더 포털 에뮬레이트"
+
+msgid "Emulated USB Devices"
+msgstr "에뮬레이트된 USB 장치"
+
+msgid "Emulated controller"
+msgstr "에뮬레이트 컨트롤러"
+
+msgid "Enable Feral GameMode"
+msgstr "페럴 게임 모드 활성화"
+
+msgid "Enabled"
+msgstr "활성화"
+
+msgid ""
+"Enables async shader and pipeline compilation. Reduces stutter at the cost "
+"of objects not rendering for a short time.\n"
+"Vulkan only"
+msgstr ""
+"비동기 셰이더 및 파이프라인 컴파일을 활성화합니다. 오브젝트가 짧은 시간 동안 "
+"렌더링되지 않는 대신 끊김 현상을 줄입니다.\n"
+"Vulkan 전용"
+
+msgid ""
+"Enables the Discord Rich Presence feature\n"
+"You will also need to enable it in the Discord settings itself!"
+msgstr ""
+"디스코드 활동 상태 기능 활성화\n"
+"또한, 디스코드 설정에서도 이 기능을 활성화해야 합니다!"
+
+msgid "English"
+msgstr "영어"
+
+msgid "Enter a custom game title"
+msgstr "커스텀 게임 타이틀 입력"
+
+msgid "Enter a memory address"
+msgstr "메모리 주소 입력"
+
+msgid "Enter a new comment."
+msgstr "새 주석을 입력합니다."
+
+msgid "Enter a new instruction."
+msgstr "새 지침을 입력합니다."
+
+msgid "Enter a new value."
+msgstr "새 값을 입력합니다."
+
+msgid "Enter a target address."
+msgstr "대상 주소를 입력합니다."
+
+msgid "Error"
+msgstr "오류"
+
+msgid "Error code"
+msgstr "오류 코드"
+
+msgid "Error in keys.txt at line {}"
+msgstr "{}번째 줄에서 keys.txt 오류 발생"
+
+msgid ""
+"Error when creating the extraction path:\n"
+"{}"
+msgstr ""
+"추출 경로를 만드는 동안 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when creating the zip for the save entry:\n"
+"{}"
+msgstr ""
+"저장 항목을 압축하는 동안 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when initializing Vulkan renderer:\n"
+"{}"
+msgstr ""
+"Vulkan 렌더러 초기화 시, 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when opening the import zip file:\n"
+"{}"
+msgstr ""
+"zip 파일을 가져올 때, 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when trying to add a directory to the zip:\n"
+"{}"
+msgstr ""
+"zip에 디렉터리 추가 시, 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when trying to add a file to the zip:\n"
+"{}"
+msgstr ""
+"zip에 파일 추가 시, 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when trying to add cemu_meta file to the zip:\n"
+"{}"
+msgstr ""
+"cemu_meta 파일을 zip에 추가 시, 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the entry:\n"
+"{}"
+msgstr ""
+"항목을 삭제하려고 할 때, 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the former save game:\n"
+"{}"
+msgstr ""
+"이전 저장 게임을 삭제하려고 할 때, 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the save directory:\n"
+"{}"
+msgstr ""
+"저장 디렉터리 삭제 시, 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when trying to move former title installation:\n"
+"{}"
+msgstr ""
+"이전 타이틀 설치 이동 시, 오류 발생 :\n"
+"{}"
+
+msgid ""
+"Error when trying to move the save game:\n"
+"{}"
+msgstr ""
+"저장 게임을 이동하려고 할 때, 오류 발생 :\n"
+"{}"
+
+msgid "Error:"
+msgstr "오류 :"
+
+msgid "Europe"
+msgstr "유럽"
+
+msgid "Exit"
+msgstr "종료"
+
+msgid "Export"
+msgstr "내보내기"
+
+msgid "Export checksum entry"
+msgstr "체크섬 항목 내보내기"
+
+msgid "Export successful"
+msgstr "내보내기 성공"
+
+msgid "Export the title checksum data to a local JSON file"
+msgstr "타이틀 체크섬 데이터를 로컬 JSON 파일로 내보내기"
+
+msgid "Exported save entry (*.zip)"
+msgstr "내보낸 저장 항목(*.zip)"
+
+msgid "Exports the selected save entry as zip file"
+msgstr "선택한 저장 항목을 zip 파일로 내보내기"
+
+msgid "Extensions:"
+msgstr "확장 :"
+
+msgid "Extracting failed!"
+msgstr "추출하지 못했습니다!"
+
+msgid "Extracting update..."
+msgstr "업데이트 추출..."
+
+msgid "Extracting..."
+msgstr "추출..."
+
+msgid "FP view mode"
+msgstr "FP 보기 모드"
+
+msgid "FPS"
+msgstr "FPS"
+
+msgid "Failed to apply patches for graphic pack '{}'"
+msgstr "그래픽 팩 '{}' 패치 적용 실패"
+
+msgid "Failed to connect to server"
+msgstr "서버에 연결하지 못함"
+
+msgid ""
+"Failed to create default MLC files in the selected directory. The MLC path "
+"has not been changed"
+msgstr ""
+"선택한 디렉터리에 기본 MLC 파일을 만들지 못했습니다. MLC 경로 변경되지 않"
+
+msgid "Failed to find a suitable Bluetooth radio."
+msgstr "적합한 블루투스 라디오를 찾지 못했습니다."
+
+msgid "Failed to launch executable. Path: "
+msgstr "실행 파일을 실행하지 못했습니다. 경로 : "
+
+msgid "Failed to launch game."
+msgstr "게임을 실행하지 못했습니다."
+
+msgid "Failed to load patches for graphic pack '{}'"
+msgstr "그래픽 팩 '{}' 패치를 불러오기 실패"
+
+msgid "Failed to pair with the found controller."
+msgstr "찾은 컨트롤러와 페어링하지 못했습니다."
+
+msgid "Failed to query account status"
+msgstr "계정 상태 조회 실패"
+
+msgid ""
+"Failed to remove the shader caches:\n"
+"{}"
+msgstr ""
+"셰이더 캐시 제거 실패 :\n"
+"{}"
+
+msgid "Failed to request tickets"
+msgstr "티켓 요청 실패"
+
+msgid "Failed to run this title because the executable is damaged"
+msgstr "실행 파일이 손상되어 이 타이틀 실행 실패"
+
+msgid "Failed to save desktop entry to {}"
+msgstr "데스크톱 항목을 {}에 저장하지 못했습니다."
+
+msgid "Failed to save shortcut to {}"
+msgstr "바로 가기를 {}에 저장하는데 실패"
+
+msgid "Failed to search for controllers."
+msgstr "컨트롤러를 검색하지 못했습니다."
+
+msgid "Female"
+msgstr "여성"
+
+msgid "Filter"
+msgstr "필터"
+
+msgid "Filter messages"
+msgstr "메시지 필터링"
+
+msgid "Finalizing..."
+msgstr "마무리..."
+
+msgid "Folder"
+msgstr "폴더"
+
+msgid "Forces a given controller profile"
+msgstr "지정된 컨트롤러 프로필 강제 적용"
+
+msgid "Format"
+msgstr "유형"
+
+msgid "Found controller. Pairing..."
+msgstr "컨트롤러를 찾았습니다. 페어링..."
+
+msgid "Found {0} games, {1} updates, {2} DLCs and {3} save entries"
+msgstr "게임 {0}개, 업데이트 {1}개, DLC {2}개 및 저장 항목 {3}개 발견"
+
+msgid "Freeze"
+msgstr "동결"
+
+msgid "French"
+msgstr "프랑스어"
+
+msgid "Friend list"
+msgstr "친구 목록"
+
+msgid "Full"
+msgstr "풀"
+
+msgid "Full sync at GX2DrawDone()"
+msgstr "GX2DrawDone()에서 전체 동기화"
+
+msgid "Fullscreen menu bar"
+msgstr "전체 화면 메뉴 표시줄"
+
+msgid "Fullscreen scaling"
+msgstr "전체 화면 크기 조정"
+
+msgid "G&oto Dump"
+msgstr "덤프로 이동(&O)"
+
+msgid "GDB Stub port"
+msgstr "GDB 스텁 포트"
+
+msgid "Game"
+msgstr "게임"
+
+msgid "Game Paths"
+msgstr "게임 경로"
+
+msgid "Game path"
+msgstr "게임 경로"
+
+msgid "Game paths"
+msgstr "게임 경로"
+
+msgid "GamePad View"
+msgstr "게임패드 보기"
+
+msgid "Gamepad"
+msgstr "게임패드"
+
+msgid ""
+"Games will be launched with gamepad view toggled as default. The view can be "
+"toggled with CTRL + TAB"
+msgstr ""
+"게임은 기본적으로 게임패드 보기가 전환된 상태로 실행됩니다. 보기는 CTRL + TAB"
+"으로 전환할 수 있습니다."
+
+msgid "Gender"
+msgstr "성별"
+
+msgid "General"
+msgstr "일반"
+
+msgid "General settings"
+msgstr "일반 설정"
+
+msgid "Generated checksum of game image: {}"
+msgstr "게임 이미지의 체크섬 생성 완료 : {}"
+
+msgid "Generated checksum of {} game files"
+msgstr "게임 파일의 {} 체크섬 생성"
+
+msgid "Generating checksum of game image: {}"
+msgstr "게임 이미지의 체크섬 생성 중 : {}"
+
+msgid "German"
+msgstr "독일어"
+
+msgid "Getting installed title information..."
+msgstr "설치된 타이틀 정보 가져오기..."
+
+msgid "Getting started"
+msgstr "시작하기"
+
+msgid "GoTo (CTRL + G)"
+msgstr "이동(CTRL + G)"
+
+msgid "GoTo address"
+msgstr "주소로 이동"
+
+msgid "Grabbing game files"
+msgstr "게임 파일 가져오기"
+
+msgid "Graphic"
+msgstr "그래픽"
+
+msgid "Graphic pack"
+msgstr "그래픽 팩"
+
+msgid "Graphic pack error"
+msgstr "그래픽 팩 오류"
+
+msgid "Graphic packs"
+msgstr "그래픽 팩"
+
+msgid "Graphic packs && mods"
+msgstr "그래픽 팩 && 모드"
+
+msgid "Graphic packs cannot be updated while a game is running."
+msgstr "게임이 실행 중일 때는 그래픽 팩을 업데이트할 수 없습니다."
+
+msgid ""
+"Graphic packs improve games by offering the ability to change resolution, "
+"increase FPS, tweak visuals or add gameplay modifications.\n"
+"Get started by opening the graphic packs configuration window.\n"
+msgstr ""
+"그래픽 팩은 해상도 변경, FPS 증가, 시각적 조정, 게임 플레이 수정 추가 등의 기"
+"능을 제공하여 게임을 개선합니다.\n"
+"그래픽 팩 구성 창을 열어 시작하세요.\n"
+
+msgid "Graphics"
+msgstr "그래픽"
+
+msgid "Graphics API"
+msgstr "그래픽 API"
+
+msgid "Graphics Device"
+msgstr "그래픽 장치"
+
+msgid "Hashing game file: {}/{}"
+msgstr "게임 파일 해싱 : {}/{}"
+
+msgid "Hermite"
+msgstr "에르미트"
+
+msgid "I understand"
+msgstr "알겠음"
+
+msgid "IP"
+msgstr "IP"
+
+msgid "Icon"
+msgstr "아이콘"
+
+msgid ""
+"If synchronization is requested by the game, the emulated CPU will wait for "
+"the GPU to finish all operations.\n"
+"This is more accurate behavior, but may cause lower performance"
+msgstr ""
+"게임에서 동기화를 요청하면 에뮬레이트된 CPU는 GPU가 모든 작업을 완료할 때까"
+"지 기다립니다.\n"
+"이는 더 정확한 동작이지만 성능이 저하될 수 있음"
+
+msgid "Import"
+msgstr "가져오기"
+
+msgid "Import save entry"
+msgstr "저장 항목 가져오기"
+
+msgid "Imports a zipped save entry"
+msgstr "압축된 저장 항목 가져오기"
+
+msgid "Infinity Base"
+msgstr "인피니티 베이스"
+
+msgid "Infinity Figure Creator"
+msgstr "인피니티 피규어 생성기"
+
+msgid "Infinity Manager"
+msgstr "인피니티 관리자"
+
+msgid "Info"
+msgstr "정보"
+
+msgid "Information"
+msgstr "정보"
+
+msgid "Initializing"
+msgstr "초기화"
+
+msgid "Input API"
+msgstr "입력 API"
+
+msgid "Input settings"
+msgstr "입력 설정"
+
+msgid "Install title"
+msgstr "타이틀 설치"
+
+msgid "Installed"
+msgstr "설치됨"
+
+msgid "Installed games"
+msgstr "설치된 게임"
+
+msgid "Installing"
+msgstr "설치"
+
+msgid "Installing DLC..."
+msgstr "DLC 설치..."
+
+msgid "Installing system title..."
+msgstr "시스템 타이틀 설치..."
+
+msgid "Installing title..."
+msgstr "타이틀 설치..."
+
+msgid "Installing update..."
+msgstr "업데이트 설치..."
+
+msgid "Interface"
+msgstr "인터페이스"
+
+msgid "Invalid TMD"
+msgstr "유효하지 않은 TMD"
+
+msgid ""
+"IsPasswordCacheEnabled is set to false (The remember password option on your "
+"Wii U must be enabled for this account before dumping it)"
+msgstr ""
+"비밀번호 캐시 활성화가 거짓으로 설정되어 있음(덤프하기 전에 이 계정에 대해 "
+"Wii U의 비밀번호 기억 옵션이 활성화되어 있어야 함)"
+
+msgid ""
+"It looks like you're starting TesseraEmu for the first time.\n"
+"This quick setup assistant will help you get the best experience"
+msgstr ""
+"TesseraEmu를 처음 시작하는 것 같습니다.\n"
+"이 빠른 설정 도우미는 최상의 경험을 얻을 수 있도록 도와줌"
+
+msgid ""
+"It seems that a newer version is already installed, do you still want to "
+"install the older version?"
+msgstr ""
+"최신 버전이 이미 설치되어 있는 것 같은데 그래도 이전 버전을 설치하시겠습니까?"
+
+msgid ""
+"It seems that the selected title is already installed, do you want to "
+"reinstall it?"
+msgstr "선택한 타이틀이 이미 설치되어 있는 것 같은데 다시 설치하시겠습니까?"
+
+msgid ""
+"It seems that there is already a title installed at the target location but "
+"it has a different type.\n"
+"Currently installed: '{}' Installing: '{}'\n"
+"\n"
+"This can happen for titles which were installed with very old Cemu "
+"versions.\n"
+"Do you still want to continue with the installation? It will replace the "
+"currently installed title."
+msgstr ""
+"대상 위치에 이미 타이틀이 설치되어 있지만 유형이 다른 것 같습니다.\n"
+"현재 설치 : '{}' 설치 중 : '{}'\n"
+"\n"
+"아주 오래된 Cemu 버전으로 설치된 타이틀의 경우 이 문제가 발생할 수 있습니"
+"다.\n"
+"그래도 설치를 계속하시겠습니까? 현재 설치된 타이틀을 대체합니다."
+
+msgid "Italian"
+msgstr "이탈리아어"
+
+msgid "JSON file doesn't satisfy needed schema"
+msgstr "JSON 파일이 필요한 스키마를 충족하지 않음"
+
+msgid "JSON parse error: {}"
+msgstr "JSON 구문 분석 오류 발생 : {}"
+
+msgid "Japan"
+msgstr "일본"
+
+msgid "Japanese"
+msgstr "일본어"
+
+msgid "Keep aspect ratio"
+msgstr "종횡비 유지"
+
+msgid "Keep outdated cache file"
+msgstr "오래된 캐시 파일 보관"
+
+msgid "Korea"
+msgstr "한국"
+
+msgid "Korean"
+msgstr "한국어"
+
+msgid "Language"
+msgstr "언어"
+
+msgid "Last played"
+msgstr "마지막 플레이"
+
+msgid "Latency"
+msgstr "레이턴시"
+
+msgid "Launch with gamepad view"
+msgstr "게임 패드 보기로 실행"
+
+msgid "Left Axis"
+msgstr "좌측 축"
+
+msgid "Lite"
+msgstr "라이트"
+
+msgid "Load"
+msgstr "불러오기"
+
+msgid "Load shared libraries"
+msgstr "공유 라이브러리 불러오기"
+
+msgid "Location"
+msgstr "지역"
+
+msgid "Logging in..."
+msgstr "로그인 중.."
+
+msgid "Logging window"
+msgstr "로그 창"
+
+msgid "Login failed. Outdated or incomplete online files?"
+msgstr "로그인에 실패했습니다. 온라인 파일이 오래되었거나 불완전합니까?"
+
+msgid "Low battery"
+msgstr "배터리 부족"
+
+msgid "MLC"
+msgstr "MLC"
+
+msgid "Male"
+msgstr "남성"
+
+msgid "Match emulated display (Experimental)"
+msgstr "매치 에뮬레이트 디스플레이(실험적)"
+
+msgid "Memory Dump"
+msgstr "메모리 덤프"
+
+msgid "Memory Searcher"
+msgstr "메모리 검색기"
+
+msgid "Microphone (Experimental)"
+msgstr "마이크로폰(실험용)"
+
+msgid "Mii name"
+msgstr "Mii 이름"
+
+msgid "Missing certificate and key files:"
+msgstr "인증서 및 키 파일 누락 :"
+
+msgid "Mode"
+msgstr "모드"
+
+msgid "Module"
+msgstr "모듀"
+
+msgid "Module&list"
+msgstr "모듈 목록(&L)"
+
+msgid "Modules"
+msgstr "모듈"
+
+msgid "Mono"
+msgstr "모노"
+
+msgid "MotionPlus"
+msgstr "모션 플러스"
+
+msgid "Multi-core recompiler"
+msgstr "싱글 코어 리컴파일러"
+
+msgid ""
+"Multiple issues with your game files have been found!\n"
+"Do you want to export them to a file?"
+msgstr ""
+"게임 파일에서 여러 가지 문제가 발견되었습니다!\n"
+"파일로 내보내시겠습니까?"
+
+msgid "NUS"
+msgstr "NUS"
+
+msgid "Name"
+msgstr "이름"
+
+msgid "Nearest Neighbor"
+msgstr "최근린"
+
+msgid "Network Service"
+msgstr "네트워크 서비스"
+
+msgid "Network service"
+msgstr "네트워크 서비스"
+
+msgid "Next"
+msgstr "다음"
+
+msgid "Nintendo"
+msgstr "닌텐도"
+
+msgid "No"
+msgstr "아니오"
+
+msgid "No account selected"
+msgstr "선택한 계정 없음"
+
+msgid "No persistent id entered!"
+msgstr "잔류 ID를 입력하지 않았습니다!"
+
+msgid "No update available!"
+msgstr "업데이트가 없습니다!"
+
+msgid "No updates available."
+msgstr "사용 가능한 업데이트가 없습니다."
+
+msgid "None"
+msgstr "없음"
+
+msgid "Not a valid NFC file"
+msgstr "유효한 NFC 파일이 아님"
+
+msgid ""
+"Not enough space available.\n"
+"Required: {0} MB\n"
+"Available: {1} MB"
+msgstr ""
+"사용 가능한 공간이 충분하지 않습니다.\n"
+"필요 : {0}MB\n"
+"여유 : {1}MB"
+
+msgid "Not installed"
+msgstr "설치되지 않음"
+
+msgid "Not installed (Partially downloaded)"
+msgstr "설치되지 않음(일부 내려받음)"
+
+msgid ""
+"Note that changing the MLC location will not transfer any accounts or save "
+"files. Are you sure you want to change the path?"
+msgstr ""
+"MLC 위치를 변경해도 계정이나 저장 파일이 이전되지는 않습니다. 정말로 경로를 "
+"변경하시겠습니까?"
+
+msgid "Notifications"
+msgstr "알림"
+
+msgid "Nunchuck"
+msgstr "눈차크"
+
+msgid "OK"
+msgstr "확인"
+
+msgid "OTP and SEEPROM present but no certificate files were found"
+msgstr "OTP 및 SEEPROM은 있지만 인증서 파일을 찾을 수 없음"
+
+msgid "OTP.bin or SEEPROM.bin is missing"
+msgstr "OTP.bin 또는 SEEPROM.bin이 없음"
+
+msgid "Off"
+msgstr "끔"
+
+msgid "Offline"
+msgstr "오프라인"
+
+msgid "On"
+msgstr "켬"
+
+msgid "Online Status"
+msgstr "온라인 상태"
+
+msgid "Online functionality disabled for this account"
+msgstr "이 계정에 대해 온라인 기능 사용 중지"
+
+msgid "Online play is not set up. Follow the guide below to get started"
+msgstr "온라인 플레이가 설정되지 않았습니다. 아래 가이드에 따라 시작하세요"
+
+msgid "Online play requirements"
+msgstr "온라인 플레이 요건"
+
+msgid "Online play tutorial"
+msgstr "온라인 플레이 튜토리얼"
+
+msgid "Open Infinity Figure dump"
+msgstr "인피니티 피규어 덤프 열기"
+
+msgid "Open Skylander dump"
+msgstr "스카이랜더 덤프 열기"
+
+msgid "Open checksum entry"
+msgstr "체크섬 항목 열기"
+
+msgid "Open directory"
+msgstr "디렉터리 열기"
+
+msgid "Open file to launch"
+msgstr "실행할 파일 열기"
+
+msgid "Open file to load"
+msgstr "불러올 파일 열기"
+
+msgid "Open separate pad screen"
+msgstr "별도의 패드 화면 열기"
+
+msgid "Open the directory of the save entry"
+msgstr "저장 항목의 디렉터리 열기"
+
+msgid "Options"
+msgstr "옵션"
+
+msgid "Outdated shader cache"
+msgstr "오래된 셰이더 캐시"
+
+msgid "Overlay"
+msgstr "중첩"
+
+msgid "PPC Debugger"
+msgstr "PPC 디버거"
+
+msgid "PPC threads"
+msgstr "PPC 스레드"
+
+msgid "Packet delay"
+msgstr "패킷 지연"
+
+msgid "Pair a Wii or Wii U controller"
+msgstr "Wii 또는 Wii U 컨트롤러 페어링하기"
+
+msgid "Pairing..."
+msgstr "페어링..."
+
+msgid "Paused"
+msgstr "일시 중지됨"
+
+msgid "Permanently delete the save entry"
+msgstr "저장 항목 영구 삭제"
+
+msgid "Please use your system's Bluetooth manager instead."
+msgstr "대신 시스템의 블루투스 관리자를 사용하세요."
+
+msgid "Port"
+msgstr "포트"
+
+msgid "Portugese"
+msgstr "포르투칼어"
+
+msgid "Position"
+msgstr "위치"
+
+msgid ""
+"Pressing the screenshot key (F12) will save a screenshot directly to the "
+"screenshots folder"
+msgstr "스크린샷 키(F12)를 누르면 스크린샷이 스크린샷 폴더에 바로 저장"
+
+msgid "Pretendo"
+msgstr "프리텐도"
+
+msgid ""
+"Prevents the system from activating the screen saver or going to sleep while "
+"running a game."
+msgstr ""
+"게임을 실행하는 동안 시스템이 화면 보호기를 활성화하거나 절전 모드로 전환되"
+"는 것을 방지합니다."
+
+msgid "Preview version"
+msgstr "미리 보기 버전"
+
+msgid "Previous"
+msgstr "이전"
+
+msgid "PrincipalId missing"
+msgstr "대표 ID 누락"
+
+msgid "Profile"
+msgstr "프로필"
+
+msgid "Profile thread"
+msgstr "프로필 스레드"
+
+msgid "Profiling thread"
+msgstr "프로파일링 스레드"
+
+msgid "Progress"
+msgstr "진행 상황"
+
+msgid "Queued"
+msgstr "대기열"
+
+msgid "RAM usage"
+msgstr "RAM 사용량"
+
+msgid "Range"
+msgstr "범위"
+
+msgid "Reading game image: {0}/{1} kB"
+msgstr "게임 이미지 읽기 : {0}/{1}kB"
+
+msgid "Reading game image: {}"
+msgstr "게임 이미지 읽기 : {}"
+
+msgid "Refresh"
+msgstr "새로 고침"
+
+msgid "Region"
+msgstr "지역 코드"
+
+msgid "Registers"
+msgstr "레지스터"
+
+msgid "Reload edited shaders"
+msgstr "편집한 셰이더 다시 불러오기"
+
+msgid "Remember main window position"
+msgstr "기본 창 위치 기억"
+
+msgid "Remember pad window position"
+msgstr "패드 창 위치 기억"
+
+msgid "Remove"
+msgstr "제거"
+
+msgid "Remove shader caches"
+msgstr "셰이더 캐시 제거"
+
+msgid "Remove the shader caches for {}?"
+msgstr "{}에 대한 셰이더 캐시를 제거하시겠습니까?"
+
+msgid "Removes the currently selected game path from the game list"
+msgstr "현재 선택된 게임 경로를 게임 목록에서 제거"
+
+msgid "Reset &order"
+msgstr "순서 재설정(&O)"
+
+msgid "Reset &width"
+msgstr "너비 재설정(&W)"
+
+msgid "Reset path"
+msgstr "경로 초기화"
+
+msgid "Restart"
+msgstr "다시 시작"
+
+msgid "Restart of TesseraEmu required for changes to take effect"
+msgstr "변경 사항을 적용하려면 TesseraEmu 다시 시작 필요"
+
+msgid "Restores the last known pad window position and size when opening it"
+msgstr "패드 창을 열 때, 마지막으로 알려진 패드 창 위치 및 크기 복원"
+
+msgid "Restores the last known window position and size when starting TesseraEmu"
+msgstr "TesseraEmu를 시작할 때, 마지막으로 알려진 창 위치 및 크기 복원"
+
+msgid "Results"
+msgstr "결과"
+
+msgid "Results ({0})"
+msgstr "결과 ({0})"
+
+msgid "Resume"
+msgstr "이력"
+
+msgid "Retrieving update information..."
+msgstr "업데이트 정보 검색..."
+
+msgid "Right Axis"
+msgstr "우측 축"
+
+msgid "Rotation"
+msgstr "회전"
+
+msgid "Rumble"
+msgstr "진동"
+
+msgid "Run (F5)"
+msgstr "실행(F5)"
+
+msgid "Russian"
+msgstr "러시아어"
+
+msgid "Save"
+msgstr "저장"
+
+msgid "Save Wii U game archive file"
+msgstr "Wii U 게임 아카이브 파일 저장"
+
+msgid "Save entry (*.zip)"
+msgstr "항목 저장(*.zip)"
+
+msgid "Save folder"
+msgstr "폴더 저장"
+
+msgid "Save screenshot"
+msgstr "스크린샷 저장"
+
+msgid "Save transfer"
+msgstr "전송 저장"
+
+msgid "Scale"
+msgstr "배율"
+
+msgid "Search"
+msgstr "검색"
+
+msgid "Searching for controllers..."
+msgstr "컨트롤러 검색..."
+
+msgid "Searching for titles..."
+msgstr "타이틀 검색 중..."
+
+msgid "Select MLC directory"
+msgstr "MLC 디렉터리 선택"
+
+msgid "Select a directory"
+msgstr "디렉터리 저장"
+
+msgid "Select a directory containing games."
+msgstr "게임이 포함된 디렉터리를 선택합니다."
+
+msgid "Select a file"
+msgstr "파일 선택"
+
+msgid "Select a file to export the errors"
+msgstr "오류를 내보낼 파일 선택"
+
+msgid "Select a folder"
+msgstr "폴더 선택"
+
+msgid "Select a target file to export the save entry"
+msgstr "저장 항목을 내보낼 대상 파일 선택"
+
+msgid "Select a zipped save file"
+msgstr "압축된 저장 파일 선택"
+
+msgid "Select an account and press Connect"
+msgstr "계정을 선택하고 연결"
+
+msgid "Select folder of title to install"
+msgstr "설치할 타이틀 폴더 선택"
+
+msgid "Select one of the available audio back ends"
+msgstr "사용 가능한 음향 후단부 중 하나를 선택"
+
+msgid "Select one of the available graphic back ends"
+msgstr "사용 가능한 그래픽 백엔드 중 하나 선택"
+
+msgid "Select the active audio input device for Wii U GamePad"
+msgstr "Wii U 게임패드의 활성 오디오 입력 장치 선택"
+
+msgid "Select the active audio output device for Wii U GamePad"
+msgstr "Wii U 게임패드용 활성 음향 출력 장치 선택"
+
+msgid "Select the active audio output device for Wii U TV"
+msgstr "Wii U TV용 활성 음향 출력 장치 선택"
+
+msgid "Select the folder that stores your update, DLC or base game files"
+msgstr "업데이트, DLC 또는 기본 게임 파일이 저장된 폴더를 선택"
+
+msgid "Select the language you want to use in TesseraEmu"
+msgstr "TesseraEmu에서 사용할 언어 선택"
+
+msgid "Select the used graphic device"
+msgstr "사용 중인 그래픽 장치 선택"
+
+msgid "Select title to install"
+msgstr "설치할 타이틀 선택"
+
+msgid "Selected account is a valid online account"
+msgstr "선택한 온라인 계정은 유효"
+
+msgid "Selected account is not linked to a NNID or PNID"
+msgstr "선택한 계정이 NNID 또는 PNID에 연결되지 않음"
+
+msgid "Set breakpoint"
+msgstr "브레이크 포인트 설정"
+
+msgid "Set comment for breakpoint at address %08x"
+msgstr "주소 %08x에 브레이크 포인트에 대한 주석 설정"
+
+msgid "Set the CPU emulation mode"
+msgstr "CPU 에뮬레이션 모드 설정"
+
+msgid "Sets the scale of the notification text"
+msgstr "알림 글자 배율 설정"
+
+msgid "Sets the scale of the overlay text"
+msgstr "중첩 글자 배율 설정"
+
+msgid "Sets the text color of notifications"
+msgstr "알림의 글자 색 설정"
+
+msgid "Sets the text color of the overlay"
+msgstr "중첩 글자 색 설정"
+
+msgid "Settings"
+msgstr "설정"
+
+msgid "Shader caches removed"
+msgstr "셰이더 캐시 제거"
+
+msgid "Shader compiler"
+msgstr "셰이더 컴파일러"
+
+msgid "Shader multiplication accuracy"
+msgstr "셰이더 멀티플리케이션 정확도"
+
+msgid "Show &dlc"
+msgstr "&DLC 표시"
+
+msgid "Show &game time"
+msgstr "게임 시간 표시(&G)"
+
+msgid "Show &icon"
+msgstr "아이콘 표시(&I)"
+
+msgid "Show &last played"
+msgstr "마지막 플레이 표시(&L)"
+
+msgid "Show &name"
+msgstr "이름 표시(&N)"
+
+msgid "Show &region"
+msgstr "지역 코드 표시(&R)"
+
+msgid "Show &title ID"
+msgstr "타이틀 ID 표기(&T)"
+
+msgid "Show &version"
+msgstr "버전 표시(&V)"
+
+msgid "Show available titles"
+msgstr "사용 가능한 타이틀 표시"
+
+msgid "Show available updates"
+msgstr "사용 가능한 업데이트 표시"
+
+msgid "Show installed"
+msgstr "설치 표기"
+
+msgid "Show only active"
+msgstr "활성 상태만 표시"
+
+msgid "Show views"
+msgstr "보기 표시"
+
+msgid "Shows a notification after shaders have been compiled"
+msgstr "셰이더 컴파일 후 알림 표시"
+
+msgid "Shows a notification when a low controller battery has been detected"
+msgstr "컨트롤러 배터리 부족이 감지되면 알림 표시"
+
+msgid "Shows friend list related data if online"
+msgstr "온라인 상태인 경우, 친구 목록 관련 데이터 표시"
+
+msgid "Single-core interpreter"
+msgstr "싱글 코어 인터프리터"
+
+msgid "Single-core recompiler"
+msgstr "싱글 코어 리컴파일러"
+
+msgid "Size"
+msgstr "크기"
+
+msgid "Skylander"
+msgstr "스카이랜더"
+
+msgid "Skylander Figure Creator"
+msgstr "스카이랜더 피규어 생성기"
+
+msgid "Skylanders Manager"
+msgstr "스카이랜더스 관리자"
+
+msgid "Skylanders Portal"
+msgstr "스카이랜더스 포털"
+
+msgid "Source"
+msgstr "소스"
+
+msgid "Spanish"
+msgstr "스페인어"
+
+msgid "Special thanks:"
+msgstr "고마운 분들 :"
+
+msgid "Start games with fullscreen"
+msgstr "전체 화면으로 게임 시작"
+
+msgid "Status"
+msgstr "상태"
+
+msgid "Step Into (F11)"
+msgstr "단계대로 진행(F11)"
+
+msgid "Step Over (F10)"
+msgstr "단계 뛰어넘기(F10)"
+
+msgid "Stereo"
+msgstr "스테레오"
+
+msgid "Stop emulation"
+msgstr "에뮬레이션 중지"
+
+msgid "Stopping..."
+msgstr "중지..."
+
+msgid "Stored Entries"
+msgstr "저장된 항목"
+
+msgid "Stretch"
+msgstr "늘이기"
+
+msgid "Style: &Icons"
+msgstr "스타일 : 아이콘(&I)"
+
+msgid "Style: &List"
+msgstr "스타일 : 목록(&L)"
+
+msgid "Style: &Small Icons"
+msgstr "스타일 : 작은 아이콘(&S)"
+
+msgid "Success"
+msgstr "성공"
+
+msgid "Successfully paired the controller."
+msgstr "컨트롤러를 성공적으로 페어링했습니다."
+
+msgid "Surround"
+msgstr "서라운드"
+
+msgid "Suspend"
+msgstr "일시 중단"
+
+msgid "Symbols"
+msgstr "기호"
+
+msgid "System data title"
+msgstr "시스템 데이터 타이틀"
+
+msgid "System title"
+msgstr "시스템 타이틀"
+
+msgid "TMD download failed"
+msgstr "TMD 내려받기 실패"
+
+msgid "TV"
+msgstr "TV"
+
+msgid "Taiwan"
+msgstr "대만"
+
+msgid "Taiwanese"
+msgstr "대만어"
+
+msgid "Target"
+msgstr "목표"
+
+msgid "Test if the controller is connected"
+msgstr "컨트롤러가 연결되어 있는지 테스트"
+
+msgid "Text Color"
+msgstr "글자 색"
+
+msgid "Texture cache"
+msgstr "텍스처 캐시"
+
+msgid ""
+"Thank you for testing the in-development build of Cemu for macOS.\n"
+" \n"
+"The macOS port is currently purely experimental and should not be considered "
+"stable or ready for issue-free gameplay. There are also known issues with "
+"degraded performance due to the use of MoltenVk and Rosetta for ARM Macs. We "
+"appreciate your patience while we improve Cemu for macOS."
+msgstr ""
+"개발 중인 macOS용 Cemu 빌드를 테스트해 주셔서 감사합니다.\n"
+" \n"
+"macOS 포트는 현재 순전히 실험적인 단계로, 안정적이거나 문제 없는 게임 플레이"
+"를 위한 준비가 완료된 것으로 간주해서는 안 됩니다. 또한 ARM Mac용 MoltenVk "
+"및 Rosetta 사용으로 인한 성능 저하 문제가 알려져 있습니다. macOS용 Cemu를 개"
+"선하는 동안 기다려주셔서 감사합니다."
+
+msgid "Thanks to our Patreon supporters:"
+msgstr "고마운 후원자분들 :"
+
+msgid ""
+"The (parent) folder of the title you selected is missing at least one of the "
+"required subfolders (\"code\", \"content\" and \"meta\")\n"
+"Make sure that the files are complete."
+msgstr ""
+"선택한 타이틀의 (상위) 폴더에 필수 하위 폴더(\"코드\", \"콘텐츠\" 및 \"메타"
+"\") 중 하나 이상이 누락됨\n"
+"파일이 올바른지 확인하세요."
+
+msgid "The VRAM usage of TesseraEmu in MB"
+msgstr "TesseraEmu의 VRAM 사용량(MB)"
+
+msgid "The controller is already added!"
+msgstr "컨트롤러가 이미 추가되어 있습니다!"
+
+msgid "The currently selected account is not a valid or dumped online account:"
+msgstr "현재 선택한 계정이 유효하지 않거나 폐기된 온라인 계정 :"
+
+msgid "The file you are comparing with is for a different title."
+msgstr "비교하려는 파일은 다른 타이틀에 대한 파일입니다."
+
+msgid "The folder you have selected cannot be found on your system."
+msgstr "시스템에서 선택한 폴더를 찾을 수 없습니다."
+
+msgid ""
+"The following content will be converted to a compressed Wii U archive file "
+"(.wua):"
+msgstr "다음 콘텐츠는 압축된 Wii U 아카이브 파일(.wua)로 변환 :"
+
+msgid "The following error(s) have been found:"
+msgstr "다음 오류가 발견됨 :"
+
+msgid "The following files are damaged:"
+msgstr "손상된 파일 :"
+
+msgid "The following files are missing:"
+msgstr "누락된 파일 :"
+
+msgid ""
+"The following prefixes are supported:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+msgstr ""
+"지원되는 접두사는 다음과 같습니다:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+
+msgid ""
+"The game path is scanned by TesseraEmu to automatically locate your games, game updates and DLCs. We recommend creating a dedicated directory in which\n"
+"you place all your Wii U game files. Additional paths can be set later in TesseraEmu's general settings. All common Wii U game formats are supported by TesseraEmu."
+msgstr ""
+"TesseraEmu는 게임 경로를 스캔하여 게임, 게임 업데이트 및 DLC를 자동으로 찾습니다. 전용 디렉터리를 만드는 것이 좋습니다.\n"
+"전용 디렉토리를 만드는 것이 좋습니다. 추가 경로는 나중에 TesseraEmu의 일반 설정에서 설정할 수 있습니다. TesseraEmu는 모든 일반적인 Wii U 게임 형식을 지원합니다."
+
+msgid ""
+"The given account id is not valid!\n"
+"It must be a hex number bigger or equal than {:08x}"
+msgstr ""
+"입력한 계정 아이디가 유효하지 않습니다!\n"
+"{:08x}보다 크거나 같은 16진수여야 합니다."
+
+msgid "The mii name is the profile name"
+msgstr "mii 이름은 프로필 이름"
+
+msgid ""
+"The mlc directory contains your save games and installed game update/dlc data"
+msgstr ""
+"mlc 디렉터리에는 저장 게임과 설치된 게임 업데이트/dlc 데이터가 들어 있음"
+
+msgid "The number of draw calls per frame. Average over last 5 seconds"
+msgstr "프레임당 그리기 호출 횟수입니다. 지난 5초 동안의 평균"
+
+msgid "The number of frames per second. Average over last 5 seconds"
+msgstr "초당 프레임 수입니다. 지난 5초 동안의 평균"
+
+msgid "The persistent id is the internal folder name used for your saves"
+msgstr "잔류 ID는 저장에 사용되는 내부 폴더 이름임"
+
+msgid ""
+"The persistent id is the internal folder name used for your saves. Only "
+"change this if you are importing saves from a Wii U with a specific id"
+msgstr ""
+"잔류 ID는 저장에 사용되는 내부 폴더 이름입니다. 특정 ID를 가진 Wii U에서 저장"
+"을 가져오는 경우에만 변경"
+
+msgid "The persistent id must be greater than {:x}!"
+msgstr "잔류 ID는 {:x}보다 커야 합니다!"
+
+msgid "The persistent id {:x} is already in use by account {}!"
+msgstr "잔류 ID {:x}는 {} 계정에서 이미 사용 중입니다!"
+
+msgid ""
+"The selected directory does not contain the expected MLC structure. Do you "
+"want to create a new MLC structure in this directory?\n"
+"Note that changing the MLC location will not transfer any accounts or save "
+"files."
+msgstr ""
+"선택한 디렉터리에 예상한 MLC 구조가 포함되어 있지 않습니다. 이 디렉터리에 새 "
+"MLC 구조를 만들시겠습니까?\n"
+"MLC 위치를 변경해도 계정이 이전되거나 파일이 저장되지는 않습니다."
+
+msgid "The shader caches were removed!"
+msgstr "셰이더 캐시가 제거되었습니다!"
+
+msgid "The verification data doesn't include a WUD hash!"
+msgstr "인증 데이터에 WUD 해시가 포함되어 있지 않습니다!"
+
+msgid ""
+"There's a new update available.\n"
+"Do you want to update?"
+msgstr ""
+"새로운 업데이트가 있습니다.\n"
+"업데이트하시겠습니까?"
+
+msgid ""
+"There's already a file at the target directory:\n"
+"{}"
+msgstr ""
+"대상 디렉터리에 이미 파일 존재 :\n"
+"{}"
+
+msgid ""
+"There's already a save game available for the target account, do you want to "
+"overwrite it?\n"
+"This will delete the existing save files for the account and replace them."
+msgstr ""
+"대상 계정에 사용할 수 있는 세이브 게임이 이미 있는데 덮어쓰기를 하시겠습니"
+"까?\n"
+"그러면 해당 계정의 기존 세이브 파일이 삭제되고 대체됩니다."
+
+msgid ""
+"This game entry seems to be either an update or the base game was merged with update data\n"
+"Broken game dumps cause various problems during emulation and may even stop working at all in future TesseraEmu versions\n"
+"Please make sure the base game is intact and install updates only with the File->Install Update/DLC option"
+msgstr ""
+"이 게임 항목은 업데이트이거나 기본 게임이 업데이트 데이터와 병합된 것 같음\n"
+"손상된 게임 덤프는 에뮬레이션 중 다양한 문제를 일으키며 향후 TesseraEmu 버전에서 전혀 작동하지 않을 수도 있음\n"
+"기본 게임이 손상되지 않았는지 확인하고 파일 → 업데이트/DLC 설치 옵션으로만 업데이트를 설치"
+
+msgid "This graphic pack has no description"
+msgstr "이 그래픽 팩에 대한 설명이 없음"
+
+msgid "This option requires Win8.1+"
+msgstr "이 옵션을 사용하려면 윈도8.1 이상 필요"
+
+msgid "This update removed or renamed the following graphic packs:"
+msgstr "이 업데이트에서는 다음 그래픽 팩이 제거되거나 이름이 변경됨 :"
+
+msgid "Thread quantum"
+msgstr "스레드 양자"
+
+msgid "Title ID"
+msgstr "타이틀 ID"
+
+msgid "Title Manager"
+msgstr "타이틀 관리자"
+
+msgid "Title checksum of {:08x}-{:08x}"
+msgstr "{:08x}-{:08x}의 타이틀 체크섬"
+
+msgid "Title installation has been canceled!"
+msgstr "타이틀 설치가 취소되었습니다!"
+
+msgid "Title installed!"
+msgstr "타이틀이 설치되었습니다!"
+
+msgid "Toggle Breakpoint (F9)"
+msgstr "브레이크 포인트 전환(F9)"
+
+msgid "Top center"
+msgstr "상단 중앙"
+
+msgid "Top left"
+msgstr "좌측 상단"
+
+msgid "Top right"
+msgstr "우측 상단"
+
+msgid "Total cpu usage in percent for each core"
+msgstr "각 코어의 총 CPU 사용량(%)"
+
+msgid "Transfer"
+msgstr "전송"
+
+msgid "Transfers the save entry to another persistent account id"
+msgstr "저장 항목을 다른 잔류 계정 ID로 전송"
+
+msgid "Trigger"
+msgstr "트리거"
+
+msgid "Triple buffering"
+msgstr "삼중 버퍼링"
+
+msgid "Type"
+msgstr "유형"
+
+msgid "USA"
+msgstr "미국"
+
+msgid "Unable to create file"
+msgstr "파일을 만들 수 없음"
+
+msgid ""
+"Unable to create file keys.txt\n"
+"This can happen if TesseraEmu does not have write permission to its own directory, the disk is full or if anti-virus software is blocking TesseraEmu."
+msgstr ""
+"keys.txt 파일 생성 불가\n"
+"이 문제는 TesseraEmu에 자체 디렉터리에 대한 쓰기 권한이 없거나 디스크가 꽉 찼거나 바이러스 백신 소프트웨어가 TesseraEmu를 차단하는 경우 발생할 수 있습니다."
+
+msgid "Unable to find the /meta/meta.xml file inside the selected folder."
+msgstr "선택한 폴더에서 /meta/meta.xml 파일을 찾을 수 없습니다."
+
+msgid ""
+"Unable to launch game\n"
+"Path:\n"
+msgstr ""
+"게임을 실행할 수 없음\n"
+"경로 :\n"
+
+msgid "Unable to launch game because the base files were not found."
+msgstr "기본 파일을 찾을 수 없어 게임을 시작할 수 없습니다."
+
+msgid ""
+"Unable to launch title.\n"
+"Make sure the configured game paths are still valid and refresh the game "
+"list.\n"
+"\n"
+"Path which failed to load:\n"
+msgstr ""
+"타이틀을 시작할 수 없습니다.\n"
+"구성된 게임 경로가 여전히 유효한지 확인하고 게임 목록을 새로 고칩니다.\n"
+"\n"
+"불러오기에 실패한 경로 :\n"
+
+msgid ""
+"Unable to mount title.\n"
+"Make sure the configured game paths are still valid and refresh the game "
+"list.\n"
+"\n"
+"File which failed to load:\n"
+msgstr ""
+"타이틀을 마운트할 수 없습니다.\n"
+"구성된 게임 경로가 여전히 유효한지 확인하고 게임 목록을 새로 고칩니다.\n"
+"\n"
+"불러오기에 실패한 파일 :\n"
+
+msgid "Update"
+msgstr "업데이트"
+
+msgid "Update available"
+msgstr "업데이트 가능"
+
+msgid "Update available!"
+msgstr "업데이트 가능!"
+
+msgid "Update error"
+msgstr "업데이트 오류"
+
+msgid "Update installation has been canceled!"
+msgstr "업데이트 설치가 취소되었습니다!"
+
+msgid "Update notification"
+msgstr "디렉터리 업데이트"
+
+msgid ""
+"Update:\n"
+"Not installed"
+msgstr ""
+"업데이트 :\n"
+"설치되지 않음"
+
+msgid ""
+"Update:\n"
+"{}"
+msgstr ""
+"없데이트 :\n"
+"{}"
+
+msgid ""
+"Updated graphic packs are available. Do you want to download and install "
+"them?"
+msgstr "업데이트된 그래픽 팩을 사용할 수 있습니다. 내려받아 설치하시겠습니까?"
+
+msgid "Updating game list..."
+msgstr "게임 목록 업데이트 중..."
+
+msgid "Updating ticket cache"
+msgstr "티켓 캐시 업데이트"
+
+msgid "Upscale filter"
+msgstr "업스케일 필터"
+
+msgid ""
+"Upscaling filters are used when the game resolution is smaller than the "
+"window size"
+msgstr "업스케일링 필터는 게임 해상도가 창 크기보다 작을 때 사용"
+
+msgid "Use FeralInteractive GameMode if installed."
+msgstr "설치된 경우, 야성 인터랙티브 게임 모드를 사용합니다."
+
+msgid "Use motion"
+msgstr "모션 사용"
+
+msgid "Used libraries and utilities:"
+msgstr "사용한 라이브러리 및 유틸리티 :"
+
+msgid "VRAM usage"
+msgstr "VRAM 사용량"
+
+msgid "VSync"
+msgstr "수직 동기화"
+
+msgid ""
+"Valid online files are required to download eShop titles. For more "
+"information, go to the Account tab in the General Settings."
+msgstr ""
+"eShop 타이틀을 내려받으려면 유효한 온라인 파일이 필요합니다. 자세한 내용은 일"
+"반 설정의 계정 탭으로 이동하세요."
+
+msgid "Value"
+msgstr "값"
+
+msgid "Verifies the checksum online"
+msgstr "온라인으로 체크섬 확인"
+
+msgid "Verifies the checksum with a local JSON file you can select"
+msgstr "선택할 수 있는 로컬 JSON 파일로 체크섬 확인"
+
+msgid "Verify online"
+msgstr "온라인 인증"
+
+msgid "Verify with local file"
+msgstr "로컬 파일로 확인"
+
+msgid "Verifying"
+msgstr "확인"
+
+msgid "Verifying integrity of game files..."
+msgstr "게임 파일의 무결성 확인..."
+
+msgid "Version"
+msgstr "버전"
+
+msgid "Volume"
+msgstr "음량"
+
+msgid "WUA"
+msgstr "WUA"
+
+msgid "WUD"
+msgstr "WUD"
+
+msgid "WUHB"
+msgstr "WUHB"
+
+msgid "Warning"
+msgstr "경고"
+
+msgid ""
+"Warning: Disabling the accurate barriers option will lead to flickering "
+"graphics but may improve performance. It is highly recommended to leave it "
+"turned on."
+msgstr ""
+"경고 : 정확한 차단 옵션을 비활성화하면 그래픽이 깜박거리지만 성능이 향상될 "
+"수 있습니다. 켜두는 것이 좋습니다."
+
+msgid "Wii U NUS content"
+msgstr "Wii U NUS 콘텐츠"
+
+msgid "Wii U archive (*.wua)"
+msgstr "Wii U 아카이브(*.wua)"
+
+msgid "Wii U executable (*.rpx, *.elf)"
+msgstr "Wii U 실행 파일(*.rpx, *.elf)"
+
+msgid "Wii U homebrew bundle (*.wuhb)"
+msgstr "Wii U 홈브루 번들(*.wuhb)"
+
+msgid "Wii U image (*.wud, *.wux, *.iso, *.wad)"
+msgstr "Wii U 이미지(*.wud, *.wux, *.iso, *.wad)"
+
+msgid "Write stack trace to log"
+msgstr "로그에 스택 추적 기록"
+
+msgid "Wrong region: {}"
+msgstr "지역 코드 불일치 : {}"
+
+msgid "Wrong version: {}"
+msgstr "버전 불일치 : {}"
+
+msgid "Yes"
+msgstr "예"
+
+msgid ""
+"You are trying to import a savegame for a different title than your "
+"currently selected one: {:016x} vs {:016x}\n"
+"Are you sure that you want to continue?"
+msgstr ""
+"현재 선택한 타이틀이 아닌 다른 타이틀의 저장 게임을 가져오려고 함 : {:016x} "
+"대 {:016x}\n"
+"계속하시겠습니까?"
+
+msgid ""
+"You can configure a custom path for the emulated internal Wii U storage (MLC).\n"
+"This is where TesseraEmu stores saves, accounts and other Wii U system files."
+msgstr ""
+"에뮬레이트된 내부 Wii U 저장소(MLC)에 대한 사용자 지정 경로를 구성할 수 있습니다.\n"
+"여기에는 TesseraEmu가 저장소, 계정 및 기타 Wii U 시스템 파일이 저장됩니다."
+
+msgid ""
+"You can configure one controller for each player.\n"
+"We advise you to always use GamePad as emulated input for the first player, "
+"since many games expect the GamePad to be present.\n"
+"It is also required for touch functionality.\n"
+"The default global hotkeys are:\n"
+"CTRL - show pad screen\n"
+"CTRL + TAB - toggle pad screen\n"
+"ALT + ENTER - toggle fullscreen\n"
+"ESC - leave fullscreen\n"
+"\n"
+"If you're having trouble configuring your controller, make sure to have it "
+"in idle state and press calibrate.\n"
+"Also don't set the axis deadzone too low."
+msgstr ""
+"각 플레이어당 하나의 컨트롤러를 구성할 수 있습니다.\n"
+"많은 게임에서 게임패드가 있어야 하므로 항상 첫 번째 플레이어의 에뮬레이트 입"
+"력으로 게임패드를 사용하는 것이 좋습니다.\n"
+"터치 기능에도 필요합니다.\n"
+"기본 글로벌 단축키는 다음과 같습니다:\n"
+"CTRL - 패드 화면 표시\n"
+"CTRL + TAB - 패드 화면 전환\n"
+"ALT + ENTER - 전체 화면 전환\n"
+"ESC - 전체 화면에서 나가기\n"
+"\n"
+"컨트롤러를 구성하는 데 문제가 있는 경우 컨트롤러를 유휴 상태로 설정하고 보정"
+"을 누르세요.\n"
+"그리고 축 데드 존을 너무 낮게 설정하지 마세요."
+
+msgid "You have to restart the game in order to apply the new settings."
+msgstr "새 설정을 적용하려면 게임을 다시 시작해야 합니다."
+
+msgid "You may need to set them up again."
+msgstr "다시 설정해야 할 수도 있습니다."
+
+msgid "You've played"
+msgstr "플레이 시간"
+
+msgid "Your entered value is not valid for the selected datatype."
+msgstr "입력한 값이 선택한 데이터 유형에 유효하지 않습니다."
+
+msgid "Your game files are valid"
+msgstr "유효한 게임 파일"
+
+msgid ""
+"Your game image is invalid!\n"
+"\n"
+"Your hash:\n"
+"{}\n"
+"\n"
+"Expected hash:\n"
+"{}"
+msgstr ""
+"게임 이미지가 유효하지 않습니다!\n"
+"\n"
+"해시 :\n"
+"{}\n"
+"\n"
+"예상 해시 :\n"
+"{}"
+
+msgid "base"
+msgstr "베이스"
+
+msgid "blow mic"
+msgstr "마이크 불기"
+
+msgid "can't delete profile"
+msgstr "프로필을 삭제할 수 없음"
+
+msgid "click"
+msgstr "클릭"
+
+msgid "controller set by gameprofile. changes won't be saved permanently!"
+msgstr ""
+"게임 프로필에서 설정한 컨트롤러 변경 사항은 영구적으로 저장되지 않습니다!"
+
+msgid "coreinit File-Access API"
+msgstr "코어이니트 파일 접속 API"
+
+msgid "coreinit MP API"
+msgstr "코어어니트 MP API"
+
+msgid "coreinit Memory API"
+msgstr "코어이니트 메모리 API"
+
+msgid "coreinit Thread API"
+msgstr "코어이니트 쓰레드 API"
+
+msgid "coreinit Thread-Synchronization API"
+msgstr "코어이니트 스레드 동기화 API"
+
+msgid "couldn't load profile"
+msgstr "프로필을 불러올 수 없음"
+
+msgid "couldn't save profile"
+msgstr "프로필을 저장할 수 없음"
+
+msgid "cycles"
+msgstr "주기"
+
+msgid "down"
+msgstr "↓"
+
+msgid "false"
+msgstr "거부"
+
+msgid "gx2 API"
+msgstr "gx2 API"
+
+msgid "h264 API"
+msgstr "h264 API"
+
+msgid "home"
+msgstr "홈"
+
+msgid "invalid profile name"
+msgstr "유효하지 않은 프로필 이름"
+
+msgid "left"
+msgstr "←"
+
+msgid "many"
+msgstr "많음"
+
+msgid "never"
+msgstr "절대 안 함"
+
+msgid "nfc API"
+msgstr "nfc API"
+
+msgid "nn_boss API"
+msgstr "nn_boss API"
+
+msgid "nn_fp API"
+msgstr "nn_fp API"
+
+msgid "nn_fp PRUDP"
+msgstr "nn_fp PRUDP"
+
+msgid "nn_nfp API"
+msgstr "nn_nfp API"
+
+msgid "nn_save API"
+msgstr "nn_save API"
+
+msgid "nsysnet API"
+msgstr "nsysnet API"
+
+msgid "ntag API"
+msgstr "ntag API"
+
+msgid "otp.bin is invalid"
+msgstr "otp.bin이 유효하지 않음"
+
+msgid "otp.bin missing in TesseraEmu directory"
+msgstr "TesseraEmu 디렉터리에서 otp.bin 누락"
+
+msgid "profile deleted"
+msgstr "프로필 삭제됨"
+
+msgid "profile loaded"
+msgstr "프로필 불러옴"
+
+msgid "profile saved"
+msgstr "프로필 저장됨"
+
+msgid "right"
+msgstr "→"
+
+msgid "save"
+msgstr "저장"
+
+msgid "seeprom.bin is invalid"
+msgstr "seeprom.bin이 유효하지 않음"
+
+msgid "seeprom.bin missing in TesseraEmu directory"
+msgstr "TesseraEmu 디렉터리에서 seeprom.bin 누락"
+
+msgid "show screen"
+msgstr "화면 표시"
+
+msgid "system"
+msgstr "시스템"
+
+msgid "true"
+msgstr "수용"
+
+msgid "unknown"
+msgstr "알 수 없음"
+
+msgid "up"
+msgstr "↑"
+
+msgid "update"
+msgstr "업데이트"
+
+msgid ""
+"{} files have an invalid hash!\n"
+"Do you want to export a list of them to a file?"
+msgstr ""
+"{} 파일에 잘못된 해시가 있습니다!\n"
+"해당 목록을 파일로 내보내시겠습니까?"
+
+msgid "{} hour"
+msgid_plural "{} hours"
+msgstr[0] "{}시"
+
+msgid "{} minute"
+msgid_plural "{} minutes"
+msgstr[0] "{}분"

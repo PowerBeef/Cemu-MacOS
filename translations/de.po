@@ -1,0 +1,2872 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Cemu\n"
+"PO-Revision-Date: 2024-11-22 10:23+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.4.4\n"
+
+msgid "&0.125x speed"
+msgstr "&0.125x Geschwindigkeit"
+
+msgid "&0.25x speed"
+msgstr "&0.25x Geschwindigkeit"
+
+msgid "&0.5x speed"
+msgstr "&0.5x Geschwindigkeit"
+
+msgid "&1x speed"
+msgstr "&1x Geschwindigkeit"
+
+msgid "&2x speed"
+msgstr "&2x Geschwindigkeit"
+
+msgid "&4x speed"
+msgstr "&4x Geschwindigkeit"
+
+msgid "&8x speed"
+msgstr "&8x Geschwindigkeit"
+
+msgid "&About TesseraEmu"
+msgstr "&Über TesseraEmu"
+
+msgid "&Accurate barriers (Vulkan)"
+msgstr "&Genaue Barrieren (Vulkan)"
+
+msgid "&Active account"
+msgstr "&Aktives Nutzerkonto"
+
+msgid "&Add new entry"
+msgstr "Eintrag &hinzufügen"
+
+msgid "&CPU"
+msgstr "&CPU"
+
+msgid "&Check for updates"
+msgstr "&Suche nach Updates"
+
+msgid "&Chinese"
+msgstr "&Chinesisch"
+
+msgid "&Console language"
+msgstr "&Konsolensprache"
+
+msgid "&Copy"
+msgstr "&Kopieren"
+
+msgid "&Copy Title ID"
+msgstr "&Kopiere Spiel ID"
+
+msgid "&Copy Title Image"
+msgstr "&Kopiere Spiel Symbol"
+
+msgid "&Copy Title Name"
+msgstr "&Kopiere Spiel Name"
+
+msgid "&Create shortcut"
+msgstr "&Verknüpfung erstellen"
+
+msgid "&DLC directory"
+msgstr "&DLC Verzeichnis"
+
+msgid "&Decrement"
+msgstr "&Verringern"
+
+msgid "&Delete"
+msgstr "&Löschen"
+
+msgid "&Download"
+msgstr "&Herunterladen"
+
+msgid "&Download Manager"
+msgstr "&Download-Verwaltung"
+
+msgid "&Dump"
+msgstr "&Dump"
+
+msgid "&Dutch"
+msgstr "&Holländisch"
+
+msgid "&Edit game profile"
+msgstr "Bearbeite Spiel-&Profil"
+
+msgid "&Edit graphic packs"
+msgstr "Bearbeite Grafik-Pakete"
+
+msgid "&Edit name"
+msgstr "&Name bearbeiten"
+
+msgid "&Emulated USB Devices"
+msgstr "&Emulierte USB-Geräte"
+
+msgid "&English"
+msgstr "&Englisch"
+
+msgid "&Exit"
+msgstr "&Beenden"
+
+msgid "&Favorite"
+msgstr "&Favorit"
+
+msgid "&File"
+msgstr "&Datei"
+
+msgid "&French"
+msgstr "&Französisch"
+
+msgid "&Fullscreen"
+msgstr "&Vollbild"
+
+msgid "&Game directory"
+msgstr "&Spiel-Verzeichnis"
+
+msgid "&General settings"
+msgstr "&Allgemeine Einstellungen"
+
+msgid "&German"
+msgstr "&Deutsch"
+
+msgid "&Graphic pack patches"
+msgstr "&Grafik-Paket-Patches"
+
+msgid "&Graphic packs"
+msgstr "&Grafikpakete"
+
+msgid "&Help"
+msgstr "&Hilfe"
+
+msgid "&Increment"
+msgstr "&Erhöhen"
+
+msgid "&Input settings"
+msgstr "&Eingabe-Einstellungen"
+
+msgid "&Install game title, update or DLC..."
+msgstr "&Installiere Spiel, Update oder DLC..."
+
+msgid "&Italian"
+msgstr "&Italienisch"
+
+msgid "&Japanese"
+msgstr "&Japanisch"
+
+msgid "&Korean"
+msgstr "&Koreanisch"
+
+msgid "&Launch title"
+msgstr "&Starte Software"
+
+msgid "&Load..."
+msgstr "&Laden..."
+
+msgid "&Logging"
+msgstr "&Logging"
+
+msgid "&Memory Dump"
+msgstr "&Speicher-Abbild"
+
+msgid "&Memory searcher"
+msgstr "&Speicher durchsuchen"
+
+msgid "&NFC"
+msgstr "&NFC"
+
+msgid "Open TesseraEmu folder"
+msgstr "TesseraEmu-Ordner öffnen"
+
+msgid "&Open MLC folder"
+msgstr "&MLC-Ordner öffnen"
+
+msgid "&Open directory"
+msgstr "Öffne &Verzeichnis"
+
+msgid "&Open logging window"
+msgstr "&Logging-Fenster öffnen"
+
+msgid "&Options"
+msgstr "&Optionen"
+
+msgid "&Portuguese"
+msgstr "&Portugisisch"
+
+msgid "&Refresh game list"
+msgstr "&Aktualisiere Spieleliste"
+
+msgid "&Registers"
+msgstr "&Register"
+
+msgid "&Remove entry"
+msgstr "Eintrag &entfernen"
+
+msgid "&Remove shader caches"
+msgstr "&Shader-Zwischenspeicher entfernen"
+
+msgid "&Render upside-down"
+msgstr "&Rendere kopfüber"
+
+msgid "&Resume"
+msgstr "&Fortsetzen"
+
+msgid "&Retry"
+msgstr "&Erneut versuchen"
+
+msgid "&Russian"
+msgstr "&Russisch"
+
+msgid "&Save directory"
+msgstr "&Speicherstand-Verzeichnis"
+
+msgid "&Scan NFC tag from file"
+msgstr "&Scanne ein NFC Tag aus einer Datei"
+
+msgid "&Separate GamePad view"
+msgstr "&Separate GamePad-Ansicht"
+
+msgid "&Shaders"
+msgstr "&Shaders"
+
+msgid "&Spanish"
+msgstr "&Spanisch"
+
+msgid "&Start"
+msgstr "&Start"
+
+msgid "&Symbols"
+msgstr "&Symbole"
+
+msgid "&Taiwanese"
+msgstr "&Taiwanesisch"
+
+msgid "&Textures"
+msgstr "&Texturen"
+
+msgid "&Timer speed"
+msgstr "&Timer-Geschwindigkeit"
+
+msgid "&Title Manager"
+msgstr "&Titel-Verwaltung"
+
+msgid "&Tools"
+msgstr "&Extras"
+
+msgid "&Unsupported API calls"
+msgstr "&Nicht unterstützter API-Aufruf"
+
+msgid "&Update directory"
+msgstr "&Update Verzeichnis"
+
+msgid "&Verify integrity of game files"
+msgstr "Bestätige Integrität von Spiel-Dateien"
+
+msgid "&View PPC debugger"
+msgstr "&Zeige PPC Debugger"
+
+msgid "&View PPC threads"
+msgstr "&Zeige PPC Threads"
+
+msgid "&View audio debugger"
+msgstr "&Zeige Audio Debugger"
+
+msgid "&Wiki page"
+msgstr "&Wiki-Seite"
+
+msgid "&Window"
+msgstr "&Fenster"
+
+msgid "<profile name>"
+msgstr "<Profilename>"
+
+msgid "> no modules loaded"
+msgstr "> keine Module geladen"
+
+msgid "> unknown module"
+msgstr "> unbekanntes Modul"
+
+msgid "API"
+msgstr "API"
+
+msgid "About TesseraEmu"
+msgstr "Über TesseraEmu"
+
+msgid "Account"
+msgstr ""
+"Nutzerk\n"
+"onto"
+
+msgid "Account information"
+msgstr "Nutzerkonto-Informationen"
+
+msgid "Account name may not be empty!"
+msgstr "Nutzerkonto-Name sollte nicht leer sein!"
+
+msgid "Account settings"
+msgstr "Nutzerkonto-Einstellungen"
+
+msgid "AccountId missing (The account is not connected to a NNID/PNID)"
+msgstr "AccountId fehlt (Das Nutzerkonto ist nicht mit einer NNID verbunden)"
+
+msgid ""
+"AccountPasswordCache is empty (The remember password option on your Wii U "
+"must be enabled for this account before dumping it)"
+msgstr ""
+"AccountPasswordCache ist leer (Die \"Passwort Speichern\"-Option auf deiner "
+"Wii U muss für dieses Nutzerkonto aktiviert sein, bevor es gedumpt wird)"
+
+msgid "Accurate barriers are off"
+msgstr "Genaue Barrieren sind ausgeschaltet"
+
+msgid "Active account"
+msgstr "Aktives Nutzerkonto"
+
+msgid "Active preset"
+msgstr "Aktive Voreinstellung"
+
+msgid "Add"
+msgstr "Hinzufügen"
+
+msgid ""
+"Add the root directory of your game(s). It will scan all directories in it "
+"for games"
+msgstr ""
+"Füge das Wurzel-Verzeichnis für dein(e) Spiel(e) hinzu. Es werden alle "
+"Unterverzeichnisse darin nach Spielen durchsucht"
+
+msgid "Additional options"
+msgstr "Zusätzliche Optionen"
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid ""
+"Adds a game path to scan for games displayed in the game list\n"
+"If you have unpacked games, make sure to select the root folder of a game"
+msgstr ""
+"Fügt einen Spiele-Pfad für das Durchsuchen nach Spielen die in der Spiele-"
+"Liste angezeigt werden hinzu\n"
+"Wenn du entpackte Spiele hast, stelle sicher das Wurzel-Verzeichnis des "
+"Spieles zu wählen"
+
+msgid "All Wii U files (*.wud, *.wux, *.wua, *.wuhb, *.iso, *.rpx, *.elf)"
+msgstr ""
+"Alle \"Wii U\"-Dateien (*.wud, *.wux, *.wua, *.wuhb, *.iso, *.rpx, *.elf)"
+
+msgid "All files (*.*)"
+msgstr "Alle Dateien (*.*)"
+
+msgid "Applying update..."
+msgstr "Wende Update an..."
+
+msgid ""
+"Are you really sure that you want to delete the following file:\n"
+"{}"
+msgstr ""
+"Bist du dir wirklich sicher, dass du die folgende Datei löschen möchtest:\n"
+"{}"
+
+msgid ""
+"Are you really sure that you want to delete the following folder:\n"
+"{}"
+msgstr ""
+"Bist du dir wirklich sicher, dass du den folgenden Ordner löschen möchtest:\n"
+"{}"
+
+msgid "Are you really sure that you want to delete the save entry for {}"
+msgstr ""
+"Bist du dir wirklich sicher, dass du den Speicherdaten-Einträg für {} "
+"löschen möchtest"
+
+msgid "Are you sure you want to delete the account {} with id {:x}?"
+msgstr ""
+"Bist du dir sicher, dass du das Nutzerkonto {}, mit ID {:x}, löschen "
+"möchtest?"
+
+msgid "Async shader compile"
+msgstr "Asynchrone Shader-Kompilierung"
+
+msgid ""
+"Async shader compile is enabled but not supported by the graphics driver\n"
+"Cemu will use synchronous compilation which can cause additional stutter"
+msgstr ""
+"Die asynchrone Shader-Kompilierung ist aktiviert, wird aber vom "
+"Grafiktreiber nicht unterstützt.\n"
+"Cemu verwendet eine synchrone Kompilierung, was zu zusätzlichem Stottern "
+"führen kann"
+
+msgid "Audio"
+msgstr "Audio"
+
+msgid "Audio API"
+msgstr "Audio API"
+
+msgid "Australia"
+msgstr "Australien"
+
+msgid "Auto"
+msgstr "Automatisch"
+
+msgid "Auto (recommended)"
+msgstr "Automatisch (Empfohlen)"
+
+msgid "Auto refresh"
+msgstr "Automatische Aktualisierung"
+
+msgid "Automatically check for updates"
+msgstr "Suche automatisch nach Updates"
+
+msgid "Automatically checks for new cemu versions on startup"
+msgstr "Prüft automatisch auf neue Cemu-Versionen beim Start"
+
+msgid "Axis"
+msgstr "Achse"
+
+msgid "Base game"
+msgstr "Basisspiel"
+
+msgid ""
+"Base game:\n"
+"Not installed"
+msgstr ""
+"Spiel:\n"
+"Nicht installiert"
+
+msgid ""
+"Base game:\n"
+"{}"
+msgstr ""
+"Spiel:\n"
+"{}"
+
+msgid "Bicubic"
+msgstr "Bikubisch"
+
+msgid "Birthday"
+msgstr "Geburtstag"
+
+msgid "Boost priority (-1)"
+msgstr "Erhöhe Priorität (-1)"
+
+msgid "Boost priority (-5)"
+msgstr "Erhöhe Priorität (-5)"
+
+msgid "Bottom center"
+msgstr "Unten mittig"
+
+msgid "Bottom left"
+msgstr "Unten links"
+
+msgid "Bottom right"
+msgstr "Unten rechts"
+
+msgid "Break (F5)"
+msgstr "Anhalten (F5)"
+
+msgid "Browse"
+msgstr "Durchsuchen"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "CPU per core usage"
+msgstr "Nutzung pro CPU-Kern"
+
+msgid "CPU usage"
+msgstr "CPU-Nutzung"
+
+msgid "CPU usage of TesseraEmu in percent"
+msgstr "CPU-Nutzung von TesseraEmu in Prozent"
+
+msgid "Calibrate"
+msgstr "Kalibrieren"
+
+msgid "Can't change MLC path while a game is running!"
+msgstr "Der MLC Pfad kann nicht geändert werden, während ein Spiel läuft!"
+
+msgid "Can't delete the only account!"
+msgstr "Kann das einzig verbleibende Nutzerkonto nicht löschen!"
+
+msgid "Can't open file to write!"
+msgstr "Kann Datei nicht zum Schreiben öffnen!"
+
+msgid "Can't open file!"
+msgstr "Kann Datei nicht öffnen!"
+
+msgid "Can't parse JSON file!"
+msgstr "Kann JSON-Datei nicht parsen!"
+
+msgid "Can't write to file: {}"
+msgstr "Kann nicht in Datei schreiben: {}"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Cannot create file"
+msgstr "Kann Datei nicht erstellen"
+
+msgid "Cannot open file"
+msgstr "Kann Datei nicht öffnen"
+
+msgid "Cannot write file. Disk full?"
+msgstr "Kann Datei nicht schreiben. Speicher voll?"
+
+msgid ""
+"Cemu\n"
+"Version {0}\n"
+"Compiled on {1}\n"
+"Original authors: {2}"
+msgstr ""
+"Cemu\n"
+"Version {0}\n"
+"Kompiliert am {1}\n"
+"Ursprüngliche Autoren: {2}"
+
+msgid "TesseraEmu RAM usage in MB"
+msgstr "TesseraEmu-RAM-Nutzung in MB"
+
+msgid "TesseraEmu can't write to {}!"
+msgstr "TesseraEmu kann nicht zu {} schreiben!"
+
+msgid ""
+"Cemu detected that the shader cache for this game is outdated.\n"
+"Only shader caches generated with Cemu 1.25.0 or above are supported.\n"
+"\n"
+"We recommend deleting the outdated cache file as it will no longer be used "
+"by Cemu."
+msgstr ""
+"Cemu erkannte dass der Shader-Zwischenspeicher für dieses Spiel veraltet "
+"ist.\n"
+"Nur Shader-Zwischenspeicher die mit Cemu 1.25.0 oder höher generiert wurden "
+"sind unterstützt.\n"
+"\n"
+"Wir empfehlen, die veraltete Shader-Zwischenspeicher-Datei zu löschen, da "
+"Cemu sie nicht länger nutzen wird."
+
+msgid ""
+"TesseraEmu failed to write to the custom mlc directory.\n"
+"\n"
+"The path is:\n"
+"{}\n"
+"\n"
+"TesseraEmu cannot start without a valid mlc path. Do you want to reset the path? You can later change it again in the General Settings."
+msgstr ""
+"TesseraEmu kann nicht in das benutzerdefinierte MLC-Verzeichnis schreiben.\n"
+"\n"
+"Der Pfad ist:\n"
+"{}\n"
+"\n"
+"TesseraEmu kann ohne gültigen MLC-Pfad nicht gestartet werden. Möchtest du den Pfad zurücksetzen? Du kannst ihn später in den Allgemeinen Einstellungen wieder ändern."
+
+msgid ""
+"TesseraEmu failed to write to the custom mlc directory.\n"
+"The path is:\n"
+"{}"
+msgstr ""
+"TesseraEmu kann nicht in das benutzerdefinierte MLC-Verzeichnis schreiben.\n"
+"Der Pfad ist:\n"
+"{}"
+
+msgid ""
+"TesseraEmu failed to write to the mlc directory.\n"
+"The path is:\n"
+"{}"
+msgstr ""
+"TesseraEmu kann nicht in das MLC-Verzeichnis schreiben.\n"
+"Der Pfad ist:\n"
+"{}"
+
+msgid ""
+"Cemu is a Wii U emulator.\n"
+"\n"
+"Wii and Wii U are trademarks of Nintendo.\n"
+"Cemu is not affiliated with Nintendo."
+msgstr ""
+"Cemu ist ein \"Wii U\"-Emulator.\n"
+"\n"
+"\"Wii\" und \"Wii U\" sind Handelsmarken von Nintendo.\n"
+"Cemu steht nicht in Verbindung mit Nintendo."
+
+msgid "TesseraEmu is running in portable mode"
+msgstr "TesseraEmu läuft im portablen Modus"
+
+msgid "TesseraEmu must be restarted to apply the selected UI language."
+msgstr "TesseraEmu muss neugestartet werden, damit die UI Sprache geändert werden kann."
+
+msgid "TesseraEmu needs to be restarted for the changes to take effect."
+msgstr "Ein Neustart von TesseraEmu ist erforderlich damit die Änderungen wirken."
+
+msgid "TesseraEmu update"
+msgstr "TesseraEmu-Aktualisierung"
+
+msgid "Changelog"
+msgstr "Änderungen"
+
+msgid ""
+"Changes the interface language of TesseraEmu\n"
+"Available languages are stored in the translation directory\n"
+"A restart will be required after changing the language"
+msgstr ""
+"Wechselt die Interface-Sprache von TesseraEmu\n"
+"Verfügbare Sprachen sind im Übersetzungsordner gespeichert\n"
+"Ein Neustart wird nach dem Wechsel der Sprache erforderlich sein"
+
+msgid "Changes the port that the GDB stub will use, which you can use by either starting TesseraEmu with the --enable-gdbstub option or by enabling it the Debug tab."
+msgstr "Ändert den Port den der GDB-Stub nutzen wird, welchen du nutzen kannst indem du entweder TesseraEmu mit der \"--enable-gdbstub\"-Option startest, oder ihn im \"Debug\"-Reiter aktivierst."
+
+msgid "Channels"
+msgstr "Kanäle"
+
+msgid "Checking"
+msgstr "Überprüfe"
+
+msgid "Checking for latest version..."
+msgstr "Schaue nach neuester Version..."
+
+msgid "Checking version..."
+msgstr "Überprüfe Version..."
+
+msgid "China"
+msgstr "China"
+
+msgid "Chinese"
+msgstr "Chinesisch"
+
+msgid "Choose desktop entry location"
+msgstr "Wähle den Ort für den Desktop-Eintrag"
+
+msgid "Choose shortcut location"
+msgstr "Wähle den Ort für die Verknüpfung"
+
+msgid "Classic"
+msgstr "Classic"
+
+msgid "Clear"
+msgstr "Leeren"
+
+msgid "Click Skip button for early results with lower accuracy"
+msgstr ""
+"Klicke \"Skip\"-Schaltfläche für schnellere Ergebnisse mit geringerer "
+"Genauigkeit"
+
+msgid "Click on Connect to load the list of downloadable titles"
+msgstr ""
+"Klicke auf „Verbinden“, um die Liste der herunterladbaren Titel zu laden"
+
+msgid "Close"
+msgstr "Schließen"
+
+msgid "Collecting list of files..."
+msgstr "Sammele Liste der Dateien..."
+
+msgid "Comment"
+msgstr "Kommentar"
+
+msgid "Complete"
+msgstr "Komplett"
+
+msgid "Configure input"
+msgstr "Konfiguriere Eingabe"
+
+msgid "Confirmation"
+msgstr "Bestätigung"
+
+msgid "Connect"
+msgstr "Verbinden"
+
+msgid ""
+"Connect to a custom Network Service (configured via network_services.xml)"
+msgstr ""
+"Verbindung zu einem benutzerdefinierten Netzwerkdienst (konfigurieren in "
+"network_services.xml)"
+
+msgid "Connect to the Pretendo Network Service"
+msgstr "Verbindung zum Pretendo Network Service"
+
+msgid "Connect to the official Nintendo Network Service"
+msgstr "Verbindung zum offiziellen Nintendo Network Service"
+
+msgid "Connected extension"
+msgstr "Verbundene Erweiterung"
+
+msgid "Connected. Right click entries in the list to start downloading"
+msgstr ""
+"Verbunden. Rechtsklicke auf Einträge in der Liste, um das Herunterladen zu "
+"starten"
+
+msgid "Connecting..."
+msgstr "Verbinde..."
+
+msgid "Control"
+msgstr "Kontrolle"
+
+msgid "Controller"
+msgstr "Controller"
+
+msgid "Controller profiles"
+msgstr "Controller-Profile"
+
+msgid "Controller settings"
+msgstr "Controller-Einstellungen"
+
+msgid "Controller {}"
+msgstr "Controller {}"
+
+msgid ""
+"Controls the amount of buffered audio data\n"
+"Higher values will create a delay in audio playback, but may avoid audio "
+"problems when emulation is too slow"
+msgstr ""
+"Kontrolliert die Menge an gepufferten Audio-Daten\n"
+"Höhere Werte werden eine Verzögerung in der Ton-Wiedergabe erzeugen, aber "
+"können Ton-Probleme die bei zu langsamer Emulation auftreten vermeiden"
+
+msgid "Controls the notification position while playing"
+msgstr "Kontrolliert die Benachrichtigungsposition beim Spielen"
+
+msgid ""
+"Controls the output aspect ratio when it doesn't match the ratio of the game"
+msgstr ""
+"Kontrolliert das Ausgabe-Seitenverhältnis wenn es nicht dem Verhältnis des "
+"Spieles entspricht"
+
+msgid "Controls the overlay which displays technical information while playing"
+msgstr ""
+"Kontrolliert das Overlay, welches technische Informationen beim Spielen "
+"anzeigt"
+
+msgid "Controls the vsync state"
+msgstr "Kontrolliert den \"VSync\"-Zustand"
+
+msgid "Conversion failed\n"
+msgstr "Konvertierung fehlgeschlagen\n"
+
+msgid "Conversion finished\n"
+msgstr "Konvertierung abgeschlossen\n"
+
+msgid "Convert to compressed Wii U archive (.wua)"
+msgstr "Konvertiere zu komprimiertem \"Wii U Archive\" (.wua)"
+
+msgid "Converting files..."
+msgstr "Konvertiere Dateien..."
+
+msgid "Could not decrypt title because title.tik is missing."
+msgstr "Konnte Titel nicht entschlüsseln weil \"title.tik\" fehlt."
+
+msgid ""
+"Could not decrypt title. Make sure that keys.txt contains the correct disc "
+"key for this title."
+msgstr ""
+"Konnte Titel nicht entschlüsseln. Stelle sicher, dass \"keys.txt\" den "
+"korrekten Schlüssel für diesen Titel beinhaltet."
+
+msgid ""
+"Couldn't create a required TesseraEmu directory or file!\n"
+"\n"
+"Error: {0}"
+msgstr ""
+"Konnte eine(n) erforderliche(n) TesseraEmu-Ordner oder -Datei nicht erstellen!\n"
+"\n"
+"Fehler: {0}"
+
+msgid "Couldn't download the update!"
+msgstr "Konnte das Update nicht laden!"
+
+msgid "Counting files..."
+msgstr "Zähle Dateien..."
+
+msgid "Country"
+msgstr "Land"
+
+msgid "Create"
+msgstr "Erstellen"
+
+msgid "Create Dimensions Figure file"
+msgstr "Dimensions Figur-Datei erstellen"
+
+msgid "Create Infinity Figure file"
+msgstr "Infinity Figur-Datei erstellen"
+
+msgid "Create Skylander file"
+msgstr "Skylander-Datei erstellen"
+
+msgid "Create execution breakpoint"
+msgstr "Erstelle Execution-Breakpoint"
+
+msgid "Create logging breakpoint"
+msgstr "Erstelle Logging-Breakpoint"
+
+msgid "Create memory breakpoint (read)"
+msgstr "Erstelle Memory-Breakpoint (lesen)"
+
+msgid "Create memory breakpoint (write)"
+msgstr "Erstelle Memory-Breakpoint (schreiben)"
+
+msgid "Create new account"
+msgstr "Erstelle neues Nutzer-Konto"
+
+msgid ""
+"Creates a core dump when TesseraEmu crashes\n"
+"Only enable when requested by a developer!"
+msgstr ""
+"Erstellt ein \"core\"-Abbild wenn TesseraEmu abstürzt\n"
+"Aktiviere dies nur wenn ein Entwickler dies anfragt!"
+
+msgid ""
+"Creates a dump when TesseraEmu crashes\n"
+"Only enable when requested by a developer!\n"
+"The Full option will create a very large dump file (includes a full RAM dump of the TesseraEmu process)"
+msgstr ""
+"Erstellt ein Abbild wenn TesseraEmu abstürzt\n"
+"Aktiviere dies nur wenn ein Entwickler dies anfragt!\n"
+"Die \"Vollständig\"-Option wird eine sehr große Abbild-Datei erstellen (beinhaltet ein vollständiges RAM-Abbild vom TesseraEmu-Prozess)"
+
+msgid "Current file:"
+msgstr "Aktuelle Datei:"
+
+msgid "Currently active downloads will continue in the background."
+msgstr "Derzeit aktive Downloads werden im Hintergrund fortgesetzt."
+
+msgid "Custom"
+msgstr "Benutzerdefiniert"
+
+msgid "Custom MLC path"
+msgstr "Benutzerdefinierter MLC Pfad"
+
+msgid "D-pad"
+msgstr "D-Pad"
+
+msgid "DLC"
+msgstr "DLC"
+
+msgid ""
+"DLC:\n"
+"Not installed"
+msgstr ""
+"DLC:\n"
+"Nicht installiert"
+
+msgid ""
+"DLC:\n"
+"{}"
+msgstr ""
+"DLC:\n"
+"{}"
+
+msgid "Deadzone"
+msgstr "Inaktiver Bereich"
+
+msgid "Debug"
+msgstr "Debug"
+
+msgid "Decrease priority (+1)"
+msgstr "Senke Priorität (+1)"
+
+msgid "Decrease priority (+5)"
+msgstr "Senke Priorität (+5)"
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "Delete breakpoint"
+msgstr "Breakpoint löschen"
+
+msgid "Delete outdated cache file [recommended]"
+msgstr "Lösche veraltete Zwischenspeicher-Datei [Empfohlen]"
+
+msgid "Demo"
+msgstr "Demo"
+
+msgid "Description"
+msgstr "Beschreibung"
+
+msgid "Details:"
+msgstr "Details:"
+
+msgid "Device"
+msgstr "Gerät"
+
+msgid "Dimensions Figure Creator"
+msgstr "Dimensions Figuren-Ersteller"
+
+msgid "Dimensions Figure Mover"
+msgstr "Dimensions Figur bewegen"
+
+msgid "Disable screen saver"
+msgstr "Bildschirmschoner deaktivieren"
+
+msgid "Disabled"
+msgstr "Deaktiviert"
+
+msgid "Discord Presence"
+msgstr "\"Discord\"-Anwesenheit (Presence)"
+
+msgid "Displays internal debug information (Vulkan only)"
+msgstr "Zeigt interner Debug-Informationen an (nur Vulkan)"
+
+msgid "Displays the active controller profile when starting a game"
+msgstr ""
+"Zeigt das derzeit aktive Controller-Profil wenn ein Spiel gestartet wird"
+
+msgid "Displays the menu bar when TesseraEmu is running in fullscreen mode and the mouse cursor is moved to the top"
+msgstr "Zeigt die Menü-Leiste an, wenn TesseraEmu im Vollbild-Modus läuft, und der Maus-Zeiger an die Oberseite bewegt wird"
+
+msgid ""
+"Do you really want to cancel the installation process?\n"
+"\n"
+"Canceling the process will delete the applied files."
+msgstr ""
+"Möchtest du wirklich den Installationsvorgang abbrechen?\n"
+"\n"
+"Den Vorgang abzubrechen wird die bisher angewandten Dateien löschen."
+
+msgid "Double buffering"
+msgstr "Double-Buffering"
+
+msgid "Download Manager"
+msgstr "Download-Verwaltung"
+
+msgid "Download and configure graphic packs"
+msgstr "Grafik-Pakete herunterladen und konfigurieren"
+
+msgid "Download failed"
+msgstr "Herunterladen fehlgeschlagen"
+
+msgid "Download latest community graphic packs"
+msgstr "Aktuellstes Community-Grafik-Pack herunterladen"
+
+msgid "Downloading"
+msgstr "Lade herunter"
+
+msgid "Downloading account ticket"
+msgstr "Lade Account-Ticket herunter"
+
+msgid "Downloading graphic packs..."
+msgstr "Lade Grafik-Pakete herunter..."
+
+msgid "Downloading meta data"
+msgstr "Lade Metadaten herunter"
+
+msgid "Downloading system tickets..."
+msgstr "Lade System-Tickets herunter..."
+
+msgid "Downloading ticket"
+msgstr "Lade Ticket herunter"
+
+msgid "Downloading update..."
+msgstr "Lade Update herunter..."
+
+msgid "Downscale filter"
+msgstr "Downscaling-Filter"
+
+msgid ""
+"Downscaling filters are used when the game resolution is bigger than the "
+"window size"
+msgstr ""
+"Downscaling-Filter werden benutzt wenn die Spiel-Auflösung größer ist als "
+"die Fenster-Größe"
+
+msgid "Draw calls per frame"
+msgstr "Draw-Calls pro Frame"
+
+msgid "Dumped online files not found"
+msgstr "Gedumpte Online-Dateien nicht gefunden"
+
+msgid "Dutch"
+msgstr "Niederländisch"
+
+msgid ""
+"EXPERT OPTION\n"
+"Controls the accuracy of floating point multiplication in shaders.\n"
+"\n"
+"Recommended: true"
+msgstr ""
+"EXPERTEN-OPTION\n"
+"Kontrolliert die Genauigkeit von Floating-Point-Muliplikationen in Shadern.\n"
+"\n"
+"Empfohlen: wahr"
+
+msgid ""
+"EXPERT OPTION\n"
+"Set the maximum thread slice runtime (in virtual cycles)"
+msgstr ""
+"EXPERTEN-OPTION\n"
+"Stelle die maximale \"Thread-Slice\"-Laufzeit ein (in virtuellen Zyklen)"
+
+msgid ""
+"EXPERT OPTION\n"
+"This option will load libraries from the cafeLibs directory"
+msgstr ""
+"EXPERTEN-OPTION\n"
+"Diese Option wird Bibliotheken vom \"cafeLibs\"-Verzeichnis laden"
+
+msgid "Edit game profile"
+msgstr "Bearbeite Spiel-Profil"
+
+msgid "Email"
+msgstr "E-Mail"
+
+msgid "Emulate Dimensions Toypad"
+msgstr "Emuliere ein Dimensions Toypad"
+
+msgid "Emulate Infinity Base"
+msgstr "Emuliere ein Infinity Base"
+
+msgid "Emulate Skylander Portal"
+msgstr "Emuliere ein Skylander Portal"
+
+msgid "Emulated USB Devices"
+msgstr "Emulierte USB-Geräte"
+
+msgid "Emulated controller"
+msgstr "Emulierter Controller"
+
+msgid "Enable Feral GameMode"
+msgstr "Feral GameMode aktivieren"
+
+msgid "Enabled"
+msgstr "Aktiviert"
+
+msgid ""
+"Enables async shader and pipeline compilation. Reduces stutter at the cost "
+"of objects not rendering for a short time.\n"
+"Vulkan only"
+msgstr ""
+"Aktiviert Asynchrone Shader-, und Pipeline-Kompilierung. Reduziert stottern, "
+"stattdessen werden Objekte jedoch kurzzeitig nicht dargestellt.\n"
+"Nur Vulkan"
+
+msgid ""
+"Enables the Discord Rich Presence feature\n"
+"You will also need to enable it in the Discord settings itself!"
+msgstr ""
+"Aktiviert die \"Discord Rich Presence\"-Funktion\n"
+"Du wirst es auch in den \"Discord\"-Einstellungen selbst aktivieren müssen!"
+
+msgid "English"
+msgstr "Englisch"
+
+msgid "Enter a custom game title"
+msgstr "Gib einen Benutzerdefinierten Spieletitel ein"
+
+msgid "Enter a memory address"
+msgstr "Gib eine Speicher-Adresse ein"
+
+msgid "Enter a new comment."
+msgstr "Gib einen neuen Kommentar ein."
+
+msgid "Enter a new instruction."
+msgstr "Gebe eine neue Anweisung ein."
+
+msgid "Enter a new value."
+msgstr "Gib einen neuen Wert ein."
+
+msgid "Enter a target address."
+msgstr "Gib eine Ziel-Adresse ein."
+
+msgid "Error"
+msgstr "Fehler"
+
+msgid "Error code"
+msgstr "Fehler-Code"
+
+msgid "Error in keys.txt at line {}"
+msgstr "Fehler in \"keys.txt\" in Zeile {}"
+
+msgid ""
+"Error when creating the extraction path:\n"
+"{}"
+msgstr ""
+"Fehler beim Erstellen des Extraktionspfades:\n"
+"{}"
+
+msgid ""
+"Error when creating the zip for the save entry:\n"
+"{}"
+msgstr ""
+"Fehler beim Erstellen der \".zip\"-Datei für den Speicherdaten-Eintrag:\n"
+"{}"
+
+msgid ""
+"Error when initializing Vulkan renderer:\n"
+"{}"
+msgstr ""
+"Fehler beim Initialisieren vom Vulkan-Renderer:\n"
+"{}"
+
+msgid ""
+"Error when opening the import zip file:\n"
+"{}"
+msgstr ""
+"Fehler beim Öffnen der \".zip\"-Datei für den Import:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a directory to the zip:\n"
+"{}"
+msgstr ""
+"Fehler beim Versuch ein Verzeichnis zur \".zip\"-Datei hinzuzufügen:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a file to the zip:\n"
+"{}"
+msgstr ""
+"Fehler beim Versuch eine Datei zur \".zip\"-Datei hinzuzufügen:\n"
+"{}"
+
+msgid ""
+"Error when trying to add cemu_meta file to the zip:\n"
+"{}"
+msgstr ""
+"Fehler beim Versuch die \"cemu_meta\"-Datei zur \".zip\"-Datei "
+"hinzuzufügen:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the entry:\n"
+"{}"
+msgstr ""
+"Fehler beim Versuch den Eintrag zu löschen:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the former save game:\n"
+"{}"
+msgstr ""
+"Fehler beim Versuch den vorherigen Speicherstand zu löschen:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the save directory:\n"
+"{}"
+msgstr ""
+"Fehler beim Versuch das Speicherdaten-Verzeichnis zu löschen:\n"
+"{}"
+
+msgid ""
+"Error when trying to move former title installation:\n"
+"{}"
+msgstr ""
+"Fehler beim Versuch die vorherige Titel-Installation zu verschieben:\n"
+"{}"
+
+msgid ""
+"Error when trying to move the save game:\n"
+"{}"
+msgstr ""
+"Fehler beim Versuch, den Speicherstand zu bewegen:\n"
+"{}"
+
+msgid "Error:"
+msgstr "Fehler:"
+
+msgid "Europe"
+msgstr "Europa"
+
+msgid "Exit"
+msgstr "Beenden"
+
+msgid "Export"
+msgstr "Exportieren"
+
+msgid "Export checksum entry"
+msgstr "Exportiere Prüfsummen-Eintrag"
+
+msgid "Export successful"
+msgstr "Export erfolgreich"
+
+msgid "Export the title checksum data to a local JSON file"
+msgstr "Exportiere die Titel-Prüfsummen-Daten in eine lokale JSON-Datei"
+
+msgid "Exported save entry (*.zip)"
+msgstr "Exportierter Speicherdaten-Eintrag (*.zip)"
+
+msgid "Exports the selected save entry as zip file"
+msgstr "Exportiert den gewählten Speicherdaten-Eintrag als \".zip\"-Datei"
+
+msgid "Extensions:"
+msgstr "Erweiterungen:"
+
+msgid "Extracting failed!"
+msgstr "Entpacken fehlgeschlagen!"
+
+msgid "Extracting update..."
+msgstr "Entpacke Update..."
+
+msgid "Extracting..."
+msgstr "Entpacke..."
+
+msgid "FPS"
+msgstr "FPS (BpS)"
+
+msgid "Failed to apply patches for graphic pack '{}'"
+msgstr "Anwenden der Patches für Grafik-Paket '{}' fehlgeschlagen"
+
+msgid "Failed to connect to server"
+msgstr "Verbindung zum Server fehlgeschlagen"
+
+msgid ""
+"Failed to create default MLC files in the selected directory. The MLC path "
+"has not been changed"
+msgstr ""
+"Fehler beim erstellen des Standard-MLC-Dateien im ausgewählten Verzeichnis. "
+"Der MLC-Pfad wurde nicht geändert"
+
+msgid "Failed to find a suitable Bluetooth radio."
+msgstr "Finden eines geeigneten Bluetooth-Moduls fehlgeschlagen."
+
+msgid "Failed to launch executable. Path: "
+msgstr "Ausführbare Datei konnte nicht gestartet werden. Pfad: "
+
+msgid "Failed to launch game."
+msgstr "Konnte Spiel nicht starten."
+
+msgid "Failed to load patches for graphic pack '{}'"
+msgstr "Laden der Patches für Grafik-Paket '{}' fehlgeschlagen"
+
+msgid "Failed to pair with the found controller."
+msgstr "Koppeln mit dem gefundenen Controller fehlgeschlagen."
+
+msgid "Failed to query account status"
+msgstr "Abfragen des Konto-Status fehlgeschlagen"
+
+msgid ""
+"Failed to remove the shader caches:\n"
+"{}"
+msgstr ""
+"Entfernen der Shader-Zwischenspeicher (Caches) fehlgeschlagen:\n"
+"{}"
+
+msgid "Failed to request tickets"
+msgstr "Abfragen des Tickets fehlgeschlagen"
+
+msgid "Failed to run this title because the executable is damaged"
+msgstr ""
+"Ausführen des Titels fehlgeschlagen, weil die ausführbare Datei beschädigt "
+"ist"
+
+msgid "Failed to save desktop entry to {}"
+msgstr "Speichern des Desktop-Eintrags zu {} fehlgeschlagen."
+
+msgid "Failed to save shortcut to {}"
+msgstr "Verknüpfung zu {} konnte nicht gespeichert werden"
+
+msgid "Failed to search for controllers."
+msgstr "Suche nach Controllern fehlgeschlagen."
+
+msgid "Female"
+msgstr "Weiblich"
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "Filter messages"
+msgstr "Nachrichten Filtern"
+
+msgid "Finalizing..."
+msgstr "Vollende..."
+
+msgid "Folder"
+msgstr "Ordner"
+
+msgid "Forces a given controller profile"
+msgstr "Erzwingt ein gegebenes Controller-Profil"
+
+msgid "Format"
+msgstr "Format"
+
+msgid "Found controller. Pairing..."
+msgstr "Controller gefunden. Koppele..."
+
+msgid "Found {0} games, {1} updates, {2} DLCs and {3} save entries"
+msgstr ""
+"{0} Spiele-, {1} Update-, {2} DLC- und {3} Speicherdaten-Einträge gefunden"
+
+msgid "Freeze"
+msgstr "Einfrieren"
+
+msgid "French"
+msgstr "Französisch"
+
+msgid "Friend list"
+msgstr "Freunde-Liste"
+
+msgid "Full"
+msgstr "Vollständig"
+
+msgid "Full sync at GX2DrawDone()"
+msgstr "Vollständige Synchronisierung bei GX2DrawDone()"
+
+msgid "Fullscreen menu bar"
+msgstr "Vollbild-Menüleiste"
+
+msgid "Fullscreen scaling"
+msgstr "Vollbild-Skalierung"
+
+msgid "Game"
+msgstr "Spiel"
+
+msgid "Game Paths"
+msgstr "Spielpfade"
+
+msgid "Game path"
+msgstr "Spiel-Pfad"
+
+msgid "Game paths"
+msgstr "Spiel-Pfade"
+
+msgid "GamePad View"
+msgstr "GamePad-Ansicht"
+
+msgid "Gamepad"
+msgstr "GamePad"
+
+msgid ""
+"Games will be launched with gamepad view toggled as default. The view can be "
+"toggled with CTRL + TAB"
+msgstr ""
+"Spiele werden standardmäßig mit GamePad-Ansicht gestartet. Die Ansicht kann "
+"mit STRG + TAB umgeschaltet werden"
+
+msgid "Gender"
+msgstr "Geschlecht"
+
+msgid "General"
+msgstr "Allgemein"
+
+msgid "General settings"
+msgstr "Allgemeine Einstellungen"
+
+msgid "Generated checksum of game image: {}"
+msgstr "Erzeugte Prüfsumme vom Spiel-Abbild: {}"
+
+msgid "Generated checksum of {} game files"
+msgstr "Prüfsummen für {} Spiel-Dateien generiert"
+
+msgid "Generating checksum of game image: {}"
+msgstr "Erzeuge Prüfsumme vom Spiel-Abbild: {}"
+
+msgid "German"
+msgstr "Deutsch"
+
+msgid "Getting installed title information..."
+msgstr "Sammele Informationen zu installierten Titeln..."
+
+msgid "Getting started"
+msgstr "Beginnen"
+
+msgid "GoTo (CTRL + G)"
+msgstr "Gehe zu (STRG + G)"
+
+msgid "Graphic"
+msgstr "Grafik"
+
+msgid "Graphic pack"
+msgstr "Grafik-Pack"
+
+msgid "Graphic pack error"
+msgstr "Grafik-Paket-Fehler"
+
+msgid "Graphic packs"
+msgstr "Grafikpack"
+
+msgid "Graphic packs && mods"
+msgstr "Grafikpack && Mods"
+
+msgid "Graphic packs cannot be updated while a game is running."
+msgstr "Grafik-Pakete können die aktualisiert werden, während ein Spiel läuft."
+
+msgid ""
+"Graphic packs improve games by offering the ability to change resolution, "
+"increase FPS, tweak visuals or add gameplay modifications.\n"
+"Get started by opening the graphic packs configuration window.\n"
+msgstr ""
+"Grafik-Pakete verbessern Spiele indem sie die Möglichkeit anbieten, die "
+"Auflösung zu ändern, FPS anzupassen,\n"
+"oder andere visuelle oder Gameplay-Modifikationen hinzuzufügen.\n"
+"Beginnen Sie, indem Sie das Konfigurationsfenster der Grafikpakete öffnen.\n"
+
+msgid "Graphics"
+msgstr "Grafiken"
+
+msgid "Graphics API"
+msgstr "Grafik-API"
+
+msgid "Graphics Device"
+msgstr "Grafik-Gerät"
+
+msgid "Hashing game file: {}/{}"
+msgstr "Erstelle Prüfsumme für Spiel-Datei: {}/{}"
+
+msgid "I understand"
+msgstr "Ich verstehe"
+
+msgid "IP"
+msgstr "IP-Adresse"
+
+msgid "Icon"
+msgstr "Icon"
+
+msgid ""
+"If synchronization is requested by the game, the emulated CPU will wait for "
+"the GPU to finish all operations.\n"
+"This is more accurate behavior, but may cause lower performance"
+msgstr ""
+"Falls Synchronisierung vom Spiel angefordert wird, wird die emulierte CPU "
+"warten, bis die GPU mit allen Operationen fertig ist.\n"
+"Dies ist korrekteres Verhalten, aber kann die Leistung reduzieren"
+
+msgid "Import"
+msgstr "Importieren"
+
+msgid "Import save entry"
+msgstr "Speicherdaten-Eintrag importieren"
+
+msgid "Imports a zipped save entry"
+msgstr "Importiert einen Speicherdaten-Eintrag aus einer \".zip\"-Datei"
+
+msgid "Infinity Figure Creator"
+msgstr "Infinity Figuren-Ersteller"
+
+msgid "Info"
+msgstr "Information"
+
+msgid "Information"
+msgstr "Information"
+
+msgid "Initializing"
+msgstr "Initialisiere"
+
+msgid "Input API"
+msgstr "Input API"
+
+msgid "Input settings"
+msgstr "Eingabe-Einstellungen"
+
+msgid "Install title"
+msgstr "Installiere Titel"
+
+msgid "Installed"
+msgstr "Installiert"
+
+msgid "Installed games"
+msgstr "Installierte Spiele"
+
+msgid "Installing"
+msgstr "Installiere"
+
+msgid "Installing DLC..."
+msgstr "Installiere DLC..."
+
+msgid "Installing system title..."
+msgstr "Installiere System-Titel..."
+
+msgid "Installing title..."
+msgstr "Installiere Titel..."
+
+msgid "Installing update..."
+msgstr "Installiere Update..."
+
+msgid "Interface"
+msgstr "Benutzeroberfläche"
+
+msgid "Invalid TMD"
+msgstr "Inkorrektes TMD"
+
+msgid ""
+"IsPasswordCacheEnabled is set to false (The remember password option on your "
+"Wii U must be enabled for this account before dumping it)"
+msgstr ""
+"IsPasswordCacheEnabled ist auf \"false\" gesetzt (Die \"Passwort Speichern\"-"
+"Option auf deiner Wii U muss für dieses Nutzerkonto aktiviert sein, bevor es "
+"gedumpt wird)"
+
+msgid ""
+"It looks like you're starting TesseraEmu for the first time.\n"
+"This quick setup assistant will help you get the best experience"
+msgstr ""
+"Es sieht aus als würdest du TesseraEmu zum ersten Mal starten.\n"
+"Dieser Schnellstart-Assistent wird dir helfen die beste Erfahrung zu erhalten"
+
+msgid ""
+"It seems that a newer version is already installed, do you still want to "
+"install the older version?"
+msgstr ""
+"Es ist scheinbar bereits eine neuere Version installiert; möchtest du "
+"dennoch die alte Version installieren?"
+
+msgid ""
+"It seems that the selected title is already installed, do you want to "
+"reinstall it?"
+msgstr ""
+"Der Titel ist scheinbar bereits installiert; soll er nochmals installiert "
+"werden?"
+
+msgid ""
+"It seems that there is already a title installed at the target location but "
+"it has a different type.\n"
+"Currently installed: '{}' Installing: '{}'\n"
+"\n"
+"This can happen for titles which were installed with very old Cemu "
+"versions.\n"
+"Do you still want to continue with the installation? It will replace the "
+"currently installed title."
+msgstr ""
+"Es scheint, dass bereits ein Titel am Ziel-Ort installiert ist, aber er hat "
+"einen anderen Typ.\n"
+"Aktuell installiert: '{}' Installierend: '{}'\n"
+"\n"
+"Dies kann bei Titeln passieren, die mit einer sehr alten Cemu-Version "
+"installiert wurden.\n"
+"Möchtest du dennoch mit der Installation fortfahren? Sie wird den aktuell "
+"installierten Titel ersetzen."
+
+msgid "Italian"
+msgstr "Italienisch"
+
+msgid "JSON file doesn't satisfy needed schema"
+msgstr "JSON-Datei erfüllt nicht das erforderliche Schema"
+
+msgid "Japan"
+msgstr "Japan"
+
+msgid "Japanese"
+msgstr "Japanisch"
+
+msgid "Keep aspect ratio"
+msgstr "Seitenverhältnis beibehalten"
+
+msgid "Keep outdated cache file"
+msgstr "Behalte veraltete Zwischenspeicher-Datei"
+
+msgid "Korea"
+msgstr "Korea"
+
+msgid "Korean"
+msgstr "Koreanisch"
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Last played"
+msgstr "Zuletzt gespielt"
+
+msgid "Latency"
+msgstr "Latenz"
+
+msgid "Launch with gamepad view"
+msgstr "Starte mit Gamepad-Ansicht"
+
+msgid "Left Axis"
+msgstr "Linker Stick"
+
+msgid "Load"
+msgstr "Öffnen"
+
+msgid "Load Dimensions Figure"
+msgstr "Öffne eine Dimensions Figur"
+
+msgid "Load shared libraries"
+msgstr "Lade geteilte Bibliotheken (Shared-Libraries)"
+
+msgid "Location"
+msgstr "Ort"
+
+msgid "Logging in..."
+msgstr "Melde an..."
+
+msgid "Logging window"
+msgstr "Logging-Fenster"
+
+msgid "Login failed. Outdated or incomplete online files?"
+msgstr "Login fehlgeschlagen. Veraltete oder unvollständige Online-Dateien?"
+
+msgid "Low battery"
+msgstr "Niedrige Akkuladung"
+
+msgid "MLC"
+msgstr "MLC"
+
+msgid ""
+"Makes the \"show screen\" button toggle between the TV and gamepad screens"
+msgstr ""
+"Ermöglicht das Umschalten zwischen dem Fernsehbildschirm und dem Gamepad-"
+"Bildschirm mit der Schaltfläche „Bildschirm anzeigen“"
+
+msgid "Male"
+msgstr "Männlich"
+
+msgid "Match emulated display (Experimental)"
+msgstr "An emulierten Bildschirm anpassen (Experimentell)"
+
+msgid "Memory Dump"
+msgstr "Speicher-Abbild"
+
+msgid "Memory Searcher"
+msgstr "Speicher durchsuchen"
+
+msgid "Microphone (Experimental)"
+msgstr "Mikrofon (Experimental)"
+
+msgid "Mii name"
+msgstr "Mii-Name"
+
+msgid "Missing certificate and key files:"
+msgstr "Fehlende Zertifikat-, und Schlüssel-Dateien:"
+
+msgid "Mode"
+msgstr "Modus"
+
+msgid "Module"
+msgstr "Modul"
+
+msgid "Module&list"
+msgstr "Modul-&Liste"
+
+msgid "Modules"
+msgstr "Module"
+
+msgid "Mono"
+msgstr "Mono"
+
+msgid "MotionPlus"
+msgstr "MotionPlus"
+
+msgid "Move"
+msgstr "Bewegen"
+
+msgid "Move Here"
+msgstr "An diese Stelle verschieben"
+
+msgid "Multi-core recompiler"
+msgstr "Multi-Core-Recompiler"
+
+msgid ""
+"Multiple issues with your game files have been found!\n"
+"Do you want to export them to a file?"
+msgstr ""
+"Mehrere Mängel mit deinen Spiel-Dateien wurden gefunden!\n"
+"Möchtest du diese in eine Datei exportieren?"
+
+msgid "NUS"
+msgstr "NUS"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Network Service"
+msgstr "Netzwerk-Dienst"
+
+msgid "Network service"
+msgstr "Netzwerk-Dienst"
+
+msgid "Next"
+msgstr "Weiter"
+
+msgid "Nintendo"
+msgstr "Nintendo"
+
+msgid "No"
+msgstr "Nein"
+
+msgid "No account selected"
+msgstr "Kein Nutzerkonto gewählt"
+
+msgid "No persistent id entered!"
+msgstr "Keine dauerhafte ID eingegeben!"
+
+msgid "No update available!"
+msgstr "Kein Update verfügbar!"
+
+msgid "No updates available."
+msgstr "Keine Updates verfügbar."
+
+msgid "None"
+msgstr "Nichts"
+
+msgid "Not a valid NFC file"
+msgstr "Keine gültige \"NFC\" Datei"
+
+msgid ""
+"Not enough space available.\n"
+"Required: {0} MB\n"
+"Available: {1} MB"
+msgstr ""
+"Nicht genügend Speicher vorhanden.\n"
+"Benötigt: {0} MB\n"
+"Verfügbar: {1} MB"
+
+msgid "Not installed"
+msgstr "Nicht installiert"
+
+msgid "Not installed (Partially downloaded)"
+msgstr "Nicht installiert (teilweise heruntergeladen)"
+
+msgid ""
+"Note that changing the MLC location will not transfer any accounts or save "
+"files. Are you sure you want to change the path?"
+msgstr ""
+"Beachte, dass durch die Änderung des MLC-Verzeichnis keine Konten oder "
+"Speicher Daten übertragen werden. Möchten Sie den Pfad wirklich ändern?"
+
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+msgid "Nunchuck"
+msgstr "Nunchuck"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "OTP and SEEPROM present but no certificate files were found"
+msgstr ""
+"OTP und SEEPROM sind vorhanden, aber es wurden keine Zertifikatsdateien "
+"gefunden."
+
+msgid "OTP.bin or SEEPROM.bin is missing"
+msgstr "OTP.bin oder SEEPROM.bin nicht gefunden"
+
+msgid "Off"
+msgstr "Aus"
+
+msgid "Offline"
+msgstr "Offline"
+
+msgid "On"
+msgstr "An"
+
+msgid "Online Status"
+msgstr "Online-Status"
+
+msgid "Online functionality disabled for this account"
+msgstr "Online-Funktionalität für dieses Konto deaktiviert"
+
+msgid "Online play is not set up. Follow the guide below to get started"
+msgstr ""
+"Das Online-Spiel ist nicht eingerichtet. Befolge die nachstehende Anleitung, "
+"um loszulegen"
+
+msgid "Online play requirements"
+msgstr "Voraussetzungen für das Online-Spielen"
+
+msgid "Online play tutorial"
+msgstr "Tutorial für das Online-Spielen"
+
+msgid "Open Infinity Figure dump"
+msgstr "Öffne eine Infinity Figur-Datei"
+
+msgid "Open Skylander dump"
+msgstr "Öffne eine Skylander-Datei"
+
+msgid "Open checksum entry"
+msgstr "Öffne Prüfsummen-Eintrag"
+
+msgid "Open directory"
+msgstr "Verzeichnis öffnen"
+
+msgid "Open file to launch"
+msgstr "Datei zum Starten öffnen"
+
+msgid "Open file to load"
+msgstr "Zu ladende Datei"
+
+msgid "Open separate pad screen"
+msgstr "Öffne separaten Pad-Bildschirm"
+
+msgid "Open the directory of the save entry"
+msgstr "Öffne das Verzeichnis des Speicherdaten-Eintrags"
+
+msgid "Options"
+msgstr "Optionen"
+
+msgid "Outdated shader cache"
+msgstr "Shader-Zwischenspeicher veraltet"
+
+msgid "Overlay"
+msgstr "Einblendungen"
+
+msgid "PPC Debugger"
+msgstr "PPC-Debugger"
+
+msgid "PPC threads"
+msgstr "PPC Threads"
+
+msgid "Packet delay"
+msgstr "Paket-Verzögerung"
+
+msgid "Pair a Wii or Wii U controller"
+msgstr "Koppele einen Wii-, oder \"Wii U\"- Controller"
+
+msgid "Pairing..."
+msgstr "Koppele..."
+
+msgid "Paused"
+msgstr "Pausiert"
+
+msgid "Permanently delete the save entry"
+msgstr "Lösche den Speicherdaten-Eintrag dauerhaft"
+
+msgid "Please use your system's Bluetooth manager instead."
+msgstr "Bitte nutze stattdessen die Bluetooth-Verwaltung deines Systems."
+
+msgid "Port"
+msgstr "Port"
+
+msgid "Portugese"
+msgstr "Portugiesisch"
+
+msgid "Position"
+msgstr "Position"
+
+msgid ""
+"Pressing the screenshot key (F12) will save a screenshot directly to the "
+"screenshots folder"
+msgstr ""
+"Die Bildschirmaufnahme-Taste (F12) zu drücken, wird eine Bildschirmaufnahme "
+"direkt im Bildschirmaufnahme-Ordner speichern"
+
+msgid "Pretendo"
+msgstr "Pretendo"
+
+msgid ""
+"Prevents the system from activating the screen saver or going to sleep while "
+"running a game."
+msgstr ""
+"Hindert das System daran, den Bildschirmschoner zu aktivieren oder in den "
+"Ruhezustand zu wechseln, während ein Spiel läuft."
+
+msgid "Preview version"
+msgstr "Vorschauversion"
+
+msgid "Previous"
+msgstr "Zurück"
+
+msgid "PrincipalId missing"
+msgstr "PrincipalId fehlt"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Progress"
+msgstr "Fortschritt"
+
+msgid "Queued"
+msgstr "In Warteschlange"
+
+msgid "RAM usage"
+msgstr "RAM-Nutzung"
+
+msgid "Range"
+msgstr "Reichweite"
+
+msgid "Reading game image: {0}/{1} kB"
+msgstr "Lese Spiel-Abbild: {0}/{1} kB"
+
+msgid "Reading game image: {}"
+msgstr "Lese Spiel-Abbild: {}"
+
+msgid "Receive untested updates"
+msgstr "Erhalten Sie ungetestete Updates"
+
+msgid "Refresh"
+msgstr "Aktualisieren"
+
+msgid "Region"
+msgstr "Region"
+
+msgid "Registers"
+msgstr "Register"
+
+msgid "Reload edited shaders"
+msgstr "Bearbeitete Shader erneut Laden"
+
+msgid "Remember main window position"
+msgstr "Merke Haupt-Fenster-Position"
+
+msgid "Remember pad window position"
+msgstr "Merke Pad-Fenster-Position"
+
+msgid "Remove"
+msgstr "Entfernen"
+
+msgid "Remove shader caches"
+msgstr "Shader-Zwischenspeicher entfernen"
+
+msgid "Remove the shader caches for {}?"
+msgstr "Die Shader-Zwischenspeicher (Caches) für {} entfernen?"
+
+msgid "Removes the currently selected game path from the game list"
+msgstr "Entfernt den derzeit gewählten Spiele-Pfad von der Spiele-Liste"
+
+msgid "Reset &order"
+msgstr "&Reihenfolge zurücksetzen"
+
+msgid "Reset &width"
+msgstr "&Breite zurücksetzen"
+
+msgid "Reset path"
+msgstr "Pfad zurücksetzen"
+
+msgid "Restart"
+msgstr "Neustarten"
+
+msgid "Restart of TesseraEmu required for changes to take effect"
+msgstr "Ein Neustart von TesseraEmu ist erforderlich damit die Änderungen wirken"
+
+msgid "Restores the last known pad window position and size when opening it"
+msgstr ""
+"Stellt die zuletzt bekannte Pad-Fenster-Position wieder her, wenn es "
+"geöffnet wird"
+
+msgid "Restores the last known window position and size when starting TesseraEmu"
+msgstr "Stellt die zuletzt bekannte Fenster-Position und Größe wieder her, wenn TesseraEmu gestartet wird"
+
+msgid "Results"
+msgstr "Ergebnisse"
+
+msgid "Results ({0})"
+msgstr "Ergebnisse ({0})"
+
+msgid "Resume"
+msgstr "Wiederaufnehmen"
+
+msgid "Retrieving update information..."
+msgstr "Hole Update-Informationen..."
+
+msgid "Right Axis"
+msgstr "Rechter Stick"
+
+msgid "Rotation"
+msgstr "Drehung"
+
+msgid "Rumble"
+msgstr "Vibration"
+
+msgid "Run (F5)"
+msgstr "Ausführen (F5)"
+
+msgid "Russian"
+msgstr "Russisch"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Save Wii U game archive file"
+msgstr "Speichere \"Wii U Game Archive\"-Datei"
+
+msgid "Save entry (*.zip)"
+msgstr "Speicherdaten-Eintrag (*.zip)"
+
+msgid "Save folder"
+msgstr "Speicherordner"
+
+msgid "Save screenshot"
+msgstr "Bildschirmaufnahme speichern"
+
+msgid "Save transfer"
+msgstr "Speicherdaten-Übertragung"
+
+msgid "Scale"
+msgstr "Skalierung"
+
+msgid "Search"
+msgstr "Suche"
+
+msgid "Searching for controllers..."
+msgstr "Suche nach Controllern..."
+
+msgid "Searching for titles..."
+msgstr "Suche nach Titeln..."
+
+msgid "Select MLC directory"
+msgstr "Wähle ein MLC Verzeichnis"
+
+msgid "Select a directory"
+msgstr "Wähle ein Verzeichnis"
+
+msgid "Select a directory containing games."
+msgstr "Wähle einen Ordner der die Spiele enthält."
+
+msgid "Select a file"
+msgstr "Wähle eine Datei"
+
+msgid "Select a file to export the errors"
+msgstr "Wähle eine Datei um die Fehler zu exportieren"
+
+msgid "Select a folder"
+msgstr "Wähle ein Verzeichnis"
+
+msgid "Select a target file to export the save entry"
+msgstr "Wähle eine Ziel-Datei um den Speicherdaten-Eintrag zu exportieren"
+
+msgid "Select a zipped save file"
+msgstr "Wähle eine \".zip\"-Datei mit Speicherdaten"
+
+msgid "Select an account and press Connect"
+msgstr "Wähle ein Nutzerkonto und drücke \"Verbinden\""
+
+msgid "Select folder of title to install"
+msgstr "Wähle Ordner des Titels zum Installieren"
+
+msgid "Select one of the available audio back ends"
+msgstr "Wähle eines der verfügbaren Audio-Backends"
+
+msgid "Select one of the available graphic back ends"
+msgstr "Wähle eines der verfügbaren Grafik-Backends"
+
+msgid "Select the active audio input device for Wii U GamePad"
+msgstr "Wähle das aktive Audio-Eingabe-Gerät für Wii U GamePad"
+
+msgid "Select the active audio output device for Wii U GamePad"
+msgstr "Wähle das aktive Audio-Ausgabe-Gerät für Wii U GamePad"
+
+msgid "Select the active audio output device for Wii U TV"
+msgstr "Wähle das aktive Audio-Ausgabe-Gerät für Wii U TV"
+
+msgid "Select the folder that stores your update, DLC or base game files"
+msgstr "Wähle den Ordner der deine Update-, DLC-, oder Spiel-Dateien speichert"
+
+msgid "Select the language you want to use in TesseraEmu"
+msgstr "Wählen Sie die Sprache aus, die Sie in TesseraEmu verwenden möchten"
+
+msgid "Select the used graphic device"
+msgstr "Wähle das benutzte Grafik-Gerät"
+
+msgid "Select title to install"
+msgstr "Wähle Titel zum Installieren"
+
+msgid "Selected account is a valid online account"
+msgstr "Dein Konto ist ein gültiges Online-Konto"
+
+msgid "Selected account is not linked to a NNID or PNID"
+msgstr "Dein Konto ist nicht mit einer NNID verbunden"
+
+msgid "Set breakpoint"
+msgstr "Setze Breakpoint"
+
+msgid "Set comment for breakpoint at address %08x"
+msgstr "Setze Kommentar für Breakpoint an Adresse %08x"
+
+msgid "Set the CPU emulation mode"
+msgstr "Lege den Modus für die CPU-Emulation fest"
+
+msgid "Sets the scale of the notification text"
+msgstr "Legt die Skalierung von dem Benachrichtigungstext fest"
+
+msgid "Sets the scale of the overlay text"
+msgstr "Legt die Skalierung des Overlay-Textes fest"
+
+msgid "Sets the text color of notifications"
+msgstr "Legt die Text-Farbe von Benachrichtigungen fest"
+
+msgid "Sets the text color of the overlay"
+msgstr "Legt die Text-Farbe von dem Overlay fest"
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "Shader caches removed"
+msgstr "Shader-Zwischenspeicher entfernt"
+
+msgid "Shader compiler"
+msgstr "Shader-Kompilierer"
+
+msgid "Shader multiplication accuracy"
+msgstr "Shader-Multiplikationsgenauigkeit"
+
+msgid "Show &dlc"
+msgstr "&DLC anzeigen"
+
+msgid "Show &game time"
+msgstr "&Spielzeit anzeigen"
+
+msgid "Show &icon"
+msgstr "&Icon anzeigen"
+
+msgid "Show &last played"
+msgstr "&Zuletzt gespieltes anzeigen"
+
+msgid "Show &name"
+msgstr "&Name anzeigen"
+
+msgid "Show &region"
+msgstr "Zeige &Region"
+
+msgid "Show &title ID"
+msgstr "Zeige &Titel-ID"
+
+msgid "Show &version"
+msgstr "&Version anzeigen"
+
+msgid "Show available titles"
+msgstr "Zeige verfügbare Titel"
+
+msgid "Show available updates"
+msgstr "Zeige verfügbare Updates"
+
+msgid "Show installed"
+msgstr "Zeige installiertes"
+
+msgid "Show only active"
+msgstr "Zeige nur aktive"
+
+msgid "Show views"
+msgstr "Zeige Ansichten"
+
+msgid "Shows a notification after shaders have been compiled"
+msgstr "Zeigt eine Benachrichtigung, nachdem Shader kompiliert wurden"
+
+msgid "Shows a notification when a low controller battery has been detected"
+msgstr ""
+"Zeigt eine Benachrichtigung, wenn ein niedriger Ladestand einer Controller-"
+"Batterie erkannt wird"
+
+msgid "Shows friend list related data if online"
+msgstr "Zeige die Freunde-Liste betreffende Daten an, wenn online"
+
+msgid "Single-core interpreter"
+msgstr "Single-Core-Interpreter"
+
+msgid "Single-core recompiler"
+msgstr "Single-Core-Recompiler"
+
+msgid "Size"
+msgstr "Größe"
+
+msgid "Skylander Figure Creator"
+msgstr "Skylander-Figuren-Ersteller"
+
+msgid "Source"
+msgstr "Quelle"
+
+msgid "Spanish"
+msgstr "Spanisch"
+
+msgid "Special thanks:"
+msgstr "Besonderer Dank:"
+
+msgid "Start games with fullscreen"
+msgstr "Starte Spiele im Vollbild-Modus"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Stereo"
+msgstr "Stereo"
+
+msgid "Stop emulation"
+msgstr "Emulation beenden"
+
+msgid "Stopping..."
+msgstr "Hält an..."
+
+msgid "Stored Entries"
+msgstr "Gespeicherte Einträge"
+
+msgid "Stretch"
+msgstr "Strecken"
+
+msgid "Style: &Icons"
+msgstr "Stil: &Symbole"
+
+msgid "Style: &List"
+msgstr "Stil: &Liste"
+
+msgid "Style: &Small Icons"
+msgstr "Stil: &Kleine Symbole"
+
+msgid "Success"
+msgstr "Erfolg"
+
+msgid "Successfully paired the controller."
+msgstr "Controller erfolgreich gekoppelt."
+
+msgid "Surround"
+msgstr "Surround"
+
+msgid "Suspend"
+msgstr "Unterbrechen"
+
+msgid "Symbols"
+msgstr "Symbole"
+
+msgid "System data title"
+msgstr "System-Daten-Titel"
+
+msgid "System title"
+msgstr "System-Titel"
+
+msgid "TMD download failed"
+msgstr "TMD-Download fehlgeschlagen"
+
+msgid "TV"
+msgstr "TV"
+
+msgid "Taiwan"
+msgstr "Taiwan"
+
+msgid "Taiwanese"
+msgstr "Taiwanesisch"
+
+msgid "Target"
+msgstr "Ziel"
+
+msgid "Test if the controller is connected"
+msgstr "Teste ob der Kontroller angeschlossen ist"
+
+msgid "Text Color"
+msgstr "Text-Farbe"
+
+msgid "Texture cache"
+msgstr "Textur-Cache"
+
+msgid ""
+"Thank you for testing the in-development build of Cemu for macOS.\n"
+" \n"
+"The macOS port is currently purely experimental and should not be considered "
+"stable or ready for issue-free gameplay. There are also known issues with "
+"degraded performance due to the use of MoltenVk and Rosetta for ARM Macs. We "
+"appreciate your patience while we improve Cemu for macOS."
+msgstr ""
+"Danke, dass du die Entwicklungsversion von Cemu für macOS testest.\n"
+"\n"
+"Die macOS-Portierung ist zurzeit rein experimentell und sollte nicht als "
+"stabil, oder als bereit für problemfreies Spielen betrachtet werden. Es gibt "
+"auch bekannte Mängeö mit reduzierter Leistung aufgrund der Nutzung von "
+"MoltenVk und Rosetta für ARM-Macs. Wir schätzen ihre Geduld während wird "
+"Cemu für macOS verbessern."
+
+msgid "Thanks to our Patreon supporters:"
+msgstr "Dank an unsere Patreon-Unterstützer:"
+
+msgid ""
+"The (parent) folder of the title you selected is missing at least one of the "
+"required subfolders (\"code\", \"content\" and \"meta\")\n"
+"Make sure that the files are complete."
+msgstr ""
+"Im (übergeordneten) Ordner von dem Titel den du wähltest fehlt mindestens "
+"einer der folgenden Unterordner (\"code\", \"content\" and \"meta\")\n"
+"Stelle sicher, dass die Dateien vollständig sind."
+
+msgid "The VRAM usage of TesseraEmu in MB"
+msgstr "Die VRAM-Nutzung von TesseraEmu in MB"
+
+msgid "The controller is already added!"
+msgstr "Der Controller ist bereits hinzugefügt!"
+
+msgid "The currently selected account is not a valid or dumped online account:"
+msgstr ""
+"Das zurzeit gewählte Nutzerkonto ist entweder ungültig oder kein gedumptes "
+"Online-Konto:"
+
+msgid "The file you are comparing with is for a different title."
+msgstr "Die Datei mit der du vergleichst, ist für einen anderen Titel."
+
+msgid "The folder you have selected cannot be found on your system."
+msgstr ""
+"Der Ordner, den du gewählt hast, kann nicht auf deinem System gefunden "
+"werden."
+
+msgid ""
+"The following content will be converted to a compressed Wii U archive file "
+"(.wua):"
+msgstr ""
+"Der folgende Inhalt wird in eine komprimierte \"Wii U Archive\"-Datei (.wua) "
+"konvertiert:"
+
+msgid "The following error(s) have been found:"
+msgstr "Die folgenden Fehler wurden gefunden:"
+
+msgid "The following files are damaged:"
+msgstr "Die folgenden Dateien sind beschädigt:"
+
+msgid "The following files are missing:"
+msgstr "Die folgenden Dateien fehlen:"
+
+msgid ""
+"The following prefixes are supported:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+msgstr ""
+"Die folgenden Prefixe sind unterstützt:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+
+msgid ""
+"The game path is scanned by TesseraEmu to automatically locate your games, game updates and DLCs. We recommend creating a dedicated directory in which\n"
+"you place all your Wii U game files. Additional paths can be set later in TesseraEmu's general settings. All common Wii U game formats are supported by TesseraEmu."
+msgstr ""
+"Der Spielpfad wird von TesseraEmu gescannt, um Ihre Spiele, Spielaktualisierungen und DLCs automatisch zu finden. Wir empfehlen, ein dediziertes Verzeichnis zu erstellen, in dem\n"
+"alle ihre Wii U-Spieldateien platzieren. Zusätzliche Pfade können später in den allgemeinen TesseraEmu-Einstellungen festgelegt werden. Alle gängigen Wii U-Spielformate werden von TesseraEmu unterstützt."
+
+msgid ""
+"The given account id is not valid!\n"
+"It must be a hex number bigger or equal than {:08x}"
+msgstr ""
+"Die gegebene Account-ID ist nicht gültig!\n"
+"Es muss eine hexadezimale Nummer sein, die größer oder gleich {:08x} ist"
+
+msgid "The mii name is the profile name"
+msgstr "Der Mii-Name ist der Profil-Name"
+
+msgid ""
+"The mlc directory contains your save games and installed game update/dlc data"
+msgstr ""
+"Das MLC-Verzeichnis beinhaltet deine Speicherstände und installierten Spiel-"
+"Updates/DLC-Daten"
+
+msgid "The number of draw calls per frame. Average over last 5 seconds"
+msgstr ""
+"Die Anzahl an Draw-Calls pro Bild. Durchschnitt über die letzten 5 Sekunden"
+
+msgid "The number of frames per second. Average over last 5 seconds"
+msgstr ""
+"Die Anzahl an Bildern pro Sekunde. Durchschnitt über die letzten 5 Sekunden"
+
+msgid "The persistent id is the internal folder name used for your saves"
+msgstr ""
+"Die dauerhafte ID ist der interne, für deine Speicherdaten benutzte Ordner-"
+"Name"
+
+msgid ""
+"The persistent id is the internal folder name used for your saves. Only "
+"change this if you are importing saves from a Wii U with a specific id"
+msgstr ""
+"Die dauerhafte ID, ist der interne Ordner-Name für deine Speicherdaten. "
+"Ändere dies nur, wenn du Speicherdaten von einer Wii U mit einer "
+"spezifischen ID importierst"
+
+msgid "The persistent id must be greater than {:x}!"
+msgstr "Die dauerhafte ID muss größer sein als {:x}!"
+
+msgid "The persistent id {:x} is already in use by account {}!"
+msgstr "Die dauerhafte ID {:x} wird bereits vom Nutzerkonto {} benutzt!"
+
+msgid ""
+"The selected directory does not contain the expected MLC structure. Do you "
+"want to create a new MLC structure in this directory?\n"
+"Note that changing the MLC location will not transfer any accounts or save "
+"files."
+msgstr ""
+"Das ausgewählte Verzeichnis enthält keine MLC-Struktur. Möchten Sie in "
+"diesem Verzeichnis eine neue MLC-Struktur erstellen?\n"
+"Beachte, dass durch die Änderung des MLC-Verzeichnis keine Konten oder "
+"Speicher Daten übertragen werden."
+
+msgid "The shader caches were removed!"
+msgstr "Die Shader-Zwischenspeicher (Caches) wurden entfernt!"
+
+msgid "The verification data doesn't include a WUD hash!"
+msgstr "Die Überprüfungsdaten enthalten keinen WUD-Hash!"
+
+msgid ""
+"There's a new update available.\n"
+"Do you want to update?"
+msgstr ""
+"Ein neues Update ist verfügbar.\n"
+"Möchtest du aktualisieren?"
+
+msgid ""
+"There's already a file at the target directory:\n"
+"{}"
+msgstr ""
+"Es gibt bereits eine Datei im Ziel-Verzeichnis:\n"
+"{}"
+
+msgid ""
+"There's already a save game available for the target account, do you want to "
+"overwrite it?\n"
+"This will delete the existing save files for the account and replace them."
+msgstr ""
+"Es ist bereits ein Speicherstand für das Ziel-Nutzerkonto verfügbar, "
+"möchtest du ihn überschreiben?\n"
+"Dies wird die existierenden Speicherstand-Dateien für das Nutzerkonto "
+"löschen, und ersetzen."
+
+msgid ""
+"This game entry seems to be either an update or the base game was merged with update data\n"
+"Broken game dumps cause various problems during emulation and may even stop working at all in future TesseraEmu versions\n"
+"Please make sure the base game is intact and install updates only with the File->Install Update/DLC option"
+msgstr ""
+"Dieser Spiel-Eintrag scheint entweder ein Update zu sein, oder das Spiel wurde mit Update-Daten kombiniert\n"
+"Defekte Spiele-Dumps verursachen diverse Probleme während der Emulation, und können möglicherweise in zukünftigen TesseraEmu-Versionen gar nicht mehr funktionieren\n"
+"Bitte stelle sicher, dass das Spiel intakt ist, und installiere Updates nur mit der \"Installiere Spiel, Update oder DLC...\"-Funktion im Datei-Menü"
+
+msgid "This graphic pack has no description"
+msgstr "Dieses Grafik-Pack hat keine Beschreibung"
+
+msgid "This option requires Win8.1+"
+msgstr "Diese Option erfordert Win8.1+"
+
+msgid "This update removed or renamed the following graphic packs:"
+msgstr ""
+"Diese Aktualisierung hat folgende Grafik-Packs umbenannt oder entfernt:"
+
+msgid "Thread quantum"
+msgstr "Thread-Quantum"
+
+msgid "Title ID"
+msgstr "Titel-ID"
+
+msgid "Title Manager"
+msgstr "Titel-Verwaltung"
+
+msgid "Title checksum of {:08x}-{:08x}"
+msgstr "Titel-Prüfsumme von {:08x}-{:08x}"
+
+msgid "Title installation has been canceled!"
+msgstr "Die Titel-Installation wurde abgebrochen!"
+
+msgid "Title installed!"
+msgstr "Titel installiert!"
+
+msgid "Toggle Breakpoint (F9)"
+msgstr "Breakpoint umschalten (F9)"
+
+msgid "Top center"
+msgstr "Oben mittig"
+
+msgid "Top left"
+msgstr "Oben links"
+
+msgid "Top right"
+msgstr "Oben rechts"
+
+msgid "Total cpu usage in percent for each core"
+msgstr "Gesamte CPU-Nutzung in Prozent, für die jeweiligen Kerne"
+
+msgid "Transfer"
+msgstr "Übertragen"
+
+msgid "Transfers the save entry to another persistent account id"
+msgstr ""
+"Überträgt den Speicherdaten-Eintrag zu einer anderen dauerhaften Account-ID"
+
+msgid "Triple buffering"
+msgstr "Triple-Buffering"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "USA"
+msgstr "USA"
+
+msgid "Unable to create file"
+msgstr "Unfähig Datei zu erstellen"
+
+msgid ""
+"Unable to create file keys.txt\n"
+"This can happen if TesseraEmu does not have write permission to its own directory, the disk is full or if anti-virus software is blocking TesseraEmu."
+msgstr ""
+"Unfähig die Datei \"keys.txt\" zu erstellen\n"
+"Dies kann passieren falls TesseraEmu keine Schreibberechtigung für sein eigenes Verzeichnis hat, der Speicher voll ist, oder TesseraEmu von Anti-Virus-Software blockiert wird."
+
+msgid "Unable to find the /meta/meta.xml file inside the selected folder."
+msgstr "Unfähig die \"/meta/meta.xml\"-Datei im gewählten Ordner zu finden."
+
+msgid ""
+"Unable to launch game\n"
+"Path:\n"
+msgstr ""
+"Unfähig Spiel zu starten\n"
+"Pfad:\n"
+
+msgid "Unable to launch game because the base files were not found."
+msgstr ""
+"Unfähig das Spiel zu starten, weil die \"base\"-Dateien nicht gefunden "
+"wurden."
+
+msgid ""
+"Unable to launch title.\n"
+"Make sure the configured game paths are still valid and refresh the game "
+"list.\n"
+"\n"
+"Path which failed to load:\n"
+msgstr ""
+"Unfähig Titel zu starten.\n"
+"Stelle sicher, dass die konfigurierten Spiele-Pfade noch gültig sind, und "
+"aktualisiere die Spiele-Liste.\n"
+"\n"
+"Pfad der nicht geladen werden konnte:\n"
+
+msgid ""
+"Unable to mount title.\n"
+"Make sure the configured game paths are still valid and refresh the game "
+"list.\n"
+"\n"
+"File which failed to load:\n"
+msgstr ""
+"Unfähig Titel einzuhängen.\n"
+"Stelle sicher, dass die konfigurierten Spiele-Pfade noch gültig sind, und "
+"aktualisiere die Spiele-Liste.\n"
+"\n"
+"Datei die nicht geladen werden konnte:\n"
+
+msgid "Update"
+msgstr "Update"
+
+msgid "Update available"
+msgstr "Update verfügbar"
+
+msgid "Update available!"
+msgstr "Update verfügbar!"
+
+msgid "Update error"
+msgstr "Update-Fehler"
+
+msgid "Update installation has been canceled!"
+msgstr "Die Installation des Updates wurde abgebrochen!"
+
+msgid "Update notification"
+msgstr "Update-Benachrichtigung"
+
+msgid ""
+"Update:\n"
+"Not installed"
+msgstr ""
+"Update:\n"
+"Nicht installiert"
+
+msgid ""
+"Update:\n"
+"{}"
+msgstr ""
+"Update:\n"
+"{}"
+
+msgid ""
+"Updated graphic packs are available. Do you want to download and install "
+"them?"
+msgstr ""
+"Aktualisierte Grafik-Pakete sind verfügbar. Möchtest du diese herunterladen "
+"und installieren?"
+
+msgid "Updating game list..."
+msgstr "Aktualisiere Spieleliste..."
+
+msgid "Updating ticket cache"
+msgstr "Aktualisiere Ticket-Zwischenspeicher"
+
+msgid "Upscale filter"
+msgstr "Upscaling-Filter"
+
+msgid ""
+"Upscaling filters are used when the game resolution is smaller than the "
+"window size"
+msgstr ""
+"Upscaling-Filter werden benutzt wenn die Spiel-Auflösung kleiner ist als die "
+"Fenster-Größe"
+
+msgid "Use FeralInteractive GameMode if installed."
+msgstr "Benutze FeralInteractive GameMode, sofern installiert."
+
+msgid "Use motion"
+msgstr "Nutze Bewegung"
+
+msgid "Used libraries and utilities:"
+msgstr "Benutzte Bibliotheken und Hilfsmittel:"
+
+msgid "VRAM usage"
+msgstr "VRAM-Nutzung"
+
+msgid "VSync"
+msgstr "VSync"
+
+msgid ""
+"Valid online files are required to download eShop titles. For more "
+"information, go to the Account tab in the General Settings."
+msgstr ""
+"Zum Herunterladen von eShop-Titeln sind gültige Onlinedateien erforderlich. "
+"Weitere Informationen finden Sie auf der Registerkarte „Konto“ in den "
+"allgemeinen Einstellungen."
+
+msgid "Value"
+msgstr "Wert"
+
+msgid "Verifies the checksum online"
+msgstr "Bestätigt die Prüfsumme online"
+
+msgid "Verifies the checksum with a local JSON file you can select"
+msgstr ""
+"Bestätigt die Prüfsumme mit einer lokalen JSON-Datei die du auswählen kannst"
+
+msgid "Verify online"
+msgstr "Überprüfe online"
+
+msgid "Verify with local file"
+msgstr "Überprüfe mit lokaler Datei"
+
+msgid "Verifying"
+msgstr "Überprüfe"
+
+msgid "Verifying integrity of game files..."
+msgstr "Überprüfe Integrität von Spiel-Dateien..."
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Volume"
+msgstr "Lautstärke"
+
+msgid "WUA"
+msgstr "WUA"
+
+msgid "WUD"
+msgstr "WUD"
+
+msgid "WUHB"
+msgstr "WUHB"
+
+msgid "Warning"
+msgstr "Warnung"
+
+msgid ""
+"Warning: Disabling the accurate barriers option will lead to flickering "
+"graphics but may improve performance. It is highly recommended to leave it "
+"turned on."
+msgstr ""
+"Warnung: Genaue Barrieren auszuschalten wird zu flimmernden Grafiken führen, "
+"aber kann die Leistung verbessern. Es ist sehr empfohlen, diese "
+"eingeschaltet zu lassen."
+
+msgid ""
+"When checking for updates, include brand new and untested releases. These "
+"may contain bugs!"
+msgstr ""
+"Wenn Sie nach Updates suchen, fügen Sie brandneue und nicht getestete "
+"Versionen hinzu. Diese können Fehler enthalten!"
+
+msgid "Wii U NUS content"
+msgstr "\"Wii U NUS\"-Inhalt"
+
+msgid "Wii U archive (*.wua)"
+msgstr "Wii U Archive (*.wua)"
+
+msgid "Wii U executable (*.rpx, *.elf)"
+msgstr "Ausführbare \"Wii U\"-Dateien (*.rpx, *.elf)"
+
+msgid "Wii U homebrew bundle (*.wuhb)"
+msgstr "Wii U Homebrew-Paket (*.wuhb)"
+
+msgid "Wii U image (*.wud, *.wux, *.iso, *.wad)"
+msgstr "\"Wii U\"-Abbilder (*.wud, *.wux, *.iso, *.wad)"
+
+msgid "Write stack trace to log"
+msgstr "Schreibe Stack-Trace ins Log"
+
+msgid "Wrong region: {}"
+msgstr "Falsche Region: {}"
+
+msgid "Wrong version: {}"
+msgstr "Falsche Version: {}"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid ""
+"You are trying to import a savegame for a different title than your "
+"currently selected one: {:016x} vs {:016x}\n"
+"Are you sure that you want to continue?"
+msgstr ""
+"Du versuchst Speicherdaten für einen anderen Titel als den aktuell gewählten "
+"zu importieren: {:016x} vs {:016x}\n"
+"Bist du dir sicher, dass du fortfahren möchtest?"
+
+msgid ""
+"You can configure a custom path for the emulated internal Wii U storage (MLC).\n"
+"This is where TesseraEmu stores saves, accounts and other Wii U system files."
+msgstr ""
+"Sie können einen benutzerdefinierten Pfad für den emulierten internen Wii U-Speicher (MLC) konfigurieren.\n"
+"Hier speichert TesseraEmu gespeicherte Konten und andere Systemdateien der Wii U."
+
+msgid ""
+"You can configure one controller for each player.\n"
+"We advise you to always use GamePad as emulated input for the first player, "
+"since many games expect the GamePad to be present.\n"
+"It is also required for touch functionality.\n"
+"The default global hotkeys are:\n"
+"CTRL - show pad screen\n"
+"CTRL + TAB - toggle pad screen\n"
+"ALT + ENTER - toggle fullscreen\n"
+"ESC - leave fullscreen\n"
+"\n"
+"If you're having trouble configuring your controller, make sure to have it "
+"in idle state and press calibrate.\n"
+"Also don't set the axis deadzone too low."
+msgstr ""
+"Du kannst einen Controller pro Spieler konfigurieren.\n"
+"Wir empfehlen dir, immer ein emuliertes GamePad für die Eingabe vom ersten "
+"Spieler zu verwenden, da viele Spiele erwarten, dass ein GamePad vorhanden "
+"ist.\n"
+"Es ist auch für Touch-Eingabe erforderlich.\n"
+"Die globalen Standard-Tastenkombinationen sind:\n"
+"STRG - GamePad-Bildschirm anzeigen\n"
+"STRG + TAB - Zwischen GamePad-Bildschirm und TV-Bildschirm umschalten\n"
+"ALT + ENTER - Vollbild-Ansicht umschalten\n"
+"ESC - Vollbild-Ansicht verlassen\n"
+"\n"
+"Wenn du Probleme beim Konfigurieren deines Controllers hast, stelle sicher, "
+"dass dieser in einem ruhigen Zustand ist, und drücke \"Kalibrieren\".\n"
+"Stelle außerdem die Deadzone für die Achsen nicht zu niedrig ein."
+
+msgid "You have to restart the game in order to apply the new settings."
+msgstr "Du musst das Spiel neu starten, um die neuen Einstellungen anzuwenden."
+
+msgid "You may need to set them up again."
+msgstr "Du musst sie möglicherweise erneut einrichten."
+
+msgid "You've played"
+msgstr "Spielzeit"
+
+msgid "Your entered value is not valid for the selected datatype."
+msgstr "Der angegebene Wert ist ungültig für diesen Datentyp."
+
+msgid "Your game files are valid"
+msgstr "Deine Spiel-Dateien sind gültig"
+
+msgid ""
+"Your game image is invalid!\n"
+"\n"
+"Your hash:\n"
+"{}\n"
+"\n"
+"Expected hash:\n"
+"{}"
+msgstr ""
+"Dein Spiel-Abbild ist ungültig!\n"
+"\n"
+"Deine Prüfsumme:\n"
+"{}\n"
+"\n"
+"Erwartete Prüfsumme:\n"
+"{}"
+
+msgid "base"
+msgstr "Basis"
+
+msgid "blow mic"
+msgstr "Mikrofon pusten"
+
+msgid "can't delete profile"
+msgstr "Kann Profil nicht löschen"
+
+msgid "click"
+msgstr "Klicken"
+
+msgid "controller set by gameprofile. changes won't be saved permanently!"
+msgstr ""
+"Controller durch Spiel-Profil eingestellt. Änderungen werden nicht dauerhaft "
+"gespeichert!"
+
+msgid "couldn't load profile"
+msgstr "Konnte Profil nicht laden"
+
+msgid "couldn't save profile"
+msgstr "Konnte Profil nicht speichern"
+
+msgid "cycles"
+msgstr "Zyklen"
+
+msgid "down"
+msgstr "Runter"
+
+msgid "false"
+msgstr "Aus"
+
+msgid "gx2 API"
+msgstr "GX2 API"
+
+msgid "h264 API"
+msgstr "H264 API"
+
+msgid "home"
+msgstr "Home"
+
+msgid "invalid profile name"
+msgstr "Ungültiger Profil-Name"
+
+msgid "left"
+msgstr "Links"
+
+msgid "many"
+msgstr "Region-Frei"
+
+msgid "never"
+msgstr "Nie"
+
+msgid "otp.bin is invalid"
+msgstr "\"otp.bin\" ist ungültig"
+
+msgid "otp.bin missing in TesseraEmu directory"
+msgstr "\"otp.bin“ fehlt im TesseraEmu-Verzeichnis"
+
+msgid "profile deleted"
+msgstr "Profil gelöscht"
+
+msgid "profile loaded"
+msgstr "Profil geladen"
+
+msgid "profile saved"
+msgstr "Profil gespeichert"
+
+msgid "right"
+msgstr "Rechts"
+
+msgid "save"
+msgstr "Speicherdaten"
+
+msgid "seeprom.bin is invalid"
+msgstr "\"seeprom.bin\" ist ungültig"
+
+msgid "seeprom.bin missing in TesseraEmu directory"
+msgstr "\"seeprom.bin\" fehlt im TesseraEmu-Verzeichnis"
+
+msgid "show screen"
+msgstr "Zeige Bildschirm"
+
+msgid "system"
+msgstr "System"
+
+msgid "toggle screen"
+msgstr "Bildschirm umschalten"
+
+msgid "true"
+msgstr "An"
+
+msgid "unknown"
+msgstr "Unbekannt"
+
+msgid "up"
+msgstr "Hoch"
+
+msgid "update"
+msgstr "Update"
+
+msgid ""
+"{} files have an invalid hash!\n"
+"Do you want to export a list of them to a file?"
+msgstr ""
+"{} Dateien haben eine ungültige Prüfsumme!\n"
+"Möchtest du eine Liste davon in eine Datei exportieren?"
+
+msgid "{} hour"
+msgid_plural "{} hours"
+msgstr[0] "{} Stunde"
+msgstr[1] "{} Stunden"
+
+msgid "{} minute"
+msgid_plural "{} minutes"
+msgstr[0] "{} Minute"
+msgstr[1] "{} Minuten"

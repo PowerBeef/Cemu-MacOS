@@ -1,0 +1,2933 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Cemu\n"
+"PO-Revision-Date: 2024-11-25 09:36+0100\n"
+"Last-Translator: Daniel Nylander <github@danielnylander.se>\n"
+"Language-Team: \n"
+"Language: sv_SE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.5\n"
+
+msgid "&0.125x speed"
+msgstr "&0.125x hastighet"
+
+msgid "&0.25x speed"
+msgstr "&0.25x hastighet"
+
+msgid "&0.5x speed"
+msgstr "&0.5x hastighet"
+
+msgid "&1x speed"
+msgstr "&1x hastighet"
+
+msgid "&2x speed"
+msgstr "&2x hastighet"
+
+msgid "&4x speed"
+msgstr "&4x hastighet"
+
+msgid "&8x speed"
+msgstr "&8x hastighet"
+
+msgid "&About TesseraEmu"
+msgstr "&Om TesseraEmu"
+
+msgid "&Accurate barriers (Vulkan)"
+msgstr "E&xakta barriärer (Vulkan)"
+
+msgid "&Active account"
+msgstr "Aktivt &konto"
+
+msgid "&Add new entry"
+msgstr "&Lägg till nytt objekt"
+
+msgid "&Breakpoints"
+msgstr "&Brytpunkter"
+
+msgid "&CPU"
+msgstr "&CPU"
+
+msgid "&CafeOS modules logging"
+msgstr "Loggning av &CafeOS-moduler"
+
+msgid "&Check for updates"
+msgstr "&Leta efter uppdateringar"
+
+msgid "&Chinese"
+msgstr "&Kinesiska"
+
+msgid "&Console language"
+msgstr "&Konsolspråk"
+
+msgid "&Copy"
+msgstr "&Kopiera"
+
+msgid "&Copy Title ID"
+msgstr "&Kopiera titel-id"
+
+msgid "&Copy Title Image"
+msgstr "K&opiera titelavbild"
+
+msgid "&Copy Title Name"
+msgstr "K&opiera titelnamn"
+
+msgid "&Coreinit Logging (OSReport/OSConsole)"
+msgstr "&Coreinit-loggning (OSReport/OSConsole)"
+
+msgid "&Create shortcut"
+msgstr "S&kapa genväg"
+
+msgid "&DLC directory"
+msgstr "&DLC-katalog"
+
+msgid "&Debug"
+msgstr "F&elsök"
+
+msgid "&Decrement"
+msgstr "&Minska"
+
+msgid "&Delete"
+msgstr "&Ta bort"
+
+msgid "&Download"
+msgstr "&Hämta"
+
+msgid "&Download Manager"
+msgstr "Hämt&ningshanterare"
+
+msgid "&Dump"
+msgstr "&Dumpa"
+
+msgid "&Dump current RAM"
+msgstr "&Dumpa aktuellt RAM"
+
+msgid "&Dutch"
+msgstr "&Nederländska"
+
+msgid "&Edit game profile"
+msgstr "R&edigera spelprofil"
+
+msgid "&Edit graphic packs"
+msgstr "R&edigera grafikpaket"
+
+msgid "&Edit name"
+msgstr "R&edigera namn"
+
+msgid "&Emulated USB Devices"
+msgstr "&Emulerade USB-enheter"
+
+msgid "&English"
+msgstr "&Engelska"
+
+msgid "&Exit"
+msgstr "A&vsluta"
+
+msgid "&Favorite"
+msgstr "&Favorit"
+
+msgid "&File"
+msgstr "&Arkiv"
+
+msgid "&French"
+msgstr "&Franska"
+
+msgid "&Fullscreen"
+msgstr "&Helskärm"
+
+msgid "&Game directory"
+msgstr "&Spelkatalog"
+
+msgid "&General settings"
+msgstr "Al&lmänna inställningar"
+
+msgid "&German"
+msgstr "T&yska"
+
+msgid "&Goto Disasm"
+msgstr "&Gå till Disasm"
+
+msgid "&Graphic pack patches"
+msgstr "Patchar för &grafikpaket"
+
+msgid "&Graphic packs"
+msgstr "&Grafikpaket"
+
+msgid "&Help"
+msgstr "&Hjälp"
+
+msgid "&Increment"
+msgstr "Ö&ka"
+
+msgid "&Input settings"
+msgstr "&Inmatningsinställningar"
+
+msgid "&Install game title, update or DLC..."
+msgstr "&Installera speltitel, uppdatering eller DLC..."
+
+msgid "&Invalid API usage"
+msgstr "Ogilti&g API-användning"
+
+msgid "&Italian"
+msgstr "&Italienska"
+
+msgid "&Japanese"
+msgstr "&Japanska"
+
+msgid "&Korean"
+msgstr "K&oreanska"
+
+msgid "&Launch title"
+msgstr "Starta tit&el"
+
+msgid "&Launch with GDB stub"
+msgstr "Sta&rta med GDB stub"
+
+msgid "&Load..."
+msgstr "&Läs in..."
+
+msgid "&Log PPC context for API"
+msgstr "&Logga PPC-kontext för API"
+
+msgid "&Logging"
+msgstr "&Loggning"
+
+msgid "&Memory Dump"
+msgstr "&Minnesdump"
+
+msgid "&Memory searcher"
+msgstr "&Minnessökare"
+
+msgid "&NFC"
+msgstr "&NFC"
+
+msgid "Open TesseraEmu folder"
+msgstr "Öppna TesseraEmu-mapp"
+
+msgid "&Open MLC folder"
+msgstr "&Öppna MLC-mapp"
+
+msgid "&Open directory"
+msgstr "Ö&ppna katalog"
+
+msgid "&Open logging window"
+msgstr "&Öppna loggfönstret"
+
+msgid "&Options"
+msgstr "&Inställningar"
+
+msgid "&Options below are for experts. Leave off if unsure"
+msgstr "Alte&rnativen nedan är för experter. Lämna av om osäker"
+
+msgid "&Pin to main window"
+msgstr "Fäst till &huvudfönstret"
+
+msgid "&Portuguese"
+msgstr "&Portugisiska"
+
+msgid "&Refresh game list"
+msgstr "&Uppdatera spellistan"
+
+msgid "&Registers"
+msgstr "&Register"
+
+msgid "&Remove entry"
+msgstr "&Ta bort objekt"
+
+msgid "&Remove shader caches"
+msgstr "&Ta bort shadercachar"
+
+msgid "&Render upside-down"
+msgstr "&Rendera upp-och-ned"
+
+msgid "&Resume"
+msgstr "Å&teruppta"
+
+msgid "&Retry"
+msgstr "Försök i&gen"
+
+msgid "&Russian"
+msgstr "&Ryska"
+
+msgid "&Save directory"
+msgstr "Spa&rkatalog"
+
+msgid "&Scan NFC tag from file"
+msgstr "&Skanna NFC-tagg från fil"
+
+msgid "&Separate GamePad view"
+msgstr "&Separat GamePad-vy"
+
+msgid "&Shaders"
+msgstr "&Shaders"
+
+msgid "&Spanish"
+msgstr "&Spanska"
+
+msgid "&Start"
+msgstr "&Starta"
+
+msgid "&Symbols"
+msgstr "&Symboler"
+
+msgid "&Taiwanese"
+msgstr "&Taiwanesiska"
+
+msgid "&Texture cache warnings"
+msgstr "Varningar för &texturcache"
+
+msgid "&Textures"
+msgstr "&Texturer"
+
+msgid "&Timer speed"
+msgstr "&Tidshastighet"
+
+msgid "&Title Manager"
+msgstr "&Titelhanterare"
+
+msgid "&Tools"
+msgstr "Ver&ktyg"
+
+msgid "&Unsupported API calls"
+msgstr "Os&upporterade API-anrop"
+
+msgid "&Update directory"
+msgstr "&Uppdateringskatalog"
+
+msgid "&Verify integrity of game files"
+msgstr "Verifiera i&ntegriteten för spelfiler"
+
+msgid "&View PPC debugger"
+msgstr "&Visa PPC-debugger"
+
+msgid "&View PPC threads"
+msgstr "&Visa PPC-trådar"
+
+msgid "&View audio debugger"
+msgstr "&Visa ljudfelsökaren"
+
+msgid "&View texture cache info"
+msgstr "&Visa info om texturcache"
+
+msgid "&Vulkan validation layer (slow)"
+msgstr "&Vulkan valideringslager (långsam)"
+
+msgid "&Wiki page"
+msgstr "&Wiki-sida"
+
+msgid "&Window"
+msgstr "Fönst&er"
+
+msgid "&Zero"
+msgstr "&Noll"
+
+msgid "&nlibcurl HTTP/HTTPS requests"
+msgstr "&nlibcurl HTTP/HTTPS-begäran"
+
+msgid "0"
+msgstr "0"
+
+msgid "<profile name>"
+msgstr "<profilnamn>"
+
+msgid "> no modules loaded"
+msgstr "> inga moduler inlästa"
+
+msgid "> unknown module"
+msgstr "> okänd modul"
+
+msgid "API"
+msgstr "API"
+
+msgid "About TesseraEmu"
+msgstr "Om TesseraEmu"
+
+msgid "Account"
+msgstr "Konto"
+
+msgid "Account information"
+msgstr "Kontoinformation"
+
+msgid "Account name may not be empty!"
+msgstr "Kontonamnet får inte vara tomt!"
+
+msgid "Account settings"
+msgstr "Kontoinställningar"
+
+msgid "AccountId missing (The account is not connected to a NNID/PNID)"
+msgstr "AccountId saknas (Kontot är inte anslutet till en NNID/PNID)"
+
+msgid ""
+"AccountPasswordCache is empty (The remember password option on your Wii U "
+"must be enabled for this account before dumping it)"
+msgstr ""
+"AccountPasswordCache är tomt (Alternativet för komma ihåg lösenord på din "
+"Wii U måste vara aktiverat för detta konto innan det dumpas)"
+
+msgid "Accurate barriers are off"
+msgstr "Exakta barriärer är av"
+
+msgid "Active account"
+msgstr "Aktivt konto"
+
+msgid "Active preset"
+msgstr "Aktivt förval"
+
+msgid "Add"
+msgstr "Lägg till"
+
+msgid ""
+"Add the root directory of your game(s). It will scan all directories in it "
+"for games"
+msgstr ""
+"Lägg till rotkatalogen för dina spel. Denna kommer att sökas igenom "
+"rekursivt efter spel"
+
+msgid "Additional options"
+msgstr "Ytterligare alternativ"
+
+msgid "Address"
+msgstr "Adress"
+
+msgid ""
+"Adds a game path to scan for games displayed in the game list\n"
+"If you have unpacked games, make sure to select the root folder of a game"
+msgstr ""
+"Lägger till en spelsökväg att söka i efter spel som sedan visas i "
+"spellistan\n"
+"Om du har packat upp spel, försäkra dig om att välja rotmappen för ett spel"
+
+msgid "All Wii U files (*.wud, *.wux, *.wua, *.wuhb, *.iso, *.rpx, *.elf)"
+msgstr "Alla Wii U-filer (*.wud, *.wux, *.wua, *.wuhb, *.iso, *.rpx, *.elf)"
+
+msgid "All files (*.*)"
+msgstr "Alla filer (*.*)"
+
+msgid "Applying update..."
+msgstr "Tillämpar uppdatering..."
+
+msgid ""
+"Are you really sure that you want to delete the following file:\n"
+"{}"
+msgstr ""
+"Är du säker på att du vill ta bort följande fil:\n"
+"{}"
+
+msgid ""
+"Are you really sure that you want to delete the following folder:\n"
+"{}"
+msgstr ""
+"Är du säker på att du vill ta bort följande mapp:\n"
+"{}"
+
+msgid "Are you really sure that you want to delete the save entry for {}"
+msgstr "Är du säker på att du vill ta bort sparat objekt för {}"
+
+msgid "Are you sure you want to delete the account {} with id {:x}?"
+msgstr "Är du säker på att du vill ta bort kontot {} med id {:x}?"
+
+msgid "Async shader compile"
+msgstr "Asynk shaderkompilering"
+
+msgid ""
+"Async shader compile is enabled but not supported by the graphics driver\n"
+"Cemu will use synchronous compilation which can cause additional stutter"
+msgstr ""
+"Asynkron shaderkompilering är aktiverad men stöds inte av grafikdrivrutinen\n"
+"Cemu kommer att använda synkron kompilering som kan orsaka störningar"
+
+msgid "Audio"
+msgstr "Ljud"
+
+msgid "Audio API"
+msgstr "Ljud-API"
+
+msgid "Australia"
+msgstr "Australien"
+
+msgid "Auto"
+msgstr "Auto"
+
+msgid "Auto (recommended)"
+msgstr "Auto (rekommenderas)"
+
+msgid "Auto refresh"
+msgstr "Uppdatera automatiskt"
+
+msgid "Automatically check for updates"
+msgstr "Leta automatiskt efter uppdateringar"
+
+msgid "Automatically checks for new cemu versions on startup"
+msgstr "Letar automatiskt efter nya Cemu-versioner vid uppstart"
+
+msgid "Axis"
+msgstr "Axlar"
+
+msgid "Base game"
+msgstr "Basspel"
+
+msgid ""
+"Base game:\n"
+"Not installed"
+msgstr ""
+"Basspel:\n"
+"Inte installerat"
+
+msgid ""
+"Base game:\n"
+"{}"
+msgstr ""
+"Basspel:\n"
+"{}"
+
+msgid "Bicubic"
+msgstr "Bikubisk"
+
+msgid "Bilinear"
+msgstr "Bilinjär"
+
+msgid "Birthday"
+msgstr "Födelsedag"
+
+msgid "Boost priority (-1)"
+msgstr "Öka prioritet (-1)"
+
+msgid "Boost priority (-5)"
+msgstr "Öka prioritet (-5)"
+
+msgid "Bottom center"
+msgstr "Nedre mitten"
+
+msgid "Bottom left"
+msgstr "Nedre vänster"
+
+msgid "Bottom right"
+msgstr "Nedre höger"
+
+msgid "Break (F5)"
+msgstr "Bryt (F5)"
+
+msgid "Break on &entry point"
+msgstr "Bryt vid &objektpunkt"
+
+msgid "Breakpoints"
+msgstr "Brytpunkter"
+
+msgid "Browse"
+msgstr "Bläddra"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "CPU per core usage"
+msgstr "Användning av CPU per kärna"
+
+msgid "CPU usage"
+msgstr "CPU-användning"
+
+msgid "CPU usage of TesseraEmu in percent"
+msgstr "CPU-användning av TesseraEmu i procent"
+
+msgid "Calibrate"
+msgstr "Kalibrera"
+
+msgid "Can't change MLC path while a game is running!"
+msgstr "Kan inte ändra MLC-sökväg när ett spel är igång!"
+
+msgid "Can't delete the only account!"
+msgstr "Kan inte ta bort enda kontot!"
+
+msgid "Can't open file to write!"
+msgstr "Kan inte öppna fil för skrivning!"
+
+msgid "Can't open file!"
+msgstr "Kan inte öppna fil!"
+
+msgid "Can't parse JSON file!"
+msgstr "Kunde inte tolka JSON-filen!"
+
+msgid "Can't write to file: {}"
+msgstr "Kan inte skriva till fil: {}"
+
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgid "Cannot create file"
+msgstr "Kan inte skapa filen"
+
+msgid "Cannot open file"
+msgstr "Kan inte öppna fil"
+
+msgid "Cannot write file. Disk full?"
+msgstr "Kan inte skriva filen. Är disken full?"
+
+msgid "Capturing samples..."
+msgstr "Fångar samplingar..."
+
+msgid ""
+"Capturing samples... ({:})\n"
+"Results will be written to log.txt\n"
+msgstr ""
+"Fångar samplingar... ({:})\n"
+"Resultatet kommer att skriva till log.txt\n"
+
+msgid ""
+"Cemu\n"
+"Version {0}\n"
+"Compiled on {1}\n"
+"Original authors: {2}"
+msgstr ""
+"Cemu\n"
+"Version {0}\n"
+"Kompilerades den {1}\n"
+"Ursprungliga upphovsmän: {2}"
+
+msgid "TesseraEmu RAM usage in MB"
+msgstr "TesseraEmu RAM-användning i MB"
+
+msgid "TesseraEmu can't write to {}!"
+msgstr "TesseraEmu kan inte skriva till {}!"
+
+msgid ""
+"Cemu detected that the shader cache for this game is outdated.\n"
+"Only shader caches generated with Cemu 1.25.0 or above are supported.\n"
+"\n"
+"We recommend deleting the outdated cache file as it will no longer be used "
+"by Cemu."
+msgstr ""
+"Cemu har upptäckt att shadercachen för detta spel är utdaterad.\n"
+"Endast shadercachar genererade med Cemu 1.25.0 eller senare stöds.\n"
+"\n"
+"Vi rekommenderar att ta bort utdaterade cachefilen eftersom den inte kan "
+"användas av Cemu."
+
+msgid ""
+"TesseraEmu failed to write to the custom mlc directory.\n"
+"\n"
+"The path is:\n"
+"{}\n"
+"\n"
+"TesseraEmu cannot start without a valid mlc path. Do you want to reset the path? You can later change it again in the General Settings."
+msgstr ""
+"TesseraEmu misslyckades med att skriva till anpassad mlc-katalog.\n"
+"\n"
+"Sökvägen är:\n"
+"{}\n"
+"\n"
+"TesseraEmu kan inte starta utan en giltig mlc-sökväg. Vill du nollställa sökvägen? Du kan ändra detta senare i Allmänna inställningar."
+
+msgid ""
+"TesseraEmu failed to write to the custom mlc directory.\n"
+"The path is:\n"
+"{}"
+msgstr ""
+"TesseraEmu misslyckades med att skriva till anpassad mlc-katalog.\n"
+"Sökvägen är:\n"
+"{}"
+
+msgid ""
+"TesseraEmu failed to write to the mlc directory.\n"
+"The path is:\n"
+"{}"
+msgstr ""
+"TesseraEmu misslyckades med att skriva till mlc-katalogen.\n"
+"Sökvägen är:\n"
+"{}"
+
+msgid ""
+"Cemu is a Wii U emulator.\n"
+"\n"
+"Wii and Wii U are trademarks of Nintendo.\n"
+"Cemu is not affiliated with Nintendo."
+msgstr ""
+"Cemu är en Wii U-emulator.\n"
+"\n"
+"Wii och Wii U är varumärken för Nintendo.\n"
+"Cemu har ingen koppling till Nintendo."
+
+msgid "TesseraEmu is running in portable mode"
+msgstr "TesseraEmu körs i portabelt läge"
+
+msgid "TesseraEmu must be restarted to apply the selected UI language."
+msgstr "TesseraEmu måste startas om för att tillämpa det valda språket."
+
+msgid "TesseraEmu needs to be restarted for the changes to take effect."
+msgstr "TesseraEmu behöver startas om för att ändringarna ska ha effekt."
+
+msgid "TesseraEmu update"
+msgstr "TesseraEmu-uppdatering"
+
+msgid "Changelog"
+msgstr "Ändringslogg"
+
+msgid ""
+"Changes the interface language of TesseraEmu\n"
+"Available languages are stored in the translation directory\n"
+"A restart will be required after changing the language"
+msgstr ""
+"Ändrar gränssnittets språk i TesseraEmu\n"
+"Tillgängliga språk lagras i översättningskatalogen\n"
+"En omstart krävs efter ändring av språk"
+
+msgid "Changes the port that the GDB stub will use, which you can use by either starting TesseraEmu with the --enable-gdbstub option or by enabling it the Debug tab."
+msgstr "Ändrar porten som GDB stub kommer att använda, vilket du kan använda genom att antingen starta TesseraEmu med alternativ --enable-gdbstub eller genom att aktivera det i fliken Felsökning."
+
+msgid "Channels"
+msgstr "Kanaler"
+
+msgid "Checking"
+msgstr "Kontrollerar"
+
+msgid "Checking for latest version..."
+msgstr "Letar efter senaste version..."
+
+msgid "Checking version..."
+msgstr "Kontrollerar version..."
+
+msgid "China"
+msgstr "Kina"
+
+msgid "Chinese"
+msgstr "Kinesiska"
+
+msgid "Choose shortcut location"
+msgstr "Välj genvägsplats"
+
+msgid "Classic"
+msgstr "Klassisk"
+
+msgid "Clear"
+msgstr "Töm"
+
+msgid "Click Skip button for early results with lower accuracy"
+msgstr ""
+"Klicka på Hoppa över-knappen för tidigare resultat med lägre träffsäkerhet"
+
+msgid "Click Skip button to finish"
+msgstr "Klicka på Hoppa över-knappen för att färdigställa"
+
+msgid "Click on Connect to load the list of downloadable titles"
+msgstr "Klicka på Anslut för att läsa in listan för hämtningsbara titlar"
+
+msgid "Close"
+msgstr "Stäng"
+
+msgid "Collecting list of files..."
+msgstr "Samlar lista över filer..."
+
+msgid "Comment"
+msgstr "Kommentar"
+
+msgid "Complete"
+msgstr "Färdig"
+
+msgid "Configure input"
+msgstr "Konfigurera inmatning"
+
+msgid "Confirmation"
+msgstr "Bekräfta"
+
+msgid "Connect"
+msgstr "Anslut"
+
+msgid ""
+"Connect to a custom Network Service (configured via network_services.xml)"
+msgstr ""
+"Anslut till en anpassad nätverkstjänst (konfigureras via "
+"network_services.xml)"
+
+msgid "Connect to the Pretendo Network Service"
+msgstr "Anslut till Pretendo Network-tjänsten"
+
+msgid "Connect to the official Nintendo Network Service"
+msgstr "Anslut till officiella Nintendo Network-tjänsten"
+
+msgid "Connected. Right click entries in the list to start downloading"
+msgstr "Ansluten. Högerklicka på objekt i listan för att starta hämtningen"
+
+msgid "Connecting..."
+msgstr "Ansluter..."
+
+msgid "Control"
+msgstr "Kontroll"
+
+msgid "Controller"
+msgstr "Handkontroller"
+
+msgid "Controller profiles"
+msgstr "Handkontrollerprofiler"
+
+msgid "Controller settings"
+msgstr "Handkontrollerinställningar"
+
+msgid "Controller {}"
+msgstr "Handkontroller {}"
+
+msgid ""
+"Controls the amount of buffered audio data\n"
+"Higher values will create a delay in audio playback, but may avoid audio "
+"problems when emulation is too slow"
+msgstr ""
+"Kontrollerar mängden buffrat ljuddata\n"
+"Högre värden kommer att skapa en fördröjning i ljuduppspelning, men kan "
+"undvika ljudproblem när emuleringen är för låg"
+
+msgid "Controls the notification position while playing"
+msgstr "Kontrollerar aviseringspositionen vid spelande"
+
+msgid ""
+"Controls the output aspect ratio when it doesn't match the ratio of the game"
+msgstr ""
+"Kontrollerar bildförhållandet för utmatning när den inte matchar "
+"förhållandet för spelet"
+
+msgid "Controls the overlay which displays technical information while playing"
+msgstr "Kontrollerar överlägget som visar teknisk information under spel"
+
+msgid "Controls the vsync state"
+msgstr "Kontrollerar vsync-tillståndet"
+
+msgid "Conversion failed\n"
+msgstr "Konvertering misslyckades\n"
+
+msgid "Conversion finished\n"
+msgstr "Konvertering färdig\n"
+
+msgid "Convert to compressed Wii U archive (.wua)"
+msgstr "Konvertera till komprimerat Wii U-arkiv (.wua)"
+
+msgid "Converting files..."
+msgstr "Konverterar filer..."
+
+msgid "Could not decrypt title because title.tik is missing."
+msgstr "Kunde inte dekryptera titeln därför att title.tik saknas."
+
+msgid ""
+"Could not decrypt title. Make sure that keys.txt contains the correct disc "
+"key for this title."
+msgstr ""
+"Kunde inte dekryptera titeln. Försäkra dig om att keys.txt innehåller "
+"korrekt skivnyckel för denna titel."
+
+msgid ""
+"Couldn't create a required TesseraEmu directory or file!\n"
+"\n"
+"Error: {0}"
+msgstr ""
+"Kunde inte skapa en nödvändig TesseraEmu-katalog eller fil!\n"
+"\n"
+"Fel: {0}"
+
+msgid "Couldn't download the update!"
+msgstr "Kunde inte hämta uppdateringen!"
+
+msgid "Counting files..."
+msgstr "Räknar filer..."
+
+msgid "Country"
+msgstr "Land"
+
+msgid "Crash dump"
+msgstr "Kraschdump"
+
+msgid "Create"
+msgstr "Skapa"
+
+msgid "Create Infinity Figure file"
+msgstr "Skapa Infinity Figure-fil"
+
+msgid "Create Skylander file"
+msgstr "Skapa Skylander-fil"
+
+msgid "Create execution breakpoint"
+msgstr "Skapa brytpunkt för körning"
+
+msgid "Create logging breakpoint"
+msgstr "Skapa brytpunkt för loggning"
+
+msgid "Create memory breakpoint (read)"
+msgstr "Skapa minnesbrytpunkt (läs)"
+
+msgid "Create memory breakpoint (write)"
+msgstr "Skapa minnesbrytpunkt (skriv)"
+
+msgid "Create new account"
+msgstr "Skapa nytt konto"
+
+msgid ""
+"Creates a core dump when TesseraEmu crashes\n"
+"Only enable when requested by a developer!"
+msgstr ""
+"Skapar en kärndump när TesseraEmu kraschar\n"
+"Aktivera endast om begärd av en utvecklare!"
+
+msgid ""
+"Creates a dump when TesseraEmu crashes\n"
+"Only enable when requested by a developer!\n"
+"The Full option will create a very large dump file (includes a full RAM dump of the TesseraEmu process)"
+msgstr ""
+"Skapar en dump när TesseraEmu kraschar\n"
+"Aktivera endast om begärt av en utvecklare!\n"
+"Alternativet Fullständig kommer att skapa en mycket stor dumpfil (inkluderar en full RAM-dump av TesseraEmu-processen)"
+
+msgid "Current file:"
+msgstr "Aktuell fil:"
+
+msgid "Currently active downloads will continue in the background."
+msgstr "Aktuella aktiva hämtningar kommer att fortsätta i bakgrunden."
+
+msgid "Custom"
+msgstr "Anpassad"
+
+msgid "Custom MLC path"
+msgstr "Anpassad MLC-sökväg"
+
+msgid "D-pad"
+msgstr "Riktningsknappar"
+
+msgid "DLC"
+msgstr "DLC"
+
+msgid ""
+"DLC:\n"
+"Not installed"
+msgstr ""
+"DLC:\n"
+"Inte installerad"
+
+msgid ""
+"DLC:\n"
+"{}"
+msgstr ""
+"DLC:\n"
+"{}"
+
+msgid "Deadzone"
+msgstr "Dödläge"
+
+msgid "Debug"
+msgstr "Felsök"
+
+msgid "Decrease priority (+1)"
+msgstr "Minska prioritet (+1)"
+
+msgid "Decrease priority (+5)"
+msgstr "Minska prioritet (+5)"
+
+msgid "Default"
+msgstr "Standardvärde"
+
+msgid "Delete"
+msgstr "Ta bort"
+
+msgid "Delete breakpoint"
+msgstr "Ta bort brytpunkt"
+
+msgid "Delete outdated cache file [recommended]"
+msgstr "Ta bort utdaterad cachefil [rekommenderas]"
+
+msgid "Demo"
+msgstr "Demo"
+
+msgid "Description"
+msgstr "Beskrivning"
+
+msgid "Details:"
+msgstr "Detaljer:"
+
+msgid "Device"
+msgstr "Enhet"
+
+msgid "Disable screen saver"
+msgstr "Inaktivera skärmsläckare"
+
+msgid "Disabled"
+msgstr "Inaktiverad"
+
+msgid "Discord Presence"
+msgstr "Discord-närvaro"
+
+msgid "Displays internal debug information (Vulkan only)"
+msgstr "Visar intern felsökningsinformation (endast Vulkan)"
+
+msgid "Displays the active controller profile when starting a game"
+msgstr "Visar aktiva handkontrollerprofilen när ett spel startas"
+
+msgid "Displays the menu bar when TesseraEmu is running in fullscreen mode and the mouse cursor is moved to the top"
+msgstr "Visar menyraden när TesseraEmu körs i helskärmsläge och muspekaren flyttas till toppen"
+
+msgid ""
+"Do you really want to cancel the installation process?\n"
+"\n"
+"Canceling the process will delete the applied files."
+msgstr ""
+"Vill du verkligen avbryta uppdateringsprocessen?\n"
+"\n"
+"Avbryta processen kommer att ta bort de tillämpade filerna."
+
+msgid "Double buffering"
+msgstr "Dubbelbuffring"
+
+msgid "Download Manager"
+msgstr "Hämtningshanterare"
+
+msgid "Download and configure graphic packs"
+msgstr "Hämta och konfigurera grafikpaket"
+
+msgid "Download failed"
+msgstr "Hämtningen misslyckades"
+
+msgid "Download latest community graphic packs"
+msgstr "Hämta senaste grafikpaketen från gemenskapen"
+
+msgid "Downloading"
+msgstr "Hämtar"
+
+msgid "Downloading account ticket"
+msgstr "Hämtar kontobiljett"
+
+msgid "Downloading graphic packs..."
+msgstr "Hämtar grafikpaket..."
+
+msgid "Downloading meta data"
+msgstr "Hämtar metadata"
+
+msgid "Downloading system tickets..."
+msgstr "Hämtar systembiljetter..."
+
+msgid "Downloading ticket"
+msgstr "Hämtar biljett"
+
+msgid "Downloading update..."
+msgstr "Hämtar uppdatering..."
+
+msgid "Downscale filter"
+msgstr "Nerskalningsfilter"
+
+msgid ""
+"Downscaling filters are used when the game resolution is bigger than the "
+"window size"
+msgstr ""
+"Nerskalningsfilter används när spelupplösningen är större än fönsterstorleken"
+
+msgid "Draw calls per frame"
+msgstr "Draw calls per bildruta"
+
+msgid "Dumped online files not found"
+msgstr "Dumpade onlinefiler hittades inte"
+
+msgid "Dutch"
+msgstr "Nederländska"
+
+msgid ""
+"EXPERT OPTION\n"
+"Controls the accuracy of floating point multiplication in shaders.\n"
+"\n"
+"Recommended: true"
+msgstr ""
+"EXPERTALTERNATIV\n"
+"Kontrollerar noggrannhet för flyttalsmultiplicering i shaders.\n"
+"\n"
+"Rekommenderad: sant"
+
+msgid ""
+"EXPERT OPTION\n"
+"Set the maximum thread slice runtime (in virtual cycles)"
+msgstr ""
+"EXPERTALTERNATIV\n"
+"Ställ in maximal thread slice runtime (i virtuella cykler)"
+
+msgid ""
+"EXPERT OPTION\n"
+"This option will load libraries from the cafeLibs directory"
+msgstr ""
+"EXPERTALTERNATIV\n"
+"Detta alternativ kommer att läsa in bibliotek från cafeLibs-katalogen"
+
+msgid "Edit game profile"
+msgstr "Redigera spelprofil"
+
+msgid "Email"
+msgstr "E-post"
+
+msgid "Emulate Infinity Base"
+msgstr "Emulera Infinity Base"
+
+msgid "Emulate Skylander Portal"
+msgstr "Emulera Skylander Portal"
+
+msgid "Emulated USB Devices"
+msgstr "Emulerade USB-enheter"
+
+msgid "Emulated controller"
+msgstr "Emulerad handkontroller"
+
+msgid "Enable Feral GameMode"
+msgstr "Aktivera Feral GameMode"
+
+msgid "Enabled"
+msgstr "Aktiverad"
+
+msgid ""
+"Enables async shader and pipeline compilation. Reduces stutter at the cost "
+"of objects not rendering for a short time.\n"
+"Vulkan only"
+msgstr ""
+"Aktiverar asynkron kompilering för shader och pipeline. Minskar störningar "
+"på bekostnad av objekt som inte renderas för en kort stund.\n"
+"Endast Vulkan"
+
+msgid ""
+"Enables the Discord Rich Presence feature\n"
+"You will also need to enable it in the Discord settings itself!"
+msgstr ""
+"Aktiverar Discord Rich Presence-funktionen\n"
+"Du behöver även aktivera det i själva Discord-inställningarna!"
+
+msgid "English"
+msgstr "Engelska"
+
+msgid "Enter a custom game title"
+msgstr "Ange en anpassad speltitel"
+
+msgid "Enter a memory address"
+msgstr "Ange en minnesadress"
+
+msgid "Enter a new comment."
+msgstr "Ange en ny kommentar."
+
+msgid "Enter a new instruction."
+msgstr "Ange en ny instruktion."
+
+msgid "Enter a new value."
+msgstr "Ange ett nytt värde."
+
+msgid "Enter a target address."
+msgstr "Ange en måladress."
+
+msgid "Error"
+msgstr "Fel"
+
+msgid "Error code"
+msgstr "Felkod"
+
+msgid "Error in keys.txt at line {}"
+msgstr "Fel i keys.txt på rad {}"
+
+msgid ""
+"Error when creating the extraction path:\n"
+"{}"
+msgstr ""
+"Fel vid skapande av extraheringssökvägen:\n"
+"{}"
+
+msgid ""
+"Error when creating the zip for the save entry:\n"
+"{}"
+msgstr ""
+"Fel vid skapande av zip-fil för sparat objekt:\n"
+"{}"
+
+msgid ""
+"Error when initializing Vulkan renderer:\n"
+"{}"
+msgstr ""
+"Fel vid initiering av Vulkan-renderare:\n"
+"{}"
+
+msgid ""
+"Error when opening the import zip file:\n"
+"{}"
+msgstr ""
+"Fel vid öppnande av zip-filen att importera:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a directory to the zip:\n"
+"{}"
+msgstr ""
+"Fel vid försök att lägga till katalogen till zip-filen:\n"
+"{}"
+
+msgid ""
+"Error when trying to add a file to the zip:\n"
+"{}"
+msgstr ""
+"Fel vid försök att lägga till en fil till zip-filen:\n"
+"{}"
+
+msgid ""
+"Error when trying to add cemu_meta file to the zip:\n"
+"{}"
+msgstr ""
+"Fel vid försök att lägga till cemu_meta-filen till zip-filen:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the entry:\n"
+"{}"
+msgstr ""
+"Fel vid försök att ta bort objektet:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the former save game:\n"
+"{}"
+msgstr ""
+"Fel vid försök att ta bort tidigare sparat spel:\n"
+"{}"
+
+msgid ""
+"Error when trying to delete the save directory:\n"
+"{}"
+msgstr ""
+"Fel vid försök att ta bort sparningskatalog:\n"
+"{}"
+
+msgid ""
+"Error when trying to move former title installation:\n"
+"{}"
+msgstr ""
+"Fel vid försök att flytta tidigare titelinstallation:\n"
+"{}"
+
+msgid ""
+"Error when trying to move the save game:\n"
+"{}"
+msgstr ""
+"Fel vid försök att flytta sparat spel:\n"
+"{}"
+
+msgid "Error:"
+msgstr "Fel:"
+
+msgid "Europe"
+msgstr "Europa"
+
+msgid "Exit"
+msgstr "Avsluta"
+
+msgid "Export"
+msgstr "Exportera"
+
+msgid "Export checksum entry"
+msgstr "Exportera kontrollsummeobjekt"
+
+msgid "Export successful"
+msgstr "Exporten lyckades"
+
+msgid "Export the title checksum data to a local JSON file"
+msgstr "Exportera titelns kontrollsummedata till en lokal JSON-fil"
+
+msgid "Exported save entry (*.zip)"
+msgstr "Exporterade sparade objekt (*.zip)"
+
+msgid "Exports the selected save entry as zip file"
+msgstr "Exportera valt sparat objekt som en zip-fil"
+
+msgid "Extracting failed!"
+msgstr "Extrahering misslyckades!"
+
+msgid "Extracting update..."
+msgstr "Extraherar uppdatering..."
+
+msgid "Extracting..."
+msgstr "Extraherar..."
+
+msgid "FPS"
+msgstr "Bilder/s"
+
+msgid "Failed to apply patches for graphic pack '{}'"
+msgstr "Misslyckades med att verkställa patchar för grafikpaketet '{}'"
+
+msgid "Failed to connect to server"
+msgstr "Misslyckades med att ansluta till servern"
+
+msgid ""
+"Failed to create default MLC files in the selected directory. The MLC path "
+"has not been changed"
+msgstr ""
+"Misslyckades med att skapa MLC-standardfiler i vald katalog. MLC-sökvägen "
+"har inte ändrats"
+
+msgid "Failed to find a suitable Bluetooth radio."
+msgstr "Misslyckades med att hitta lämplig Bluetooth-radio."
+
+msgid "Failed to launch executable. Path: "
+msgstr "Misslyckades med att starta körbar fil. Sökväg: "
+
+msgid "Failed to launch game."
+msgstr "Misslyckades med att starta spelet."
+
+msgid "Failed to load patches for graphic pack '{}'"
+msgstr "Misslyckades med att läsa in patchar för grafikpaketet '{}'"
+
+msgid "Failed to pair with the found controller."
+msgstr "Misslyckades med att para ihop upptäckt handkontroller."
+
+msgid "Failed to query account status"
+msgstr "Misslyckades med att fråga kontostatus"
+
+msgid ""
+"Failed to remove the shader caches:\n"
+"{}"
+msgstr ""
+"Misslyckades med att ta bort shadercachar:\n"
+"{}"
+
+msgid "Failed to request tickets"
+msgstr "Misslyckades med att begära biljetter"
+
+msgid "Failed to run this title because the executable is damaged"
+msgstr ""
+"Misslyckades med att köra denna titel därför att den körbara filen är skadad"
+
+msgid "Failed to save shortcut to {}"
+msgstr "Misslyckades med att spara genväg till {}"
+
+msgid "Failed to search for controllers."
+msgstr "Misslyckades med att söka efter handkontroller."
+
+msgid "Female"
+msgstr "Kvinna"
+
+msgid "Filter"
+msgstr "Filter"
+
+msgid "Filter messages"
+msgstr "Filtrera meddelanden"
+
+msgid "Finalizing..."
+msgstr "Färdigställer..."
+
+msgid "Folder"
+msgstr "Mapp"
+
+msgid "Forces a given controller profile"
+msgstr "Tvingar en angiven handkontrollerprofil"
+
+msgid "Format"
+msgstr "Format"
+
+msgid "Found controller. Pairing..."
+msgstr "Hittade handkontroller. Parar ihop..."
+
+msgid "Found {0} games, {1} updates, {2} DLCs and {3} save entries"
+msgstr "Hittade {0} spel, {1} uppdateringar, {2} DLCer samt {3} sparade objekt"
+
+msgid "Freeze"
+msgstr "Frys"
+
+msgid "French"
+msgstr "Franska"
+
+msgid "Friend list"
+msgstr "Vänlista"
+
+msgid "Full"
+msgstr "Fullständig"
+
+msgid "Full sync at GX2DrawDone()"
+msgstr "Fullständig synk på GX2DrawDone()"
+
+msgid "Fullscreen menu bar"
+msgstr "Menyrad för helskärm"
+
+msgid "Fullscreen scaling"
+msgstr "Helskärmsskalning"
+
+msgid "G&oto Dump"
+msgstr "Gå t&ill dump"
+
+msgid "GDB Stub port"
+msgstr "Port för GDB Stub"
+
+msgid "Game"
+msgstr "Spel"
+
+msgid "Game Paths"
+msgstr "Spelsökvägar"
+
+msgid "Game path"
+msgstr "Spelsökväg"
+
+msgid "Game paths"
+msgstr "Spelsökvägar"
+
+msgid "GamePad View"
+msgstr "GamePad-vy"
+
+msgid "Gamepad"
+msgstr "Gamepad"
+
+msgid ""
+"Games will be launched with gamepad view toggled as default. The view can be "
+"toggled with CTRL + TAB"
+msgstr ""
+"Spel kommer att startas med GamePad-vyn växlad som standard. Vyn kan växlas "
+"med CTRL + TAB"
+
+msgid "Gender"
+msgstr "Kön"
+
+msgid "General"
+msgstr "Allmänt"
+
+msgid "General settings"
+msgstr "Allmänna inställningar"
+
+msgid "Generated checksum of game image: {}"
+msgstr "Genererad kontrollsumma för spelavbild: {}"
+
+msgid "Generated checksum of {} game files"
+msgstr "Genererade kontrollsummor för {} spelfiler"
+
+msgid "Generating checksum of game image: {}"
+msgstr "Genererar kontrollsumma för spelavbild: {}"
+
+msgid "German"
+msgstr "Tyska"
+
+msgid "Getting installed title information..."
+msgstr "Hämtar information om installerade titlar..."
+
+msgid "Getting started"
+msgstr "Komma igång"
+
+msgid "GoTo (CTRL + G)"
+msgstr "Gå till (CTRL + G)"
+
+msgid "GoTo address"
+msgstr "Gå till adress"
+
+msgid "Grabbing game files"
+msgstr "Hämtar spelfiler"
+
+msgid "Graphic"
+msgstr "Grafik"
+
+msgid "Graphic pack"
+msgstr "Grafikpaket"
+
+msgid "Graphic pack error"
+msgstr "Fel i grafikpaket"
+
+msgid "Graphic packs"
+msgstr "Grafikpaket"
+
+msgid "Graphic packs && mods"
+msgstr "Grafikpaket && moddar"
+
+msgid "Graphic packs cannot be updated while a game is running."
+msgstr "Grafikpaket kan inte uppdateras under tiden ett spel körs."
+
+msgid ""
+"Graphic packs improve games by offering the ability to change resolution, "
+"increase FPS, tweak visuals or add gameplay modifications.\n"
+"Get started by opening the graphic packs configuration window.\n"
+msgstr ""
+"Grafikpaket förbättrar spel genom att ge möjligheten att ändra upplösningen, "
+"öka bildfrekvensen, skruva på det visuella eller lägga till "
+"spelmodifieringar.\n"
+"Kom igång genom att öppna konfigurationsfönstret för grafikpaket.\n"
+
+msgid "Graphics"
+msgstr "Grafik"
+
+msgid "Graphics API"
+msgstr "Grafik-API"
+
+msgid "Graphics Device"
+msgstr "Grafikenhet"
+
+msgid "Hashing game file: {}/{}"
+msgstr "Hashar spelfil: {}/{}"
+
+msgid "I understand"
+msgstr "Jag förstår"
+
+msgid "IP"
+msgstr "IP"
+
+msgid "Icon"
+msgstr "Ikon"
+
+msgid ""
+"If synchronization is requested by the game, the emulated CPU will wait for "
+"the GPU to finish all operations.\n"
+"This is more accurate behavior, but may cause lower performance"
+msgstr ""
+"Om synkronisering begärs av spelet kommer emulerad CPU att vänta på att GPUn "
+"ska färdigställa alla operationer.\n"
+"Detta är ett mer noggrant beteende men kan leda till lägre prestanda"
+
+msgid "Import"
+msgstr "Importera"
+
+msgid "Import save entry"
+msgstr "Importera sparat objekt"
+
+msgid "Imports a zipped save entry"
+msgstr "Importerar ett zippat sparat objekt"
+
+msgid "Infinity Base"
+msgstr "Infinity Base"
+
+msgid "Infinity Figure Creator"
+msgstr "Infinity figurskapare"
+
+msgid "Infinity Manager"
+msgstr "Infinity Manager"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Information"
+msgstr "Information"
+
+msgid "Initializing"
+msgstr "Initierar"
+
+msgid "Input API"
+msgstr "Inmatnings-API"
+
+msgid "Input settings"
+msgstr "Inmatningsinställningar"
+
+msgid "Install title"
+msgstr "Installera titel"
+
+msgid "Installed"
+msgstr "Installerad"
+
+msgid "Installed games"
+msgstr "Installerade spel"
+
+msgid "Installing"
+msgstr "Installerar"
+
+msgid "Installing DLC..."
+msgstr "Installerar DLC..."
+
+msgid "Installing system title..."
+msgstr "Installerar systemtitel..."
+
+msgid "Installing title..."
+msgstr "Installerar titel..."
+
+msgid "Installing update..."
+msgstr "Installerar uppdatering..."
+
+msgid "Interface"
+msgstr "Gränssnitt"
+
+msgid "Invalid TMD"
+msgstr "Ogiltig TMD"
+
+msgid ""
+"IsPasswordCacheEnabled is set to false (The remember password option on your "
+"Wii U must be enabled for this account before dumping it)"
+msgstr ""
+"IsPasswordCacheEnabled är inställd till falskt (Alternativet för komma ihåg "
+"lösenord på din Wii U måste vara aktiverat för detta konto innan det dumpas)"
+
+msgid ""
+"It looks like you're starting TesseraEmu for the first time.\n"
+"This quick setup assistant will help you get the best experience"
+msgstr ""
+"Det verkar som om du startar TesseraEmu för första gången.\n"
+"Denna snabbguide hjälper dig att komma igång direkt"
+
+msgid ""
+"It seems that a newer version is already installed, do you still want to "
+"install the older version?"
+msgstr ""
+"Det verkar som om en nyare version redan är installerad. Vill du fortfarande "
+"installera den äldre versionen?"
+
+msgid ""
+"It seems that the selected title is already installed, do you want to "
+"reinstall it?"
+msgstr ""
+"Det verkar som om vald titel redan är installerad. Vill du installera om den?"
+
+msgid ""
+"It seems that there is already a title installed at the target location but "
+"it has a different type.\n"
+"Currently installed: '{}' Installing: '{}'\n"
+"\n"
+"This can happen for titles which were installed with very old Cemu "
+"versions.\n"
+"Do you still want to continue with the installation? It will replace the "
+"currently installed title."
+msgstr ""
+"Det verkar som om det redan finns en titel installerad i målkatalogen men av "
+"en annan typ.\n"
+"Aktuellt installerad: '{}' Installerar: '{}'\n"
+"\n"
+"Detta kan hända för titlar som installerades med en mycket gammal version av "
+"Cemu.\n"
+"Vill du fortfarande fortsätta med installationen? Den kommer att ersätta den "
+"aktuellt installerade titeln."
+
+msgid "Italian"
+msgstr "Italienska"
+
+msgid "JSON file doesn't satisfy needed schema"
+msgstr "JSON-filen har inte rätt schema"
+
+msgid "JSON parse error: {}"
+msgstr "JSON-tolkningsfel: {}"
+
+msgid "Japan"
+msgstr "Japan"
+
+msgid "Japanese"
+msgstr "Japanska"
+
+msgid "Keep aspect ratio"
+msgstr "Behåll bildförhållande"
+
+msgid "Keep outdated cache file"
+msgstr "Behåll utdaterad cachefil"
+
+msgid "Korea"
+msgstr "Korea"
+
+msgid "Korean"
+msgstr "Koreanska"
+
+msgid "Language"
+msgstr "Språk"
+
+msgid "Last played"
+msgstr "Senast spelat"
+
+msgid "Latency"
+msgstr "Latens"
+
+msgid "Launch with gamepad view"
+msgstr "Starta med gamepad-vy"
+
+msgid "Left Axis"
+msgstr "Vänster axel"
+
+msgid "Lite"
+msgstr "Liten"
+
+msgid "Load"
+msgstr "Läs in"
+
+msgid "Load shared libraries"
+msgstr "Läs in delade bibliotek"
+
+msgid "Location"
+msgstr "Plats"
+
+msgid "Logging in..."
+msgstr "Loggar in..."
+
+msgid "Logging window"
+msgstr "Loggningsfönster"
+
+msgid "Login failed. Outdated or incomplete online files?"
+msgstr "Inloggning misslyckades. Utdaterade eller ofärdiga hämtningsfiler?"
+
+msgid "Low battery"
+msgstr "Lågt batteri"
+
+msgid "MLC"
+msgstr "MLC"
+
+msgid "Male"
+msgstr "Man"
+
+msgid "Match emulated display (Experimental)"
+msgstr "Matcha emulerad skärm (experimentell)"
+
+msgid "Memory Dump"
+msgstr "Minnesdump"
+
+msgid "Memory Searcher"
+msgstr "Minnessökare"
+
+msgid "Microphone (Experimental)"
+msgstr "Mikrofon (experimentell)"
+
+msgid "Mii name"
+msgstr "Mii-namn"
+
+msgid "Missing certificate and key files:"
+msgstr "Saknade certifikat och nyckelfiler:"
+
+msgid "Mode"
+msgstr "Läge"
+
+msgid "Module"
+msgstr "Modul"
+
+msgid "Module&list"
+msgstr "Modul&lista"
+
+msgid "Modules"
+msgstr "Moduler"
+
+msgid "Mono"
+msgstr "Mono"
+
+msgid "MotionPlus"
+msgstr "MotionPlus"
+
+msgid "Multi-core recompiler"
+msgstr "Flerkärnig omkompilerare"
+
+msgid ""
+"Multiple issues with your game files have been found!\n"
+"Do you want to export them to a file?"
+msgstr ""
+"Flera problem med dina spelfiler har hittats!\n"
+"Vill du exportera dem till en fil?"
+
+msgid "NUS"
+msgstr "NUS"
+
+msgid "Name"
+msgstr "Namn"
+
+msgid "Nearest Neighbor"
+msgstr "Närmsta granne"
+
+msgid "Network Service"
+msgstr "Nätverkstjänst"
+
+msgid "Network service"
+msgstr "Nätverkstjänst"
+
+msgid "Next"
+msgstr "Nästa"
+
+msgid "Nintendo"
+msgstr "Nintendo"
+
+msgid "No"
+msgstr "Nej"
+
+msgid "No account selected"
+msgstr "Inget konto valt"
+
+msgid "No persistent id entered!"
+msgstr "Inget bestående id angivet!"
+
+msgid "No update available!"
+msgstr "Ingen uppdatering tillgänglig!"
+
+msgid "No updates available."
+msgstr "Inga uppdateringar tillgängliga."
+
+msgid "None"
+msgstr "Ingen"
+
+msgid "Not a valid NFC file"
+msgstr "Inte en giltig NFC-fil"
+
+msgid ""
+"Not enough space available.\n"
+"Required: {0} MB\n"
+"Available: {1} MB"
+msgstr ""
+"Inte tillräckligt med utrymme ledigt.\n"
+"Nödvändigt: {0} MB\n"
+"Tillgängligt: {1} MB"
+
+msgid "Not installed"
+msgstr "Inte installerad"
+
+msgid "Not installed (Partially downloaded)"
+msgstr "Inte installerad (delvis hämtad)"
+
+msgid ""
+"Note that changing the MLC location will not transfer any accounts or save "
+"files. Are you sure you want to change the path?"
+msgstr ""
+"Observera att ändring av MLC-platsen inte kommer att överföra några konton "
+"eller sparade filer. Är du säker på att du vill ändra sökvägen?"
+
+msgid "Notifications"
+msgstr "Aviseringar"
+
+msgid "Nunchuck"
+msgstr "Nunchuck"
+
+msgid "OK"
+msgstr "Ok"
+
+msgid "OTP and SEEPROM present but no certificate files were found"
+msgstr "OTP och SEEPROM finns men inga certifikatfiler hittades"
+
+msgid "OTP.bin or SEEPROM.bin is missing"
+msgstr "OTP.bin eller SEEPROM.bin saknas"
+
+msgid "Off"
+msgstr "Av"
+
+msgid "Offline"
+msgstr "Frånkopplad"
+
+msgid "On"
+msgstr "På"
+
+msgid "Online Status"
+msgstr "Onlinestatus"
+
+msgid "Online functionality disabled for this account"
+msgstr "Onlinefunktionalitet är inaktiverat för detta konto"
+
+msgid "Online play is not set up. Follow the guide below to get started"
+msgstr "Onlinespel är inte konfigurerat. Följ guiden nedan för att komma igång"
+
+msgid "Online play requirements"
+msgstr "Krav för onlinespel"
+
+msgid "Online play tutorial"
+msgstr "Guide för onlinespel"
+
+msgid "Open Infinity Figure dump"
+msgstr "Öppna Infinity Figure-dump"
+
+msgid "Open Skylander dump"
+msgstr "Öppna Skylander-dump"
+
+msgid "Open checksum entry"
+msgstr "Öppna kontrollsummeobjekt"
+
+msgid "Open directory"
+msgstr "Öppna katalog"
+
+msgid "Open file to launch"
+msgstr "Öppna fil att starta"
+
+msgid "Open file to load"
+msgstr "Öppna fil att läsa in"
+
+msgid "Open separate pad screen"
+msgstr "Öppna separat GamePad-skärm"
+
+msgid "Open the directory of the save entry"
+msgstr "Öppna katalogen för sparat objekt"
+
+msgid "Options"
+msgstr "Alternativ"
+
+msgid "Outdated shader cache"
+msgstr "Utdaterad shadercache"
+
+msgid "Overlay"
+msgstr "Överlägg"
+
+msgid "PPC Debugger"
+msgstr "PPC-debugger"
+
+msgid "PPC threads"
+msgstr "PPC-trådar"
+
+msgid "Packet delay"
+msgstr "Paketfördröjning"
+
+msgid "Pair a Wii or Wii U controller"
+msgstr "Parkoppla en Wii eller Wii U-handkontroller"
+
+msgid "Pairing..."
+msgstr "Parar ihop..."
+
+msgid "Paused"
+msgstr "Pausad"
+
+msgid "Permanently delete the save entry"
+msgstr "Ta permanent bort sparat objekt"
+
+msgid "Please use your system's Bluetooth manager instead."
+msgstr "Använd ditt systems Bluetooth-hanterare istället."
+
+msgid "Port"
+msgstr "Port"
+
+msgid "Portugese"
+msgstr "Portugisiska"
+
+msgid "Position"
+msgstr "Position"
+
+msgid ""
+"Pressing the screenshot key (F12) will save a screenshot directly to the "
+"screenshots folder"
+msgstr ""
+"Tryck på skärmbildsknappen (F12) för att spara en skärmbild direkt till "
+"skärmbildsmappen"
+
+msgid "Pretendo"
+msgstr "Pretendo"
+
+msgid ""
+"Prevents the system from activating the screen saver or going to sleep while "
+"running a game."
+msgstr ""
+"Förhindrar att systemet aktiverar skärmsläckaren eller går i viloläge när "
+"ett spel körs."
+
+msgid "Preview version"
+msgstr "Förhandsversion"
+
+msgid "Previous"
+msgstr "Föregående"
+
+msgid "PrincipalId missing"
+msgstr "PrincipalId saknas"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Profile thread"
+msgstr "Profiltråd"
+
+msgid "Profiling thread"
+msgstr "Profilerar tråd"
+
+msgid "Progress"
+msgstr "Förlopp"
+
+msgid "Queued"
+msgstr "Köad"
+
+msgid "RAM usage"
+msgstr "RAM-användning"
+
+msgid "Range"
+msgstr "Räckvidd"
+
+msgid "Reading game image: {0}/{1} kB"
+msgstr "Läser spelavbild: {0}/{1} kB"
+
+msgid "Reading game image: {}"
+msgstr "Läser spelavbild: {}"
+
+msgid "Refresh"
+msgstr "Uppdatera"
+
+msgid "Region"
+msgstr "Region"
+
+msgid "Registers"
+msgstr "Register"
+
+msgid "Reload edited shaders"
+msgstr "Läs om redigerade shaders"
+
+msgid "Remember main window position"
+msgstr "Kom ihåg position för huvudfönstret"
+
+msgid "Remember pad window position"
+msgstr "Kom ihåg GamePad-fönstrets position"
+
+msgid "Remove"
+msgstr "Ta bort"
+
+msgid "Remove shader caches"
+msgstr "Ta bort shadercachar"
+
+msgid "Remove the shader caches for {}?"
+msgstr "Ta bort shadercachar för {}?"
+
+msgid "Removes the currently selected game path from the game list"
+msgstr "Tar bort aktuella markerade spelsökvägen från spellistan"
+
+msgid "Reset &order"
+msgstr "Nollställ &ordning"
+
+msgid "Reset &width"
+msgstr "Nollställ &bredd"
+
+msgid "Reset path"
+msgstr "Nollställ sökväg"
+
+msgid "Restart"
+msgstr "Starta om"
+
+msgid "Restart of TesseraEmu required for changes to take effect"
+msgstr "Starta om TesseraEmu för att ändringarna ska börja gälla"
+
+msgid "Restores the last known pad window position and size when opening it"
+msgstr ""
+"Återställer senast kända GamePad-fönstrets position och storlek när det "
+"öppnas"
+
+msgid "Restores the last known window position and size when starting TesseraEmu"
+msgstr "Återställer senast kända fönsterposition och storlek när TesseraEmu startas"
+
+msgid "Results"
+msgstr "Resultat"
+
+msgid "Results ({0})"
+msgstr "Resultat ({0})"
+
+msgid "Resume"
+msgstr "Återuppta"
+
+msgid "Retrieving update information..."
+msgstr "Hämtar uppdateringsinformation..."
+
+msgid "Right Axis"
+msgstr "Höger axel"
+
+msgid "Rotation"
+msgstr "Rotering"
+
+msgid "Rumble"
+msgstr "Rumble"
+
+msgid "Run (F5)"
+msgstr "Kör (F5)"
+
+msgid "Russian"
+msgstr "Ryska"
+
+msgid "Save"
+msgstr "Spara"
+
+msgid "Save Wii U game archive file"
+msgstr "Spara Wii U-spelarkivfil"
+
+msgid "Save entry (*.zip)"
+msgstr "Sparat objekt (*.zip)"
+
+msgid "Save folder"
+msgstr "Sparad mapp"
+
+msgid "Save screenshot"
+msgstr "Spara skärmbild"
+
+msgid "Save transfer"
+msgstr "Spara överföring"
+
+msgid "Scale"
+msgstr "Skala"
+
+msgid "Search"
+msgstr "Sök"
+
+msgid "Searching for controllers..."
+msgstr "Letar efter handkontroller..."
+
+msgid "Searching for titles..."
+msgstr "Letar efter titlar..."
+
+msgid "Select MLC directory"
+msgstr "Välj MLC-katalog"
+
+msgid "Select a directory"
+msgstr "Välj en katalog"
+
+msgid "Select a directory containing games."
+msgstr "Välj en katalog som innehåller spel."
+
+msgid "Select a file"
+msgstr "Välj en fil"
+
+msgid "Select a file to export the errors"
+msgstr "Välj en fil för att exportera felen"
+
+msgid "Select a folder"
+msgstr "Välj en mapp"
+
+msgid "Select a target file to export the save entry"
+msgstr "Välj en målfil för att exportera sparat objekt"
+
+msgid "Select a zipped save file"
+msgstr "Välj en zippad sparad fil"
+
+msgid "Select an account and press Connect"
+msgstr "Välj ett konto och tryck på Anslut"
+
+msgid "Select folder of title to install"
+msgstr "Välj mapp för titel att installera"
+
+msgid "Select one of the available audio back ends"
+msgstr "Välj en av dessa tillgängliga ljudbakändar"
+
+msgid "Select one of the available graphic back ends"
+msgstr "Välj en av de dessa tillgängliga grafikbakändar"
+
+msgid "Select the active audio input device for Wii U GamePad"
+msgstr "Välj aktiv ljudinmatningsenhet för Wii U GamePad"
+
+msgid "Select the active audio output device for Wii U GamePad"
+msgstr "Välj aktiv ljudutmatningsenhet för Wii U GamePad"
+
+msgid "Select the active audio output device for Wii U TV"
+msgstr "Välj aktiv ljudutmatningsenhet för Wii U TV"
+
+msgid "Select the folder that stores your update, DLC or base game files"
+msgstr "Välj den mapp som innehåller dina uppdateringar, DLC eller basspel"
+
+msgid "Select the language you want to use in TesseraEmu"
+msgstr "Välj det språk som du vill använda i TesseraEmu"
+
+msgid "Select the used graphic device"
+msgstr "Välj den grafikenhet att använda"
+
+msgid "Select title to install"
+msgstr "Välj titel att installera"
+
+msgid "Selected account is a valid online account"
+msgstr "Valt konto är ett giltigt onlinekonto"
+
+msgid "Selected account is not linked to a NNID or PNID"
+msgstr "Valt konto är inte länkat till en NNID eller PNID"
+
+msgid "Set breakpoint"
+msgstr "Ange brytpunkt"
+
+msgid "Set comment for breakpoint at address %08x"
+msgstr "Ange kommentar för brytpunkt på adress %08x"
+
+msgid "Set the CPU emulation mode"
+msgstr "Ställ in CPU-emuleringsläge"
+
+msgid "Sets the scale of the notification text"
+msgstr "Ställer in skalan för aviseringstexten"
+
+msgid "Sets the scale of the overlay text"
+msgstr "Ställer in skalan för överläggstexten"
+
+msgid "Sets the text color of notifications"
+msgstr "Ställer in textfärgen för aviseringar"
+
+msgid "Sets the text color of the overlay"
+msgstr "Ställer in textfärgen för överlägget"
+
+msgid "Settings"
+msgstr "Inställningar"
+
+msgid "Shader caches removed"
+msgstr "Shadercachar togs bort"
+
+msgid "Shader compiler"
+msgstr "Shaderkompilerare"
+
+msgid "Shader multiplication accuracy"
+msgstr "Noggrannhet för shadermultiplicering"
+
+msgid "Show &dlc"
+msgstr "Visa &DLC"
+
+msgid "Show &game time"
+msgstr "Visa sp&eltid"
+
+msgid "Show &icon"
+msgstr "Visa &ikon"
+
+msgid "Show &last played"
+msgstr "Visa sen&ast spelat"
+
+msgid "Show &name"
+msgstr "Visa &namn"
+
+msgid "Show &region"
+msgstr "Visa &region"
+
+msgid "Show &title ID"
+msgstr "Visa &titel-id"
+
+msgid "Show &version"
+msgstr "Visa &version"
+
+msgid "Show available titles"
+msgstr "Visa tillgängliga titlar"
+
+msgid "Show available updates"
+msgstr "Visa tillgängliga uppdateringar"
+
+msgid "Show installed"
+msgstr "Visa installerade"
+
+msgid "Show only active"
+msgstr "Visa endast aktiva"
+
+msgid "Show views"
+msgstr "Visa vyer"
+
+msgid "Shows a notification after shaders have been compiled"
+msgstr "Visar en avisering efter att shaders har kompilerats"
+
+msgid "Shows a notification when a low controller battery has been detected"
+msgstr ""
+"Visar en avisering när batteriet i en handkontroller har upptäckts som lågt"
+
+msgid "Shows friend list related data if online"
+msgstr "Visar relaterad data för vänlista om online"
+
+msgid "Single-core interpreter"
+msgstr "Enkärnig tolk"
+
+msgid "Single-core recompiler"
+msgstr "Enkärning omkompilerare"
+
+msgid "Size"
+msgstr "Storlek"
+
+msgid "Skylander"
+msgstr "Skylander"
+
+msgid "Skylander Figure Creator"
+msgstr "Skylanders figurskapare"
+
+msgid "Skylanders Manager"
+msgstr "Skylanders Manager"
+
+msgid "Skylanders Portal"
+msgstr "Skylanders-portal"
+
+msgid "Source"
+msgstr "Källa"
+
+msgid "Spanish"
+msgstr "Spanska"
+
+msgid "Special thanks:"
+msgstr "Speciellt tack till:"
+
+msgid "Start games with fullscreen"
+msgstr "Starta spel i helskärm"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Step Into (F11)"
+msgstr "Stega in i (F11)"
+
+msgid "Step Over (F10)"
+msgstr "Stega över (F10)"
+
+msgid "Stereo"
+msgstr "Stereo"
+
+msgid "Stop emulation"
+msgstr "Stoppa emulering"
+
+msgid "Stopping..."
+msgstr "Stoppar..."
+
+msgid "Stored Entries"
+msgstr "Lagrade objekt"
+
+msgid "Stretch"
+msgstr "Sträck ut"
+
+msgid "Style: &Icons"
+msgstr "Stil: &Ikoner"
+
+msgid "Style: &List"
+msgstr "Stil: &Lista"
+
+msgid "Style: &Small Icons"
+msgstr "Stil: &Små ikoner"
+
+msgid "Success"
+msgstr "Lyckades"
+
+msgid "Successfully paired the controller."
+msgstr "Lyckades para ihop handkontrollern."
+
+msgid "Surround"
+msgstr "Surround"
+
+msgid "Suspend"
+msgstr "Viloläge"
+
+msgid "Symbols"
+msgstr "Symboler"
+
+msgid "System data title"
+msgstr "Systemdatatitel"
+
+msgid "System title"
+msgstr "Systemtitel"
+
+msgid "TMD download failed"
+msgstr "TMD-hämtning misslyckades"
+
+msgid "TV"
+msgstr "TV"
+
+msgid "Taiwan"
+msgstr "Taiwan"
+
+msgid "Taiwanese"
+msgstr "Taiwanesiska"
+
+msgid "Target"
+msgstr "Mål"
+
+msgid "Test if the controller is connected"
+msgstr "Testa om handkontrollen är ansluten"
+
+msgid "Text Color"
+msgstr "Textfärg"
+
+msgid "Texture cache"
+msgstr "Texturcache"
+
+msgid ""
+"Thank you for testing the in-development build of Cemu for macOS.\n"
+" \n"
+"The macOS port is currently purely experimental and should not be considered "
+"stable or ready for issue-free gameplay. There are also known issues with "
+"degraded performance due to the use of MoltenVk and Rosetta for ARM Macs. We "
+"appreciate your patience while we improve Cemu for macOS."
+msgstr ""
+"Tack för att du testar utvecklingsversionen av Cemu för macOS.\n"
+" \n"
+"macOS-portningen är rent experimentell och ska inte ses som stabil eller "
+"redo för användning utan problem. Det finns kända problem med minskad "
+"prestanda på grund av användningen av MoltenVk och Rosetta för ARM Macs. Vi "
+"uppskattar ditt tålamod under tiden vi förbättrar Cemu för macOS."
+
+msgid "Thanks to our Patreon supporters:"
+msgstr "Tack till våra Patreon-medlemmar:"
+
+msgid ""
+"The (parent) folder of the title you selected is missing at least one of the "
+"required subfolders (\"code\", \"content\" and \"meta\")\n"
+"Make sure that the files are complete."
+msgstr ""
+"Föräldramappen för titeln som du valt saknar minst en av de nödvändiga "
+"undermapparna (\"code\", \"content\" samt \"meta\")\n"
+"Försäkra dig om att filerna är kompletta."
+
+msgid "The VRAM usage of TesseraEmu in MB"
+msgstr "VRAM-användning för TesseraEmu i MB"
+
+msgid "The controller is already added!"
+msgstr "Handkontrollern är redan tillagd!"
+
+msgid "The currently selected account is not a valid or dumped online account:"
+msgstr ""
+"Det aktuella valda kontot är inte ett giltigt eller dumpat onlinekonto:"
+
+msgid "The file you are comparing with is for a different title."
+msgstr "Filen som du jämför med är för en annan titel."
+
+msgid "The folder you have selected cannot be found on your system."
+msgstr "Mappen som du har valt kan inte hittas på ditt system."
+
+msgid ""
+"The following content will be converted to a compressed Wii U archive file "
+"(.wua):"
+msgstr ""
+"Följande innehåll kommer att konverteras till en komprimerad Wii U-arkivfil "
+"(.wua):"
+
+msgid "The following error(s) have been found:"
+msgstr "Följande fel har hittats:"
+
+msgid "The following files are damaged:"
+msgstr "Följande filer är skadade:"
+
+msgid "The following files are missing:"
+msgstr "Följande filer saknas:"
+
+msgid ""
+"The following prefixes are supported:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+msgstr ""
+"Följande prefix stöds:\n"
+"{0}\n"
+"{1}\n"
+"{2}\n"
+"{3}\n"
+"{4}"
+
+msgid ""
+"The game path is scanned by TesseraEmu to automatically locate your games, game updates and DLCs. We recommend creating a dedicated directory in which\n"
+"you place all your Wii U game files. Additional paths can be set later in TesseraEmu's general settings. All common Wii U game formats are supported by TesseraEmu."
+msgstr ""
+"Spelsökvägen som söks igenom av TesseraEmu för att automatiskt hitta dina spel, speluppdateringar och DLCer. Vi rekommenderar att skapa en dedikerad katalog som\n"
+"du placerar alla dina Wii U-spelfiler i. Ytterligare sökvägar kan ställas in senare i TesseraEmus allmänna inställningar. Alla vanliga Wii U-spelformat stöds av TesseraEmu."
+
+msgid ""
+"The given account id is not valid!\n"
+"It must be a hex number bigger or equal than {:08x}"
+msgstr ""
+"Angivet konto-id är inte giltigt!\n"
+"Det måste vara ett hexadecimalt nummer större eller lika med {:08x}"
+
+msgid "The mii name is the profile name"
+msgstr "Mii-namnet är profilnamnet"
+
+msgid ""
+"The mlc directory contains your save games and installed game update/dlc data"
+msgstr ""
+"MLC-katalogen innehåller dina sparade spel och installerade "
+"speluppdateringar/DLC-data"
+
+msgid "The number of draw calls per frame. Average over last 5 seconds"
+msgstr "Antalet draw calls per bildruta. Genomsnitt över senaste 5 sekunder"
+
+msgid "The number of frames per second. Average over last 5 seconds"
+msgstr "Antalet bildrutor per sekund. Genomsnitt de senaste 5 sekunderna"
+
+msgid "The persistent id is the internal folder name used for your saves"
+msgstr "Bestående id är det interna mappnamnet som används för dina sparningar"
+
+msgid ""
+"The persistent id is the internal folder name used for your saves. Only "
+"change this if you are importing saves from a Wii U with a specific id"
+msgstr ""
+"Bestående id är det interna mappnamnet som används för dina sparningar. "
+"Ändra endast detta om du importerar sparningar från en Wii U med ett "
+"specifikt id"
+
+msgid "The persistent id must be greater than {:x}!"
+msgstr "Bestående id måste vara större än {:x}!"
+
+msgid "The persistent id {:x} is already in use by account {}!"
+msgstr "Bestående id {:x} används redan av kontot {}!"
+
+msgid ""
+"The selected directory does not contain the expected MLC structure. Do you "
+"want to create a new MLC structure in this directory?\n"
+"Note that changing the MLC location will not transfer any accounts or save "
+"files."
+msgstr ""
+"Den valda katalogen innehåller inte den förväntade MLC-strukturen. Vill du "
+"skapa en ny MLC-struktur i denna katalog?\n"
+"Observera att ändring av MLC-platsen inte kommer att överföra några konton "
+"eller sparade filer."
+
+msgid "The shader caches were removed!"
+msgstr "Shadercachar togs bort!"
+
+msgid "The verification data doesn't include a WUD hash!"
+msgstr "Verifieringsdata inkluderar inte en WUD-hash!"
+
+msgid ""
+"There's a new update available.\n"
+"Do you want to update?"
+msgstr ""
+"Det finns en ny uppdatering tillgänglig.\n"
+"Vill du uppdatera?"
+
+msgid ""
+"There's already a file at the target directory:\n"
+"{}"
+msgstr ""
+"Det finns redan en fil i målkatalogen:\n"
+"{}"
+
+msgid ""
+"There's already a save game available for the target account, do you want to "
+"overwrite it?\n"
+"This will delete the existing save files for the account and replace them."
+msgstr ""
+"Det finns redan ett sparat spel tillgängligt för målkontot. Vill du skriva "
+"över det?\n"
+"Detta kommer att ta bort befintliga sparade filer för kontot och ersätta dem."
+
+msgid ""
+"This game entry seems to be either an update or the base game was merged with update data\n"
+"Broken game dumps cause various problems during emulation and may even stop working at all in future TesseraEmu versions\n"
+"Please make sure the base game is intact and install updates only with the File->Install Update/DLC option"
+msgstr ""
+"Detta spelobjekt verkar vara antingen en uppdatering eller att basspelet slagits samman med uppdateringsdata\n"
+"Trasiga speldumpar orsakar olika problem under emulering och kan även sluta fungera helt i framtida TesseraEmu-versioner\n"
+"Försäkra dig om att basspelet är intakt och installera endast uppdateringar med alternativet Arkiv->Installera uppdatering/DLC"
+
+msgid "This graphic pack has no description"
+msgstr "Det här grafikpaketet har ingen beskrivning"
+
+msgid "This option requires Win8.1+"
+msgstr "Detta alternativ kräver Win8.1+"
+
+msgid "This update removed or renamed the following graphic packs:"
+msgstr "Denna uppdatering tog bort eller bytt namn på följande grafikpaket:"
+
+msgid "Title ID"
+msgstr "Titelns ID"
+
+msgid "Title Manager"
+msgstr "Titelhanterare"
+
+msgid "Title checksum of {:08x}-{:08x}"
+msgstr "Titeln kontrollsumma för {:08x}-{:08x}"
+
+msgid "Title installation has been canceled!"
+msgstr "Titelinstallationen har avbrutits!"
+
+msgid "Title installed!"
+msgstr "Titel installerad!"
+
+msgid "Toggle Breakpoint (F9)"
+msgstr "Växla brytpunkt (F9)"
+
+msgid "Top center"
+msgstr "Övre mitten"
+
+msgid "Top left"
+msgstr "Övre vänster"
+
+msgid "Top right"
+msgstr "Övre höger"
+
+msgid "Total cpu usage in percent for each core"
+msgstr "Total cpu-användning i procent för varje kärna"
+
+msgid "Transfer"
+msgstr "Överför"
+
+msgid "Transfers the save entry to another persistent account id"
+msgstr "Överför sparat objekt till ett annat bestående konto-id"
+
+msgid "Trigger"
+msgstr "Avtryckare"
+
+msgid "Triple buffering"
+msgstr "Trippelbuffring"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "USA"
+msgstr "USA"
+
+msgid "Unable to create file"
+msgstr "Kunde inte skapa filen"
+
+msgid ""
+"Unable to create file keys.txt\n"
+"This can happen if TesseraEmu does not have write permission to its own directory, the disk is full or if anti-virus software is blocking TesseraEmu."
+msgstr ""
+"Kunde inte skapa filen keys.txt\n"
+"Detta kan hända om TesseraEmu inte har skrivbehörighet till sin egna katalog, att disken är full eller om antivirusprogram blockerar TesseraEmu."
+
+msgid "Unable to find the /meta/meta.xml file inside the selected folder."
+msgstr "Kunde inte hitta filen /meta/meta.xml inne i vald mapp."
+
+msgid ""
+"Unable to launch game\n"
+"Path:\n"
+msgstr ""
+"Kunde inte starta spelet\n"
+"Sökväg:\n"
+
+msgid "Unable to launch game because the base files were not found."
+msgstr "Kunde inte starta spelet därför att basfilerna inte hittades."
+
+msgid ""
+"Unable to launch title.\n"
+"Make sure the configured game paths are still valid and refresh the game "
+"list.\n"
+"\n"
+"Path which failed to load:\n"
+msgstr ""
+"Kunde inte starta titeln.\n"
+"Försäkra dig om att konfigurerade spelsökvägar är giltiga och uppdatera "
+"spellistan.\n"
+"\n"
+"Sökvägen som misslyckades att läsa in:\n"
+
+msgid ""
+"Unable to mount title.\n"
+"Make sure the configured game paths are still valid and refresh the game "
+"list.\n"
+"\n"
+"File which failed to load:\n"
+msgstr ""
+"Kunde inte montera titeln.\n"
+"Försäkra dig om att konfigurerade spelsökvägar är giltiga och uppdatera "
+"spellistan.\n"
+"\n"
+"Filen som misslyckades att läsa in:\n"
+
+msgid "Update"
+msgstr "Uppdatera"
+
+msgid "Update available"
+msgstr "Uppdatering tillgänglig"
+
+msgid "Update available!"
+msgstr "Uppdatering tillgänglig!"
+
+msgid "Update error"
+msgstr "Uppdateringsfel"
+
+msgid "Update installation has been canceled!"
+msgstr "Uppdateringsinstallationen har avbrutits!"
+
+msgid "Update notification"
+msgstr "Uppdateringsavisering"
+
+msgid ""
+"Update:\n"
+"Not installed"
+msgstr ""
+"Uppdatera:\n"
+"Inte installerad"
+
+msgid ""
+"Update:\n"
+"{}"
+msgstr ""
+"Uppdatera:\n"
+"{}"
+
+msgid ""
+"Updated graphic packs are available. Do you want to download and install "
+"them?"
+msgstr ""
+"Uppdaterade grafikpaket finns tillgängliga. Vill du hämta och installera dem?"
+
+msgid "Updating game list..."
+msgstr "Uppdaterar spellistan..."
+
+msgid "Updating ticket cache"
+msgstr "Uppdaterar biljettcache"
+
+msgid "Upscale filter"
+msgstr "Uppskalningsfilter"
+
+msgid ""
+"Upscaling filters are used when the game resolution is smaller than the "
+"window size"
+msgstr ""
+"Uppskalningsfilter används när spelupplösningen är mindre än fönsterstorleken"
+
+msgid "Use FeralInteractive GameMode if installed."
+msgstr "Använd FeralInteractive GameMode om installerat."
+
+msgid "Use motion"
+msgstr "Använd rörelse"
+
+msgid "Used libraries and utilities:"
+msgstr "Bibliotek och verktyg som används:"
+
+msgid "VRAM usage"
+msgstr "VRAM-användning"
+
+msgid "VSync"
+msgstr "VSync"
+
+msgid ""
+"Valid online files are required to download eShop titles. For more "
+"information, go to the Account tab in the General Settings."
+msgstr ""
+"Giltiga onlinefiler krävs för att hämta eShop-titlar. För mer information, "
+"gå till Konto-fliken i Allmänna inställningar."
+
+msgid "Value"
+msgstr "Värde"
+
+msgid "Verifies the checksum online"
+msgstr "Verifierar kontrollsumman på nätet"
+
+msgid "Verifies the checksum with a local JSON file you can select"
+msgstr "Verifierar kontrollsumman med en lokal JSON-fil som du kan välja"
+
+msgid "Verify online"
+msgstr "Verifiera på nätet"
+
+msgid "Verify with local file"
+msgstr "Verifiera med lokal fil"
+
+msgid "Verifying"
+msgstr "Verifierar"
+
+msgid "Verifying integrity of game files..."
+msgstr "Verifierar integriteten för spelfiler..."
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Volume"
+msgstr "Volym"
+
+msgid "WUA"
+msgstr "WUA"
+
+msgid "WUD"
+msgstr "WUD"
+
+msgid "WUHB"
+msgstr "WUHB"
+
+msgid "Warning"
+msgstr "Varning"
+
+msgid ""
+"Warning: Disabling the accurate barriers option will lead to flickering "
+"graphics but may improve performance. It is highly recommended to leave it "
+"turned on."
+msgstr ""
+"Varning: Inaktivering av alternativet för exakta barriärer kommer leda till "
+"fladdrande grafik men kan förbättra prestandan. Det rekommenderas varmt att "
+"lämna den aktiverad."
+
+msgid "Wii U NUS content"
+msgstr "Wii U NUS-innehåll"
+
+msgid "Wii U archive (*.wua)"
+msgstr "Wii U-arkiv (*.wua)"
+
+msgid "Wii U executable (*.rpx, *.elf)"
+msgstr "Wii U-körbar fil (*.rpx, *.elf)"
+
+msgid "Wii U homebrew bundle (*.wuhb)"
+msgstr "Wii U homebrew bundle (*.wuhb)"
+
+msgid "Wii U image (*.wud, *.wux, *.iso, *.wad)"
+msgstr "Wii U-avbild (*.wud, *.wux, *.iso, *.wad)"
+
+msgid "Write stack trace to log"
+msgstr "Skriva stackspårning till logg"
+
+msgid "Wrong region: {}"
+msgstr "Fel region: {}"
+
+msgid "Wrong version: {}"
+msgstr "Fel version: {}"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid ""
+"You are trying to import a savegame for a different title than your "
+"currently selected one: {:016x} vs {:016x}\n"
+"Are you sure that you want to continue?"
+msgstr ""
+"Du försöker att importera ett sparat spel för en annan titel än den som du "
+"för närvarande valt: {:016x} vs {:016x}\n"
+"Är du säker på att du vill fortsätta?"
+
+msgid ""
+"You can configure a custom path for the emulated internal Wii U storage (MLC).\n"
+"This is where TesseraEmu stores saves, accounts and other Wii U system files."
+msgstr ""
+"Du kan konfigurera en anpassad sökväg för den emulerade interna Wii U-lagringen (MLC).\n"
+"Det är här som TesseraEmu lagrar sparningar, konton och andra Wii U-systemfiler."
+
+msgid ""
+"You can configure one controller for each player.\n"
+"We advise you to always use GamePad as emulated input for the first player, "
+"since many games expect the GamePad to be present.\n"
+"It is also required for touch functionality.\n"
+"The default global hotkeys are:\n"
+"CTRL - show pad screen\n"
+"CTRL + TAB - toggle pad screen\n"
+"ALT + ENTER - toggle fullscreen\n"
+"ESC - leave fullscreen\n"
+"\n"
+"If you're having trouble configuring your controller, make sure to have it "
+"in idle state and press calibrate.\n"
+"Also don't set the axis deadzone too low."
+msgstr ""
+"You can configure one controller for each player.\n"
+"We advise you to always use GamePad as emulated input for the first player, "
+"since many games expect the GamePad to be present.\n"
+"It is also required for touch functionality.\n"
+"Globala standarder för snabbtangenter är:\n"
+"CTRL - visa GamePad-skärm\n"
+"CTRL + TAB - växla Pad-skärm\n"
+"ALT + ENTER - växla helskärm\n"
+"ESC - lämna helskärm\n"
+"\n"
+"Om du har problem att konfigurera din handkontroller, försäkra dig om att du "
+"har den i påslaget tillstånd och tryck kalibrera.\n"
+"Ställ dock inte i dödläget för axlarna för lågt."
+
+msgid "You have to restart the game in order to apply the new settings."
+msgstr ""
+"Du måste starta om spelet för att kunna verkställa de nya inställningarna."
+
+msgid "You may need to set them up again."
+msgstr "Du kanske behöver konfigurera dem igen."
+
+msgid "You've played"
+msgstr "Du har spelat"
+
+msgid "Your entered value is not valid for the selected datatype."
+msgstr "Ditt angivna värde är inte giltigt för vald datatyp."
+
+msgid "Your game files are valid"
+msgstr "Dina spelfiler är giltiga"
+
+msgid ""
+"Your game image is invalid!\n"
+"\n"
+"Your hash:\n"
+"{}\n"
+"\n"
+"Expected hash:\n"
+"{}"
+msgstr ""
+"Din spelavbild är ogiltig!\n"
+"\n"
+"Din hash:\n"
+"{}\n"
+"\n"
+"Förväntad hash:\n"
+"{}"
+
+msgid "base"
+msgstr "bas"
+
+msgid "blow mic"
+msgstr "blåsa i mikrofon"
+
+msgid "can't delete profile"
+msgstr "kan inte ta bort profil"
+
+msgid "click"
+msgstr "klick"
+
+msgid "controller set by gameprofile. changes won't be saved permanently!"
+msgstr ""
+"handkontroller inställd av spelprofil. ändringar kommer inte sparas "
+"permanent!"
+
+msgid "coreinit File-Access API"
+msgstr "coreinit File-Access API"
+
+msgid "coreinit MP API"
+msgstr "coreinit MP API"
+
+msgid "coreinit Memory API"
+msgstr "coreinit Memory API"
+
+msgid "coreinit Thread API"
+msgstr "coreinit Thread API"
+
+msgid "coreinit Thread-Synchronization API"
+msgstr "coreinit Thread-Synchronization API"
+
+msgid "couldn't load profile"
+msgstr "kunde inte läsa in profil"
+
+msgid "couldn't save profile"
+msgstr "kunde inte spara profil"
+
+msgid "cycles"
+msgstr "cykler"
+
+msgid "down"
+msgstr "ner"
+
+msgid "false"
+msgstr "falskt"
+
+msgid "gx2 API"
+msgstr "gx2 API"
+
+msgid "h264 API"
+msgstr "h264 API"
+
+msgid "invalid profile name"
+msgstr "ogiltigt profilnamn"
+
+msgid "left"
+msgstr "vänster"
+
+msgid "many"
+msgstr "många"
+
+msgid "never"
+msgstr "aldrig"
+
+msgid "nfc API"
+msgstr "nfc API"
+
+msgid "nn_boss API"
+msgstr "nn_boss API"
+
+msgid "nn_fp API"
+msgstr "nn_fp API"
+
+msgid "nn_fp PRUDP"
+msgstr "nn_fp PRUDP"
+
+msgid "nn_nfp API"
+msgstr "nn_nfp API"
+
+msgid "nn_save API"
+msgstr "nn_save API"
+
+msgid "nsysnet API"
+msgstr "nsysnet API"
+
+msgid "ntag API"
+msgstr "ntag API"
+
+msgid "otp.bin is invalid"
+msgstr "otp.bin är ogiltig"
+
+msgid "otp.bin missing in TesseraEmu directory"
+msgstr "otp.bin saknar i TesseraEmu-katalogen"
+
+msgid "profile deleted"
+msgstr "profil togs bort"
+
+msgid "profile loaded"
+msgstr "profil inläst"
+
+msgid "profile saved"
+msgstr "profil sparad"
+
+msgid "right"
+msgstr "höger"
+
+msgid "save"
+msgstr "sparat"
+
+msgid "seeprom.bin is invalid"
+msgstr "seeprom.bin är ogiltig"
+
+msgid "seeprom.bin missing in TesseraEmu directory"
+msgstr "seeprom.bin saknas i TesseraEmu-katalogen"
+
+msgid "show screen"
+msgstr "visa skärm"
+
+msgid "system"
+msgstr "system"
+
+msgid "true"
+msgstr "sant"
+
+msgid "unknown"
+msgstr "okänt"
+
+msgid "up"
+msgstr "upp"
+
+msgid "update"
+msgstr "uppdatering"
+
+msgid ""
+"{} files have an invalid hash!\n"
+"Do you want to export a list of them to a file?"
+msgstr ""
+"{} filer har en ogiltig hash!\n"
+"Vill du exportera en lista över dem till en fil?"
+
+msgid "{} hour"
+msgid_plural "{} hours"
+msgstr[0] "{} timme"
+msgstr[1] "{} timmar"
+
+msgid "{} minute"
+msgid_plural "{} minutes"
+msgstr[0] "{} minut"
+msgstr[1] "{} minuter"

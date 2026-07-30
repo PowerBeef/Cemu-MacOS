@@ -1,0 +1,1329 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Cemu\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2019-07-23 16:11+0300\n"
+"Last-Translator: Bartuzen#1957\n"
+"Language-Team: Turkish (Turkey)\n"
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.2.3\n"
+
+msgid "&About"
+msgstr "&Hakkında"
+
+msgid "&Add new entry"
+msgstr "&Yeni girdi ekle"
+
+msgid "&Audio API"
+msgstr "&Ses API"
+
+msgid "&Auto"
+msgstr "&Otomatik"
+
+msgid "&Breakpoints"
+msgstr "&Kayıt noktaları"
+
+msgid "&CPU"
+msgstr "&CPU"
+
+msgid "&China"
+msgstr "&Çin"
+
+msgid "&Chinese"
+msgstr "&Çince"
+
+msgid "&Console language"
+msgstr "&Konsol dili"
+
+msgid "&Console region"
+msgstr "&Konsol bölgesi"
+
+msgid "&Copy"
+msgstr "&Kopyala"
+
+msgid "&Coreinit File-Access"
+msgstr "&Çekirdek İçi Dosya Erişimi"
+
+msgid "&Coreinit Memory API"
+msgstr "&Çekirdek İçi Hafıza API"
+
+msgid "&Coreinit Thread-Synchronization API"
+msgstr "&Çekirdek İçi İş Parçacığı-Senkronizasyon API"
+
+msgid "&DLC directory"
+msgstr "&DLC klasörü"
+
+msgid "&Debug"
+msgstr "&Ayıklama"
+
+msgid "&Decrement"
+msgstr "&Azalış"
+
+msgid "&Dual-core recompiler (fast, unstable!)"
+msgstr "&Çift-çekirdek derleyici (hızlı, dengesiz!)"
+
+msgid "&Dump"
+msgstr "&Boşalt"
+
+msgid "&Dump WUD filesystem"
+msgstr "&WUD dosya sistemini boşalt"
+
+msgid "&Dump current RAM"
+msgstr "&Geçerli RAM'i boşalt"
+
+msgid "&Dutch"
+msgstr "&Flemenkçe"
+
+msgid "&Edit game profile"
+msgstr "&Oyun profilini düzenle"
+
+msgid "&Edit graphic packs"
+msgstr "&Grafik paketlerini düzenle"
+
+msgid "&English"
+msgstr "&İngilizce"
+
+msgid "&Europe"
+msgstr "&Avrupa"
+
+msgid "&Exit"
+msgstr "&Çıkış"
+
+msgid "&File"
+msgstr "&Dosya"
+
+msgid "&French"
+msgstr "&Fransızca"
+
+msgid "&Fullscreen"
+msgstr "&Tam ekran"
+
+msgid "&GPU buffer cache accuracy"
+msgstr "&GPU önbellek doğruluğu"
+
+msgid "&GX2 API"
+msgstr "&GX2 API"
+
+msgid "&General settings"
+msgstr "&Genel ayarlar"
+
+msgid "&German"
+msgstr "&Almanca"
+
+msgid "&Goto Disasm"
+msgstr "&Disasm'a Git"
+
+msgid "&Graphic packs"
+msgstr "&Grafik paketleri"
+
+msgid "&H264 API"
+msgstr "&H264 API"
+
+msgid "&Help"
+msgstr "&Yardım"
+
+msgid "&High (slow)"
+msgstr "&Yüksek (yavaş)"
+
+msgid "&Increment"
+msgstr "&Artış"
+
+msgid "&Input API"
+msgstr "&Tuş API"
+
+msgid "&Input settings"
+msgstr "&Tuş ayarları"
+
+msgid "&Install game update or DLC"
+msgstr "&Güncelle veya DLC yükle"
+
+msgid "&Italian"
+msgstr "&İtalyanca"
+
+msgid "&Japan"
+msgstr "&Japonya"
+
+msgid "&Japanese"
+msgstr "&Japonca"
+
+msgid "&Korea"
+msgstr "&Kore"
+
+msgid "&Korean"
+msgstr "&Korece"
+
+msgid "&Load"
+msgstr "&Aç"
+
+msgid "&Logging"
+msgstr "&Kayıtlar"
+
+msgid "&Low (fast)"
+msgstr "&Düşük (hızlı)"
+
+msgid "&Medium"
+msgstr "&Orta"
+
+msgid "&Memory Dump"
+msgstr "&Bellek Boşaltma"
+
+msgid "&Memory searcher"
+msgstr "&Bellek arayıcı"
+
+msgid "&Mode"
+msgstr "&Mod"
+
+msgid "&NFC"
+msgstr "&NFC"
+
+msgid "&OpenGL debug output"
+msgstr "&OpenGL ayıklama çıkışı (debug)"
+
+msgid "&Options"
+msgstr "&Ayarlar"
+
+msgid "&Pin to main window"
+msgstr "A&na pencereye sabitle"
+
+msgid "&Portuguese"
+msgstr "&Portekizce"
+
+msgid "&Refresh game list"
+msgstr "&Oyun listesini yenile"
+
+msgid "&Refresh games"
+msgstr "&Oyunları yenile"
+
+msgid "&Registers"
+msgstr "&Kayıtlar"
+
+msgid "&Remove entry"
+msgstr "&Girdiyi sil"
+
+msgid "&Render upside-down"
+msgstr "&Ters göster"
+
+msgid "&Russian"
+msgstr "&Rusça"
+
+msgid "&Save API"
+msgstr "&Kaydetme API"
+
+msgid "&Save directory"
+msgstr "&Kayıt klasörü"
+
+msgid "&Scan NFC tag from file"
+msgstr "&Dosyadan NFC etiketi tara"
+
+msgid "&Separate GamePad view"
+msgstr "&Kumanda görüntüsünü ayır"
+
+msgid "&Shaders"
+msgstr "&Shaderlar"
+
+msgid "&Show frame profiler"
+msgstr "&Çerçeve profili oluşturucuyu göster"
+
+msgid "&Single-core interpreter"
+msgstr "&Tek-çekirdek yorumlayıcı"
+
+msgid "&Single-core recompiler (fast)"
+msgstr "&Tek-çekirdek derleyici (hızlı)"
+
+msgid "&Socket API"
+msgstr "&Soket  API"
+
+msgid "&Spanish"
+msgstr "&İspanyolca"
+
+msgid "&Start"
+msgstr "&Başla"
+
+msgid "&Taiwan"
+msgstr "&Tayvan"
+
+msgid "&Taiwanese"
+msgstr "&Tayvanca"
+
+msgid "&Texture cache warnings"
+msgstr "&Doku önbelleği uyarıları"
+
+msgid "&Textures"
+msgstr "&Dokular"
+
+msgid "&Tools"
+msgstr "&Araçlar"
+
+msgid "&Triple-core recompiler (fast, unstable!)"
+msgstr "&Üçlü-çekirdek derleyici (hızlı, dengesiz!)"
+
+msgid "&USA"
+msgstr "&ADB"
+
+msgid "&Unsupported API calls"
+msgstr "&Desteklenmeyen API çağrıları"
+
+msgid "&Update directory"
+msgstr "&Güncelleme klasörü"
+
+msgid "&View PPC debugger"
+msgstr "&PPC ayıklayıcısını göster"
+
+msgid "&View PPC threads"
+msgstr "&PPC iş parçacıklarını göster"
+
+msgid "&View audio debugger"
+msgstr "&Ses ayıklayıcısını göster"
+
+msgid "&View texture cache info"
+msgstr "&Doku önbelleği bilgisin göster"
+
+msgid "&Window"
+msgstr "&Pencere"
+
+msgid "&Zero"
+msgstr "&Sıfır"
+
+msgid "&nlibcurl HTTP/HTTPS requests"
+msgstr "&nlibcurl HTTP/HTTPS istekleri"
+
+msgid "API"
+msgstr "API"
+
+msgid "Account information"
+msgstr "Hesap bilgisi"
+
+msgid "Account settings"
+msgstr "Hesap ayarları"
+
+msgid "Active account"
+msgstr "Aktif hesap"
+
+msgid "Active preset"
+msgstr "Aktif paket"
+
+msgid "Add"
+msgstr "Ekle"
+
+msgid "Additional settings"
+msgstr "Ek ayarlar"
+
+msgid "Address"
+msgstr "Adres"
+
+msgid ""
+"Adds a game path to scan for games displayed in the game list\n"
+"If you have unpacked games, make sure to select the root folder of a game"
+msgstr ""
+"Oyun listesinde görüntülenen oyunları taramak için bir oyun yolu ekler\n"
+"Paketli oyunlarınız varsa, oyunun kök klasörünü seçtiğinizden emin olun"
+
+msgid "Affinity"
+msgstr "İlgi"
+
+msgid ""
+"All files from the currently running game will be dumped to /dump/"
+"<gamefolder>. This process can take a few minutes."
+msgstr ""
+"Halen devam etmekte olan oyundaki tüm dosyalar /dump/<gamefolder>'a "
+"gönderilecektir. Bu işlem birkaç dakika sürebilir."
+
+msgid "Audio"
+msgstr "Ses"
+
+msgid "Auto refresh"
+msgstr "Otomatik yenileme"
+
+msgid "Bicubic"
+msgstr "Çift kübik (Bicubic)"
+
+msgid "Bilinear"
+msgstr "Çift çigili (Bilinear)"
+
+msgid "Birthday"
+msgstr "Doğum Günü"
+
+msgid "Boost priority (-1)"
+msgstr "Öncelik artır (-1)"
+
+msgid "Boost priority (-5)"
+msgstr "Öncelik artır (-5)"
+
+msgid "Bottom center"
+msgstr "Sol merkez"
+
+msgid "Bottom left"
+msgstr "Sol alt"
+
+msgid "Bottom right"
+msgstr "Sağ alt"
+
+msgid "Break (F5)"
+msgstr "Ara (F5)"
+
+msgid "Button Threshold"
+msgstr "Düğme Eşiği"
+
+msgid "CPU"
+msgstr "CPU"
+
+msgid "CPU per core usage"
+msgstr "Çekirdek kullanımı başına CPU"
+
+msgid "CPU usage"
+msgstr "CPU kullanımı"
+
+msgid "CPU usage of TesseraEmu in percent"
+msgstr "TesseraEmu’nun yüzde CPU kullanımı"
+
+msgid "Calibrate"
+msgstr "Kalibrasyon"
+
+msgid "Can't find the \"longname_en\" in the given \"meta.xml\" file."
+msgstr "Seçilen \"meta.xml\" dosyasında \"longname_en\" bulunamıyor."
+
+msgid "Can't find the \"title_id\" in the given \"meta.xml\" file."
+msgstr "Seçilen \"meta.xml\" dosyasında \"title_id\" bulunamıyor."
+
+msgid "Can't find the \"title_version\" in the given \"meta.xml\" file."
+msgstr "Seçilen \"meta.xml\" dosyasında \"title_version\" bulunamıyor."
+
+msgid "Can't open the file."
+msgstr "Dosya açılamıyor."
+
+msgid "Cancel"
+msgstr "İptal"
+
+msgid "Cannot open file"
+msgstr "Dosya açılamıyor"
+
+msgid "TesseraEmu RAM usage in MB"
+msgstr "MB cinsinden TesseraEmu RAM kullanımı"
+
+msgid "Cemu detected outdated graphic packs and automatically disabled them."
+msgstr ""
+"Cemu eski grafik paketlerini tespit etti ve bunları otomatik olarak devre "
+"dışı bıraktı."
+
+msgid "TesseraEmu must be restarted to apply the selected UI language."
+msgstr "Dil ayarlarının uygulanması için TesseraEmu yeniden başlatılmalı."
+
+msgid ""
+"Changes the interface language of Cemu\n"
+"Available languages are stored in the translation directory\n"
+"A restard will be required after changing the language"
+msgstr ""
+"Cemu'nun arayüz dilini değiştirir\n"
+"Kullanılabilir diller çeviri dizininde saklanır\n"
+"Dil değiştirildikten sonra yeniden başlatmanız gerekir"
+
+msgid "Channels"
+msgstr "Kanallar"
+
+msgid "Checking version..."
+msgstr "Sürüm kontrol ediliyor..."
+
+msgid "Classic"
+msgstr "Klasik"
+
+msgid "Clear"
+msgstr "Temizle"
+
+msgid "Clear all currently set input settings"
+msgstr "Ayarlanmış bütün tuşları temizle"
+
+msgid "Comment"
+msgstr "Yorum"
+
+msgid "Control"
+msgstr "Kontrol"
+
+msgid "Controller"
+msgstr "Kumanda"
+
+msgid "Controller API:"
+msgstr "Kumanda API:"
+
+msgid "Controller profiles"
+msgstr "Kumanda profilleri"
+
+msgid "Controller:"
+msgstr "Kumanda:"
+
+msgid ""
+"Controls the amount of buffered audio data\n"
+"Higher values will create a delay in audio playback, but may avoid audio "
+"problems when emulation is too slow"
+msgstr ""
+"Bufferlanmış ses verisi miktarını kontrol eder\n"
+"Daha yüksek değerler ses oynatımında gecikme yaratacaktır, ancak emülasyon "
+"çok yavaş olduğunda ses sorunlarını önleyebilir"
+
+msgid "Controls the notification position while playing"
+msgstr "Oynarken bildirim konumunu kontrol eder"
+
+msgid ""
+"Controls the output aspect ratio when it doesn't match the ratio of the game"
+msgstr "Oyunun oranına uymadığında çıktı en boy oranını kontrol eder"
+
+msgid "Controls the overlay which displays technical information while playing"
+msgstr "Oynarken teknik bilgileri görüntüleyen kaplamayı kontrol eder"
+
+msgid "Controls the vsync state"
+msgstr "VSync durumunu kontrol eder"
+
+msgid "Couldn't load the selected profile!"
+msgstr "Seçilen profil yüklenemedi!"
+
+msgid "Couldn't save settings for controller {0}"
+msgstr "{0} kumandası için ayarlar kaydedilemedi"
+
+msgid "Couldn't save the profile!"
+msgstr "Profil kaydedilemedi!"
+
+msgid "Country"
+msgstr "Ülke"
+
+msgid "Create memory breakpoint (read)"
+msgstr "Hafıza kayıt noktası oluştur (okuma)"
+
+msgid "Create memory breakpoint (write)"
+msgstr "Hafıza kayıt noktası oluştur (yazma)"
+
+msgid "Current file:"
+msgstr "Geçerli dosya:"
+
+msgid "D-pad"
+msgstr "Yön Düğmeleri"
+
+msgid "DLC"
+msgstr "DLC"
+
+msgid "Deadzone"
+msgstr "Hassasiyet"
+
+msgid "Decrease priority (+1)"
+msgstr "Öncelik azalt (+1)"
+
+msgid "Decrease priority (+5)"
+msgstr "Öncelik azalt (+5)"
+
+msgid "Default"
+msgstr "Varsayılan"
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "Description"
+msgstr "Açıklama"
+
+msgid "Device"
+msgstr "Cihaz"
+
+msgid "Dim"
+msgstr "Dim"
+
+msgid "Disabled"
+msgstr "Pasif"
+
+msgid "Discord Presence"
+msgstr "Discord Presence"
+
+msgid "Displays the active controller profile when starting a game"
+msgstr "Oyun başlatılırken aktif kumanda profilini gösterir"
+
+msgid "Displays the menu bar when TesseraEmu is running in fullscreen mode and the mouse cursor is moved to the top"
+msgstr "TesseraEmu tam ekran modunda çalışırken ve fare imleci en üste getirildiğinde menü çubuğunu görüntüler"
+
+msgid ""
+"Do you really want to cancel the update process?\n"
+"\n"
+"Canceling the process will delete the applied update."
+msgstr ""
+"Güncelleme işlemini durdurmak istediğinden emin misin?\n"
+"\n"
+"İşlemi iptal etmek geçerli güncellemeyi silecek."
+
+msgid "Download latest community graphic packs"
+msgstr "En yeni topluluk grafik paketlerini indirin"
+
+msgid "Downloading graphic packs..."
+msgstr "Grafik paketleri indiriliyor..."
+
+msgid "Downscale filter"
+msgstr "Küçültme filtresi"
+
+msgid ""
+"Downscaling filters are used when the game resolution is bigger than the "
+"window size"
+msgstr ""
+"Küçültme filtreleri, oyun çözünürlüğü pencere boyutundan büyük olduğunda "
+"kullanılır"
+
+msgid "Draw calls per frame"
+msgstr "Kare başına çağrıları çizme"
+
+msgid "Dualcore-Recompiler"
+msgstr "ÇiftÇekirdek-Derleyici"
+
+msgid "Dump WUD"
+msgstr "&WUD boşalt"
+
+msgid "Dump complete"
+msgstr "Boşaltma tamamlandı"
+
+msgid "E&xit"
+msgstr "&Çıkış"
+
+msgid "E-Mail"
+msgstr "E-Posta"
+
+msgid ""
+"EXPERT OPTION\n"
+"Controls the accuracy of floating point multiplication in shaders.\n"
+"\n"
+"Recommended: true"
+msgstr ""
+"UZMAN SEÇENEĞİ\n"
+"Shaderlarda kayan nokta çarpma doğruluğunu kontrol eder.\n"
+"\n"
+"Önerilen: aktif"
+
+msgid ""
+"EXPERT OPTION\n"
+"Set the maximum thread slice runtime (in virtual cycles)"
+msgstr ""
+"UZMAN SEÇENEĞİ\n"
+"Maksimum iş parçacığı dilimi çalışma zamanını ayarla (sanal döngülerde)"
+
+msgid ""
+"EXPERT OPTION\n"
+"This option will load libraries from the cafeLibs directory"
+msgstr ""
+"UZMAN SEÇENEĞİ\n"
+"Bu ayar cafeLibs klasöründeki kütüphaneleri yükler"
+
+msgid "Edit game profile"
+msgstr "&Oyun profili düzenle"
+
+msgid "Emulate Controller"
+msgstr "Taklit Edilecek Kumanda"
+
+msgid ""
+"Enables the Discord Rich Presence feature\n"
+"You will also need to enable it in the Discord settings itself!"
+msgstr ""
+"Discord Rich Presence özelliğini etkinleştirir\n"
+"Discord ayarlarında da etkinleştirmeniz gerekecek!"
+
+msgid "English"
+msgstr "İngilizce"
+
+msgid "Enter a memory address"
+msgstr "Bir bellek adresi girin"
+
+msgid "Enter a new comment."
+msgstr "Yeni bir yorum gir."
+
+msgid "Enter a new instruction."
+msgstr "Yeni bir talimat girin."
+
+msgid "Enter a new value."
+msgstr "Yeni bir değer girin."
+
+msgid "Enter a target address."
+msgstr "Bir hedef adres girin."
+
+msgid "Entry"
+msgstr "Girdi"
+
+msgid "Error"
+msgstr "Hata"
+
+msgid "Error Code:"
+msgstr "Hata Kodu:"
+
+msgid "Error:"
+msgstr "Hata:"
+
+msgid "Extended texture readback"
+msgstr "Extended texture readback"
+
+msgid "Extensions:"
+msgstr "Eklentiler:"
+
+msgid "Extracting..."
+msgstr "Çıkarılıyor..."
+
+msgid "FPS"
+msgstr "FPS"
+
+msgid "Failed to connect to server"
+msgstr "Sunucuya bağlanılamadı"
+
+msgid "Failed to launch file."
+msgstr "Dosya açılamadı."
+
+msgid "Filter"
+msgstr "Filtre"
+
+msgid "Forces a given controller profile"
+msgstr "Seçilen kumanda profilini zorlar"
+
+msgid "Format"
+msgstr "Format"
+
+msgid "Friend list"
+msgstr "Arkadaş listesi"
+
+msgid "Full sync at GX2DrawDone()"
+msgstr "GX2DrawDone() tam senkronize"
+
+msgid "Fullscreen menu bar"
+msgstr "Tam ekran menü barı"
+
+msgid "Fullscreen scaling"
+msgstr "Tam ekran ölçeği"
+
+msgid "G&oto Dump"
+msgstr "&Boşaltmaya git"
+
+msgid "GPR"
+msgstr "GPR"
+
+msgid "GPU buffer cache accuracy"
+msgstr "GPU önbellek doğruluğu"
+
+msgid "Game"
+msgstr "Oyun"
+
+msgid "Game Paths"
+msgstr "Oyun Klasörleri"
+
+msgid "Gamepad"
+msgstr "Kumanda"
+
+msgid "General"
+msgstr "Genel"
+
+msgid "General settings"
+msgstr "Genel ayarlar"
+
+msgid "GoTo (CTRL + G)"
+msgstr "Git (CTRL + G)"
+
+msgid "GoTo address"
+msgstr "Adrese git"
+
+msgid "Graphic"
+msgstr "Grafik"
+
+msgid "Graphic pack"
+msgstr "Grafik paketi"
+
+msgid "Graphic packs"
+msgstr "Grafik paketleri"
+
+msgid "Graphic packs cannot be updated while a game is running."
+msgstr "Grafik paketleri bir oyun çalışıyorken güncellenemez."
+
+msgid "Graphics"
+msgstr "Grafik"
+
+msgid "Graphics API"
+msgstr "Grafik API"
+
+msgid "Hermite"
+msgstr "Hermite"
+
+msgid "Id"
+msgstr "Id"
+
+msgid ""
+"If synchronization is requested by the game, the emulated CPU will wait for "
+"the GPU to finish all operations.\n"
+"This is more accurate behavior, but may cause lower performance"
+msgstr ""
+"Oyun tarafından senkronizasyon isteniyorsa, emüle edilmiş CPU GPU'nun tüm "
+"işlemleri tamamlamasını bekler.\n"
+"Bu daha doğru davranış, ancak daha düşük performansa neden olabilir"
+
+msgid ""
+"Improves emulation accuracy of CPU to GPU memory access at the cost of "
+"performance. Required for some games."
+msgstr ""
+"CPU'nun GPU belleğe emülasyon doğruluğunu, performans pahasına arttırır. "
+"Bazı oyunlar için gerekli."
+
+msgid "Info"
+msgstr "Bilgi"
+
+msgid "Information"
+msgstr "Bilgi"
+
+msgid "Input Settings"
+msgstr "Tuş Ayarları"
+
+msgid "Installing DLC ..."
+msgstr "DLC yükleniyor ..."
+
+msgid "Installing update ..."
+msgstr "Güncelleme yükleniyor ..."
+
+msgid "Interface"
+msgstr "Arayüz"
+
+msgid "Invalid \"meta.xml\" file."
+msgstr "Geçersiz \"meta.xml\" dosyası."
+
+msgid "Invalid folder structure"
+msgstr "Bilinmeyen dosya yapısı"
+
+msgid ""
+"It seems that a DLC is already installed, do you still want to install it?"
+msgstr "DLC zaten yüklenmiş, yeniden yüklemek ister misin?"
+
+msgid ""
+"It seems that a newer update is already installed, do you still want to "
+"install the older version?"
+msgstr ""
+"Daha yeni bir sürüm zaten yüklenmiş, yine de eski sürümü yüklemek ister "
+"misin?"
+
+msgid ""
+"It seems that the selected update is already installed, do you want to "
+"reinstall it?"
+msgstr "Güncelleme zaten yüklenmiş, yeniden yüklemek ister misin?"
+
+msgid "Keep aspect ratio"
+msgstr "En boy oranını koru"
+
+msgid "LR"
+msgstr "LR"
+
+msgid "Language"
+msgstr "Dil"
+
+msgid "Last access"
+msgstr "Son erişim"
+
+msgid "Last played"
+msgstr "Son oynama"
+
+msgid "Latency"
+msgstr "Gecikme"
+
+msgid "Left Axis"
+msgstr "Sol Çubuk"
+
+msgid "Load"
+msgstr "Yükle"
+
+msgid "Load shared libraries"
+msgstr "Paylaşılan kütüphaneleri yükle"
+
+msgid "Loading, please wait!"
+msgstr "Yükleniyor, lütfen bekle!"
+
+msgid "Low battery"
+msgstr "Düşülk batarya"
+
+msgid ""
+"Lower value results in higher performance, but may cause graphical issues"
+msgstr ""
+"Düşük değerler daha yüksek performansa neden olur, ancak grafik sorunlara "
+"neden olabilir"
+
+msgid "MLC Path"
+msgstr "MLC Klasörü"
+
+msgid "Memory Searcher"
+msgstr "Hafıza Arayıcı"
+
+msgid "Memory breakpoint"
+msgstr "Hafıza kayıt noktası"
+
+msgid "MipRange"
+msgstr "MipRange"
+
+msgid "Mode"
+msgstr "Mod"
+
+msgid "Module&list"
+msgstr "&Modüllistesi"
+
+msgid "MotionPlus"
+msgstr "MotionPlus"
+
+msgid "Name"
+msgstr "İsim"
+
+msgid "Nearest Neighbor"
+msgstr "En Yakın Komşu"
+
+msgid "No profile name entered!"
+msgstr "Profil adı girilmedi!"
+
+msgid "No profile name selected!"
+msgstr "Profil seçilmedi!"
+
+msgid "No updates available."
+msgstr "Güncelleme bulunamadı."
+
+msgid "Not a valid NFC NTAG215 file"
+msgstr "Geçerli bir NFC NTAG215 dosyası değil"
+
+msgid ""
+"Not enough space available.\n"
+"Required: {0} MB\n"
+"Available: {1} MB"
+msgstr ""
+"Yeterince alan yok.\n"
+"Gereken: {0} MB\n"
+"Bulunan: {1} MB"
+
+msgid "Notifications"
+msgstr "Bildirimler"
+
+msgid "Nunchuck"
+msgstr "Nunchuck"
+
+msgid "On"
+msgstr "Açık"
+
+msgid "Online"
+msgstr "Çevrimiçi"
+
+msgid "Online disabled"
+msgstr "Çevrimiçi pasif"
+
+msgid "Open file to launch"
+msgstr "Başlatma için dosya seç"
+
+msgid "Open file to load"
+msgstr "Yüklemek için dosya seç"
+
+msgid "Outdated graphic packs"
+msgstr "Eski grafik paketleri"
+
+msgid "Overlay"
+msgstr "Kaplama"
+
+msgid "OverwriteRes"
+msgstr "OverwriteRes"
+
+msgid "PC"
+msgstr "PC"
+
+msgid "PPC threads"
+msgstr "PPC iş parçacıkları"
+
+msgid "PhysAddr"
+msgstr "PhysAddr"
+
+msgid "Pitch"
+msgstr "Pitch"
+
+msgid ""
+"Please be aware that online mode lets you connect to OFFICIAL servers and "
+"therefore there is a risk of getting banned.\n"
+"Only proceed if you are willing to risk losing online access with your Wii U "
+"and/or NNID."
+msgstr ""
+"Lütfen bu çevrimiçi modun sizi RESMİ sunuculara bağladığından ve bu nedenle "
+"yasaklanma riskiniz olduğunu unutmayın.\n"
+"Sadece eğer Wii U'nuzun çevrimiçi özelliğini ve/veya NNID'nizi  kaybetme "
+"riskini göze alıyorsanız devam edin."
+
+msgid "Position"
+msgstr "Pozisyon"
+
+msgid "Precompiled shaders"
+msgstr "Önceden derlenmiş shaderlar"
+
+msgid ""
+"Precompiled shaders can speed up the load time on the shader loading "
+"screen.\n"
+"Auto will enable it for AMD/Intel but disable it for NVIDIA GPUs as a "
+"workaround for a driver bug.\n"
+"\n"
+"Recommended: Auto"
+msgstr ""
+"Önceden derlenmiş shaderlar, shader yükleme ekranında yükleme süresini "
+"hızlandırabilir.\n"
+"Otomatik, bu ayarı AMD/Intel için aktifleştirecek, ancak NVIDIA GPU'lar için "
+"bir sürücü hatasından dolayı geçici bir çözüm olarak devre dışı "
+"bırakacaktır.\n"
+"\n"
+"Önerilen: Otomatik"
+
+msgid "Priority"
+msgstr "Öncelik"
+
+msgid "Profile"
+msgstr "Profil"
+
+msgid "RAM usage"
+msgstr "RAM kullanımı"
+
+msgid "Range"
+msgstr "Menzil"
+
+msgid "Refresh"
+msgstr "Yenile"
+
+msgid "Remember main window position"
+msgstr "Ana pencere konumunu hatırla"
+
+msgid "Remember pad window position"
+msgstr "Pad penceresinin konumunu hatırla"
+
+msgid "Remove"
+msgstr "Kaldır"
+
+msgid "Removes the currently selected game path from the game list"
+msgstr "Seçili olan oyun yolunu oyun listesinden kaldırır"
+
+msgid "Reset the default state of the controller"
+msgstr "Kumandanın varsayılan ayarlarına döndür"
+
+msgid "Resolution"
+msgstr "Çözünürlük"
+
+msgid "Restart of TesseraEmu required for changes to take effect"
+msgstr "Değişikliklerin uygulanması için TesseraEmu'nun yeniden başlatılması gerekiyor"
+
+msgid "Restores the last known pad window position and size when opening it"
+msgstr "Bilinen son pad penceresi konumunu ve boyutunu açarken geri yükler"
+
+msgid "Restores the last known window position and size when starting TesseraEmu"
+msgstr "TesseraEmu'yu başlatırken bilinen en son pencere konumunu ve boyutunu geri yükler"
+
+msgid "Results"
+msgstr "Sonuçlar"
+
+msgid "Results ({0})"
+msgstr "Sonuçlar ({0})"
+
+msgid "Resume"
+msgstr "Devam"
+
+msgid "Right Axis"
+msgstr "Sağ Çubuk"
+
+msgid "Rumble"
+msgstr "Titreşim"
+
+msgid "Run (F5)"
+msgstr "Çalıştır (F5)"
+
+msgid "Save"
+msgstr "Kaydet"
+
+msgid "Scale"
+msgstr "Ölçek"
+
+msgid "Search"
+msgstr "Ara"
+
+msgid "Searching for wiimotes..."
+msgstr "Wiimoteler aranıyor..."
+
+msgid ""
+"Select a custom mlc path\n"
+"The mlc path is used to store Wii U related files like save games, game "
+"updates and dlc data"
+msgstr ""
+"Özel bir mlc yolu seçin\n"
+"Mlc yolu, oyun kaydetme, oyun güncellemeleri ve dlc verileri gibi Wii U ile "
+"ilgili dosyaları depolamak için kullanılır"
+
+msgid "Select a directory containing games."
+msgstr "Oyunları içeren bir klasör seç."
+
+msgid "Select a mlc directory"
+msgstr "Bir mlc klasörü seçin"
+
+msgid "Select one of the available audio back ends"
+msgstr "Kullanılabilir ses arka uçlarından birini seçin"
+
+msgid "Select the active audio output device for Wii U GamePad"
+msgstr "Wii U GamePad için aktif ses çıkış cihazını seçin"
+
+msgid "Select the active audio output device for Wii U TV"
+msgstr "Wii U TV için aktif ses çıkış cihazını seçin"
+
+msgid "Set comment for breakpoint at address %08x"
+msgstr "Kayıt noktası adresi için yorum gir %08x"
+
+msgid "Set the CPU emulation mode"
+msgstr "CPU taklit emülasyon seç"
+
+msgid "Sets the scale of the notification text"
+msgstr "Bildirim metninin ölçeğini ayarlar"
+
+msgid "Sets the scale of the overlay text"
+msgstr "Kaplama metninin ölçeğini ayarlar"
+
+msgid "Sets the text color of notifications"
+msgstr "Bildirimlerin metin rengini ayarlar"
+
+msgid "Sets the text color of the overlay"
+msgstr "Kaplamanın metin rengini ayarlar"
+
+msgid "Shader compiler"
+msgstr "Shader derleyici"
+
+msgid "Shader mul accuracy"
+msgstr "Shader çoğaltması doğruluğu"
+
+msgid "Show only active"
+msgstr "Sadece aktif olanları göster"
+
+msgid "Show views"
+msgstr "Görüntülenmeleri göster"
+
+msgid "Shows a notification after shaders have been compiled"
+msgstr "Shader derlendikten sonra bildirim gsöterir"
+
+msgid "Shows a notification when a low controller battery has been detected"
+msgstr "Pili düşük olan bir kumanda bulunduğunda bildirim gösterir"
+
+msgid "Shows friend list related data if online"
+msgstr "Çevrimiçi ise arkadaş listesiyle ilgili verileri gösterir"
+
+msgid "Singlecore-Interpreter"
+msgstr "TekÇekirdek-Yorumlayıcı"
+
+msgid "Singlecore-Recompiler"
+msgstr "TekÇekirdek-Derleyici"
+
+msgid "Size"
+msgstr "Boyut"
+
+msgid "SliceRange"
+msgstr "SliceRange"
+
+msgid "SliceStart"
+msgstr "SliceStart"
+
+msgid "Stack"
+msgstr "Yığın"
+
+msgid "State"
+msgstr "Durum"
+
+msgid "Step Into (F11)"
+msgstr "Adım (F11)"
+
+msgid "Step Over (F10)"
+msgstr "Aşama (F10)"
+
+msgid "Stereo"
+msgstr "Stereo"
+
+msgid "Stored Entries"
+msgstr "Depolanmış Girdiler"
+
+msgid "Stretch"
+msgstr "Uzat"
+
+msgid "Success"
+msgstr "Başarılı"
+
+msgid "SumWakeTime"
+msgstr "SumWakeTime"
+
+msgid "Suspend"
+msgstr "Askıya al"
+
+msgid "TV"
+msgstr "Televizyon"
+
+msgid "Test if the controller is connected"
+msgstr "Kumandanın bağlanıp bağlanmadığını kontrol et"
+
+msgid "Text Color"
+msgstr "Yazı Rengi"
+
+msgid "Texture cache"
+msgstr "Doku önbelleği"
+
+msgid "The given \"meta.xml\" file is no update or DLC."
+msgstr "Verilen \"meta.xml\" güncelleme veya DLC değil."
+
+msgid "The given profile name is not valid!"
+msgstr "Bu profil geçerli değil!"
+
+msgid "The number of draw calls per frame. Average over last 5 seconds"
+msgstr "Kare başına yapılan arama sayısı. Son 5 saniyedeki ortalama"
+
+msgid "The number of frames per second. Average over last 5 seconds"
+msgstr "Saniyedeki kare sayısı. Son 5 saniyedeki ortalama"
+
+msgid ""
+"The threshold of a button to recognizes a press from a trigger/axis value"
+msgstr "Bir tetik/eksen değerinden bir basını tanıyan bir düğmenin eşiği"
+
+msgid "This graphic pack has no description"
+msgstr "Bu grafik paketinin açıklaması yok"
+
+msgid "This is an old graphic pack, therefore it has no description."
+msgstr "Bu eski bir grafik paketi, bu nedenle açıklaması yok."
+
+msgid "Thread quantum"
+msgstr "İş Parçacığı Kuantumu"
+
+msgid "ThreadName"
+msgstr "ThreadAdı"
+
+msgid "Tilemode"
+msgstr "Tilemode"
+
+msgid "Toggle Breakpoint (F9)"
+msgstr "Kayıt Noktası Değiştir"
+
+msgid "Top center"
+msgstr "Üst merkez"
+
+msgid "Top left"
+msgstr "Sol üst"
+
+msgid "Top right"
+msgstr "Sağ üst"
+
+msgid "Total cpu usage in percent for each core"
+msgstr "Her çekirdek için yüzde cinsinden toplam cpu kullanımı"
+
+msgid "Triplecore-Recompiler"
+msgstr "ÜçÇekircdek-Derleyici"
+
+msgid "Type"
+msgstr "Tip"
+
+msgid "Unable to open file."
+msgstr "Dosya açılamıyor."
+
+msgid "Uncategorized graphic packs"
+msgstr "Kategorize edilmemiş grafik paketleri"
+
+msgid "Unknown error occured"
+msgstr "Bilinmeyen bir hata oldu"
+
+msgid "Unknown file type."
+msgstr "Bilinmeyen dosya türü."
+
+msgid "Update installation has been canceled!"
+msgstr "Güncelleme yüklemesi iptal edildi!"
+
+msgid "Update installed!"
+msgstr "Güncelleme yüklendi!"
+
+msgid ""
+"Updated graphic packs are available. Do you want to download and install "
+"them?"
+msgstr "Güncel grafik paketleri bulundu. Güncellemek ister misiniz?"
+
+msgid "Updating game list..."
+msgstr "Oyun listesi güncelleniyor..."
+
+msgid "Upscale filter"
+msgstr "Genişletme filtresi"
+
+msgid ""
+"Upscaling filters are used when the game resolution is smaller than the "
+"window size"
+msgstr ""
+"Yükseltme filtreleri, oyun çözünürlüğü pencere boyutundan küçük olduğunda "
+"kullanılır"
+
+msgid "VSync"
+msgstr "VSync"
+
+msgid "Version"
+msgstr "Sürüm"
+
+msgid "Volume"
+msgstr "Ses"
+
+msgid "Warning"
+msgstr "Uyarı"
+
+msgid "You can configure game paths in the general settings."
+msgstr "Oyun klasörlerini genel ayarlardan yapılandırabilirsin."
+
+msgid "You've played"
+msgstr "Oynama Süren"
+
+msgid "Your entered value is not valid for the selected datatype."
+msgstr "Girdiğin değer bu veri tipine uygun değil."
+
+msgid "address"
+msgstr "adres"
+
+msgid "auto"
+msgstr "otomatilk"
+
+msgid "blow mic"
+msgstr "mik. üfleme"
+
+msgid "cycles"
+msgstr "döngüler"
+
+msgid "description"
+msgstr "açıklama"
+
+msgid "disable"
+msgstr "kapat"
+
+msgid "enable"
+msgstr "aç"
+
+msgid "false"
+msgstr "kapalı"
+
+msgid "freeze"
+msgstr "dondur"
+
+msgid "high"
+msgstr "yüksek"
+
+msgid "low"
+msgstr "düşük"
+
+msgid "medium"
+msgstr "orta"
+
+msgid "minimal"
+msgstr "en az"
+
+msgid "never"
+msgstr "asla"
+
+msgid "otp.bin could not be found"
+msgstr "otp.bin bulunamadı"
+
+msgid "otp.bin is corrupted or has invalid size"
+msgstr "otp.bin bozuk veya boyutu geçersiz"
+
+msgid "seeprom.bin could not be found"
+msgstr "seeprom.bin bulunamadı"
+
+msgid "seeprom.bin is corrupted or has invalid size"
+msgstr "seeprom.bin bozuk veya boyutu geçersiz"
+
+msgid "show screen"
+msgstr "ekranı göster"
+
+msgid "true"
+msgstr "açık"
+
+msgid "type"
+msgstr "tip"
+
+msgid "value"
+msgstr "değer"
