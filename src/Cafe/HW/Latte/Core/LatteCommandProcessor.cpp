@@ -5,6 +5,7 @@
 #include "Cafe/HW/Latte/Core/Latte.h"
 #include "Cafe/HW/Latte/Core/LatteShader.h"
 #include "Cafe/HW/Latte/Core/LatteAsyncCommands.h"
+#include "Cafe/HW/Latte/Core/LatteTiming.h" // fence-stall vs vsync correlation
 #include "Cafe/HW/Latte/Core/LattePerformanceMonitor.h"
 #include "Cemu/Telemetry/Telemetry.h"
 #include "util/highresolutiontimer/HighResolutionTimer.h"
@@ -561,6 +562,13 @@ LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 	TLM_INC(Gpu, GpuFenceTotal);
 	const bool tlmFence = tlm::AreaEnabled(tlm::Area::Gpu);
 	const uint64 tlmFenceStart = tlmFence ? HighResolutionTimer::now().getTick() : 0;
+	// Emulated vsync is a polled timer that this very loop drives (LatteTiming_HandleTimedVsync
+	// is called on every iteration below), and GX2WaitForFlip parks guest threads on it. If the
+	// fence is released by a guest thread that was itself waiting for a flip, then the stall
+	// ends within microseconds of a vsync signal. If it is released by something else, the
+	// offset is unrelated to the vsync grid. Snapshot both sides and let the number decide.
+	const uint64 tlmVsyncAtStart = tlmFence ? LatteTiming_GetVsyncSignalCount() : 0;
+	const uint64 tlmFlipAtStart = tlmFence ? LatteTiming_GetFlipSignalCount() : 0;
 	if ((word0 & 0x10) != 0)
 	{
 		// wait for memory address
@@ -661,9 +669,17 @@ LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 		st.waits++;
 		if (stalls)
 		{
+			const uint64 now = HighResolutionTimer::now().getTick();
 			st.stalls++;
-			st.stallNs += HighResolutionTimer::now().getTick() - tlmFenceStart;
+			st.stallNs += now - tlmFenceStart;
 			TLM_INC(Gpu, GpuFenceStalls);
+			TLM_ADD(Gpu, GpuFenceVsyncDuring, LatteTiming_GetVsyncSignalCount() - tlmVsyncAtStart);
+			TLM_ADD(Gpu, GpuFenceFlipDuring, LatteTiming_GetFlipSignalCount() - tlmFlipAtStart);
+			// How long after the most recent vsync signal the fence finally came free. Near
+			// zero means the vsync released it; anything else means it did not.
+			const uint64 lastVsync = LatteTiming_GetLastVsyncTick();
+			if (lastVsync && now >= lastVsync)
+				TLM_ADD(Gpu, GpuFenceReleaseLagNs, now - lastVsync);
 		}
 	}
 	return cmd;

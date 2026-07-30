@@ -131,14 +131,24 @@ frame / 20.04 fps, from `--telemetry`:
 | guest core 1 busy / idle | 9.42 / 39.61 | 19% / 79% |
 | guest core 2 busy / idle | 9.53 / 37.39 | 19% / 75% |
 | **all 3 guest cores busy** | **26.89** | **18% of 3-core capacity** |
-| Latte thread: waiting on guest (`cp_idle`) | 20.28 | 41% |
-| Latte thread: waiting on GPU (`cp_fence`) | 15.58 | 31% |
-| GPU busy (asynchronous) | 19.16 | 38% |
+| Latte thread: waiting for guest commands (`cp_idle`) | 20.03 | 40% |
+| Latte thread: waiting for **vsync** (`cp_fence`) | 15.58 | 31% |
+| GPU busy (asynchronous) | 19.20 | 38% |
 
-Guest cores ~18% busy, GPU ~38% busy, command processor ~72% waiting. **This is a latency and
-serialisation problem, not a throughput problem** — each stage waits on the previous one and nothing
-overlaps. Note the process still shows ~205% CPU in `ps`: most of that is spin-wait burn in the
-command processor, not useful work.
+Guest cores ~18% busy, GPU ~38% busy, command processor ~71% waiting.
+
+**`cp_fence` is solved and is not a defect: it is the emulated vsync timer.** The fence is released
+**10 µs** after a vsync signal (p99 30 µs), exactly one vsync and one flip fire per stall, and the
+duration is the same in a 113-draw menu as in 3,516-draw gameplay. The guest thread that writes the
+fence is parked in `GX2WaitForFlip`; the flip comes from `LatteTiming`'s polled software timer,
+which the fence wait loop itself drives. That is frame pacing working. **Do not try to recover this
+time** — and note it retroactively explains why parking the spin (`5933733`) and committing work
+early both changed nothing: the guest was never waiting for the GPU. One flip per vsync also pins
+`swapInterval = 1`, so the grid is 16.68 ms and a 49.90 ms frame is the title taking three slots.
+
+**`cp_idle` is the open question and now the largest term.** Twenty milliseconds a frame of the
+command processor genuinely out of work while the guest cores sit 18% busy. Unlike the fence it has
+no innocent explanation yet.
 
 Two numbers stand out as suspects:
 

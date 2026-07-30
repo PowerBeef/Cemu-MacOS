@@ -36,9 +36,13 @@ TLM_COUNTER(GpuCpFenceNs,           "gpu.cp_fence_ns",           "ns",    Gpu)
 // a scene is from the vsync quantisation cliff.
 TLM_COUNTER(GpuWaitFlipNs,          "gpu.wait_flip_ns",          "ns",    Gpu)
 TLM_COUNTER(GpuDrawableWaitNs,      "gpu.drawable_wait_ns",      "ns",    Gpu)
-// IT_WAIT_REG_MEM: the GPU command processor spinning until the guest CPU writes a
-// value. cp_fence_ns is 3.6ms/frame in the BotW shrine but 15.6ms in Korok Forest --
-// the largest single difference between a scene that holds 30fps and one that does not.
+// IT_WAIT_REG_MEM: the GPU command processor waiting until the guest CPU writes a value.
+// SOLVED, and it is not a defect: cp_fence_ns is "time until the next emulated vsync".
+// The fence is released 10us after a vsync signal (fence_release_lag_ns below), exactly one
+// vsync and one flip fire per stall, and the duration is identical in a 113-draw menu and
+// 3,516-draw gameplay. The guest thread owning the fence is parked in GX2WaitForFlip; the
+// flip comes from LatteTiming's polled software timer, which this same wait loop drives.
+// Do not treat this as time to be recovered.
 TLM_COUNTER(GpuFenceTotal,          "gpu.fence_total",           "count", Gpu)
 TLM_COUNTER(GpuFenceStalls,         "gpu.fence_stalls",          "count", Gpu)
 TLM_COUNTER(GpuFenceSpins,          "gpu.fence_spins",           "count", Gpu)
@@ -57,6 +61,14 @@ TLM_COUNTER(GpuCpIdleWithPendingWork,"gpu.cp_idle_pending",      "count", Gpu)
 TLM_COUNTER(GpuCpIdlePendingDrawcalls,"gpu.cp_idle_pending_draws","count",Gpu)
 // Commits forced by --commit-on-fence-stall. Zero unless the flag is passed.
 TLM_COUNTER(GpuCpIdleCommits,       "gpu.cp_idle_commits",       "count", Gpu)
+// Is the fence wait a timer? It lasts ~15.3 ms whether the title draws 113 objects or
+// 3,516, which no work dependency explains. Emulated vsync IS a timer that the Latte
+// thread polls from inside the wait loop, and GX2WaitForFlip parks guest threads on it --
+// so if the fence is released by a thread waiting for a flip, release_lag_ns (time from
+// the last vsync signal to the fence coming free) collapses to microseconds.
+TLM_COUNTER(GpuFenceVsyncDuring,    "gpu.fence_vsync_during",    "count", Gpu)
+TLM_COUNTER(GpuFenceFlipDuring,     "gpu.fence_flip_during",     "count", Gpu)
+TLM_COUNTER(GpuFenceReleaseLagNs,   "gpu.fence_release_lag_ns",  "ns",    Gpu)
 
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)

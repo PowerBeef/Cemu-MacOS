@@ -73,12 +73,23 @@ void LatteTiming_Init()
 	LatteGPUState.timer_nextVSync = LatteGPUState.timer_bootUp + LatteTime_CalculateTimeBetweenVSync();
 }
 
+// See LatteTiming.h. Written and read only on LatteThread.
+static uint64 s_vsyncSignalCount = 0;
+static uint64 s_flipSignalCount = 0;
+static uint64 s_lastVsyncTick = 0;
+
+uint64 LatteTiming_GetVsyncSignalCount() { return s_vsyncSignalCount; }
+uint64 LatteTiming_GetFlipSignalCount() { return s_flipSignalCount; }
+uint64 LatteTiming_GetLastVsyncTick() { return s_lastVsyncTick; }
+
 void LatteTiming_signalVsync()
 {
 	static uint32 s_vsyncIntervalCounter = 0;
 
 	if (!LatteGPUState.gx2InitCalled)
 		return;
+	s_vsyncSignalCount++;
+	s_lastVsyncTick = HighResolutionTimer::now().getTick();
 	s_vsyncIntervalCounter++;
 	uint32 swapInterval = 1;
 	if (LatteGPUState.sharedArea)
@@ -116,6 +127,7 @@ void LatteTiming_signalVsync()
 			}
 		}
 		GX2::__GX2NotifyEvent(GX2::GX2CallbackEventType::FLIP);
+		s_flipSignalCount++;
 		s_vsyncIntervalCounter = 0;
 	}
 	// vsync

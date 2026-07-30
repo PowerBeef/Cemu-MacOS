@@ -617,3 +617,50 @@ Two supporting observations:
   ~15 ms, which is the size of `cp_fence`. That is a correlation and not yet a cause, but it is the
   first quantitative reason to think the fence is what separates 20 fps from 30 here — the
   commit-on-idle experiment ruled out one explanation for the fence, not the fence itself.
+
+### `cp_fence` solved: it is the vsync timer, and it is correct behaviour
+
+The previous section argued from a constant duration that the fence wait had to be a timer.
+Measured directly, per stall:
+
+| | menu | gameplay |
+|---|---|---|
+| `cp_fence` | 15.24 ms | 15.58 ms |
+| vsync signals during the stall | **1** | **1** |
+| flip events during the stall | **1** | **1** |
+| **time from that vsync to the fence coming free** | — | **0.01 ms** (p99 0.03) |
+
+**The fence is released ten microseconds after a vsync signal, every frame, in both phases.**
+
+The chain, now fully closed:
+
+1. The command processor hits `IT_WAIT_REG_MEM` and waits on a guest-written fence in MEM2.
+2. The guest thread that writes it is parked in `GX2WaitForFlip` — `cpu.block.gx2_flip` and
+   `cpu.block.gx2_vsync` are ~1/frame each.
+3. Emulated vsync is a **polled software timer**: `LatteTiming_HandleTimedVsync` fires when
+   `now >= timer_nextVSync` and advances by one 16.68 ms period. Host-driven vsync is a stub on
+   this fork (`LatteTiming_EnableHostDrivenVSync` has an empty body).
+4. That poll is called **from inside the fence wait loop itself**. When it fires,
+   `__GX2NotifyEvent(FLIP)` wakes the guest thread, which writes the fence, and the CP proceeds.
+
+So `cp_fence` measures *time until the next emulated vsync*. It is frame pacing working, not a
+stall to be recovered, and **the whole line of investigation is closed**. In hindsight it explains
+every negative result along the way: parking the spin (`5933733`) freed 40 points of CPU and moved
+nothing, and committing work early moved nothing, because the guest was never waiting for the GPU.
+
+One flip per vsync also pins `swapInterval = 1`, so the display grid is 16.68 ms and a 49.90 ms
+frame is the title taking **three** grid slots.
+
+**The remaining term is `cp_idle`, and it is now the largest:**
+
+| gameplay, per frame | |
+|---|---|
+| frame | 49.90 ms |
+| `cp_idle` — Latte thread waiting for guest commands | **20.03 ms (40%)** |
+| `cp_fence` — waiting for vsync (solved, correct) | 15.58 ms (31%) |
+| work | 14.09 ms (28%) |
+| GPU busy (async) | 19.20 ms |
+
+`cp_idle` is not a timer — it is the command processor genuinely out of work while the guest
+cores sit ~18% busy. Twenty milliseconds a frame of the GPU pipeline waiting for a CPU that is
+mostly idle is the next thing to explain, and unlike the fence it has no innocent explanation yet.
