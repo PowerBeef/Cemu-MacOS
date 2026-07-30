@@ -284,6 +284,7 @@ int main(int argc, char *argv[])
 	tlm::Init(LaunchSettings::GetTelemetryPath(), LaunchSettings::GetTelemetryLabel(),
 			  LaunchSettings::GetTelemetryAreas());
 	tlm::RegisterDetailFlushCallback(&PPCInterpreter_flushUnsupportedHLEStats);
+	tlm::RegisterDetailFlushCallback(&PPCInterpreter_flushHLECallStats);
 	tlm::RegisterDetailFlushCallback(&LatteCP_flushFenceStats);
 	WindowSystem::Create();
 	return 0;

@@ -130,7 +130,7 @@ serialisation problem, not a throughput problem** — each stage waits on the pr
 overlaps. Note the process still shows ~205% CPU in `ps`: most of that is spin-wait burn in the
 command processor, not useful work.
 
-Two numbers stand out as suspects, neither yet acted on:
+Two numbers stand out as suspects:
 
 - **52,330 HLE calls per frame** (1.05M/s) that cost the guest **nothing**. The `-= 500` at
   `BackendAArch64.cpp:874` applies *only* to the `0xFFD0` unresolved-import branch, which is 1.1% of
@@ -138,6 +138,13 @@ Two numbers stand out as suspects, neither yet acted on:
   IPC round trip to IOSU — advances guest time by zero cycles. That is a far larger timing
   divergence than a wrong flat charge would be, and it is why guest threads can issue a million
   library calls a second without consuming quantum.
+
+  **A flat charge is now ruled out by measurement.** `cpu.hle_would_charge_cycles` sums a
+  hypothetical 500/call without applying it: **25,103,500 cycles/frame against 15,384,240 actually
+  retired, i.e. 163%** — it would more than double emulated guest time. The named histogram
+  (`cpu.hle_calls` accuracy details, top 64) shows the volume is `OSFastMutex_Lock/Unlock`,
+  `OSGetCoreId`, `OSBlockMove` and GX2 register setters, all worth tens of cycles on hardware, while
+  the calls that matter are rare. **Any charge must be tiered per function.**
 - **3,143 guest thread switches per frame** (63k/s), and the accounting closes:
 
   | reason | per frame | share |
@@ -154,16 +161,38 @@ Two numbers stand out as suspects, neither yet acted on:
   faithfully emulated — Cafe OS scheduling is cooperative (`docs/hardware/05`), so engine threads
   poll and yield rather than block. On console a yield is a cheap scheduler call. Here every one is
   a `ucontext` fiber switch, and `swapcontext` on Darwin/arm64 calls `sigprocmask` on both save and
-  restore. At the ~700 ns/switch estimate in `docs/porting/02-cpu-jit-memory.md` §4.2 that is
-  ~2.2 ms/frame, 4.4% of the frame, spent purely on switching.
+  restore.
 
-  That estimate is **not measured**, and cannot be measured with a scope timer: `Fiber::Switch` does
-  not return until the fiber is resumed, so timing around it captures descheduled time, not switch
-  cost — the same trap that produced 197 ms of "busy" in a 49.9 ms frame. Measuring it needs a probe
-  inside the fiber layer, which is in `CemuUtil` and cannot reach telemetry without a new link edge.
+  **Now measured** — `tools/probes/fiber_switch_cost.c`, ping-pong 10⁶ switches: **454.5 ns** for
+  `swapcontext` versus **6.5 ns** for the hand-written AArch64 switch, a 70x gap. At 3,143
+  switches/frame that is **1.43 ms/frame today**, 2.9% of a 49.9 ms frame. The earlier ~700 ns
+  estimate was ~35% high.
+
+  **But it is not a frame-rate fix.** The frame decomposes as 12.64 ms of work inside a 33.27 ms
+  frame quantised to two vsync periods, and that work already fits in *one* period with 24%
+  headroom. Removing 1.4 ms from a stage with 20 ms of slack crosses no boundary. Same shape as the
+  `DeviceShared` change: worth doing for power and headroom, not for fps.
+
+  A microbenchmark is the right instrument and an in-process probe is not: `Fiber::Switch` does not
+  return until the fiber is resumed, so a scope timer around it measures descheduled time — the trap
+  that produced 197 ms of "busy" in a 49.9 ms frame.
 
 `cpu.guest_cycles_retired` is reported but should not be read as a clean instruction count:
 `__OSStoreThread` zeroes it when `executedCycles < skippedCycles`, so it undercounts.
+
+**The live lead is that the renderer holds uncommitted work while the CP is blocked.**
+`MetalRenderer::NotifyLatteCommandProcessorIdle()` has a commented-out body and is called from
+exactly the two places the command processor blocks — ring starvation and the fence stall. Measured:
+**129,377 of 129,575 idle notifications per frame have recorded drawcalls pending**, 94.7 on average,
+against 6 command buffers committed per frame. Two things to know before acting: that count is
+inside the ring-starvation spin so it counts spins rather than distinct idle events, and
+**`m_commitOnIdle` does not exist** — the commented-out line names a flag nobody ever added, so this
+is a design task, not an uncomment.
+
+Already struck off by measurement, so don't re-raise them: `IT_MEM_SEMAPHORE` and the wait-for-flip
+spin are **exactly zero** in BotW, and snapshotting guest threads at fence-stall entry proved
+nothing — it found the cores idle 95% of the time, which is just their 96% baseline idle rate. A
+probe with no control sample cannot discriminate.
 
 **Do not divide BotW's GPU time by 16.67 ms.** BotW targets **30 FPS**, so the budget is 33.3 ms. An earlier revision of this file divided by the 60 FPS budget and concluded the GPU was at "108–147% of budget" and "is what caps the frame rate" — both wrong. At 15.6–18.5 ms against a ~35 ms wall-clock frame, the GPU sits at roughly **50% duty cycle and is not the limiter in this scene**: cutting GPU time 16% moved the frame rate not at all. Check what the title actually targets before computing a percentage.
 

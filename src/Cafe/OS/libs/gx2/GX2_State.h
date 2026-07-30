@@ -11,6 +11,13 @@ namespace GX2
 
 	static_assert(sizeof(GX2AlphaTestReg) == 8);
 
+	struct GX2AlphaToMaskReg
+	{
+		betype<Latte::LATTE_DB_ALPHA_TO_MASK> reg;
+	};
+
+	static_assert(sizeof(GX2AlphaToMaskReg) == 4);
+
 	struct GX2ColorControlReg
 	{
 		betype<Latte::LATTE_CB_COLOR_CONTROL> reg;
@@ -140,6 +147,22 @@ namespace GX2
 	void GX2InitAlphaTestReg(GX2AlphaTestReg* reg, uint32 alphaTestEnable, GX2_ALPHAFUNC alphaFunc, float alphaRef);
 	void GX2SetAlphaTestReg(GX2AlphaTestReg* reg);
 	void GX2SetAlphaTest(uint32 alphaTestEnable, GX2_ALPHAFUNC alphaFunc, float alphaRef);
+
+	// GX2AlphaToMaskMode -- selects which rotation of the 2x2 dither matrix the four
+	// DB_ALPHA_TO_MASK offset fields describe.
+	enum class GX2_ALPHATOMASKMODE
+	{
+		NON_DITHERED	= 0,
+		DITHER_0		= 1,
+		DITHER_90		= 2,
+		DITHER_180		= 3,
+		DITHER_270		= 4,
+	};
+
+	void GX2InitAlphaToMaskReg(GX2AlphaToMaskReg* reg, uint32 alphaToMaskEnable, GX2_ALPHATOMASKMODE mode);
+	void GX2GetAlphaToMaskReg(GX2AlphaToMaskReg* reg, uint32be* alphaToMaskEnable, uint32be* mode);
+	void GX2SetAlphaToMaskReg(GX2AlphaToMaskReg* reg);
+	void GX2SetAlphaToMask(uint32 alphaToMaskEnable, GX2_ALPHATOMASKMODE mode);
 
 	void GX2InitColorControlReg(GX2ColorControlReg* reg, GX2_LOGICOP logicOp, uint32 blendMask, uint32 multiwriteEnable, uint32 colorBufferEnable);
 	void GX2SetColorControl(GX2_LOGICOP logicOp, uint32 blendMask, uint32 multiwriteEnable, uint32 colorBufferEnable);

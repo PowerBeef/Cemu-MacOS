@@ -15,6 +15,7 @@
 #include "Cafe/HW/Latte/Core/LatteSurfaceCopy.h"
 
 #include "Cafe/OS/libs/coreinit/coreinit_Time.h"
+#include "Cafe/OS/libs/coreinit/coreinit_Thread.h" // fence-stall attribution reads guest scheduler state
 #include "Cafe/OS/libs/TCL/TCL.h" // TCL currently handles the GPU command ringbuffer
 
 #include "Cafe/CafeSystem.h"
@@ -463,6 +464,13 @@ namespace
 		uint64 stallNs;
 	};
 	std::unordered_map<uint32, FenceStat> s_fenceStats;
+
+	// Who the guest was running when a fence stall began. Parking the spin (5933733) freed
+	// 40 points of CPU but moved cp_fence not at all, which ruled out contention and left
+	// the question of what the guest is actually doing for those 15.6ms while its cores sit
+	// 18% busy. Bucketed by "core<N> <threadname> <state>" so the count is "stalls that saw
+	// this", not a running total that would change the dedup key every flush.
+	std::unordered_map<std::string, uint64> s_stallGuestState;
 }
 
 void LatteCP_flushFenceStats()
@@ -478,6 +486,45 @@ void LatteCP_flushFenceStats()
 		tlm::NoteAccuracyDetail(tlm::CounterId::GpuFenceStalls,
 								fmt::format("fence@{:08x}", addr),
 								st.stallNs / 1000);
+		// waits was tracked and never reported, so a fence that stalls every time looked
+		// the same as one that stalls occasionally.
+		tlm::NoteAccuracyDetail(tlm::CounterId::GpuFenceTotal,
+								fmt::format("fence@{:08x} waits", addr), st.waits);
+		tlm::NoteAccuracyDetail(tlm::CounterId::GpuFenceStalls,
+								fmt::format("fence@{:08x} stalls", addr), st.stalls);
+	}
+	for (const auto& [who, count] : s_stallGuestState)
+		tlm::NoteAccuracyDetail(tlm::CounterId::GpuCpFenceNs, who, count);
+}
+
+namespace
+{
+	// Called once per stall, on the Latte thread. Reads guest scheduler state that the guest
+	// cores are concurrently writing -- see __OSGetCoreThreadUnsafe. A torn read here costs
+	// one mislabelled sample out of thousands and cannot affect emulation.
+	void LatteCP_noteStallGuestState()
+	{
+		for (uint32 i = 0; i < 3; i++)
+		{
+			OSThread_t* thread = coreinit::__OSGetCoreThreadUnsafe(i);
+			const char* name = "(none)";
+			const char* state = "-";
+			if (thread)
+			{
+				if (!thread->threadName.IsNull())
+					name = thread->threadName.GetPtr();
+				switch (thread->state.value())
+				{
+				case OSThread_t::THREAD_STATE::STATE_NONE:		state = "none"; break;
+				case OSThread_t::THREAD_STATE::STATE_READY:		state = "ready"; break;
+				case OSThread_t::THREAD_STATE::STATE_RUNNING:	state = "running"; break;
+				case OSThread_t::THREAD_STATE::STATE_WAITING:	state = "waiting"; break;
+				case OSThread_t::THREAD_STATE::STATE_MORIBUND:	state = "moribund"; break;
+				default:										state = "?"; break;
+				}
+			}
+			s_stallGuestState[fmt::format("stall core{} {} {}", i, name, state)]++;
+		}
 	}
 }
 
@@ -569,6 +616,8 @@ LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 			{
 				g_renderer->NotifyLatteCommandProcessorIdle();
 				stalls = true;
+				if (tlmFence) [[unlikely]]
+					LatteCP_noteStallGuestState();
 			}
 
 			// check if any GPU events happened
@@ -707,6 +756,13 @@ LatteCMDPtr LatteCP_itMemSemaphore(LatteCMDPtr cmd, uint32 nWords)
 	else if(SEM_SIGNAL == 7)
 	{
 		// wait
+		// The only command-processor wait with no instrumentation at all, so any time spent
+		// here is currently invisible and gets attributed to whatever encloses it in the
+		// frame decomposition. Note it also still spins (2000 iterations before it deigns to
+		// yield) rather than parking like the fence and ring-buffer waits now do -- worth
+		// fixing only if this turns out to fire at all.
+		TLM_SCOPED_TIMER(Gpu, GpuCpSemaphoreNs);
+		TLM_INC(Gpu, GpuCpSemaphoreWaits);
 		LatteCP_signalEnterWait();
 		size_t loopCount = 0;
 		while (true)
@@ -715,6 +771,7 @@ LatteCMDPtr LatteCP_itMemSemaphore(LatteCMDPtr cmd, uint32 nWords)
 			if (oldVal == 0)
 			{
 				loopCount++;
+				TLM_INC(Gpu, GpuCpSemaphoreSpins);
 				if (loopCount > 2000)
 					std::this_thread::yield();
 				continue;
@@ -1046,6 +1103,10 @@ LatteCMDPtr LatteCP_itHLEWaitForFlip(LatteCMDPtr cmd, uint32 nWords)
 		{
 			break;
 		}
+		// Timed in aggregate but never counted, so there was no way to tell a long wait from
+		// a hot spin. The fence wait looked equally innocent until its spin rate was measured
+		// at 65 million/s.
+		TLM_INC(Gpu, GpuWaitFlipSpins);
 		// check if any GPU events happened
 		LatteTiming_HandleTimedVsync();
 		std::this_thread::yield();

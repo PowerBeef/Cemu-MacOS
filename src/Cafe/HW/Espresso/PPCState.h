@@ -234,6 +234,8 @@ using HLEIDX = sint32;
 
 void PPCInterpreter_handleUnsupportedHLECall(PPCInterpreter_t* hCPU);
 void PPCInterpreter_flushUnsupportedHLEStats();
+void PPCInterpreter_accountHLECall(uint32 hleFuncId);
+void PPCInterpreter_flushHLECallStats();
 HLEIDX PPCInterpreter_registerHLECall(HLECALL hleCall, std::string hleName);
 HLECALL PPCInterpreter_getHLECall(HLEIDX funcIndex);
 const std::string& PPCInterpreter_getHLEName(HLEIDX funcIndex);

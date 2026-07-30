@@ -42,6 +42,19 @@ TLM_COUNTER(GpuDrawableWaitNs,      "gpu.drawable_wait_ns",      "ns",    Gpu)
 TLM_COUNTER(GpuFenceTotal,          "gpu.fence_total",           "count", Gpu)
 TLM_COUNTER(GpuFenceStalls,         "gpu.fence_stalls",          "count", Gpu)
 TLM_COUNTER(GpuFenceSpins,          "gpu.fence_spins",           "count", Gpu)
+// IT_MEM_SEMAPHORE was the one command-processor wait with no instrumentation at all, so
+// any time it took was invisible and landed on whatever enclosed it.
+TLM_COUNTER(GpuCpSemaphoreNs,       "gpu.cp_semaphore_ns",       "ns",    Gpu)
+TLM_COUNTER(GpuCpSemaphoreWaits,    "gpu.cp_semaphore_waits",    "count", Gpu)
+TLM_COUNTER(GpuCpSemaphoreSpins,    "gpu.cp_semaphore_spins",    "count", Gpu)
+// wait_flip was timed but never counted, so a long wait and a hot spin looked identical.
+TLM_COUNTER(GpuWaitFlipSpins,       "gpu.wait_flip_spins",       "count", Gpu)
+// Does the renderer have work in hand while the command processor is blocked? The idle
+// notification exists and its body is commented out, so if these fire the recorded draws
+// sit unsubmitted for the whole stall and the GPU starves itself waiting for the guest.
+TLM_COUNTER(GpuCpIdleNotify,        "gpu.cp_idle_notify",        "count", Gpu)
+TLM_COUNTER(GpuCpIdleWithPendingWork,"gpu.cp_idle_pending",      "count", Gpu)
+TLM_COUNTER(GpuCpIdlePendingDrawcalls,"gpu.cp_idle_pending_draws","count",Gpu)
 
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)
@@ -49,6 +62,12 @@ TLM_COUNTER(CpuThreadSwitches,      "cpu.thread_switches",       "count", Cpu)
 TLM_COUNTER(CpuRecompilerEnter,     "cpu.recompiler_enter",      "count", Cpu)
 TLM_COUNTER(CpuRecompilerLeaveEarly,"cpu.recompiler_leave_early","count", Cpu)
 TLM_COUNTER(CpuHleCalls,            "cpu.hle_calls",             "count", Cpu)
+// Counterfactual, NOT applied: what a flat 500-cycle-per-HLE-call charge would come to.
+// Resolved HLE calls currently advance guest time by one cycle (the trampoline is a single
+// PPC instruction inside a block charged by PPCREC_IML_MACRO_COUNT_CYCLES), so a guest
+// thread doing nothing but library calls never exhausts its 45,000-cycle quantum. Compare
+// this against cpu.guest_cycles_retired to see whether modelling that cost could matter.
+TLM_COUNTER(CpuHleWouldChargeCycles,"cpu.hle_would_charge_cycles","count", Cpu)
 // Per-guest-core busy and idle. Keyed by spr.UPIR (the guest-visible core index), NOT by
 // t_assignedCoreIndex -- the two disagree in singlecore mode, where one host thread
 // rotates all three logical cores. These three must stay CONSECUTIVE and in this order:
@@ -105,3 +124,8 @@ TLM_COUNTER(AccDrawSkippedNoTarget, "acc.draw_skipped_no_target","count", Accura
 TLM_COUNTER(AccDrawSkippedShaderErr,"acc.draw_skipped_shader_err","count",Accuracy)
 TLM_COUNTER(AccAudioFrameServiced,  "acc.audio_frames_serviced", "count", Accuracy)
 TLM_COUNTER(AccAudioUpdatePolls,    "acc.audio_update_polls",    "count", Accuracy)
+// Draws issued with DB_ALPHA_TO_MASK.ALPHA_TO_MASK_ENABLE set. GX2SetAlphaToMaskReg was
+// 92% of BotW's unresolved-import volume, but that only says the setter is hot -- this
+// says whether the state it sets is ever actually on, which is what decides whether the
+// MSL emitter needs an ordered-dither path.
+TLM_COUNTER(AccAlphaToMaskDraws,    "acc.alpha_to_mask_draws",   "count", Accuracy)

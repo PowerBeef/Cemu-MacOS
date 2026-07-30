@@ -867,7 +867,9 @@ void AArch64GenContext_t::conditionalJumpCycleCheck(IMLSegment* imlSegment)
 
 void* PPCRecompiler_virtualHLE(PPCInterpreter_t* ppcInterpreter, uint32 hleFuncId)
 {
-	TLM_INC(Cpu, CpuHleCalls);
+	// Counting lives in PPCInterpreter_accountHLECall so the interpreter path gets it too --
+	// it used to be a bare TLM_INC here, which made cpu.hle_calls recompiler-only.
+	PPCInterpreter_accountHLECall(hleFuncId);
 	void* prevRSPTemp = ppcInterpreter->rspTemp;
 	if (hleFuncId == 0xFFD0)
 	{

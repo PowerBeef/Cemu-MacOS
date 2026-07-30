@@ -40,6 +40,76 @@ namespace GX2
 		GX2SetAlphaTestReg(&tmpReg);
 	}
 
+	// The four 2-bit offsets pick each sample's entry in the 2x2 dither matrix; the mode
+	// just rotates that assignment. NON_DITHERED gives every sample the same offset, which
+	// is what turns alpha-to-mask into a plain threshold.
+	static void _GX2AlphaToMaskOffsetsForMode(GX2_ALPHATOMASKMODE mode, uint32 (&offset)[4])
+	{
+		switch (mode)
+		{
+		case GX2_ALPHATOMASKMODE::DITHER_0:		offset[0] = 3; offset[1] = 1; offset[2] = 0; offset[3] = 2; break;
+		case GX2_ALPHATOMASKMODE::DITHER_90:	offset[0] = 1; offset[1] = 2; offset[2] = 3; offset[3] = 0; break;
+		case GX2_ALPHATOMASKMODE::DITHER_180:	offset[0] = 0; offset[1] = 3; offset[2] = 2; offset[3] = 1; break;
+		case GX2_ALPHATOMASKMODE::DITHER_270:	offset[0] = 2; offset[1] = 0; offset[2] = 1; offset[3] = 3; break;
+		case GX2_ALPHATOMASKMODE::NON_DITHERED:
+		default:								offset[0] = 2; offset[1] = 2; offset[2] = 2; offset[3] = 2; break;
+		}
+	}
+
+	void GX2InitAlphaToMaskReg(GX2AlphaToMaskReg* reg, uint32 alphaToMaskEnable, GX2_ALPHATOMASKMODE mode)
+	{
+		uint32 offset[4];
+		_GX2AlphaToMaskOffsetsForMode(mode, offset);
+
+		Latte::LATTE_DB_ALPHA_TO_MASK tmpReg{};
+		tmpReg.set_ALPHA_TO_MASK_ENABLE(alphaToMaskEnable != 0);
+		tmpReg.set_ALPHA_TO_MASK_OFFSET0(offset[0]);
+		tmpReg.set_ALPHA_TO_MASK_OFFSET1(offset[1]);
+		tmpReg.set_ALPHA_TO_MASK_OFFSET2(offset[2]);
+		tmpReg.set_ALPHA_TO_MASK_OFFSET3(offset[3]);
+		tmpReg.set_OFFSET_ROUND(true);
+		reg->reg = tmpReg;
+	}
+
+	void GX2GetAlphaToMaskReg(GX2AlphaToMaskReg* reg, uint32be* alphaToMaskEnable, uint32be* mode)
+	{
+		Latte::LATTE_DB_ALPHA_TO_MASK v = reg->reg.value();
+		*alphaToMaskEnable = v.get_ALPHA_TO_MASK_ENABLE() ? 1 : 0;
+
+		// Recover the mode by matching the offset quad against the table it was built from,
+		// which is the only direction that round-trips -- the offsets are not an encoding of
+		// the mode value.
+		uint32 actual[4] = { v.get_ALPHA_TO_MASK_OFFSET0(), v.get_ALPHA_TO_MASK_OFFSET1(),
+							 v.get_ALPHA_TO_MASK_OFFSET2(), v.get_ALPHA_TO_MASK_OFFSET3() };
+		*mode = (uint32)GX2_ALPHATOMASKMODE::NON_DITHERED;
+		for (uint32 m = 0; m <= (uint32)GX2_ALPHATOMASKMODE::DITHER_270; m++)
+		{
+			uint32 candidate[4];
+			_GX2AlphaToMaskOffsetsForMode((GX2_ALPHATOMASKMODE)m, candidate);
+			if (std::equal(std::begin(candidate), std::end(candidate), std::begin(actual)))
+			{
+				*mode = m;
+				break;
+			}
+		}
+	}
+
+	void GX2SetAlphaToMaskReg(GX2AlphaToMaskReg* reg)
+	{
+		GX2ReserveCmdSpace(3);
+
+		gx2WriteGather_submit(pm4HeaderType3(IT_SET_CONTEXT_REG, 1 + 1),
+			Latte::REGADDR::DB_ALPHA_TO_MASK - 0xA000,
+			reg->reg);
+	}
+
+	void GX2SetAlphaToMask(uint32 alphaToMaskEnable, GX2_ALPHATOMASKMODE mode)
+	{
+		GX2AlphaToMaskReg tmpReg;
+		GX2InitAlphaToMaskReg(&tmpReg, alphaToMaskEnable, mode);
+		GX2SetAlphaToMaskReg(&tmpReg);
+	}
+
 	void GX2InitColorControlReg(GX2ColorControlReg* reg, GX2_LOGICOP logicOp, uint32 blendMask, uint32 multiwriteEnable, uint32 colorBufferEnable)
 	{
 		Latte::LATTE_CB_COLOR_CONTROL colorControlReg2;
@@ -660,6 +730,11 @@ namespace GX2
 		cafeExportRegister("gx2", GX2InitAlphaTestReg, LogType::GX2);
 		cafeExportRegister("gx2", GX2SetAlphaTestReg, LogType::GX2);
 		cafeExportRegister("gx2", GX2SetAlphaTest, LogType::GX2);
+
+		cafeExportRegister("gx2", GX2InitAlphaToMaskReg, LogType::GX2);
+		cafeExportRegister("gx2", GX2GetAlphaToMaskReg, LogType::GX2);
+		cafeExportRegister("gx2", GX2SetAlphaToMaskReg, LogType::GX2);
+		cafeExportRegister("gx2", GX2SetAlphaToMask, LogType::GX2);
 
 		cafeExportRegister("gx2", GX2InitColorControlReg, LogType::GX2);
 		cafeExportRegister("gx2", GX2SetColorControl, LogType::GX2);

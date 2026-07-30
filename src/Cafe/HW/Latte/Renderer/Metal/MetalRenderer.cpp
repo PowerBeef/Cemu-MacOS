@@ -543,6 +543,23 @@ void MetalRenderer::Flush(bool waitIdle)
 
 void MetalRenderer::NotifyLatteCommandProcessorIdle()
 {
+    // This body is commented out, and it is called from exactly the two places the command
+    // processor blocks: ring-buffer starvation and the IT_WAIT_REG_MEM fence stall. So when
+    // the CP sits on a fence for 15.6ms waiting for the guest, the renderer is told and does
+    // nothing -- and any draws already recorded stay unsubmitted for the whole stall.
+    //
+    // If that is what is happening, the chain closes on itself: the CP waits for the guest,
+    // the guest waits for the GPU, and the GPU has no work because the CP never committed
+    // it. Which is exactly the shape of "guest cores 18% busy, GPU 38% busy, nothing
+    // saturated". Counted before being acted on, because the alternative reading -- that the
+    // guest is blocked on something unrelated -- predicts zero here.
+    TLM_INC(Gpu, GpuCpIdleNotify);
+    if (m_recordedDrawcalls > 0)
+    {
+        TLM_INC(Gpu, GpuCpIdleWithPendingWork);
+        TLM_ADD(Gpu, GpuCpIdlePendingDrawcalls, (uint64)m_recordedDrawcalls);
+    }
+
     //if (m_commitOnIdle)
     //    CommitCommandBuffer();
 }
@@ -1179,6 +1196,17 @@ void MetalRenderer::draw_execute(uint32 baseVertex, uint32 baseInstance, uint32 
         // but counted so it can never be silent again.
         TLM_INC(Accuracy, AccGeometryDrawDropped);
         return;
+    }
+
+    // DB_ALPHA_TO_MASK arrives and is serialized but nothing consumes it, so any draw that
+    // asks for alpha-to-mask silently renders without it. Counted per *draw*, not per
+    // GX2SetAlphaToMaskReg call: a title can call the setter thousands of times a frame
+    // with the enable bit clear, which would say nothing about whether the feature is used.
+    if (LatteGPUState.contextNew.DB_ALPHA_TO_MASK.get_ALPHA_TO_MASK_ENABLE())
+    {
+        TLM_INC(Accuracy, AccAlphaToMaskDraws);
+        cemuLog_logOnce(LogType::Force, "Draw with alpha-to-mask enabled, which is not implemented (DB_ALPHA_TO_MASK = 0x{:08x})",
+            LatteGPUState.contextNew.DB_ALPHA_TO_MASK.getRawValue());
     }
 
     bool fetchVertexManually = (usesGeometryShader || fetchShader->mtlFetchVertexManually);

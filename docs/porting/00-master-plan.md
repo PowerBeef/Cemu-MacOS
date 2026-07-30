@@ -478,3 +478,58 @@ Two things made this tractable, and both are worth reusing:
   pass, so it reports textures bound at any point in the past — the resulting figure was an upper
   bound, not a measurement. The FBO-pointer comparison had no such problem, which is why it is
   the number the conclusion rests on.
+
+---
+
+### Instrumenting three open questions at once — measured 2026-07-30
+
+One build, one BotW run, three answers. Every counter added is gated on the telemetry area mask,
+and the A/B against the same scene confirmed the instrumentation is free: frame ms median
+33.27 → 33.27, p99 49.95 → 49.95, fps median 30.06 → 30.06, GPU busy 17.65 → 17.58 ms.
+
+**1. `GX2SetAlphaToMaskReg` — a decisive negative, and the renderer work is retired unbuilt.**
+It was 91.7% of all unresolved-import volume (2,757,074 of 3,005,784 calls), which is why it looked
+like the biggest compatibility gap in the tree. Implementing the export and counting *draws with
+`ALPHA_TO_MASK_ENABLE` set* — rather than calls to the setter — gives **0 across 9,181 frames**.
+BotW calls it ~300 times a frame and never enables it. The MSL ordered-dither path, and the
+pipeline-cache invalidation it would have forced on every user, are not needed. Details in
+`../hardware/09-accuracy-gap-register.md` §4.2.
+
+**2. A flat per-HLE-call cycle charge is impossible.** The counterfactual counter
+(`cpu.hle_would_charge_cycles`, summed but never applied) says a flat 500/call would be
+**25,103,500 cycles/frame against 15,384,240 actually retired — 163%**. The histogram shows the
+volume sits in `OSFastMutex_Lock/Unlock`, `OSGetCoreId`, `OSBlockMove` and GX2 register setters,
+whose real cost is tens of cycles, while the calls where the divergence matters (`FSReadFile`) are
+rare. Any charge must be tiered by function.
+
+**3. The renderer is holding uncommitted work essentially whenever the CP is idle.**
+`MetalRenderer::NotifyLatteCommandProcessorIdle()` has a commented-out body and is called from
+exactly the two places the command processor blocks. Measured per frame:
+
+| | |
+|---|---|
+| idle notifications | 129,575 |
+| **of which with recorded drawcalls pending** | **129,377 (99.85%)** |
+| mean drawcalls pending at notification | 94.7 |
+| command buffers committed per frame | 6 |
+
+So the recorded draws sit unsubmitted for the whole stall. This is the live lead. Two caveats
+before acting: the notification fires 129k times a frame (it is inside the ring-starvation spin, so
+this counts spins, not distinct idle events), and **`m_commitOnIdle` does not exist** — the
+commented-out line references a flag that was never added, so reviving it means designing the
+throttle, not uncommenting a line.
+
+**4. Two suspected blind spots are empty.** `IT_MEM_SEMAPHORE` had no instrumentation at all and
+`IT_HLE_WAIT_FOR_FLIP` was timed but never counted. Both measure **exactly zero** in BotW —
+`gpu.cp_semaphore_waits`, `gpu.cp_semaphore_spins` and `gpu.wait_flip_spins` are 0/frame. They are
+not hiding time; strike them off.
+
+**5. The fence-stall guest snapshot did not discriminate — a probe-design failure worth recording.**
+Sampling `__currentCoreThread[0..2]` at stall entry finds all three cores with no thread scheduled
+in ~95% of stalls (8,585 / 8,629 / 8,042 of 9,010). That looks damning until you compare it against
+the cores' *baseline* idle rate, which is already ~96% (`cpu.coreN_idle_ns` ≈ 32.1 ms of a 33.3 ms
+frame). **A sample taken at random would have found the same thing**, so the probe shows only that
+the cores are idle during the stall as they are everywhere else. It needed a control sample at a
+non-stall moment and did not have one. What it does yield is the list of threads ever caught
+running — `RadarMgr` (678), `Default Core 1` (138), `GameScen TaskMgr` (129), `DecompThread` (121) —
+and confirmation that the one stalling fence is still `fence@1046d420`, 9,010 stalls in 9,015 waits.

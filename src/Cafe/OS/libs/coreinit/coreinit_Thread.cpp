@@ -211,6 +211,13 @@ namespace coreinit
 		return __currentCoreThread[currentInstance->spr.UPIR];
 	}
 
+	OSThread_t* __OSGetCoreThreadUnsafe(uint32 coreIndex)
+	{
+		if (coreIndex >= 3)
+			return nullptr;
+		return __currentCoreThread[coreIndex];
+	}
+
 	void threadEntry(PPCInterpreter_t* hCPU)
 	{
 		OSThread_t* currentThread = coreinit::OSGetCurrentThread();

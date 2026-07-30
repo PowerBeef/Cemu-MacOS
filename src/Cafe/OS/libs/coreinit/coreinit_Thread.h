@@ -523,6 +523,13 @@ namespace coreinit
 	OSThread_t* OSGetCurrentThread();
 	void OSSetCurrentThread(uint32 coreIndex, OSThread_t* thread);
 
+	// Reads another core's current thread without any synchronisation, for diagnostics that
+	// run off the guest cores entirely (the Latte thread). The pointer may be one scheduler
+	// decision stale by the time it is used; the OSThread_t it names stays allocated, so a
+	// stale read is wrong-but-safe, never a dangling one. Do not use this for anything that
+	// affects emulation.
+	OSThread_t* __OSGetCoreThreadUnsafe(uint32 coreIndex);
+
 	void __OSSetThreadBasePriority(OSThread_t* thread, sint32 newPriority);
 	void __OSUpdateThreadEffectivePriority(OSThread_t* thread);
 

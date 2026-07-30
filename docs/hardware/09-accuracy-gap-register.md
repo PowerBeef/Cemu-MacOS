@@ -161,6 +161,43 @@ timeslice.
 **Detectable:** yes, and now instrumented — `cpu.hle_calls` gives the rate and the per-function
 histogram gives the distribution. What is *not* yet modelled is any per-function cost.
 
+#### A flat charge is ruled out — measured, not argued
+
+`cpu.hle_would_charge_cycles` sums what a flat 500-cycle charge *would* cost without applying it.
+BotW, per frame:
+
+| | cycles/frame |
+|---|---|
+| `cpu.guest_cycles_retired` (what the guest actually spends) | 15,384,240 |
+| **a flat 500/call would add** | **25,103,500** |
+| ratio | **163%** |
+
+So the charge upstream's comment claims to apply would **more than double emulated guest time**, and
+against `ppcThreadQuantum = 45000` it would add ~186 quanta per core per frame — roughly tripling
+context switches. It is not a rounding error in either direction.
+
+The per-function histogram says why a *uniform* charge cannot be right, whatever the constant:
+
+| function | calls (run total) |
+|---|---|
+| `coreinit.OSFastMutex_Unlock` | 25,396,184 |
+| `coreinit.OSFastMutex_Lock` | 25,372,171 |
+| `coreinit.OSBlockMove` | 23,297,132 |
+| `gx2.GX2SetBlendControlReg` | 21,899,976 |
+| `gx2.GX2CallDisplayList` | 21,012,248 |
+| `coreinit.OSYieldThread` | 19,154,050 |
+| `coreinit.OSGetCoreId` | 18,913,587 |
+
+The volume is dominated by functions whose real hardware cost is tens of cycles — `OSGetCoreId` is a
+register read. The functions where the divergence actually matters (`FSReadFile`, an IPC round trip
+to IOSU per chapter 08) are rare. **Any charge has to be tiered by function**; picking one constant
+either mis-times the trivial 95% or under-times the expensive tail, and at 50,207 calls/frame the
+first of those is a first-order effect on scheduling.
+
+`cpu.hle_calls` also now counts the interpreter path. It was incremented only from
+`PPCRecompiler_virtualHLE`, so it read zero under `--force-interpreter`; both dispatchers share one
+accounting helper now.
+
 ### 2.5 Audio is paced by the idle loop, not a 3 ms clock — **measured, and not a problem here**
 
 AX runs on a 3 ms frame (chapter 07), but `AXOut_update()` is driven from `__OSCheckSystemEvents()`
@@ -262,6 +299,33 @@ primitive** and a title calling it is telling us exactly where it expects memory
 enforced — which bears directly on gap 1.3. And the `gx2` entries are GPU state
 (`GX2SetLineWidth`, `GX2SetAlphaToMaskReg`) that currently does nothing, so they are candidate
 causes for any visual difference in this title.
+
+#### `GX2SetAlphaToMaskReg` — implemented, and the title never turns it on
+
+**One import was 91.7% of all unresolved-import volume**, and it turned out to be a call BotW makes
+constantly with the feature disabled:
+
+| | before | after |
+|---|---|---|
+| unresolved calls, run total | 3,005,784 | 246,663 |
+| of which `gx2.GX2SetAlphaToMaskReg` | **2,757,074 (91.7%)** | 0 — resolved |
+| per frame | 324 | 27 |
+| **draws with `ALPHA_TO_MASK_ENABLE` set** | — | **0**, across 9,181 frames |
+
+The export now exists (`GX2Init/Set/Get AlphaToMaskReg`, `GX2SetAlphaToMask`), `DB_ALPHA_TO_MASK`
+(0xA351) has a `REGADDR` entry, a `LATTE_DB_ALPHA_TO_MASK` bitfield and a named member in
+`LatteContextRegister` — the register word was already arriving and already being serialized
+(`RegisterSerializer.cpp:83`), it was simply read by nobody.
+
+**The renderer work is retired unbuilt.** Wii U alpha-to-mask is an ordered dither against the AA
+sample mask, which on this fork's 1-sample pipelines would have meant a screen-space dither emitted
+from the MSL decompiler — a change that invalidates the pipeline cache for every user. BotW calls
+the setter ~300 times a frame and enables it exactly zero times, so there is nothing to render
+differently. Counting *draws with the bit set* rather than *calls to the setter* is what separated
+those two, and they differ by the entire result.
+
+Worth generalising: high call volume for an unimplemented function says the API is hot, not that
+its state is ever non-default.
 
 The audio surface being the least complete thing BotW actually touches was not predicted by any
 prior analysis in this repo.

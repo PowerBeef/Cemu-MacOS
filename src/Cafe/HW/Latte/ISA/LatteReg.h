@@ -478,6 +478,8 @@ namespace Latte
 		DB_SRESULTS_COMPARE_STATE0			= 0xA34A,
 		DB_SRESULTS_COMPARE_STATE1			= 0xA34B,
 
+		DB_ALPHA_TO_MASK					= 0xA351,
+
 		PA_SU_POLY_OFFSET_CLAMP				= 0xA37F,
 		PA_SU_POLY_OFFSET_FRONT_SCALE		= 0xA380,
 		PA_SU_POLY_OFFSET_FRONT_OFFSET		= 0xA381,
@@ -837,6 +839,21 @@ float get_##__regname() const \
 		LATTE_BITFIELD_TYPED(STENCIL_FAIL_B, 23, 3, E_STENCILACTION);
 		LATTE_BITFIELD_TYPED(STENCIL_ZPASS_B, 26, 3, E_STENCILACTION);
 		LATTE_BITFIELD_TYPED(STENCIL_ZFAIL_B, 29, 3, E_STENCILACTION);
+	};
+
+	struct LATTE_DB_ALPHA_TO_MASK : LATTEREG // 0xA351
+	{
+		// Alpha-to-mask is an ordered dither of alpha against the AA sample mask, not
+		// alpha-to-coverage in the Metal sense: the four OFFSET fields select which entry
+		// of a 2x2 dither matrix each sample uses, so the pattern rotates with the mode
+		// GX2InitAlphaToMaskReg was given. On a 1-sample target the mask degenerates to
+		// one bit and the hardware behaves like a screen-space dithered alpha test.
+		LATTE_BITFIELD_BOOL(ALPHA_TO_MASK_ENABLE, 0);
+		LATTE_BITFIELD(ALPHA_TO_MASK_OFFSET0, 8, 2);
+		LATTE_BITFIELD(ALPHA_TO_MASK_OFFSET1, 10, 2);
+		LATTE_BITFIELD(ALPHA_TO_MASK_OFFSET2, 12, 2);
+		LATTE_BITFIELD(ALPHA_TO_MASK_OFFSET3, 14, 2);
+		LATTE_BITFIELD_BOOL(OFFSET_ROUND, 16);
 	};
 
 	struct LATTE_CB_COLOR_CONTROL : LATTEREG // 0xA202
@@ -1562,7 +1579,11 @@ struct LatteContextRegister
 	/* +0x28B10 */ Latte::LATTE_VGT_STRMOUT_BASE_OFFSET_X VGT_STRMOUT_BASE_OFFSET_X[4];
 	/* +0x28B20 */ Latte::LATTE_VGT_STRMOUT_BUFFER_EN VGT_STRMOUT_BUFFER_EN;
 
-	uint8 padding_28B24[0x28DFC - 0x28B24];
+	uint8 padding_28B24[0x28D44 - 0x28B24];
+
+	/* +0x28D44 */ Latte::LATTE_DB_ALPHA_TO_MASK DB_ALPHA_TO_MASK; // 0xA351
+
+	uint8 padding_28D48[0x28DFC - 0x28D48];
 
 	/* +0x28DFC */ Latte::LATTE_PA_SU_POLY_OFFSET_CLAMP PA_SU_POLY_OFFSET_CLAMP;
 	/* +0x28E00 */ Latte::LATTE_PA_SU_POLY_OFFSET_FRONT_SCALE PA_SU_POLY_OFFSET_FRONT_SCALE;
@@ -1667,6 +1688,7 @@ static_assert(offsetof(LatteContextRegister, DB_DEPTH_CONTROL) == Latte::REGADDR
 static_assert(offsetof(LatteContextRegister, CB_COLOR_CONTROL) == Latte::REGADDR::CB_COLOR_CONTROL * 4);
 static_assert(offsetof(LatteContextRegister, VGT_GS_MODE) == Latte::REGADDR::VGT_GS_MODE * 4);
 static_assert(offsetof(LatteContextRegister, VGT_DMA_INDEX_TYPE) == Latte::REGADDR::VGT_DMA_INDEX_TYPE * 4);
+static_assert(offsetof(LatteContextRegister, DB_ALPHA_TO_MASK) == Latte::REGADDR::DB_ALPHA_TO_MASK * 4);
 static_assert(offsetof(LatteContextRegister, PA_SU_POLY_OFFSET_CLAMP) == Latte::REGADDR::PA_SU_POLY_OFFSET_CLAMP * 4);
 static_assert(offsetof(LatteContextRegister, PA_SU_POLY_OFFSET_FRONT_SCALE) == Latte::REGADDR::PA_SU_POLY_OFFSET_FRONT_SCALE * 4);
 static_assert(offsetof(LatteContextRegister, PA_SU_POLY_OFFSET_FRONT_OFFSET) == Latte::REGADDR::PA_SU_POLY_OFFSET_FRONT_OFFSET * 4);
