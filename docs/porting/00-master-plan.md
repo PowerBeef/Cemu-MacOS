@@ -547,32 +547,73 @@ times a frame inside a park-and-recheck loop (committing there would mint a comm
 spin), while `FenceStall` fires once and means the guest will not proceed until the GPU retires
 something. Only the second commits.
 
-n=3 control, n=2 treatment, same scene, same binary:
+n=3 control, n=2 treatment, same scene, same binary. **Gameplay frames only** — see the correction
+below; the first version of this table was computed over whole files and was wrong.
 
 | | control | `--commit-on-fence-stall` |
 |---|---|---|
-| frame ms median | 33.27 · 33.27 · 33.27 | 33.27 · 33.29 |
-| frame ms p99 | 49.95 · 49.95 · 49.95 | 49.95 · 49.97 |
-| **`cp_fence` ms** | **15.25 · 15.26 · 15.28** | **15.30 · 15.31** |
-| GPU busy ms | 17.65 · 17.58 · 17.64 | **16.41 · 16.63** |
-| command buffers/frame | 6 | 7 |
-| idle notifications holding work | 129,377 · 127,299 | 11,812 · 11,973 |
+| frame ms median | 49.89 · 49.89 · 49.90 | 49.90 · 49.90 |
+| fps median | 20.04 ×3 | 20.04 ×2 |
+| **`cp_fence` ms** | **14.95 · 15.13 · 15.41** | **15.50 · 15.54** |
+| GPU busy ms | 18.81 · 18.85 · 18.98 | 19.07 · 19.36 |
+| idle notifications holding work | 139,491 | 20,802 (−85%) |
 
-**The mechanism works and the hypothesis is wrong.** Work held at idle drops 91%, exactly one extra
-command buffer is submitted per frame, and **`cp_fence` does not move** — if anything it is
-marginally worse, and the ranges do not overlap in that direction either. The guest's 15.6 ms wait
-is not for GPU work the renderer was withholding. That is the third time in this repo that freeing
-a resource the command processor was blocked behind changed nothing: parking the fence spin
-(`5933733`) freed 40 points of CPU and moved nothing, `DeviceShared` cut GPU time 16% and moved
-nothing, and this cuts it another 6% and moves nothing.
+**The mechanism works and the hypothesis is wrong.** Work held at idle drops 85%, one extra command
+buffer is submitted per frame, and **nothing else moves at all** — frame time, fps, `cp_fence` and
+GPU busy are all flat. The guest's 15.4 ms wait is not for GPU work the renderer was withholding.
+That is the third time here that freeing something the command processor was blocked behind has
+changed nothing: parking the fence spin (`5933733`) freed 40 points of CPU, `DeviceShared` cut GPU
+time 16%, and the frame rate has not moved once.
 
-**The side effect is real but small.** GPU busy drops **6.2%** (17.62 → 16.52 ms at midpoints,
-non-overlapping ranges) for one extra command buffer — presumably because splitting the frame lets
-the GPU start earlier. Kept **off by default**: it is one scene in one title, and unlike the
-`DeviceShared` change there is no second metric moving with it. The flag preserves the result for
-whoever tests a GPU-bound title.
+Kept **off by default**, now on stronger grounds than before: it has no measured benefit at all.
+
+#### Correction: the "−6.2% GPU busy" side effect was an artifact, not a result
+
+The first version of this section reported GPU busy dropping 17.62 → 16.52 ms and called it real
+because the ranges did not overlap. **They did not overlap because the two groups had different
+menu-to-gameplay frame ratios**, not because the treatment did anything. `drive-botw.sh` spends its
+first ~4,000 frames in the title and save menus, which are 113 draws and 4.2 ms of GPU work against
+gameplay's 3,516 and 19.0 ms. A median over the whole file lands wherever that ratio falls.
+Restricted to gameplay the effect is **+0.5%**, i.e. nothing.
+
+Every whole-file median quoted in this repo for BotW is suspect for the same reason. The fix is in
+the tool: `testing/telemetry-report.py` now segments a run by draw load, prints the phases, and
+analyses the longest one unless told `--all`.
 
 **Where the fence chain goes next.** Not into the renderer. The guest is genuinely waiting, its
 cores are 18% busy, and the largest block reason is `cpu.block.sleep` at 115/frame. The next probe
 should ask what the fence-owning thread is sleeping *on*, and it needs the control sample the
 stall-entry snapshot lacked.
+
+### The menu waits on the fence exactly as long as the open world does
+
+Splitting runs by phase produced the clearest fact yet about `cp_fence`, and it was invisible while
+whole-file medians blended the two:
+
+| | menu | gameplay |
+|---|---|---|
+| frames per run | ~4,050 | ~4,750 |
+| draws/frame | **113** | **3,516** |
+| GPU busy/frame | **4.2 ms** | **19.0 ms** |
+| frame | 33.27 ms (30.06 fps, 2 vsync) | 49.90 ms (20.04 fps, 3 vsync) |
+| `cp_idle` | 16.61 ms (49.9%) | 19.91 ms (39.9%) |
+| **`cp_fence`** | **15.25 ms (45.8%)** | **15.41 ms (30.9%)** |
+| work (frame − waits) | **1.40 ms (4.2%)** | 13.91 ms (27.9%) |
+
+Both decompositions close to within 1%.
+
+**The command processor waits the same ~15.3 ms on a guest fence whether the game is drawing 113
+objects or 3,516.** A 31× swing in draw load and a 4.5× swing in GPU time move it by 1%. That is
+not a work dependency of any kind — not on the guest, not on the GPU. A wait whose duration is
+independent of everything around it is a **timer**, and the next probe should test that directly
+rather than looking for something for it to be waiting on.
+
+Two supporting observations:
+
+- In the menu the emulator does **1.4 ms of work in a 33.3 ms frame** and spends the other 31.9 ms
+  in the two waits. Whatever holds the menu at 30 fps, it is not work.
+- In gameplay the work (13.91 ms) fits inside **one** 16.68 ms vsync period with 16.6% headroom, and
+  GPU busy (18.98 ms) needs **two**. Yet the frame takes **three**. The unexplained third period is
+  ~15 ms, which is the size of `cp_fence`. That is a correlation and not yet a cause, but it is the
+  first quantitative reason to think the fence is what separates 20 fps from 30 here — the
+  commit-on-idle experiment ruled out one explanation for the fence, not the fence itself.

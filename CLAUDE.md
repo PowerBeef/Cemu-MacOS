@@ -61,6 +61,16 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
 
 ### How to measure here without fooling yourself
 
+- **A BotW telemetry run is two workloads, not one, and the split is ~50/50.** `drive-botw.sh`
+  spends its first **~4,050 frames in the title and save menus** — 113 draws, 4.2 ms GPU, 33.27 ms
+  frames — before ~4,750 frames of gameplay at 3,516 draws, 19.0 ms GPU, 49.90 ms frames. `--skip=60`
+  removes none of it. A median over the whole file lands wherever the phase ratio falls and describes
+  no frame that occurred, and because two runs of the same script never have quite the same ratio,
+  **that difference shows up as a counter delta that looks like a treatment effect**. It produced a
+  confident "−6.2% GPU busy" for a change whose real effect is +0.5%. `testing/telemetry-report.py`
+  now segments by draw load, prints the phases and analyses the longest; pass `--all` for the old
+  behaviour, `--phase=N` to pick. Any BotW number in this repo predating that is suspect.
+
 Two traps already caught in this repo — both produce confident, wrong numbers:
 
 - **MK8's attract mode is not a fixed workload.** It cycles demo scenes with very different draw loads, so two traces taken minutes apart are not comparable, and neither are their sample counts. A first A/B here read as "4.4x faster" from sample counts; the real figure was 1.77x. To compare two implementations, **put a runtime toggle behind an env var, flip it every ~20 s inside one process**, discard any window that straddles a switch, and report the median of n≥5 per variant. Ranges that overlap mean you have not measured anything.
@@ -168,10 +178,10 @@ Two numbers stand out as suspects:
   switches/frame that is **1.43 ms/frame today**, 2.9% of a 49.9 ms frame. The earlier ~700 ns
   estimate was ~35% high.
 
-  **But it is not a frame-rate fix.** The frame decomposes as 12.64 ms of work inside a 33.27 ms
-  frame quantised to two vsync periods, and that work already fits in *one* period with 24%
-  headroom. Removing 1.4 ms from a stage with 20 ms of slack crosses no boundary. Same shape as the
-  `DeviceShared` change: worth doing for power and headroom, not for fps.
+  **But it is not a frame-rate fix.** In gameplay the frame decomposes as **13.91 ms of work inside
+  a 49.90 ms frame** quantised to three vsync periods, and that work already fits in *one* period
+  with 16.6% headroom. Removing 1.4 ms from a stage with 35 ms of slack crosses no boundary. Same
+  shape as the `DeviceShared` change: worth doing for power and headroom, not for fps.
 
   A microbenchmark is the right instrument and an in-process probe is not: `Fiber::Switch` does not
   return until the fiber is resumed, so a scope timer around it measures descheduled time — the trap
@@ -181,13 +191,14 @@ Two numbers stand out as suspects:
 `__OSStoreThread` zeroes it when `executedCycles < skippedCycles`, so it undercounts.
 
 **The renderer was holding uncommitted work while the CP blocked — and fixing it changed nothing.**
-`MetalRenderer::NotifyLatteCommandProcessorIdle` held recorded drawcalls in **129,377 of 129,575**
-idle notifications per frame. `--commit-on-fence-stall` (off by default) submits at stall entry:
-work-held-at-idle drops **91%**, GPU busy drops **6.2%** (17.62 → 16.52 ms, non-overlapping ranges,
-n=3 vs n=2) — and **`cp_fence` does not move** (15.25–15.28 → 15.30–15.31), nor does frame time.
-The guest's 15.6 ms wait is not for GPU work we were withholding. **Don't re-raise this**; the
-chain's next link is on the guest side, and `cpu.block.sleep` at 115/frame is the largest block
-reason.
+`MetalRenderer::NotifyLatteCommandProcessorIdle` held recorded drawcalls in **139,491 of 139,512**
+idle notifications per gameplay frame. `--commit-on-fence-stall` (off by default) submits at stall
+entry: work-held-at-idle drops **85%** and **nothing else moves** — frame time, fps, `cp_fence` and
+GPU busy all flat to within 0.6%. The guest's 15.4 ms wait is not for GPU work we were withholding.
+**Don't re-raise this.**
+
+*(An earlier revision credited this change with −6.2% GPU busy. That was a menu/gameplay blend
+artifact — see "Phases" below — and on gameplay frames it is +0.5%, i.e. nothing.)*
 
 Note the notification fires from two sites that look identical to the CP and are nothing alike:
 `RingStarvation` ~129,000×/frame inside a park-and-recheck loop, `FenceStall` once. Committing on

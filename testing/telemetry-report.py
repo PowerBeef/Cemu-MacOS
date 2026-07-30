@@ -3,12 +3,28 @@
 
     testing/telemetry-report.py run.jsonl              # summarise one run
     testing/telemetry-report.py a.jsonl b.jsonl        # A/B two runs
+    testing/telemetry-report.py run.jsonl --all        # do not split into phases
+    testing/telemetry-report.py run.jsonl --phase=0    # pick a phase explicitly
 
-Why medians and percentiles rather than a mean: the window-title FPS this project has
-been quoting all along is a mean, and a mean hides the thing you usually care about. On
-BotW the median frame is 33.27 ms (30.06 fps, i.e. on target) while p99 is 49.9 ms -- a
-tail of dropped frames drags the mean to 29.0. "Runs at 28.6 fps" and "hits 30 fps but
-drops 1% of frames" call for completely different work.
+A run is NOT one workload. `testing/drive-botw.sh` spends its first ~4,000 frames in the
+title and save-select menus before the game is even loaded, and the menu is a completely
+different thing to measure: 113 draws and 4.2 ms of GPU work per frame versus 3,516 draws
+and 19.0 ms in the open world. Both are steady, and they sit at different vsync divisions
+(33.27 ms vs 49.90 ms), so a median over the whole file lands wherever the phase *ratio*
+happens to fall and describes no frame that actually occurred.
+
+That is not hypothetical. Reporting whole-file medians produced "the frame is 33.27 ms and
+work fits in one vsync period with 24% headroom" -- both menu figures -- and a "-6.2% GPU
+busy" A/B result that was entirely the two runs having slightly different menu-to-gameplay
+frame ratios. Restricted to gameplay the effect was zero.
+
+So this splits a run into contiguous phases by draw count, prints them, and analyses the
+LONGEST one unless told otherwise. It always says which phase it picked and how many
+frames it set aside.
+
+Why medians and percentiles rather than a mean: a mean hides the shape. Within the BotW
+gameplay phase the median frame is 49.90 ms and p99 is 49.97 -- essentially no variance,
+which is the signature of vsync quantisation rather than of variable work.
 
 Runs are aligned by counter *name*, never by index, so two files produced by different
 builds with different counter sets still compare correctly; counters present in only one
@@ -43,6 +59,45 @@ def load(path):
     return header, frames, details
 
 
+def phases(header, frames):
+    """Split into contiguous runs of similar draw load.
+
+    The split is on gpu.draw_calls against half the run's peak, which separates a menu
+    (~113 draws) from gameplay (~3,516) with an enormous margin and is not sensitive to
+    where exactly the threshold falls. Runs shorter than 100 frames are loading
+    transitions and are folded into neither side -- they are reported, not analysed.
+    """
+    names = [c["n"] for c in header["counters"]]
+    if "gpu.draw_calls" not in names or not frames:
+        return [(0, len(frames) - 1)]
+    di = names.index("gpu.draw_calls")
+    draws = [f["v"][di] for f in frames]
+    peak = sorted(draws)[int(len(draws) * 0.99)]
+    if peak == 0:
+        return [(0, len(frames) - 1)]
+    heavy = [d > peak / 2 for d in draws]
+    out, start = [], 0
+    for k in range(1, len(heavy)):
+        if heavy[k] != heavy[k - 1]:
+            out.append((start, k - 1))
+            start = k
+    out.append((start, len(heavy) - 1))
+    return out
+
+
+def describe_phases(header, frames, chosen):
+    names = [c["n"] for c in header["counters"]]
+    di = names.index("gpu.draw_calls") if "gpu.draw_calls" in names else None
+    print("\n    phases (a run is not one workload -- see the module docstring)")
+    for k, (a, b) in enumerate(phases(header, frames)):
+        sub = frames[a:b + 1]
+        ms = statistics.median(f["ns"] / 1e6 for f in sub)
+        dr = statistics.median(f["v"][di] for f in sub) if di is not None else 0
+        mark = "  <-- analysed" if (a, b) == chosen else ""
+        print(f"      [{k}] frames {a:6d}-{b:<6d} n={len(sub):6d}  "
+              f"{ms:7.2f} ms = {1000/ms:6.2f} fps   {dr:7.0f} draws{mark}")
+
+
 def series(header, frames, skip):
     """counter name -> list of per-frame values, boot frames dropped."""
     names = [c["n"] for c in header["counters"]]
@@ -72,7 +127,23 @@ def frame_ms(frames, skip):
     return [r["ns"] / 1e6 for r in frames[skip:]]
 
 
-def report(path, skip):
+def select(header, frames, opts, quiet=False):
+    """Pick the phase to analyse and say so. Never narrows silently."""
+    if opts.get("all"):
+        if not quiet:
+            print("\n    --all: analysing every frame, phases NOT separated")
+        return frames
+    ph = phases(header, frames)
+    want = opts.get("phase")
+    chosen = ph[want] if want is not None and want < len(ph) else max(ph, key=lambda r: r[1] - r[0])
+    if not quiet:
+        describe_phases(header, frames, chosen)
+        dropped = len(frames) - (chosen[1] - chosen[0] + 1)
+        print(f"      ({dropped} frames in other phases are excluded below)")
+    return frames[chosen[0]:chosen[1] + 1]
+
+
+def report(path, skip, opts):
     header, frames, details = load(path)
     print(f"=== {path}")
     print(f"    build {header['build']}  label {header.get('label') or '-'}  "
@@ -80,6 +151,7 @@ def report(path, skip):
     cfg = header.get("config", {})
     if cfg:
         print("    " + "  ".join(f"{k}={v}" for k, v in cfg.items()))
+    frames = select(header, frames, opts)
     ms = frame_ms(frames, skip)
     if not ms:
         print("    no frames after skip")
@@ -142,10 +214,19 @@ def report(path, skip):
             print(f"      {d['signal']:34s} {d['detail']}")
 
 
-def diff(a, b, skip):
+def diff(a, b, skip, opts):
     ha, fa, _ = load(a)
     hb, fb, _ = load(b)
     print(f"=== A {a}\n=== B {b}\n")
+    # Phase-select BOTH sides. Two runs of the same script rarely spend the same number of
+    # frames in the menu, and comparing whole-file medians turns that difference into a
+    # counter delta that looks like a treatment effect and is not.
+    na, nb = len(fa), len(fb)
+    fa = select(ha, fa, opts, quiet=True)
+    fb = select(hb, fb, opts, quiet=True)
+    if not opts.get("all"):
+        print(f"phase-selected: A {len(fa)}/{na} frames, B {len(fb)}/{nb} "
+              f"(run with --all to compare every frame)\n")
 
     ca, cb = ha.get("config", {}), hb.get("config", {})
     changed = [(k, ca.get(k), cb.get(k)) for k in sorted(set(ca) | set(cb))
@@ -186,12 +267,17 @@ def diff(a, b, skip):
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     skip = 60  # boot frames: the first is seconds long and would dominate every stat
+    opts = {}
     for a in sys.argv[1:]:
         if a.startswith("--skip="):
             skip = int(a.split("=", 1)[1])
+        elif a == "--all":
+            opts["all"] = True
+        elif a.startswith("--phase="):
+            opts["phase"] = int(a.split("=", 1)[1])
     if len(args) == 1:
-        report(args[0], skip)
+        report(args[0], skip, opts)
     elif len(args) == 2:
-        diff(args[0], args[1], skip)
+        diff(args[0], args[1], skip, opts)
     else:
         sys.exit(__doc__)
