@@ -45,6 +45,8 @@ public:
 	static const std::string& GetTelemetryLabel() { return s_telemetry_label; }
 	static uint32 GetTelemetryAreas() { return s_telemetry_areas; }
 
+	static bool GetCommitOnFenceStall() { return s_commit_on_fence_stall; }
+
 private:
 	inline static std::optional<fs::path> s_load_game_file{};
 	inline static std::optional<uint64> s_load_title_id{};
@@ -75,6 +77,10 @@ private:
 	inline static std::string s_telemetry_path{};
 	inline static std::string s_telemetry_label{};
 	inline static uint32 s_telemetry_areas = 0xF; // all four areas
+
+	// Experiment, default off. A launch flag rather than a compile-time change so both
+	// variants exist in one binary and can be A/B'd against the same scene.
+	inline static bool s_commit_on_fence_stall = false;
 
 	static bool ExtractorTool(std::wstring_view wud_path, std::string_view output_path, std::wstring_view log_path);
 };

@@ -180,14 +180,19 @@ Two numbers stand out as suspects:
 `cpu.guest_cycles_retired` is reported but should not be read as a clean instruction count:
 `__OSStoreThread` zeroes it when `executedCycles < skippedCycles`, so it undercounts.
 
-**The live lead is that the renderer holds uncommitted work while the CP is blocked.**
-`MetalRenderer::NotifyLatteCommandProcessorIdle()` has a commented-out body and is called from
-exactly the two places the command processor blocks — ring starvation and the fence stall. Measured:
-**129,377 of 129,575 idle notifications per frame have recorded drawcalls pending**, 94.7 on average,
-against 6 command buffers committed per frame. Two things to know before acting: that count is
-inside the ring-starvation spin so it counts spins rather than distinct idle events, and
-**`m_commitOnIdle` does not exist** — the commented-out line names a flag nobody ever added, so this
-is a design task, not an uncomment.
+**The renderer was holding uncommitted work while the CP blocked — and fixing it changed nothing.**
+`MetalRenderer::NotifyLatteCommandProcessorIdle` held recorded drawcalls in **129,377 of 129,575**
+idle notifications per frame. `--commit-on-fence-stall` (off by default) submits at stall entry:
+work-held-at-idle drops **91%**, GPU busy drops **6.2%** (17.62 → 16.52 ms, non-overlapping ranges,
+n=3 vs n=2) — and **`cp_fence` does not move** (15.25–15.28 → 15.30–15.31), nor does frame time.
+The guest's 15.6 ms wait is not for GPU work we were withholding. **Don't re-raise this**; the
+chain's next link is on the guest side, and `cpu.block.sleep` at 115/frame is the largest block
+reason.
+
+Note the notification fires from two sites that look identical to the CP and are nothing alike:
+`RingStarvation` ~129,000×/frame inside a park-and-recheck loop, `FenceStall` once. Committing on
+the first would mint a command buffer per spin. `NotifyLatteCommandProcessorIdle` takes a reason
+now for exactly that reason.
 
 Already struck off by measurement, so don't re-raise them: `IT_MEM_SEMAPHORE` and the wait-for-flip
 spin are **exactly zero** in BotW, and snapshotting guest threads at fence-stall entry proved

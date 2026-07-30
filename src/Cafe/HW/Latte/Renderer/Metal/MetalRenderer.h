@@ -185,7 +185,7 @@ public:
 
 	// flush control
 	void Flush(bool waitIdle = false) override;		// called when explicit flush is required (e.g. by imgui)
-	void NotifyLatteCommandProcessorIdle() override; // called when command processor has no more commands available or when stalled
+	void NotifyLatteCommandProcessorIdle(CommandProcessorIdleReason reason) override;
 
 	// imgui
 	bool ImguiBegin(bool mainWindow) override;

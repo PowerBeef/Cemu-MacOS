@@ -18,6 +18,7 @@
 #include "Cafe/HW/Latte/Core/LatteIndices.h"
 #include "Cafe/HW/Latte/Core/LatteBufferCache.h"
 #include "Cemu/Telemetry/Telemetry.h"
+#include "config/LaunchSettings.h" // --commit-on-fence-stall
 #include "CafeSystem.h"
 #include "Cemu/Logging/CemuLogging.h"
 #include "Cafe/HW/Latte/Core/FetchShader.h"
@@ -541,18 +542,13 @@ void MetalRenderer::Flush(bool waitIdle)
         m_executingCommandBuffers.back()->waitUntilCompleted();
 }
 
-void MetalRenderer::NotifyLatteCommandProcessorIdle()
+void MetalRenderer::NotifyLatteCommandProcessorIdle(CommandProcessorIdleReason reason)
 {
-    // This body is commented out, and it is called from exactly the two places the command
-    // processor blocks: ring-buffer starvation and the IT_WAIT_REG_MEM fence stall. So when
-    // the CP sits on a fence for 15.6ms waiting for the guest, the renderer is told and does
-    // nothing -- and any draws already recorded stay unsubmitted for the whole stall.
-    //
-    // If that is what is happening, the chain closes on itself: the CP waits for the guest,
-    // the guest waits for the GPU, and the GPU has no work because the CP never committed
-    // it. Which is exactly the shape of "guest cores 18% busy, GPU 38% busy, nothing
-    // saturated". Counted before being acted on, because the alternative reading -- that the
-    // guest is blocked on something unrelated -- predicts zero here.
+    // This body used to be commented out entirely, referencing an m_commitOnIdle flag that
+    // was never added. Measured before touching it: 129,377 of 129,575 notifications per
+    // frame arrive with recorded drawcalls pending, 94.7 on average, against 6 command
+    // buffers committed per frame. So the renderer really does sit on work while the command
+    // processor is blocked.
     TLM_INC(Gpu, GpuCpIdleNotify);
     if (m_recordedDrawcalls > 0)
     {
@@ -560,8 +556,27 @@ void MetalRenderer::NotifyLatteCommandProcessorIdle()
         TLM_ADD(Gpu, GpuCpIdlePendingDrawcalls, (uint64)m_recordedDrawcalls);
     }
 
-    //if (m_commitOnIdle)
-    //    CommitCommandBuffer();
+    // But "commit whenever idle" is not the fix that suggests. RingStarvation is ~129,000 of
+    // those 129,575, and it fires inside a park-and-recheck loop where the guest is typically
+    // microseconds behind -- committing there would mint a command buffer per spin and
+    // replace one problem with a worse one.
+    //
+    // FenceStall fires once per stall (one per frame in BotW) and is categorically different:
+    // the command processor is blocked until the *guest* writes a fence, and the guest is
+    // waiting on the GPU to retire something. If the work it is waiting for is still sitting
+    // in an uncommitted buffer, the chain closes on itself and nothing can make progress
+    // until the commit threshold happens to be reached by other means. Submitting here breaks
+    // that, and it is safe by construction: everything recorded precedes the fence in program
+    // order, which is the whole reason the fence exists.
+    //
+    // Off by default and behind --commit-on-fence-stall so both variants live in one binary
+    // and can be A/B'd against the same scene.
+    if (reason == CommandProcessorIdleReason::FenceStall && m_recordedDrawcalls > 0 &&
+        LaunchSettings::GetCommitOnFenceStall())
+    {
+        TLM_INC(Gpu, GpuCpIdleCommits);
+        CommitCommandBuffer();
+    }
 }
 
 bool MetalRenderer::ImguiBegin(bool mainWindow)

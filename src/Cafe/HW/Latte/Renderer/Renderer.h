@@ -80,7 +80,19 @@ public:
 
 	// flush control
 	virtual void Flush(bool waitIdle = false) = 0; // called when explicit flush is required (e.g. by imgui)
-	virtual void NotifyLatteCommandProcessorIdle() = 0; // called when command processor has no more commands available or when stalled
+
+	// Why the command processor stopped. The two cases look identical to the CP but are
+	// nothing alike to the renderer: RingStarvation fires ~129,000 times a frame inside a
+	// park-and-recheck loop and usually means "the guest is a microsecond behind", while
+	// FenceStall fires once and means "the guest will not proceed until the GPU retires
+	// something". Only the second is worth acting on, and the old parameterless signature
+	// could not tell them apart.
+	enum class CommandProcessorIdleReason
+	{
+		RingStarvation,
+		FenceStall,
+	};
+	virtual void NotifyLatteCommandProcessorIdle(CommandProcessorIdleReason reason) = 0;
 
 	// imgui
 	virtual bool ImguiBegin(bool mainWindow);

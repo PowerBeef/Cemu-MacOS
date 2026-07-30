@@ -55,6 +55,8 @@ TLM_COUNTER(GpuWaitFlipSpins,       "gpu.wait_flip_spins",       "count", Gpu)
 TLM_COUNTER(GpuCpIdleNotify,        "gpu.cp_idle_notify",        "count", Gpu)
 TLM_COUNTER(GpuCpIdleWithPendingWork,"gpu.cp_idle_pending",      "count", Gpu)
 TLM_COUNTER(GpuCpIdlePendingDrawcalls,"gpu.cp_idle_pending_draws","count",Gpu)
+// Commits forced by --commit-on-fence-stall. Zero unless the flag is passed.
+TLM_COUNTER(GpuCpIdleCommits,       "gpu.cp_idle_commits",       "count", Gpu)
 
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)

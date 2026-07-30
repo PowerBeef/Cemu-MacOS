@@ -182,7 +182,7 @@ uint32 LatteCP_readU32Deprc()
 		if ( TCL::TCLGPUReadRBWord(cmdWord) )
 			return cmdWord;
 
-		g_renderer->NotifyLatteCommandProcessorIdle(); // let the renderer know in case it wants to flush any commands
+		g_renderer->NotifyLatteCommandProcessorIdle(Renderer::CommandProcessorIdleReason::RingStarvation);
 		// NOTE: the LattePerfStatTimer pair below is escaped by the two early returns in
 		// this block, so its accumulated value is not trustworthy. The scoped timer is,
 		// because the destructor runs on those paths too.
@@ -614,7 +614,7 @@ LatteCMDPtr LatteCP_itWaitRegMem(LatteCMDPtr cmd, uint32 nWords)
 			TLM_INC(Gpu, GpuFenceSpins);
 			if (!stalls)
 			{
-				g_renderer->NotifyLatteCommandProcessorIdle();
+				g_renderer->NotifyLatteCommandProcessorIdle(Renderer::CommandProcessorIdleReason::FenceStall);
 				stalls = true;
 				if (tlmFence) [[unlikely]]
 					LatteCP_noteStallGuestState();

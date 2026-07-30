@@ -533,3 +533,46 @@ the cores are idle during the stall as they are everywhere else. It needed a con
 non-stall moment and did not have one. What it does yield is the list of threads ever caught
 running — `RadarMgr` (678), `Default Core 1` (138), `GameScen TaskMgr` (129), `DecompThread` (121) —
 and confirmation that the one stalling fence is still `fence@1046d420`, 9,010 stalls in 9,015 waits.
+
+### The commit-on-idle hypothesis is refuted — measured 2026-07-30
+
+The instrumentation above found the renderer holding uncommitted draws in 99.85% of
+command-processor idle notifications and proposed the obvious chain: *the CP waits for the guest,
+the guest waits for the GPU, and the GPU has no work because the CP never committed it.* If that
+were true, submitting at stall entry would shorten the stall.
+
+Implemented behind `--commit-on-fence-stall`, off by default. `NotifyLatteCommandProcessorIdle`
+now takes a reason, because the two call sites are nothing alike: `RingStarvation` fires ~129,000
+times a frame inside a park-and-recheck loop (committing there would mint a command buffer per
+spin), while `FenceStall` fires once and means the guest will not proceed until the GPU retires
+something. Only the second commits.
+
+n=3 control, n=2 treatment, same scene, same binary:
+
+| | control | `--commit-on-fence-stall` |
+|---|---|---|
+| frame ms median | 33.27 · 33.27 · 33.27 | 33.27 · 33.29 |
+| frame ms p99 | 49.95 · 49.95 · 49.95 | 49.95 · 49.97 |
+| **`cp_fence` ms** | **15.25 · 15.26 · 15.28** | **15.30 · 15.31** |
+| GPU busy ms | 17.65 · 17.58 · 17.64 | **16.41 · 16.63** |
+| command buffers/frame | 6 | 7 |
+| idle notifications holding work | 129,377 · 127,299 | 11,812 · 11,973 |
+
+**The mechanism works and the hypothesis is wrong.** Work held at idle drops 91%, exactly one extra
+command buffer is submitted per frame, and **`cp_fence` does not move** — if anything it is
+marginally worse, and the ranges do not overlap in that direction either. The guest's 15.6 ms wait
+is not for GPU work the renderer was withholding. That is the third time in this repo that freeing
+a resource the command processor was blocked behind changed nothing: parking the fence spin
+(`5933733`) freed 40 points of CPU and moved nothing, `DeviceShared` cut GPU time 16% and moved
+nothing, and this cuts it another 6% and moves nothing.
+
+**The side effect is real but small.** GPU busy drops **6.2%** (17.62 → 16.52 ms at midpoints,
+non-overlapping ranges) for one extra command buffer — presumably because splitting the frame lets
+the GPU start earlier. Kept **off by default**: it is one scene in one title, and unlike the
+`DeviceShared` change there is no second metric moving with it. The flag preserves the result for
+whoever tests a GPU-bound title.
+
+**Where the fence chain goes next.** Not into the renderer. The guest is genuinely waiting, its
+cores are 18% busy, and the largest block reason is `cpu.block.sleep` at 115/frame. The next probe
+should ask what the fence-owning thread is sleeping *on*, and it needs the control sample the
+stall-entry snapshot lacked.

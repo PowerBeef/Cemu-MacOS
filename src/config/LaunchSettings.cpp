@@ -94,7 +94,8 @@ bool LaunchSettings::HandleCommandline(const std::vector<std::wstring>& args)
 
 		("telemetry", po::value<std::string>(), "Record per-frame telemetry to the given file (JSONL). Off unless specified.")
 		("telemetry-label", po::value<std::string>(), "Scene label recorded in the telemetry run header, e.g. 'botw-shrine'")
-		("telemetry-areas", po::value<std::string>(), "Comma-separated subset of cpu,gpu,mem,accuracy. Default: all");
+		("telemetry-areas", po::value<std::string>(), "Comma-separated subset of cpu,gpu,mem,accuracy. Default: all")
+		("commit-on-fence-stall", po::value<bool>()->implicit_value(true), "Experiment: submit recorded draw work when the GPU command processor blocks on a guest fence, instead of holding it until the commit threshold");
 
 	po::options_description hidden{ "Hidden options" };
 	hidden.add_options()
@@ -214,6 +215,8 @@ bool LaunchSettings::HandleCommandline(const std::vector<std::wstring>& args)
 			s_telemetry_path = trim_leading_eq(vm["telemetry"].as<std::string>());
 		if (vm.count("telemetry-label"))
 			s_telemetry_label = trim_leading_eq(vm["telemetry-label"].as<std::string>());
+		if (vm.count("commit-on-fence-stall"))
+			s_commit_on_fence_stall = vm["commit-on-fence-stall"].as<bool>();
 		if (vm.count("telemetry-areas"))
 		{
 			// Deliberately not persisted to CemuConfig: a telemetry setting that survived
