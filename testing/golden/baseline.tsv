@@ -24,3 +24,4 @@
 2026-07-27T02:56:23Z	74dc839	botw-korok-forest-renamed	21.99	Metal/Apple GPU	745 MB	45 threads	153.7%
 2026-07-30T20:00:47Z	3ba7eb0	step1-before	20.20	Metal/Apple GPU	888 MB	47 threads	155.8%
 2026-07-30T20:07:17Z	3ba7eb0	step1-after	20.04	Metal/Apple GPU	1409 MB	46 threads	166.2%
+2026-07-31T00:51:12Z	e34facb	botw-korok-drawdone-sync-off	29.81	Metal/Apple GPU	1292 MB	46 threads	201.9%

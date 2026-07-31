@@ -535,7 +535,25 @@ private:
 
 	// Active objects
 	MetalCommandBuffer m_currentCommandBuffer{};
-	std::vector<MTL::CommandBuffer*> m_executingCommandBuffers;
+	// In-flight command buffers, oldest first. Carries the host time at commit() so the wait
+	// between "the CPU handed this over" and "the GPU started it" can be measured -- that
+	// figure is the hard ceiling on anything a change to command-buffer ordering could
+	// recover, and it is worth knowing before paying for such a change. The frame-end tag
+	// separates the benign inter-frame GPU idle from a genuine mid-frame bubble.
+	struct InFlightCommandBuffer
+	{
+		MTL::CommandBuffer* m_commandBuffer;
+		uint64 m_commitHostNs;
+		bool m_isFrameEnd;
+	};
+	std::vector<InFlightCommandBuffer> m_executingCommandBuffers;
+	// Set by SwapBuffer, consumed by the next CommitCommandBuffer: the buffer carrying the
+	// present is the one that ends a frame.
+	bool m_nextCommitEndsFrame = false;
+	// Host time at the first GetCommandBuffer() of the current frame, for the critical path.
+	uint64 m_frameFirstCommandBufferNs = 0;
+	// Did the buffer retired just before this one carry the frame's present?
+	bool m_lastRetiredEndedFrame = false;
 	MetalEncoderType m_encoderType = MetalEncoderType::None;
 	MTL::CommandEncoder* m_commandEncoder = nullptr;
 

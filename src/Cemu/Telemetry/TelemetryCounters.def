@@ -76,6 +76,34 @@ TLM_COUNTER(GpuFenceReleaseLagNs,   "gpu.fence_release_lag_ns",  "ns",    Gpu)
 TLM_COUNTER(GpuGapNs,               "gpu.gap_ns",                "ns",    Gpu)
 TLM_COUNTER(GpuGapCount,            "gpu.gap_count",             "count", Gpu)
 TLM_COUNTER(GpuGapLarge,            "gpu.gap_large",             "count", Gpu)  // > 4 ms
+// Split the gap by whether the buffer before it carried the frame's present. One big
+// inter-frame gap is the GPU finishing early and waiting for vsync, which is fine; a big
+// intra-frame gap is the CPU failing to keep it fed, which is not. Size alone cannot tell
+// them apart.
+TLM_COUNTER(GpuGapInterframeNs,     "gpu.gap_interframe_ns",     "ns",    Gpu)
+TLM_COUNTER(GpuGapIntraframeNs,     "gpu.gap_intraframe_ns",     "ns",    Gpu)
+// Time from commit() to the GPU actually starting a buffer. THE hard upper bound on what any
+// change to command-buffer ordering could win back -- worth knowing before paying for one.
+TLM_COUNTER(GpuQueueLatencyNs,      "gpu.queue_latency_ns",      "ns",    Gpu)
+// Samples where GPUStartTime came out at or before the host commit stamp -- i.e. the two
+// clocks do not share a timebase after all. Should be 0; if it is not, queue_latency_ns is
+// meaningless rather than small.
+TLM_COUNTER(GpuQueueLatencyRejected,"gpu.queue_latency_rejected","count", Gpu)
+// First GetCommandBuffer() of a frame -> that frame's presenting buffer leaving the GPU.
+// Tests the "CPU work + GPU work overruns the two-vsync-slot deadline" model directly
+// instead of inferring it from two numbers that are measured separately.
+TLM_COUNTER(GpuFrameCriticalPathNs, "gpu.frame_critical_path_ns","ns",    Gpu)
+// GX2DrawDone's IT_HLE_SYNC_ASYNC_OPERATIONS: a full pipeline drain that blocks BOTH the
+// guest (GX2WaitTimeStamp -> OSWaitEvent) and the Latte thread (two waitUntilCompleted
+// paths). If a title emits this per frame it explains a stalled pipeline all by itself, with
+// no help from the renderer.
+TLM_COUNTER(GpuSyncAsyncPackets,    "gpu.sync_async_packets",    "count", Gpu)
+TLM_COUNTER(GpuSyncAsyncNs,         "gpu.sync_async_ns",         "ns",    Gpu)
+TLM_COUNTER(GpuOcclusionQueries,    "gpu.occlusion_queries",     "count", Gpu)
+TLM_COUNTER(GpuOcclusionFlushes,    "gpu.occlusion_flushes",     "count", Gpu)
+TLM_COUNTER(GpuOcclusionFlushNs,    "gpu.occlusion_flush_ns",    "ns",    Gpu)
+TLM_COUNTER(GpuReadbackForceFinishes,"gpu.readback_forcefinish",  "count", Gpu)
+TLM_COUNTER(GpuReadbackForceFinishNs,"gpu.readback_forcefinish_ns","ns",   Gpu)
 
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)

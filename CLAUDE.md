@@ -146,9 +146,26 @@ time** — and note it retroactively explains why parking the spin (`5933733`) a
 early both changed nothing: the guest was never waiting for the GPU. One flip per vsync also pins
 `swapInterval = 1`, so the grid is 16.68 ms and a 49.90 ms frame is the title taking three slots.
 
-**`cp_idle` is the open question and now the largest term.** Twenty milliseconds a frame of the
-command processor genuinely out of work while the guest cores sit 18% busy. Unlike the fence it has
-no innocent explanation yet.
+**Korok Forest is 20 fps instead of 30 because of one config default, and it is not a renderer
+problem.** `gpu.frame_critical_path_ns` (first `GetCommandBuffer()` of a frame → that frame's
+presenting buffer leaving the GPU) is **35.25 ms**, which overruns the two-vsync-slot deadline of
+33.27 ms and therefore takes three slots. Turning off **`GX2DrawdoneSync`** — a user-facing
+checkbox, default on — drops the critical path to **18.64 ms**, the frame to **33.27 ms** and the
+frame rate to **30.06 fps**, deterministic across n=3 control and n=2 treatment runs.
+
+The cost is `GX2DrawDone`'s `IT_HLE_SYNC_ASYNC_OPERATIONS` packet, which BotW emits **twice per
+frame** and whose handler force-finishes readbacks and queries with bare `waitUntilCompleted()` on
+the Latte thread: **6.78 ms/frame, of which 6.75 ms is texture-readback force-finish**
+(`gpu.occlusion_flush_ns` is 0.00). It collapses the intra-frame GPU gap from 16.39 ms to 0.25 ms.
+
+**Don't just flip the default** — it is a documented accuracy tradeoff, and the drain force-finishes
+*every* in-flight readback whether or not the guest wants one. A surgical version keeps the accuracy
+and recovers most of the 6.75 ms.
+
+**Two Metal-side hypotheses are refuted by the same run**, so don't re-raise them: `queue_latency_ns`
+(14.29 → 14.69 ms) and `command_buffers` (7 → 7) do not move, so neither the `MTLEvent` chain nor the
+commit threshold is what holds this scene at 20 fps. Note `queue_latency_ns` is nonetheless 14.3 ms —
+a large ceiling on any future ordering change, worth re-measuring against the 33.27 ms frame.
 
 Two numbers stand out as suspects:
 

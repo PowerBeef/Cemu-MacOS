@@ -1564,6 +1564,8 @@ void LatteCP_processCommandBuffer(DrawPassContext& drawPassCtx)
 				}
 				case IT_HLE_SYNC_ASYNC_OPERATIONS:
 				{
+					TLM_INC(Gpu, GpuSyncAsyncPackets);
+					TLM_SCOPED_TIMER(Gpu, GpuSyncAsyncNs);
 					LatteTextureReadback_UpdateFinishedTransfers(true);
 					LatteQuery_UpdateFinishedQueriesForceFinishAll();
 					break;
@@ -1872,6 +1874,12 @@ void LatteCP_ProcessRingbuffer()
 			case IT_HLE_SYNC_ASYNC_OPERATIONS:
 			{
 				//LatteCP_skipWords<LatteCP_readU32Deprc>(nWords);
+				// GX2DrawDone's full pipeline drain. Both of these end in a bare
+				// waitUntilCompleted() on the Latte thread, so if a title emits this packet
+				// per frame it is a complete CPU/GPU bubble that owes nothing to the Metal
+				// backend. Timed before anything in the renderer is touched.
+				TLM_INC(Gpu, GpuSyncAsyncPackets);
+				TLM_SCOPED_TIMER(Gpu, GpuSyncAsyncNs);
 				LatteTextureReadback_UpdateFinishedTransfers(true);
 				LatteQuery_UpdateFinishedQueriesForceFinishAll();
 				break;

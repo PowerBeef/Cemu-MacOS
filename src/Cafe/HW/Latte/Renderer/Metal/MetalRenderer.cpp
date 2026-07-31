@@ -538,8 +538,14 @@ void MetalRenderer::Flush(bool waitIdle)
     if (m_recordedDrawcalls > 0 || waitIdle)
         CommitCommandBuffer();
 
-    if (waitIdle && m_executingCommandBuffers.size() != 0)
-        m_executingCommandBuffers.back()->waitUntilCompleted();
+    // Waiting on .back() alone is correct only while the MTLEvent chain makes the last buffer
+    // the last to finish. Wait on the whole in-flight set instead -- the only caller is the
+    // imgui overlay, at most once a frame, so this costs nothing.
+    if (waitIdle)
+    {
+        for (auto& inFlight : m_executingCommandBuffers)
+            inFlight.m_commandBuffer->waitUntilCompleted();
+    }
 }
 
 void MetalRenderer::NotifyLatteCommandProcessorIdle(CommandProcessorIdleReason reason)
@@ -1662,6 +1668,9 @@ void MetalRenderer::indexData_uploadIndexMemory(IndexAllocation& allocation)
 }
 
 LatteQueryObject* MetalRenderer::occlusionQuery_create() {
+    // Does this title use occlusion queries at all? If not, the 1024-slot visibility ring
+    // that wraps ~3.4x per frame is a non-issue and several correctness worries go away.
+    TLM_INC(Gpu, GpuOcclusionQueries);
 	return new LatteQueryObjectMtl(this);
 }
 
@@ -1671,8 +1680,15 @@ void MetalRenderer::occlusionQuery_destroy(LatteQueryObject* queryObj) {
 }
 
 void MetalRenderer::occlusionQuery_flush() {
+    // A bare CPU-side GPU drain on the Latte thread. Reached from
+    // LatteQuery_UpdateFinishedQueriesForceFinishAll, i.e. from GX2DrawDone's
+    // IT_HLE_SYNC_ASYNC_OPERATIONS packet. Timed to find out whether it fires at all.
     if (m_occlusionQuery.m_lastCommandBuffer)
+    {
+        TLM_INC(Gpu, GpuOcclusionFlushes);
+        TLM_SCOPED_TIMER(Gpu, GpuOcclusionFlushNs);
         m_occlusionQuery.m_lastCommandBuffer->waitUntilCompleted();
+    }
 }
 
 void MetalRenderer::occlusionQuery_updateState() {
@@ -1790,6 +1806,10 @@ MTL::CommandBuffer* MetalRenderer::GetCommandBuffer()
 	    MTL::CommandBuffer* mtlCommandBuffer = m_commandQueue->commandBuffer()->retain();
 		pool->release();
 		m_currentCommandBuffer = {mtlCommandBuffer};
+
+		// Start of the frame's critical path: the first buffer minted after the last present.
+		if (m_frameFirstCommandBufferNs == 0)
+			m_frameFirstCommandBufferNs = HighResolutionTimer::now().getTick();
 
 		// Wait for the previous command buffer
 		if (m_eventValue != -1)
@@ -1994,7 +2014,10 @@ void MetalRenderer::CommitCommandBuffer()
         mtlCommandBuffer->commit();
         m_currentCommandBuffer.m_commited = true;
 
-        m_executingCommandBuffers.push_back(mtlCommandBuffer);
+        m_executingCommandBuffers.push_back({mtlCommandBuffer,
+                                             HighResolutionTimer::now().getTick(),
+                                             m_nextCommitEndsFrame});
+        m_nextCommitEndsFrame = false;
 
         // Debug
         //m_commandQueue->insertDebugCaptureBoundary();
@@ -2006,7 +2029,7 @@ void MetalRenderer::ProcessFinishedCommandBuffers()
     // Check for finished command buffers
     for (auto it = m_executingCommandBuffers.begin(); it != m_executingCommandBuffers.end();)
     {
-        auto commandBuffer = *it;
+        auto commandBuffer = it->m_commandBuffer;
         if (CommandBufferCompleted(commandBuffer))
         {
             // The measurement that has been hand-added and thrown away twice. Attributed
@@ -2033,15 +2056,48 @@ void MetalRenderer::ProcessFinishedCommandBuffers()
                         // One 33 ms gap at the end of a frame is the GPU finishing early and
                         // waiting for vsync, which is fine. Seven 5 ms gaps interleaved between
                         // command buffers is the CPU failing to keep the GPU fed, which is not.
-                        // The sum alone cannot tell them apart, so count the large ones too.
+                        // The sum alone cannot tell them apart, so count the large ones too --
+                        // and split by whether the PREVIOUS buffer ended a frame, which is the
+                        // only way to tell the two apart rather than inferring from size.
                         double gap = start - m_lastGpuEndTime;
                         TLM_ADD(Gpu, GpuGapNs, (uint64)(gap * 1e9));
                         TLM_INC(Gpu, GpuGapCount);
                         if (gap > 0.004)
                             TLM_INC(Gpu, GpuGapLarge);
+                        if (m_lastRetiredEndedFrame)
+                            TLM_ADD(Gpu, GpuGapInterframeNs, (uint64)(gap * 1e9));
+                        else
+                            TLM_ADD(Gpu, GpuGapIntraframeNs, (uint64)(gap * 1e9));
                     }
                     if (commandBuffer->GPUEndTime() > m_lastGpuEndTime)
                         m_lastGpuEndTime = commandBuffer->GPUEndTime();
+
+                    // Queue latency: how long the GPU sat on this buffer after commit(). This
+                    // is the direct upper bound on what any change to command-buffer ordering
+                    // could win back, so it is worth having before making one.
+                    // GPUStartTime is host time in SECONDS on the mach timebase;
+                    // HighResolutionTimer::now() is nanoseconds off cntvct_el0, same base. That
+                    // is an assumption, so make it self-diagnosing: if the two clocks do not
+                    // agree, every sample lands in the rejected counter instead of silently
+                    // reading zero and looking like "the GPU starts instantly".
+                    uint64 startNs = (uint64)(start * 1e9);
+                    uint64 commitNs = it->m_commitHostNs;
+                    if (startNs > commitNs)
+                        TLM_ADD(Gpu, GpuQueueLatencyNs, startNs - commitNs);
+                    else
+                        TLM_INC(Gpu, GpuQueueLatencyRejected);
+
+                    // Critical path: first GetCommandBuffer() of the frame -> this frame-ending
+                    // buffer leaving the GPU. Tests the "CPU work + GPU work exceeds the
+                    // two-slot deadline" model directly instead of assuming it.
+                    if (it->m_isFrameEnd && m_frameFirstCommandBufferNs != 0)
+                    {
+                        uint64 endNs = (uint64)(commandBuffer->GPUEndTime() * 1e9);
+                        if (endNs > m_frameFirstCommandBufferNs)
+                            TLM_ADD(Gpu, GpuFrameCriticalPathNs, endNs - m_frameFirstCommandBufferNs);
+                        m_frameFirstCommandBufferNs = 0;
+                    }
+                    m_lastRetiredEndedFrame = it->m_isFrameEnd;
                 }
                 // counted unconditionally, so busy_ns/buffers_done stays a valid average
                 TLM_INC(Gpu, GpuCommandBuffersDone);
@@ -2421,6 +2477,9 @@ void MetalRenderer::SwapBuffer(bool mainWindow)
 
     auto commandBuffer = GetCommandBuffer();
     GetLayer(mainWindow).PresentDrawable(commandBuffer);
+    // Whichever commit picks this buffer up is the one that ends the frame. Used to separate
+    // the benign inter-frame GPU idle from a real mid-frame bubble.
+    m_nextCommitEndsFrame = true;
 }
 
 void MetalRenderer::EnsureImGuiBackend()

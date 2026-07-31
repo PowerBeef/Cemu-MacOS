@@ -706,3 +706,58 @@ pipelining rather than at any individual cost. Two structural candidates, neithe
 the frame it *completed* in, so a gap spanning a frame boundary lands in the later frame. One of
 the two gaps is plausibly that inter-frame idle, which would be benign. Distinguishing them needs a
 per-gap timeline rather than per-frame sums, and that has not been done.
+
+### The 20-vs-30 fps question is answered, and it is not the renderer
+
+Instrumented the frame's *critical path* — first `GetCommandBuffer()` of a frame to that frame's
+presenting buffer leaving the GPU — rather than continuing to infer it from GPU busy and Latte work
+measured separately. That one counter settles the whole thing:
+
+| | `GX2DrawdoneSync` **on** (default, n=3) | **off** (n=2) |
+|---|---|---|
+| frame ms median / p99 | 49.90 / 49.98 | **33.27 / 33.35** |
+| **fps** | **20.04** | **30.06** |
+| `gpu.frame_critical_path_ns` | **35.25 ms** | **18.64 ms** |
+| `gpu.gap_intraframe_ns` | **16.39 ms** | **0.25 ms** |
+| `gpu.sync_async_ns` | 6.78 ms | 0 |
+| GPU busy | 19.33 ms | 19.41 ms |
+| command buffers/frame | 7 | 7 |
+| `gpu.queue_latency_ns` | 14.29 ms | 14.69 ms |
+
+Both sides are deterministic to two decimal places and the ranges do not come close to overlapping.
+
+**The critical path decides the vsync slot count, exactly.** 35.25 ms exceeds the two-slot deadline
+(33.27 ms) → three slots → 49.90 ms. 18.64 ms exceeds one slot (16.63 ms) → two slots → 33.27 ms.
+The model this investigation was built on is confirmed — but the term that overruns it is not the one
+anybody had been looking at.
+
+**What it is.** `GX2DrawDone` submits `IT_HLE_SYNC_ASYNC_OPERATIONS`, whose handler
+(`LatteCommandProcessor.cpp:1872`) force-finishes texture readbacks and occlusion queries with bare
+`waitUntilCompleted()` calls **on the Latte thread**. BotW emits it **twice per frame**. Measured
+cost **6.78 ms**, of which **6.75 ms is readback force-finish** — `gpu.occlusion_flush_ns` is
+**0.00 ms**, so occlusion queries are free and the entire cost is
+`LatteTextureReadbackInfoMtl::ForceFinish` (`LatteTextureReadbackMtl.cpp:44`). Removing it collapses
+the intra-frame GPU gap from 16.39 ms to 0.25 ms — a 98.6% reduction — because the drain was what
+kept the GPU idle in the middle of every frame.
+
+**What it is not.** Two Metal-side hypotheses are refuted directly by this run rather than argued
+away: `gpu.queue_latency_ns` (14.29 → 14.69 ms) and `gpu.command_buffers` (7 → 7) do not move.
+So neither the `MTLEvent` serialisation chain nor the commit threshold is implicated, and Steps 2–5
+of the plan this work was following are aimed at the wrong subsystem.
+
+**This is not a bug — it is a documented tradeoff whose price had never been measured here.**
+`GX2DrawdoneSync` is a user-facing checkbox, "Full sync at GX2DrawDone()", tooltip *"more accurate
+behavior, but may cause lower performance"* (`GeneralSettings2.cpp:409-410`), default **on**. The
+finding is that on this fork's target hardware it costs BotW **exactly one third of its frame rate**,
+and that the cost is entirely one call site.
+
+**The right next step is therefore not to flip the default.** The drain force-finishes *every*
+in-flight readback synchronously, whether or not the guest is about to read any of them. A surgical
+version — wait only for readbacks whose results have actually been requested, or let the existing
+non-forcing `LatteTextureReadback_UpdateFinishedTransfers(false)` sweep retire them — would keep the
+accuracy the checkbox promises and recover most of the 6.75 ms. That is the work to scope next.
+
+Also worth recording: `gpu.queue_latency_ns` is **14.29 ms/frame** in both arms. That is the hard
+ceiling on anything a change to command-buffer ordering could recover, and it is large — so the
+overlap question is not closed, merely demoted. It should be re-measured *after* the readback drain
+is dealt with, against the new 33.27 ms frame, where the deadline arithmetic is completely different.

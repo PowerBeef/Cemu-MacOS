@@ -1,4 +1,5 @@
 #include "Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h"
+#include "Cemu/Telemetry/Telemetry.h"
 #include "Cafe/HW/Latte/Renderer/Metal/LatteTextureReadbackMtl.h"
 #include "Cafe/HW/Latte/Renderer/Metal/LatteTextureMtl.h"
 #include "Cafe/HW/Latte/Renderer/Metal/LatteToMtl.h"
@@ -43,6 +44,10 @@ bool LatteTextureReadbackInfoMtl::IsFinished()
 
 void LatteTextureReadbackInfoMtl::ForceFinish()
 {
+    // The other half of GX2DrawDone's drain: a blocking GPU wait on the Latte thread, once
+    // per in-flight readback.
+    TLM_INC(Gpu, GpuReadbackForceFinishes);
+    TLM_SCOPED_TIMER(Gpu, GpuReadbackForceFinishNs);
     m_commandBuffer->waitUntilCompleted();
 }
 
