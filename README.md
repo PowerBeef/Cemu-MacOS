@@ -38,7 +38,7 @@ This fork exists to delete those layers rather than apologise for them.
 | Graphics path on a Mac  | Vulkan → MoltenVK → Metal      | **Metal, directly**              |
 | Minimum macOS           | 13.4                           | **26.0**                         |
 | Thread scheduling       | none                           | **QoS-aware, P/E-core split**    |
-| Performance measurement | frame counter                  | **68-counter telemetry harness** |
+| Performance measurement | frame counter                  | **96-counter telemetry harness** |
 
 Roughly **56,000 lines removed**: both non-Metal renderers, the GLSL shader emitter, the entire
 x86-64 recompiler backend, glslang, MoltenVK and the Vulkan headers. `precompiled.h` `#error`s on
@@ -131,7 +131,7 @@ codebase structurally could not use.
 ## Measuring instead of guessing
 
 Most emulator optimisation is folklore. This fork ships a **telemetry harness compiled into the
-core**: 77 counters across CPU, GPU, memory and accuracy, `__thread`-local and cache-line striped,
+core**: 96 counters across CPU, GPU, memory and accuracy, `__thread`-local and cache-line striped,
 gated behind a single branch on a global mask so that a disabled build measurably costs nothing.
 
 ```sh
@@ -144,6 +144,15 @@ It earns its keep by **contradicting** things that seemed obvious:
 - The open world was assumed GPU-bound. It is not. Guest cores sit **~18% busy** and the GPU
   **~38%**, and the frame time is **vsync-quantised** — 49.90 ms is three display refreshes at 60 Hz, so a
   small increase in work costs a whole one-refresh step rather than a proportional slowdown.
+- Chasing *what* misses that deadline went through the renderer twice and found nothing: neither the
+  command-buffer submission rate nor the GPU-side ordering moved between a 20 fps and a 30 fps frame.
+  Measuring the frame's **critical path** directly instead — first command buffer to last pixel —
+  put it at **35.25 ms against a 33.27 ms deadline**, and named what pushes it over: an emulated
+  `GX2DrawDone` that synchronously drains *every* in-flight texture readback, twice a frame, whether
+  the game asked for one or not. It blocks for 6.8 ms and idles the GPU for 16.4 more; without it the
+  critical path is **18.64 ms**. **Breath of the Wild goes 20.04 → 30.06 fps** — its actual
+  target — with that one drain out of the way. It had been mistaken for a renderer problem for the
+  entire investigation.
 - That frame time was traced to a **single guest fence** at one address, spun on **65 million times
   per second**. Parking it removed **99.6% of the spins** and a fifth of all CPU — and moved the
   frame rate *not at all*, which is itself the result.
@@ -162,11 +171,17 @@ It earns its keep by **contradicting** things that seemed obvious:
 
 Every measurement lands in `testing/golden/baseline.tsv`, alongside a window-only screenshot:
 
-| Scene                 | Commit    | FPS   |
-| --------------------- | --------- | ----- |
-| Mario Kart 8, title   | `213bcd7` | 60.00 |
-| BotW, shrine interior | `2c09604` | 28.63 |
-| BotW, Korok Forest    | `5933733` | 20.05 |
+| Scene                          | Commit    | FPS       |
+| ------------------------------ | --------- | --------- |
+| Mario Kart 8, title            | `213bcd7` | 60.00     |
+| BotW, shrine interior          | `2c09604` | 28.63     |
+| BotW, Korok Forest             | `5933733` | 20.05     |
+| BotW, Korok Forest — sync off  | `e34facb` | **29.81** |
+
+The last row is the same scene with **`GX2DrawdoneSync`** — a user-facing accuracy option, on by
+default — turned off. It is listed separately rather than replacing the row above it, because the
+20 fps figure is what the emulator does out of the box and both numbers are real. The right fix is
+to make that drain surgical rather than to change the default, and it has not been done yet.
 
 Everything above was measured on one machine — an **8 GB M2 Mac mini** (4P+4E, 16 KB pages,
 macOS 26.5) — against each title's own target frame rate: 60 FPS for Mario Kart 8, 30 for Breath of

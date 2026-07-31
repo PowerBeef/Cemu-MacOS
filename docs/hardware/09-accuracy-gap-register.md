@@ -23,10 +23,16 @@ The telemetry harness now counts these at runtime. First full run, 9,555 frames:
 | `acc.unsupported_primitive` | 0 | 0 | |
 | `acc.draw_skipped_no_target` / `_shader_err` | 0 | 0 | |
 
-**Only one gap in this register actually fires in BotW, and it fires 557 times a frame.**
-Every other one is either absent from this title's workload or, in the geometry-shader case,
-confirmed dead. That is the point of measuring rather than reasoning: a list of eleven
-plausible problems turned out to be one real one, and the real one was previously invisible.
+**Two gaps in this register actually fire in BotW.** `acc.unsupported_hle_calls` at 557/frame (now
+27/frame — 4.2 was 91.7% one function, since implemented), and **2.7, the `GX2DrawDone` drain, added
+later and by far the more expensive: it costs a third of the frame rate.** Every other row is either
+absent from this title's workload or, in the geometry-shader case, confirmed dead.
+
+That is the point of measuring rather than reasoning — but note *how* 2.7 was found. It is not in the
+list above because nobody thought to look for it: it was turned up by instrumenting the frame's
+critical path while chasing an unrelated hypothesis about the Metal command-buffer chain, which the
+same run refuted. **A register of plausible problems is not a substitute for measuring the thing you
+actually care about.**
 
 These figures are for one scene in one title. A different title will light up different rows.
 
@@ -228,6 +234,38 @@ Every filesystem, socket and crypto operation is an IPC round trip to IOSU on ha
 here they are direct C++ calls. Titles that overlap I/O with computation see different timing.
 
 **Detectable:** yes, cheaply — count IPC-surface calls; the *latency* is the absent part.
+
+### 2.7 `GX2DrawDone` is emulated as a full synchronous drain, and it costs a third of the frame rate
+
+On hardware `GX2DrawDone` means "the GPU has retired everything I submitted". Here, with
+`GX2DrawdoneSync` on (the default, and a user-facing checkbox — *"more accurate behavior, but may
+cause lower performance"*, `[SRC GeneralSettings2.cpp:409-410]`), it also submits
+`IT_HLE_SYNC_ASYNC_OPERATIONS`, whose handler `[SRC LatteCommandProcessor.cpp:1872-1877]`
+force-finishes **every** in-flight texture readback and occlusion query with bare
+`waitUntilCompleted()` calls **on the Latte thread**.
+
+Measured on BotW in Korok Forest, n=3 control / n=2 treatment, deterministic to two decimals:
+
+| | sync on (default) | sync off |
+|---|---|---|
+| frame ms median / p99 | 49.90 / 49.98 | **33.27 / 33.35** |
+| **fps** | **20.04** | **30.06** |
+| `gpu.frame_critical_path_ns` | 35.25 ms | 18.64 ms |
+| `gpu.gap_intraframe_ns` | 16.39 ms | 0.25 ms |
+| `gpu.sync_async_ns` | 6.78 ms | 0 |
+
+**6.75 of those 6.78 ms are readback force-finish** — `gpu.occlusion_flush_ns` measures 0.00, so
+occlusion queries cost nothing and the whole price is one call site,
+`LatteTextureReadbackInfoMtl::ForceFinish` `[SRC LatteTextureReadbackMtl.cpp:44]`. BotW emits the
+packet **twice per frame**.
+
+The divergence is not that the drain exists — a title asking for a sync should get one. It is that
+the drain is **indiscriminate**: it waits for every readback in flight whether or not the guest has
+asked for any of their results. A version that waits only for requested readbacks would keep the
+accuracy the setting promises at a fraction of the cost.
+
+**Detectable:** yes, and now instrumented — `gpu.sync_async_packets`, `gpu.sync_async_ns`,
+`gpu.readback_forcefinish{,_ns}`, `gpu.occlusion_flushes{,_ns}`.
 
 ---
 

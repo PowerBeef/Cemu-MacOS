@@ -293,7 +293,7 @@ The core structural problem: exactly one encoder is alive at a time (`m_encoderT
 
 Three candidate fixes; **recommend a combination of (a) and (b):**
 
-**(a) A dedicated upload command buffer.** Keep a second `MTL::CommandBuffer` purely for blits, committed *before* the render CB each frame, ordered via the existing `MTL::Event`. This turns "N render-pass breaks" into "zero", at the cost of one extra CB per frame. This is also the natural consumer of the currently-dead `m_event` (`MetalRenderer.h:504`, signalled at `:1921-1923`, never waited on). **This is the right home for that primitive — keep it, don't delete it.**
+**(a) A dedicated upload command buffer.** Keep a second `MTL::CommandBuffer` purely for blits, committed *before* the render CB each frame, ordered via the existing `MTL::Event`. This turns "N render-pass breaks" into "zero", at the cost of one extra CB per frame. This is also the natural consumer of `m_event` (`MetalRenderer.h:509`). **Correction (2026-07-31): the claim that `m_event` is "never waited on" was wrong.** `GetCommandBuffer` has done `encodeWait(m_event, m_eventValue)` on every command buffer since `26e40a4`, i.e. since the Metal backend landed — this doc was written against `b8f2cf4` and read only the signal site. So the primitive is not dead, it is a total order over every command buffer, and a dedicated upload CB would have to be threaded through that existing chain rather than adopting a spare event. Note also `EVENT_VALUE_WRAP` is 4096 and the counter wraps every ~29 s at 7 buffers/frame, which breaks `MTLEvent`'s monotonicity contract; fix that before reasoning about the chain at all.
 
 **(b) Batch uploads at pass boundaries.** Latte's upload calls arrive in bursts. Queue `texture_loadSlice`/`bufferCache_upload` requests into a list, and flush the whole list to a single blit encoder at the next natural pass boundary (`GetRenderCommandEncoder` with a real FBO change, or `draw_endSequence`). Requires care: an upload must be flushed before the first draw that reads it. Track a per-texture/per-range "dirty, pending upload" bit and force a flush on first use.
 
@@ -311,7 +311,7 @@ Metal does reliably call completion handlers. The reported unreliability is almo
 
 ### 5.3 Revive `NotifyLatteCommandProcessorIdle` — **S**
 
-`MetalRenderer.cpp:540-544` is an empty override; Vulkan commits opportunistically when the command processor stalls. Restore it: `if (m_recordedDrawcalls > 0) CommitCommandBuffer();`. Reduces latency between the guest finishing work and the GPU starting it. Low risk. Note the `m_commitOnIdle` member referenced in the commented code no longer exists — just use the drawcall count.
+~~`MetalRenderer.cpp:540-544` is an empty override; Vulkan commits opportunistically when the command processor stalls. Restore it: `if (m_recordedDrawcalls > 0) CommitCommandBuffer();`~~ **Retired — the recommendation was wrong on both counts.** Vulkan did *not* commit on every idle: `NotifyLatteCommandProcessorIdle` was gated on `m_submitOnIdle`, armed only by a pending readback or occlusion query and cleared at every submit (`084b514:VulkanRenderer.cpp:2274,3059-3071`). And an unconditional commit-on-idle would fire ~129,000 times a frame, because the notification sits inside the ring-starvation spin. Implemented and measured behind `--commit-on-fence-stall` (`064d9a7`): work held at idle drops 85% and **nothing else moves at all** — frame time, fps, `cp_fence` and GPU busy are flat. Left off by default.
 
 ### 5.4 Readback path — **S**
 

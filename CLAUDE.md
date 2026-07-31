@@ -119,8 +119,13 @@ leaves the GPU idle 62% of the time. What it is, is **vsync-quantised**: 20.04 f
 59.94/3, 49.90 ms is exactly 1.5x the shrine's 33.27 ms, and p99 equals the median, so there is
 essentially no variance. Something misses the 33.3 ms deadline and the software vsync timer
 (`LatteTiming`, host-driven vsync is a stub on this fork) drops it to the next whole division rather
-than degrading smoothly. The gap between 18.7 ms of GPU work and a 49.9 ms frame is where the answer
-is, and it is not the renderer.
+than degrading smoothly.
+
+> **Solved — and the Korok column above is conditional on a setting.** The thing missing the deadline
+> is `GX2DrawDone`'s readback drain, not the renderer. With `GX2DrawdoneSync` off the same scene runs
+> **33.27 ms / 30.06 fps**. See "Korok Forest is 20 fps instead of 30 because of one config default"
+> below for the numbers; the 20.04 fps figure here is the *default-configuration* result and both are
+> real.
 
 **Nothing is saturated in the open world.** Full frame decomposition of Korok Forest, 49.90 ms
 frame / 20.04 fps, from `--telemetry`:
