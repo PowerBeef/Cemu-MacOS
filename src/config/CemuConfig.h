@@ -448,6 +448,10 @@ struct CemuConfig
 	ConfigValue<float> overrideGammaValue{ 2.2f };
 	ConfigValue<float> userDisplayGamma { 2.2f }; // 0 = sRGB, >0 gamma
 
+	// INERT on this fork. Kept only so settings.xml round-trips and so the Metal self-dependency
+	// work (03-graphics-metal.md 3.1) has a setting to hang off. Nothing reads it: the Vulkan
+	// backend is deleted and the Metal consumer is commented out. Do not add a UI for it again
+	// without first making it do something.
 	ConfigValue<bool> vk_accurate_barriers{ true };
 
 	struct

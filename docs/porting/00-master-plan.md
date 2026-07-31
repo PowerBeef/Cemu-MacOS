@@ -1081,3 +1081,31 @@ has to reduce **shader cost**, not memory traffic: ALU work and texture sampling
 different and harder project than anything attempted so far — it points at the MSL the Latte
 decompiler emits, and at texture filtering settings, rather than at the Metal backend's structure.
 Bandwidth-shaped optimisations are now closed by measurement alongside the ordering-shaped ones.
+
+
+---
+
+### The accuracy-for-speed levers, measured — and neither default is changed
+
+Two user-facing settings trade correctness for frame rate. Recording what each actually costs so the
+"leave it on" decision is informed rather than inherited. **Neither default is being changed here** —
+that is a product call, not an engineering one.
+
+| lever | default | state on this fork | measured effect | correctness cost |
+|---|---|---|---|---|
+| **`GX2DrawdoneSync`** | **on** | live, honoured | **20.04 → 30.06 fps** on Korok gameplay; critical path 35.25 → 18.64 ms; intra-frame GPU gap 16.39 → 0.25 ms. n=3 control / n=2 treatment | The guest asked for a full pipeline drain and does not get one. BotW reads back 21 KB of GPU-computed float arrays per frame that it genuinely consumes — see "what BotW actually reads back" |
+| **Accurate barriers** | `true` | **not implemented** — dead code since `26e40a4` | **unavailable.** The fork already runs as if it were off, so its performance is banked in every number in this document | Already being paid: any effect sampling a render target while writing it reads undefined data. BotW lava/waterfall are the known cases |
+
+Two consequences worth stating plainly.
+
+**1. The headline 20-vs-30 fps gap is a single accuracy option, and it is the *only* lever that
+crosses the deadline.** Every engineering attempt to recover the same 1.90 ms has failed on
+measurement: the `MTLEvent` chain (twice), the commit threshold, commit-on-idle, a surgical readback
+drain, the readback command-buffer exemption, and now the in-pass streamout copy. `GX2DrawdoneSync`
+remains the one thing that works, and it works by declining to do what the guest asked.
+
+**2. Implementing 3.1 will make things slower, and that is correct.** Splitting render passes for
+self-dependency raises pass count — the very thing the bandwidth work was trying to reduce. It should
+still be done: shipping wrong pixels quietly is worse than shipping fewer frames honestly. But it
+should be done with the expectation that frame rate drops, and it makes the (currently cancelled)
+streamout work more valuable, not less, by moving the GPU further toward the memory path.

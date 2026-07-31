@@ -277,22 +277,23 @@ void InfoLog_PrintActiveSettings()
 	cemuLog_log(LogType::Force, "Use precompiled shaders: {}{}", fmt::format("{}", ActiveSettings::GetPrecompiledShadersOption()), g_current_game_profile->GetPrecompiledShadersState().has_value() ? " (gameprofile)" : "");
 	cemuLog_log(LogType::Force, "Full sync at GX2DrawDone: {}", ActiveSettings::WaitForGX2DrawDoneEnabled() ? "true" : "false");
 	cemuLog_log(LogType::Force, "Strict shader mul: {}", g_current_game_profile->GetAccurateShaderMul() == AccurateShaderMulOption::True ? "true" : "false");
-	if (ActiveSettings::GetGraphicsAPI() == GraphicAPI::kVulkan)
-	{
-		cemuLog_log(LogType::Force, "Async compile: {}", GetConfig().async_compile.GetValue() ? "true" : "false");
-		if (!GetConfig().vk_accurate_barriers.GetValue())
-			cemuLog_log(LogType::Force, "Accurate barriers are disabled!");
-	}
+	// The kVulkan branch that used to sit here was unreachable: ENABLE_VULKAN is never defined in
+	// this fork, so GetGraphicsAPI() cannot return kVulkan. Removed rather than left to rot.
 #ifdef ENABLE_METAL
-	else if (ActiveSettings::GetGraphicsAPI() == GraphicAPI::kMetal)
+	if (ActiveSettings::GetGraphicsAPI() == GraphicAPI::kMetal)
 	{
 	    cemuLog_log(LogType::Force, "Async compile: {}", GetConfig().async_compile.GetValue() ? "true" : "false");
 	    cemuLog_log(LogType::Force, "Force mesh shaders: {}", GetConfig().force_mesh_shaders.GetValue() ? "true" : "false");
 		cemuLog_log(LogType::Force, "Fast math: {}", g_current_game_profile->GetShaderFastMath() ? "true" : "false");
 		cemuLog_log(LogType::Force, "Buffer cache type: {}", g_current_game_profile->GetBufferCacheMode());
 		cemuLog_log(LogType::Force, "Position invariance: {}", g_current_game_profile->GetPositionInvariance());
-		if (!GetConfig().vk_accurate_barriers.GetValue())
-			cemuLog_log(LogType::Force, "Accurate barriers are disabled!");
+		// Not a setting readout -- a standing limitation. The Metal backend has NO render-pass
+		// self-dependency handling at all: the code that would split a pass when a shader samples
+		// a texture the same pass is writing arrived commented out in the upstream Metal PR
+		// (26e40a4) and has never run. This used to log the state of vk_accurate_barriers here,
+		// which nothing on Metal reads -- a setting readout for a code path that does not exist.
+		cemuLog_log(LogType::Force, "Render-pass self-dependency: not implemented (Metal). Effects that "
+									"sample a render target while writing it may render incorrectly.");
 	}
 #endif
 	cemuLog_log(LogType::Force, "Console language: {}", stdx::to_underlying(config.console_language.GetValue()));

@@ -175,7 +175,28 @@ Ordered by payoff/risk.
 
 ### 3.1 Render-pass self-dependency / "accurate barriers" — **L, highest correctness payoff**
 
-`MetalRenderer.cpp:1130-1160` (block commented out), `:1970-2019` (`CheckIfRenderPassNeedsFlush` commented out), `MetalRenderer.h:349`.
+`MetalRenderer.cpp:1207-1237` (block commented out), `:2302-2352` (`CheckIfRenderPassNeedsFlush` commented out), `MetalRenderer.h:363` (declaration commented out).
+
+> **Status (2026-07-31): this is an OPEN CORRECTNESS GAP, not a latent option.** Confirmed by
+> `git blame`: all of it arrived already-commented in `26e40a4` ("Add Metal backend (#1287)") and has
+> never executed in this fork. `nm` finds no `CheckIfRenderPassNeedsFlush` symbol in the binary.
+>
+> The fork therefore runs **permanently in upstream's "accurate barriers off" regime** — it is
+> already receiving that configuration's performance (upstream reports ~2x in BotW when disabled) and
+> already paying its correctness cost. There is no ~2x left to win here; there is a visual defect to
+> fix, and fixing it will *cost* frame rate.
+>
+> Three surfaces used to imply otherwise and were removed on 2026-07-31: a Debug menu checkbox
+> labelled "Accurate barriers (Vulkan)" that was not gated on the active renderer and controlled
+> nothing; a `cemuLog` line in the `kMetal` branch of `InfoLog_PrintActiveSettings` that reported the
+> state of `vk_accurate_barriers`, which nothing on Metal reads; and an unreachable `kVulkan` branch
+> beside it (`ENABLE_VULKAN` is never defined, so `GetGraphicsAPI()` cannot return `kVulkan`). The log
+> now states the limitation plainly instead. `ConfigValue<bool> vk_accurate_barriers`
+> (`CemuConfig.h:455`) is kept but marked inert, so settings.xml round-trips and this item has a
+> setting to hang off — **do not put a UI back on it until it does something.**
+>
+> `m_state.m_isFirstDrawInRenderPass` (`MetalRenderer.h:108`) is still maintained but has no reader
+> outside the commented block.
 
 Metal has no automatic hazard tracking *within* a render pass. Today the renderer merges render passes aggressively (`GetRenderCommandEncoder()`, `:1768-1836`) and never splits them for read-after-write on an attachment. Any game that samples a render target it is simultaneously drawing to reads stale or undefined data. This is a whole class of visual bugs (BotW lava/waterfall are the known cases, hence the special-case shader hashes in the dead code).
 

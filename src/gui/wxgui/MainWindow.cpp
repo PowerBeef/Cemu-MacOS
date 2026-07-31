@@ -136,7 +136,6 @@ enum
 	MAINFRAME_MENU_ID_DEBUG_VIEW_AUDIO_DEBUGGER,
 	MAINFRAME_MENU_ID_DEBUG_VIEW_TEXTURE_RELATIONS,
 	MAINFRAME_MENU_ID_DEBUG_AUDIO_AUX_ONLY,
-	MAINFRAME_MENU_ID_DEBUG_VK_ACCURATE_BARRIERS,
 	MAINFRAME_MENU_ID_DEBUG_GPU_CAPTURE,
 
 	// debug->logging
@@ -220,7 +219,6 @@ EVT_MENU(MAINFRAME_MENU_ID_DEBUG_DUMP_CURL_REQUESTS, MainWindow::OnDebugSetting)
 // debug -> Other options
 EVT_MENU(MAINFRAME_MENU_ID_DEBUG_RENDER_UPSIDE_DOWN, MainWindow::OnDebugSetting)
 EVT_MENU(MAINFRAME_MENU_ID_DEBUG_AUDIO_AUX_ONLY, MainWindow::OnDebugSetting)
-EVT_MENU(MAINFRAME_MENU_ID_DEBUG_VK_ACCURATE_BARRIERS, MainWindow::OnDebugSetting)
 EVT_MENU(MAINFRAME_MENU_ID_DEBUG_GPU_CAPTURE, MainWindow::OnDebugSetting)
 EVT_MENU(MAINFRAME_MENU_ID_DEBUG_DUMP_RAM, MainWindow::OnDebugSetting)
 EVT_MENU(MAINFRAME_MENU_ID_DEBUG_DUMP_FST, MainWindow::OnDebugSetting)
@@ -1019,12 +1017,6 @@ void MainWindow::OnDebugSetting(wxCommandEvent& event)
 {
 	if (event.GetId() == MAINFRAME_MENU_ID_DEBUG_RENDER_UPSIDE_DOWN)
 		GetConfig().render_upside_down = event.IsChecked();
-	else if (event.GetId() == MAINFRAME_MENU_ID_DEBUG_VK_ACCURATE_BARRIERS)
-	{
-		GetConfig().vk_accurate_barriers = event.IsChecked();
-		if(!GetConfig().vk_accurate_barriers)
-			wxMessageBox(_("Warning: Disabling the accurate barriers option will lead to flickering graphics but may improve performance. It is highly recommended to leave it turned on."), _("Accurate barriers are off"), wxOK);
-	}
 #ifdef ENABLE_METAL
 	else if (event.GetId() == MAINFRAME_MENU_ID_DEBUG_GPU_CAPTURE)
 	{
@@ -2336,8 +2328,10 @@ void MainWindow::RecreateMenu()
 	if(LaunchSettings::RenderUpsideDownEnabled().has_value())
 		upsidedownItem->Enable(false);
 
-	auto accurateBarriers = debugMenu->AppendCheckItem(MAINFRAME_MENU_ID_DEBUG_VK_ACCURATE_BARRIERS, _("&Accurate barriers (Vulkan)"));
-	accurateBarriers->Check(GetConfig().vk_accurate_barriers);
+	// No "Accurate barriers" item. It was labelled "(Vulkan)", was not gated on the active
+	// renderer, and this fork has no Vulkan backend -- so it offered a checkbox that could not
+	// affect anything. See docs/porting/03-graphics-metal.md 3.1; restore it if and when the
+	// Metal self-dependency path is actually implemented.
 
 #ifdef ENABLE_METAL
 	auto gpuCapture = debugMenu->Append(MAINFRAME_MENU_ID_DEBUG_GPU_CAPTURE, _("&GPU capture (Metal)"));
