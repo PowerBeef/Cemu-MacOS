@@ -18,6 +18,28 @@ TLM_COUNTER(GpuDrawCalls,           "gpu.draw_calls",            "count", Gpu)
 TLM_COUNTER(GpuDrawCallsFast,       "gpu.draw_calls_fast",       "count", Gpu)
 TLM_COUNTER(GpuRenderPasses,        "gpu.render_passes",         "count", Gpu)
 TLM_COUNTER(GpuRenderPassesTemp,    "gpu.render_passes_temp",    "count", Gpu)
+
+// --- Pass-structure audit (2026-07-31). The earlier audit that closed the TBDR work ran on the
+// SHRINE, where GPU busy was 2.83 ms against a 16.67 ms budget -- its decisive argument was "none
+// of this matters, because the GPU is idle", and it explicitly said to revisit on a GPU-heavy
+// scene. Korok Forest gameplay is 16.45 ms against a 16.63 ms slot, so that precondition is met.
+//
+// Consecutive render passes targeting the SAME FBO. The store-then-reload between them is pure
+// waste: the tile leaves and comes straight back. Measured 35.9/frame on the shrine before the
+// DeviceShared fix and 12.3-13.5 after; unknown on the open world, which runs 202 passes to 174.
+TLM_COUNTER(GpuPassSameFboSplits,   "gpu.pass_same_fbo_splits",  "count", Gpu)
+// Attachment load+store traffic, computed from the real formats and sizes rather than assumed.
+// The 1749 MB/frame in the master plan is flagged there as order-of-magnitude because the formats
+// were never confirmed -- this is the confirmation.
+TLM_COUNTER(GpuPassAttachmentBytes, "gpu.pass_attachment_bytes", "bytes", Gpu)
+// Of that traffic, the share belonging to passes that re-target the previous pass's FBO. This is
+// the actual prize for eliminating a split -- one redundant store plus one redundant load -- and it
+// is NOT the frame total times the split fraction, because split passes need not be typical size.
+TLM_COUNTER(GpuPassSplitBytes,      "gpu.pass_split_bytes",      "bytes", Gpu)
+// Draws that bind a depth-format texture as a sampler. The shrine measured EXACTLY ZERO, which is
+// the whole basis for "the final depth store each frame is dead". Korok is foliage + fog and fog
+// usually samples depth, so if this is non-zero here that conclusion does not transfer.
+TLM_COUNTER(GpuDepthSampledDraws,   "gpu.depth_sampled_draws",   "count", Gpu)
 TLM_COUNTER(GpuCommandBuffers,      "gpu.command_buffers",       "count", Gpu)
 TLM_COUNTER(GpuCommandBuffersDone,  "gpu.command_buffers_done",  "count", Gpu)
 TLM_COUNTER(GpuBusyNs,              "gpu.busy_ns",               "ns",    Gpu)

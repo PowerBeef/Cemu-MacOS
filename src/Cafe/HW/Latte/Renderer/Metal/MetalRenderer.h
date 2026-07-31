@@ -349,6 +349,8 @@ public:
 
 	MTL::CommandBuffer* GetCommandBuffer();
 	MTL::RenderCommandEncoder* GetTemporaryRenderCommandEncoder(MTL::RenderPassDescriptor* renderPassDescriptor);
+    void NotePassStructure(class LatteCachedFBO* fbo);
+    void NoteSplitCause();
 	MTL::RenderCommandEncoder* GetRenderCommandEncoder(bool forceRecreate = false);
     MTL::ComputeCommandEncoder* GetComputeCommandEncoder();
     MTL::BlitCommandEncoder* GetBlitCommandEncoder();
@@ -558,6 +560,14 @@ private:
 	// Set by SwapBuffer, consumed by the next CommitCommandBuffer: the buffer carrying the
 	// present is the one that ends a frame.
 	bool m_nextCommitEndsFrame = false;
+	// The FBO of the PREVIOUS render pass, surviving EndEncoding -- m_lastUsedFBO is reset as part
+	// of the encoder state, so it cannot answer "did the pass before this one target the same FBO".
+	class LatteCachedFBO* m_previousRenderPassFbo = nullptr;
+	// Who tore down the last RENDER pass. Captured at teardown because that is the only moment the
+	// caller is on the stack; symbolicated later, and only when the next pass turns out to target
+	// the same FBO (i.e. the teardown was waste).
+	void* m_lastRenderTeardownStack[10] = {};
+	int m_lastRenderTeardownDepth = 0;
 	// Host time at the first GetCommandBuffer() of the current frame, for the critical path.
 	uint64 m_frameFirstCommandBufferNs = 0;
 	// Did the buffer retired just before this one carry the frame's present?

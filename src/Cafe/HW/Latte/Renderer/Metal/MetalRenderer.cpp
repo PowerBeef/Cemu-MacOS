@@ -1,4 +1,8 @@
 #include "Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h"
+#include <execinfo.h>
+#include <boost/core/demangle.hpp>
+#include <array>
+#include <map>
 #include "Cafe/HW/Latte/Renderer/Metal/MetalMemoryManager.h"
 #include "Cafe/HW/Latte/Renderer/Metal/LatteTextureMtl.h"
 #include "Cafe/HW/Latte/Renderer/Metal/LatteTextureViewMtl.h"
@@ -1867,6 +1871,119 @@ MTL::RenderCommandEncoder* MetalRenderer::GetTemporaryRenderCommandEncoder(MTL::
 }
 
 // Some render passes clear the attachments, forceRecreate is supposed to be used in those cases
+// Attributes one same-FBO split to whoever ended the previous render pass.
+//
+// Symbolication is expensive, so it happens once per distinct call stack: the raw address tuple is
+// the cache key, and the resulting string is the telemetry dedup key. The occurrence count must
+// live OUTSIDE that string -- a count embedded in the detail makes every occurrence a new entry and
+// blows the 256-detail cap. That trap has been hit twice in this repo already.
+void MetalRenderer::NoteSplitCause()
+{
+    if (m_lastRenderTeardownDepth <= 1)
+        return;
+
+    static std::map<std::array<void*, 6>, std::string> s_symbolCache;
+    static std::map<std::string, uint64> s_counts;
+
+    // Frame 0 is EndEncoding itself; its callers are what we are attributing to.
+    std::array<void*, 6> key{};
+    const int n = std::min(m_lastRenderTeardownDepth - 1, 6);
+    for (int i = 0; i < n; i++)
+        key[i] = m_lastRenderTeardownStack[i + 1];
+
+    auto it = s_symbolCache.find(key);
+    if (it == s_symbolCache.end())
+    {
+        std::string joined;
+        char** symbols = backtrace_symbols(key.data(), n);
+        if (symbols)
+        {
+            for (int i = 0; i < n; i++)
+            {
+                // "3   TesseraEmu   0x00000001... _ZN13MetalRenderer3FooEv + 72" -- field 3 is the
+                // mangled name. Same shape the crash handler parses.
+                std::string_view line{symbols[i]};
+                std::vector<std::string_view> f;
+                size_t pos = 0;
+                while (pos < line.size() && f.size() < 4)
+                {
+                    while (pos < line.size() && line[pos] == ' ') pos++;
+                    const size_t start = pos;
+                    while (pos < line.size() && line[pos] != ' ') pos++;
+                    if (pos > start) f.push_back(line.substr(start, pos - start));
+                }
+                if (f.size() < 4)
+                    continue;
+                std::string name = boost::core::demangle(std::string{f[3]}.c_str());
+                // Drop argument lists -- they make the string enormous and add nothing here.
+                if (const size_t paren = name.find('('); paren != std::string::npos)
+                    name.resize(paren);
+                if (!joined.empty())
+                    joined += " < ";
+                joined += name;
+            }
+            free(symbols);
+        }
+        if (joined.empty())
+            joined = "<unsymbolicated>";
+        it = s_symbolCache.emplace(key, std::move(joined)).first;
+    }
+
+    tlm::NoteAccuracyDetail(tlm::CounterId::GpuPassSameFboSplits, it->second, ++s_counts[it->second]);
+}
+
+// Records what a render pass costs in attachment traffic, and whether it was worth starting.
+//
+// Called once per render-pass creation. Everything here is arithmetic over at most 10 attachments,
+// so it is far cheaper than the encoder creation it accompanies -- but the A/B against the previous
+// build still has to show frame time unmoved, per the standing rule.
+void MetalRenderer::NotePassStructure(class LatteCachedFBO* fbo)
+{
+    if (!fbo)
+        return;
+
+    // A pass that re-targets the FBO the previous pass just finished with. LoadActionLoad +
+    // StoreActionStore means the tile was written to memory and immediately read back.
+    const bool isSplit = (fbo == m_previousRenderPassFbo);
+    if (isSplit)
+    {
+        TLM_INC(Gpu, GpuPassSameFboSplits);
+        NoteSplitCause();
+    }
+    m_previousRenderPassFbo = fbo;
+
+    // Load + store traffic, from the actual formats rather than an assumed RGBA8/Depth32.
+    uint64 bytes = 0;
+    // Use the VIEW's effective size at its mip, which is what LatteCachedFBO::GetSize does.
+    // baseTexture->width/height is the mip-0 size and overstates any attachment bound at a
+    // smaller mip.
+    auto attachmentBytes = [](LatteTextureView* view, bool isDepth) -> uint64
+    {
+        if (!view || !view->baseTexture)
+            return 0;
+        sint32 w = 0, h = 0;
+        view->baseTexture->GetEffectiveSize(w, h, view->firstMip);
+        if (w <= 0 || h <= 0)
+            return 0;
+        const auto& info = GetMtlPixelFormatInfo(view->baseTexture->format, isDepth);
+        if (info.blockTexelSize.x == 0 || info.blockTexelSize.y == 0 || info.bytesPerBlock == 0)
+            return 0;
+        const uint64 blocksW = ((uint64)w + info.blockTexelSize.x - 1) / info.blockTexelSize.x;
+        const uint64 blocksH = ((uint64)h + info.blockTexelSize.y - 1) / info.blockTexelSize.y;
+        return blocksW * blocksH * info.bytesPerBlock;
+    };
+    for (int i = 0; i < 8; i++)
+        bytes += attachmentBytes(fbo->colorBuffer[i].texture, false);
+    bytes += attachmentBytes(fbo->depthBuffer.texture, true);
+
+    // x2: LoadActionLoad reads it in, StoreActionStore writes it back out.
+    TLM_ADD(Gpu, GpuPassAttachmentBytes, bytes * 2);
+    // A split wastes exactly one store (ending the previous pass) plus one load (starting this
+    // one) -- the same 2x, charged only when the teardown between them bought nothing.
+    if (isSplit)
+        TLM_ADD(Gpu, GpuPassSplitBytes, bytes * 2);
+}
+
 MTL::RenderCommandEncoder* MetalRenderer::GetRenderCommandEncoder(bool forceRecreate)
 {
     bool fboChanged = m_state.m_fboChanged;
@@ -1931,6 +2048,9 @@ MTL::RenderCommandEncoder* MetalRenderer::GetRenderCommandEncoder(bool forceRecr
 
     ResetEncoderState();
 
+    if (tlm::AreaEnabled(tlm::Area::Gpu)) [[unlikely]]
+        NotePassStructure(m_state.m_activeFBO.m_fbo);
+
     // Debug
     m_performanceMonitor.m_renderPasses++;
     TLM_INC(Gpu, GpuRenderPasses);
@@ -1992,6 +2112,11 @@ void MetalRenderer::EndEncoding()
 {
     if (m_commandEncoder)
     {
+        // Capture the caller before the frame is gone. Only render-pass teardowns matter: a blit or
+        // compute encoder ending is not what makes the *next* render pass reload its attachments.
+        if (m_encoderType == MetalEncoderType::Render && tlm::AreaEnabled(tlm::Area::Gpu)) [[unlikely]]
+            m_lastRenderTeardownDepth = backtrace(m_lastRenderTeardownStack, 10);
+
         m_commandEncoder->endEncoding();
         m_commandEncoder->release();
         m_commandEncoder = nullptr;
@@ -2344,6 +2469,16 @@ void MetalRenderer::BindStageResources(MTL::RenderCommandEncoder* renderCommandE
 		uint32 word4 = LatteGPUState.contextRegister[texUnitRegIndex + 4];
 		auto& boundTexture = m_state.m_encoderState.m_textures[mtlShaderType][binding];
 		MTL::Texture* mtlTexture = textureView->GetSwizzledView(word4);
+		// Does anything actually READ a depth buffer here? On the shrine the answer was zero, which
+		// is what makes each frame's final depth store elidable. Fog usually samples depth, so the
+		// open world may well differ -- and if it does, that conclusion does not transfer.
+		if (baseTexture->isDepth) [[unlikely]]
+		{
+			TLM_INC(Gpu, GpuDepthSampledDraws);
+			tlm::NoteAccuracyDetail(tlm::CounterId::GpuDepthSampledDraws,
+				fmt::format("{:08x} {}x{} fmt {:04x}", baseTexture->physAddress,
+							baseTexture->width, baseTexture->height, (uint32)baseTexture->format), 1);
+		}
 		SetTexture(renderCommandEncoder, mtlShaderType, mtlTexture, binding);
 	}
 
