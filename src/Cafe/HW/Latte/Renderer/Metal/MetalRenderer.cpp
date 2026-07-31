@@ -383,6 +383,11 @@ void MetalRenderer::DrawEmptyFrame(bool mainWindow)
 
 void MetalRenderer::SwapBuffers(bool swapTV, bool swapDRC)
 {
+    // Retirement only ran from CommitCommandBuffer and occlusionQuery_updateState, so an
+    // emulator that stops committing -- paused, or a menu with almost no draws -- never
+    // reclaimed staging memory at all. A frame boundary always happens, so pump it here too.
+    ProcessFinishedCommandBuffers();
+
     if (swapTV)
         SwapBuffer(true);
     if (swapDRC)
@@ -1692,11 +1697,11 @@ void MetalRenderer::occlusionQuery_flush() {
     // A bare CPU-side GPU drain on the Latte thread. Reached from
     // LatteQuery_UpdateFinishedQueriesForceFinishAll, i.e. from GX2DrawDone's
     // IT_HLE_SYNC_ASYNC_OPERATIONS packet. Timed to find out whether it fires at all.
-    if (m_occlusionQuery.m_lastCommandBuffer)
+    if (m_occlusionQuery.m_lastCommandBufferId != UINT64_MAX)
     {
         TLM_INC(Gpu, GpuOcclusionFlushes);
         TLM_SCOPED_TIMER(Gpu, GpuOcclusionFlushNs);
-        m_occlusionQuery.m_lastCommandBuffer->waitUntilCompleted();
+        WaitCommandBufferFinished(m_occlusionQuery.m_lastCommandBufferId);
     }
 }
 
@@ -2033,8 +2038,10 @@ void MetalRenderer::CommitCommandBuffer()
         m_currentCommandBuffer.m_commited = true;
 
         m_executingCommandBuffers.push_back({mtlCommandBuffer,
+                                             m_submittedCount,
                                              HighResolutionTimer::now().getTick(),
                                              m_nextCommitEndsFrame});
+        m_submittedCount++;
         m_nextCommitEndsFrame = false;
 
         // Debug
@@ -2045,10 +2052,17 @@ void MetalRenderer::CommitCommandBuffer()
 void MetalRenderer::ProcessFinishedCommandBuffers()
 {
     // Check for finished command buffers
-    for (auto it = m_executingCommandBuffers.begin(); it != m_executingCommandBuffers.end();)
+    // Retire the in-order PREFIX only. A ring allocator can reclaim in order and no other, so
+    // what it needs is a watermark -- "everything below N is done" -- and the old loop, which
+    // erased completed buffers from the middle of the vector, destroyed exactly that property.
+    // A buffer that finishes early simply waits its turn here; that costs a little reclaim
+    // latency and is correct by construction.
+    while (!m_executingCommandBuffers.empty())
     {
+        auto it = m_executingCommandBuffers.begin();
         auto commandBuffer = it->m_commandBuffer;
-        if (CommandBufferCompleted(commandBuffer))
+        if (!CommandBufferCompleted(commandBuffer))
+            break;
         {
             // The measurement that has been hand-added and thrown away twice. Attributed
             // to the frame the buffer *completed* in, not the one that submitted it, so
@@ -2120,15 +2134,25 @@ void MetalRenderer::ProcessFinishedCommandBuffers()
                 // counted unconditionally, so busy_ns/buffers_done stays a valid average
                 TLM_INC(Gpu, GpuCommandBuffersDone);
             }
-            m_memoryManager->CleanupBuffers(commandBuffer);
+            m_retiredCount = it->m_id + 1;
+            m_memoryManager->CleanupBuffers(m_retiredCount);
             commandBuffer->release();
-            it = m_executingCommandBuffers.erase(it);
-        }
-        else
-        {
-            ++it;
+            m_executingCommandBuffers.erase(it);
         }
     }
+}
+
+void MetalRenderer::WaitCommandBufferFinished(uint64 id)
+{
+    if (id == m_submittedCount)
+        CommitCommandBuffer(); // still being recorded -- submit it or we would wait forever
+    for (auto& inFlight : m_executingCommandBuffers)
+    {
+        if (inFlight.m_id > id)
+            break;
+        inFlight.m_commandBuffer->waitUntilCompleted();
+    }
+    ProcessFinishedCommandBuffers();
 }
 
 bool MetalRenderer::AcquireDrawable(bool mainWindow)

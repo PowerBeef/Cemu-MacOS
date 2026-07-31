@@ -71,11 +71,13 @@ public:
 
 	struct BufferSyncPoint_t
 	{
-		// todo - modularize sync point
-		MTL::CommandBuffer* commandBuffer;
+		// Keyed on the renderer's command-buffer id, not the MTL::CommandBuffer*. The pointer
+		// is released while m_currentCommandBuffer still holds it, so it can dangle, and Metal
+		// may hand the same address back for a later buffer.
+		uint64 commandBufferId;
 		uint32 offset;
 
-		BufferSyncPoint_t(MTL::CommandBuffer* _commandBuffer, uint32 _offset) : commandBuffer(_commandBuffer), offset(_offset) {};
+		BufferSyncPoint_t(uint64 _commandBufferId, uint32 _offset) : commandBufferId(_commandBufferId), offset(_offset) {};
 	};
 
 	struct AllocatorBuffer_t
@@ -85,7 +87,7 @@ public:
 		uint32 size;
 		uint32 writeIndex;
 		std::queue<BufferSyncPoint_t> queue_syncPoints;
-		MTL::CommandBuffer* lastSyncpointCommandBuffer{ nullptr };
+		uint64 lastSyncpointCommandBufferId{ UINT64_MAX };
 		uint32 index;
 		uint32 cleanupCounter{ 0 }; // increased by one every time CleanupBuffer() is called if there is no sync point. If it reaches 300 then the buffer is released
 	};
@@ -101,7 +103,8 @@ public:
 
 	AllocatorReservation_t AllocateBufferMemory(uint32 size, uint32 alignment);
 	void FlushReservation(AllocatorReservation_t& uploadReservation);
-	void CleanupBuffer(MTL::CommandBuffer* latestFinishedCommandBuffer);
+	// ids strictly below the watermark have completed
+	void CleanupBuffer(uint64 retiredWatermark);
 	MTL::Buffer* GetBufferByIndex(uint32 index) const;
 
     bool RequiresFlush() const
@@ -149,7 +152,8 @@ class MetalSynchronizedHeapAllocator
 	void FreeReservation(AllocatorReservation* uploadReservation);
 	void FlushReservation(AllocatorReservation* uploadReservation);
 
-	void CleanupBuffer(MTL::CommandBuffer* latestFinishedCommandBuffer);
+	// ids strictly below the watermark have completed
+	void CleanupBuffer(uint64 retiredWatermark);
 
 	void GetStats(uint32& numBuffers, size_t& totalBufferSize, size_t& freeBufferSize) const;
   private:
@@ -159,5 +163,6 @@ class MetalSynchronizedHeapAllocator
 	std::vector<TrackedAllocation> m_activeAllocations;
 	MemoryPool<AllocatorReservation> m_poolAllocatorReservation{32};
 	// release queue
-	std::unordered_map<MTL::CommandBuffer*, std::vector<CHAddr>> m_releaseQueue;
+	// Ordered, so cleanup is an erase of the below-watermark prefix.
+	std::map<uint64, std::vector<CHAddr>> m_releaseQueue;
 };

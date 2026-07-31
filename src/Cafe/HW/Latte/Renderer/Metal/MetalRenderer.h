@@ -285,18 +285,21 @@ public:
         return m_currentCommandBuffer.m_commandBuffer;
     }
 
-    MTL::CommandBuffer* GetAndRetainCurrentCommandBufferIfNotCompleted() const
+    // The id the work being recorded right now will be submitted under. Safe to call with no
+    // buffer open: an unsubmitted id can never satisfy HasCommandBufferFinished, which is the
+    // conservative answer.
+    uint64 GetCurrentCommandBufferId() const
     {
-        // No command buffer has been created yet
-        if (!m_currentCommandBuffer.m_commandBuffer)
-            return nullptr;
-
-        // The command buffer has been commited and has finished execution
-        if (m_currentCommandBuffer.m_commited && m_executingCommandBuffers.size() == 0)
-            return nullptr;
-
-        return GetCurrentCommandBuffer()->retain();
+        return m_submittedCount;
     }
+
+    bool HasCommandBufferFinished(uint64 id) const
+    {
+        return id < m_retiredCount;
+    }
+
+    // Blocks until the given id has retired. Submits first if it is still being recorded.
+    void WaitCommandBufferFinished(uint64 id);
 
     void RequestSoonCommit()
     {
@@ -454,12 +457,9 @@ public:
     {
         m_occlusionQuery.m_active = false;
 
-        // Release the old command buffer
-        if (m_occlusionQuery.m_lastCommandBuffer)
-            m_occlusionQuery.m_lastCommandBuffer->release();
-
-        // Get and retain the current command buffer
-        m_occlusionQuery.m_lastCommandBuffer = GetAndRetainCurrentCommandBufferIfNotCompleted();
+        // An id, so there is nothing to retain and nothing to release. The old code kept the
+        // command buffer alive purely to be able to ask whether it had finished.
+        m_occlusionQuery.m_lastCommandBufferId = GetCurrentCommandBufferId();
     }
 
     // GPU capture
@@ -532,7 +532,7 @@ private:
     	uint64* m_resultsPtr;
     	uint32 m_currentIndex = 0;
         bool m_active = false;
-        MTL::CommandBuffer* m_lastCommandBuffer = nullptr;
+        uint64 m_lastCommandBufferId = UINT64_MAX; // UINT64_MAX = no query has ended yet
 	} m_occlusionQuery;
 
 	// Active objects
@@ -545,6 +545,7 @@ private:
 	struct InFlightCommandBuffer
 	{
 		MTL::CommandBuffer* m_commandBuffer;
+		uint64 m_id;
 		uint64 m_commitHostNs;
 		bool m_isFrameEnd;
 	};
@@ -556,6 +557,15 @@ private:
 	uint64 m_frameFirstCommandBufferNs = 0;
 	// Did the buffer retired just before this one carry the frame's present?
 	bool m_lastRetiredEndedFrame = false;
+
+	// A software timeline, replacing MTL::CommandBuffer* as the identity of a submission.
+	// Ids in [0, m_retiredCount) have completed. The pointer was never a safe key: it is
+	// released in ProcessFinishedCommandBuffers while m_currentCommandBuffer still holds it,
+	// so GetCurrentCommandBuffer() can hand out a dangling pointer, and Metal is free to
+	// return the same address for a later buffer. An id has neither problem, and it lets a
+	// resource say "safe once N has retired" without holding anything alive.
+	uint64 m_submittedCount = 0;   // id the buffer currently being recorded will take
+	uint64 m_retiredCount = 0;     // everything below this has completed
 	MetalEncoderType m_encoderType = MetalEncoderType::None;
 	MTL::CommandEncoder* m_commandEncoder = nullptr;
 

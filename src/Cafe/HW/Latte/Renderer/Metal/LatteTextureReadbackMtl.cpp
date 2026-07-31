@@ -27,6 +27,11 @@ void LatteTextureReadbackInfoMtl::StartTransfer()
 
 	blitCommandEncoder->copyFromTexture(baseTexture->GetTexture(), 0, 0, MTL::Origin{0, 0, 0}, MTL::Size{(uint32)baseTexture->width, (uint32)baseTexture->height, 1}, m_mtlr->GetTextureReadbackBuffer(), m_bufferOffset, bytesPerRow, bytesPerImage);
 
+	// Deliberately still a retained command buffer rather than a timeline id. An id would make
+	// IsFinished() depend on ProcessFinishedCommandBuffers having run, where the retained
+	// pointer polls Metal directly -- and a readback that merely *looks* unfinished costs a
+	// forced blocking wait at the next GX2DrawDone. Safe here because GetBlitCommandEncoder
+	// above has already ensured a live, uncommitted buffer exists.
 	m_commandBuffer = m_mtlr->GetCurrentCommandBuffer()->retain();
 	// TODO: uncomment?
 	//m_mtlr->RequestSoonCommit();

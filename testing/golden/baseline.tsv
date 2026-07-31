@@ -25,3 +25,4 @@
 2026-07-30T20:00:47Z	3ba7eb0	step1-before	20.20	Metal/Apple GPU	888 MB	47 threads	155.8%
 2026-07-30T20:07:17Z	3ba7eb0	step1-after	20.04	Metal/Apple GPU	1409 MB	46 threads	166.2%
 2026-07-31T00:51:12Z	e34facb	botw-korok-drawdone-sync-off	29.81	Metal/Apple GPU	1292 MB	46 threads	201.9%
+2026-07-31T02:31:44Z	dfaa971	botw-korok-cb-timeline	20.20	Metal/Apple GPU	1192 MB	46 threads	199.2%

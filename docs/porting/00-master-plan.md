@@ -888,3 +888,44 @@ has never once moved the frame rate (`5933733`: 40 points of CPU, zero fps).
 
 So this is a **power and thermal** item on a machine already running three guest cores and the shader
 pools on four P-cores, not a frame-rate one, and it should be scheduled and measured as such.
+
+### Command buffers now have a timeline instead of a pointer identity
+
+The renderer identified a submission by its `MTL::CommandBuffer*`, which is not a safe key for two
+independent reasons. `ProcessFinishedCommandBuffers` `release()`s the buffer while
+`m_currentCommandBuffer` still holds the same pointer, so `GetCurrentCommandBuffer()` can hand out a
+dangling one — and Metal is free to return that address again for a later buffer, so a stale entry
+would match a live submission. `GetAndRetainCurrentCommandBufferIfNotCompleted` papered over the
+first case with `m_executingCommandBuffers.size() == 0`, an inference that is only sound while the
+`MTLEvent` chain guarantees the newest buffer retires last.
+
+Replaced with the scheme the deleted Vulkan backend used: `m_submittedCount` / `m_retiredCount`, and
+ids in `[0, m_retiredCount)` have completed.
+
+- `ProcessFinishedCommandBuffers` now retires the **in-order prefix** and stops at the first
+  unfinished buffer. The old loop erased completed buffers from the middle of the vector, which
+  destroyed the very property a ring allocator needs.
+- `CleanupBuffer` takes a **watermark** rather than "some buffer finished". The ring allocator popped
+  sync points only from the front by pointer equality, so anything retiring out of order stranded its
+  sync point permanently and leaked a 32 MB ring at a time; the heap allocator's release queue became
+  a `std::map` so the completed prefix is erased in one sweep.
+- Occlusion queries hold an id, so `LatteQueryObjectMtl` no longer retains a command buffer purely to
+  ask whether it finished, and its destructor is gone.
+- `ProcessFinishedCommandBuffers` is now also pumped from `SwapBuffers`. It previously ran only from
+  `CommitCommandBuffer` and `occlusionQuery_updateState`, so **an emulator that stopped committing —
+  paused, or a menu with almost no draws — never reclaimed staging memory at all.**
+
+Texture readback is deliberately **not** converted and keeps its retained pointer. An id would make
+`IsFinished()` depend on the retire pump having run, where the pointer polls Metal directly, and a
+readback that merely *looks* unfinished costs a forced blocking wait at the next `GX2DrawDone` — the
+most expensive thing in the frame. The pointer is safe there because `GetBlitCommandEncoder` has
+already ensured a live uncommitted buffer.
+
+Verified behaviour-neutral over 9,921 frames: frame 49.90 ms, 20.04 fps, GPU busy 16.74 → 16.76 ms,
+7 command buffers, draws and passes unchanged, screenshot identical, no crash.
+
+New counter `gpu.staging_rings_created` is the leak watch, and it is worth knowing how to read it: it
+totalled **6** for the run, which looks alarming until you see *when* — one at startup and five
+across frames 4028–4031, the menu→gameplay transition where the workload jumps from 113 draws to
+3,375. **Flat across all 5,712 gameplay frames afterwards**, and RSS held at ~1.39 GB with no
+staircase. Growth to a working set is not a leak; a climb during steady state would be.

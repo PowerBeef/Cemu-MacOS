@@ -1,4 +1,5 @@
 #include "Cafe/HW/Latte/Renderer/Metal/MetalBufferAllocator.h"
+#include "Cemu/Telemetry/Telemetry.h"
 
 MetalBufferChunkedHeap::~MetalBufferChunkedHeap()
 {
@@ -19,11 +20,11 @@ uint32 MetalBufferChunkedHeap::allocateNewChunk(uint32 chunkIndex, uint32 minimu
 
 void MetalSynchronizedRingAllocator::addUploadBufferSyncPoint(AllocatorBuffer_t& buffer, uint32 offset)
 {
-	auto commandBuffer = m_mtlr->GetCurrentCommandBuffer();
-	if (commandBuffer == buffer.lastSyncpointCommandBuffer)
+	uint64 commandBufferId = m_mtlr->GetCurrentCommandBufferId();
+	if (commandBufferId == buffer.lastSyncpointCommandBufferId)
 		return;
-	buffer.lastSyncpointCommandBuffer = commandBuffer;
-	buffer.queue_syncPoints.emplace(commandBuffer, offset);
+	buffer.lastSyncpointCommandBufferId = commandBufferId;
+	buffer.queue_syncPoints.emplace(commandBufferId, offset);
 }
 
 void MetalSynchronizedRingAllocator::allocateAdditionalUploadBuffer(uint32 sizeRequiredForAlloc)
@@ -41,6 +42,10 @@ void MetalSynchronizedRingAllocator::allocateAdditionalUploadBuffer(uint32 sizeR
 	newBuffer.size = bufferAllocSize;
 	newBuffer.index = (uint32)m_buffers.size();
 	m_buffers.push_back(newBuffer);
+	// A healthy run needs exactly one of these. A staircase means retirement has stopped
+	// reclaiming and the ring can no longer wrap -- the failure mode the watermark fix in
+	// CleanupBuffer exists to prevent, and the one thing that would make it silently wrong.
+	TLM_INC(Gpu, GpuStagingRingsCreated);
 }
 
 MetalSynchronizedRingAllocator::AllocatorReservation_t MetalSynchronizedRingAllocator::AllocateBufferMemory(uint32 size, uint32 alignment)
@@ -111,11 +116,15 @@ void MetalSynchronizedRingAllocator::FlushReservation(AllocatorReservation_t& up
     }
 }
 
-void MetalSynchronizedRingAllocator::CleanupBuffer(MTL::CommandBuffer* latestFinishedCommandBuffer)
+void MetalSynchronizedRingAllocator::CleanupBuffer(uint64 retiredWatermark)
 {
 	for (auto& itr : m_buffers)
 	{
-		while (!itr.queue_syncPoints.empty() && latestFinishedCommandBuffer == itr.queue_syncPoints.front().commandBuffer)
+		// Was: pop only while the FRONT sync point's pointer equalled the one buffer that had
+		// just finished. Each buffer is cleaned exactly once and then forgotten, so anything
+		// that finished out of order left its sync point stranded forever, freezing the ring's
+		// reclaim point and leaking 32 MB at a time. A watermark has no such failure mode.
+		while (!itr.queue_syncPoints.empty() && itr.queue_syncPoints.front().commandBufferId < retiredWatermark)
 		{
 			itr.queue_syncPoints.pop();
 		}
@@ -183,10 +192,10 @@ MetalSynchronizedHeapAllocator::AllocatorReservation* MetalSynchronizedHeapAlloc
 void MetalSynchronizedHeapAllocator::FreeReservation(AllocatorReservation* uploadReservation)
 {
 	// put the allocation on a delayed release queue for the current command buffer
-	MTL::CommandBuffer* currentCommandBuffer = m_mtlr->GetCurrentCommandBuffer();
+	uint64 currentCommandBufferId = m_mtlr->GetCurrentCommandBufferId();
 	auto it = std::find_if(m_activeAllocations.begin(), m_activeAllocations.end(), [&uploadReservation](const TrackedAllocation& allocation) { return allocation.allocation.chunkIndex == uploadReservation->bufferIndex && allocation.allocation.offset == uploadReservation->bufferOffset; });
 	cemu_assert_debug(it != m_activeAllocations.end());
-	m_releaseQueue[currentCommandBuffer].emplace_back(it->allocation);
+	m_releaseQueue[currentCommandBufferId].emplace_back(it->allocation);
 	m_activeAllocations.erase(it);
 	m_poolAllocatorReservation.freeObj(uploadReservation);
 }
@@ -199,16 +208,17 @@ void MetalSynchronizedHeapAllocator::FlushReservation(AllocatorReservation* uplo
 	}
 }
 
-void MetalSynchronizedHeapAllocator::CleanupBuffer(MTL::CommandBuffer* latestFinishedCommandBuffer)
+void MetalSynchronizedHeapAllocator::CleanupBuffer(uint64 retiredWatermark)
 {
-    auto it = m_releaseQueue.find(latestFinishedCommandBuffer);
-    if (it == m_releaseQueue.end())
-        return;
-
-    // release allocations
-	for (auto& addr : it->second)
-		m_chunkedHeap.free(addr);
-	m_releaseQueue.erase(it);
+    // Erase the whole completed prefix, not just one exact key. The map is ordered, so this is
+    // a single sweep and it cannot leave an entry behind the way an exact-match find could.
+    auto end = m_releaseQueue.lower_bound(retiredWatermark);
+    for (auto it = m_releaseQueue.begin(); it != end; ++it)
+    {
+        for (auto& addr : it->second)
+            m_chunkedHeap.free(addr);
+    }
+    m_releaseQueue.erase(m_releaseQueue.begin(), end);
 }
 
 void MetalSynchronizedHeapAllocator::GetStats(uint32& numBuffers, size_t& totalBufferSize, size_t& freeBufferSize) const

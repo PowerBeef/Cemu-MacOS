@@ -25,10 +25,11 @@ public:
         return m_bufferCache;
     }
 
-    void CleanupBuffers(MTL::CommandBuffer* latestFinishedCommandBuffer)
+    // ids strictly below the watermark have completed
+    void CleanupBuffers(uint64 retiredWatermark)
     {
-        m_stagingAllocator.CleanupBuffer(latestFinishedCommandBuffer);
-        m_indexAllocator.CleanupBuffer(latestFinishedCommandBuffer);
+        m_stagingAllocator.CleanupBuffer(retiredWatermark);
+        m_indexAllocator.CleanupBuffer(retiredWatermark);
     }
 
     // Texture upload buffer

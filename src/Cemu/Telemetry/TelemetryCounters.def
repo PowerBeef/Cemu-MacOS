@@ -71,6 +71,9 @@ TLM_COUNTER(GpuCpIdleWithPendingWork,"gpu.cp_idle_pending",      "count", Gpu)
 TLM_COUNTER(GpuCpIdlePendingDrawcalls,"gpu.cp_idle_pending_draws","count",Gpu)
 // Commits forced by --commit-on-fence-stall. Zero unless the flag is passed.
 TLM_COUNTER(GpuCpIdleCommits,       "gpu.cp_idle_commits",       "count", Gpu)
+// Staging ring buffers ever allocated. Should be 1. Climbing means command-buffer
+// retirement has stopped reclaiming and each 32 MB ring is being abandoned in turn.
+TLM_COUNTER(GpuStagingRingsCreated, "gpu.staging_rings_created", "count", Gpu)
 // Is the fence wait a timer? It lasts ~15.3 ms whether the title draws 113 objects or
 // 3,516, which no work dependency explains. Emulated vsync IS a timer that the Latte
 // thread polls from inside the wait loop, and GX2WaitForFlip parks guest threads on it --

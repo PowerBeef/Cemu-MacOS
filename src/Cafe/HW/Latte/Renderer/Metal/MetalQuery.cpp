@@ -3,7 +3,7 @@
 
 bool LatteQueryObjectMtl::getResult(uint64& numSamplesPassed)
 {
-    if (m_commandBuffer && !CommandBufferCompleted(m_commandBuffer))
+    if (m_commandBufferId != UINT64_MAX && !m_mtlr->HasCommandBufferFinished(m_commandBufferId))
         return false;
 
     uint64* resultPtr = m_mtlr->GetOcclusionQueryResultsPtr();
@@ -13,12 +13,6 @@ bool LatteQueryObjectMtl::getResult(uint64& numSamplesPassed)
         numSamplesPassed += resultPtr[i];
 
     return true;
-}
-
-LatteQueryObjectMtl::~LatteQueryObjectMtl()
-{
-    if (m_commandBuffer)
-        m_commandBuffer->release();
 }
 
 void LatteQueryObjectMtl::begin()
@@ -32,7 +26,6 @@ void LatteQueryObjectMtl::end()
     m_range.end = m_mtlr->GetOcclusionQueryIndex();
     m_mtlr->EndOcclusionQuery();
 
-    m_commandBuffer = m_mtlr->GetAndRetainCurrentCommandBufferIfNotCompleted();
-    if (m_commandBuffer)
-        m_mtlr->RequestSoonCommit();
+    m_commandBufferId = m_mtlr->GetCurrentCommandBufferId();
+    m_mtlr->RequestSoonCommit();
 }
