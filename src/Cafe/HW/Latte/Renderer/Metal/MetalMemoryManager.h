@@ -70,7 +70,12 @@ private:
     MetalSynchronizedHeapAllocator m_indexAllocator;
 
     MTL::Buffer* m_bufferCache = nullptr;
-    MetalBufferCacheMode m_metalBufferCacheMode;
+    // Must have an initialiser: MetalRenderer's constructor calls NeedsReducedLatency()
+    // seven lines after `new MetalMemoryManager(this)`, but this is not assigned until
+    // InitBufferCache(), which Latte calls much later via bufferCache_init. The read was
+    // therefore indeterminate. Auto is the pre-resolution value and matches what the
+    // config default means before InitBufferCache narrows it.
+    MetalBufferCacheMode m_metalBufferCacheMode = MetalBufferCacheMode::Auto;
     MPTR m_importedMemBaseAddress;
     size_t m_hostAllocationSize = 0;
 };

@@ -167,10 +167,23 @@ the Latte thread: **6.78 ms/frame, of which 6.75 ms is texture-readback force-fi
 *every* in-flight readback whether or not the guest wants one. A surgical version keeps the accuracy
 and recovers most of the 6.75 ms.
 
-**Two Metal-side hypotheses are refuted by the same run**, so don't re-raise them: `queue_latency_ns`
-(14.29 → 14.69 ms) and `command_buffers` (7 → 7) do not move, so neither the `MTLEvent` chain nor the
-commit threshold is what holds this scene at 20 fps. Note `queue_latency_ns` is nonetheless 14.3 ms —
-a large ceiling on any future ordering change, worth re-measuring against the 33.27 ms frame.
+**Two Metal-side hypotheses are refuted, so don't re-raise them.** `queue_latency_ns`
+(14.29 → 14.69 ms) and `command_buffers` (7 → 7) do not move between the 20 fps and 30 fps arms, so
+neither the `MTLEvent` chain nor the commit threshold is what holds this scene back. Confirmed a
+second way by the event-wrap fix below: buffers *had* been overlapping for most of every run and it
+bought nothing.
+
+**`gpu.busy_ns` before commit `1616cd6` is inflated — do not compare across that boundary.**
+`EVENT_VALUE_WRAP` was 4096, so the signalled value went backwards every ~29 s and periodically
+disabled the serialisation. `gpu.busy_ns` sums per-buffer intervals, so overlapping buffers were
+double-counted. Fixed to a monotonic `uint64`; the same scene reads **16.8 ms** properly serialised
+against 19.1–19.4 before, with frame time and critical path identical. The inflation grows with run
+length (the first wrap is ~29 s in), so old figures are inconsistently wrong, not uniformly so.
+
+The readback drain is **not** surgically improvable, measured: `gpu.readback_forcestart` is 0 and
+`gpu.readback_age_at_wait_ns` is 14.19 ms, so the 5-drawcall start delay holds nothing back and the
+transfers we block on had already been running for ~7 ms each. We are waiting for the GPU to catch
+up, which is what `GX2DrawDone` means. See the master plan for what *is* still improvable.
 
 Two numbers stand out as suspects:
 

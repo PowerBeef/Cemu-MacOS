@@ -761,3 +761,87 @@ Also worth recording: `gpu.queue_latency_ns` is **14.29 ms/frame** in both arms.
 ceiling on anything a change to command-buffer ordering could recover, and it is large — so the
 overlap question is not closed, merely demoted. It should be re-measured *after* the readback drain
 is dealt with, against the new 33.27 ms frame, where the deadline arithmetic is completely different.
+
+### The readback drain is not surgically improvable — measured
+
+The obvious follow-up to the `GX2DrawDone` finding was that the drain is *indiscriminate*: it calls
+`LatteTextureReadback_Update(true)` to force-start delayed transfers and then immediately blocks on
+them, which would be the worst possible arrangement — start a GPU copy, wait for it with zero
+runway. Two counters test that directly:
+
+| | per frame |
+|---|---|
+| `gpu.readback_forcestart` (transfers the forced update actually started) | **0** |
+| `gpu.readback_age_at_wait_ns` (how long the transfer had already run) | **14.19 ms** |
+| `gpu.readback_forcefinish` / `_ns` | 2 / 6.72 ms |
+
+**The 5-drawcall delay holds nothing back.** Every readback blocked on at `GX2DrawDone` was already
+in flight, started on average ~7 ms earlier, and still had not completed. So we are not waiting for a
+texture copy — **we are waiting for the GPU to catch up**, which is precisely what `GX2DrawDone` is
+specified to do.
+
+That kills "make the drain surgical" as stated. There is no subset of the wait that can be skipped
+while preserving the semantics: the call means *the GPU has retired everything*, and the GPU is
+roughly one pipeline depth behind when it is asked.
+
+What remains genuinely improvable is narrower and should not be confused with the above:
+
+- The readback blit is appended to the **current** command buffer by `GetBlitCommandEncoder`
+  (`LatteTextureReadbackMtl.cpp:25`), which then commits. A command buffer's encoders execute in
+  order, so waiting for the blit means waiting for every draw encoded ahead of it in that buffer —
+  up to ~500. A blit issued into its **own** command buffer would need only its true dependency (the
+  render that wrote the source texture). That is a real decoupling, but it is bounded by that
+  dependency and it interacts with the `MTLEvent` chain, which would re-serialise it anyway.
+- After the block the pipeline is empty and has to refill, which is where the 16.4 ms of
+  `gap_intraframe` comes from. **That refill is not inherent to the semantics** and is the larger
+  number of the two.
+
+Neither is a small change, and neither is justified by the evidence gathered so far. The honest
+status is: the accuracy option costs what it costs, the cost is now measured and documented
+(`docs/hardware/09` gap 2.7), and whether it stays on by default is a product decision rather than an
+engineering one.
+
+### The MTLEvent wrap was real, and fixing it corrects every `gpu.busy_ns` ever recorded
+
+`EVENT_VALUE_WRAP` was 4096 and `m_eventValue` stepped `(v + 1) % 4096`, sending the signalled value
+**backwards** every 4096 command buffers. `MTLEvent` requires monotonically increasing values. At 7
+buffers/frame and 20 fps that is a wrap **every 29 seconds** — ten times in a single telemetry run,
+not a once-in-a-blue-moon edge case. Replaced with a monotonic `uint64`.
+
+The fix is strictly a correctness change, but it moved a counter, and the direction is the
+interesting part. n=4 wrapping, n=2 monotonic, gameplay phase, ranges non-overlapping:
+
+| | wrapping | monotonic |
+|---|---|---|
+| frame ms / fps | 49.90 / 20.04 | **49.90 / 20.04** |
+| `gpu.frame_critical_path_ns` | 35.24 – 35.25 | **35.23** |
+| **`gpu.busy_ns`** | 19.14 – 19.37 | **16.74 – 16.92** |
+| `gpu.queue_latency_ns` | 14.13 – 14.28 | **16.27 – 16.56** |
+
+**`gpu.busy_ns` sums `GPUEndTime − GPUStartTime` per command buffer, so it double-counts whenever
+buffers overlap.** GPU busy dropping 13% under *stricter* ordering, with identical draw counts, is
+the signature of overlap having been happening before and being counted twice. Queue latency rising
+15% is the same fact from the other side: strictly ordered buffers wait longer to start.
+
+Two consequences.
+
+**1. It is independent confirmation that overlap does not help.** The wrap had been letting command
+buffers overlap for most of every run, and frame time and critical path are identical to two decimal
+places with it on and off. That is a stronger refutation of the "remove the serialisation chain"
+hypothesis than the queue-latency argument used earlier, because it is a direct observation of
+overlap occurring and buying nothing.
+
+**2. Every `gpu.busy_ns` figure recorded before this fix is inflated**, including the 19.3 ms in the
+`GX2DrawDone` section above and the 18.7 ms in the older Korok Forest baselines. The true serialised
+figure for that scene is **16.8 ms**. The inflation is not a constant: the first wrap only happens
+~29 s into a run, so short traces are unaffected and long ones are affected more — which makes old
+numbers inconsistently wrong rather than uniformly wrong. Conclusions that rested on *frame time*
+(the `GX2DrawdoneSync` result, the phase-split correction) are unaffected; conclusions that rested on
+GPU busy in absolute terms should be re-derived.
+
+Also fixed alongside: `m_metalBufferCacheMode` had no initialiser but was read by
+`NeedsReducedLatency()` seven lines after the memory manager was constructed, to choose the commit
+threshold — indeterminate memory deciding submission cadence. It now has an initialiser, and the
+threshold is set explicitly to the 196 that behaviour has always shown, rather than being switched to
+64 under cover of a correctness fix. There is no evidence for 64: command buffer count does not move
+frame rate in this scene.

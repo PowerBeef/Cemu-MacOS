@@ -506,7 +506,9 @@ private:
 
 	// Synchronization resources
 	MTL::Event* m_event;
-	int32_t m_eventValue = -1;
+	// Monotonic, per MTLEvent's contract. Starts at 0 = "nothing signalled yet", so the first
+	// command buffer skips the wait.
+	uint64 m_eventValue = 0;
 
 	// Resources
 	MTL::SamplerState* m_nearestSampler;

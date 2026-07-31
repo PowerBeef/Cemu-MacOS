@@ -29,7 +29,6 @@
 #include "imgui/imgui_extension.h"
 #include "imgui/imgui_impl_metal.h"
 
-#define EVENT_VALUE_WRAP 4096
 
 extern bool hasValidFramebufferAttached;
 
@@ -224,11 +223,21 @@ MetalRenderer::MetalRenderer() : Renderer(RendererAPI::Metal)
     m_depthStencilCache = new MetalDepthStencilCache(this);
     m_samplerCache = new MetalSamplerCache(this);
 
-    // Lower the commit treshold when buffer cache needs reduced latency
-    if (m_memoryManager->NeedsReducedLatency())
-        m_defaultCommitTreshlod = 64;
-    else
-        m_defaultCommitTreshlod = 196;
+    // Was: pick 64 or 196 from m_memoryManager->NeedsReducedLatency(). That read
+    // m_metalBufferCacheMode before InitBufferCache had assigned it -- indeterminate memory,
+    // seven lines after the manager was constructed. In practice it always resolved to 196,
+    // so the "reduced latency" path this fork's DeviceShared default was meant to enable had
+    // never once run.
+    //
+    // Deliberately NOT switching to 64 while fixing the UB. Note m_recordedDrawcalls counts
+    // draw *passes*, not draw calls, so the threshold is a direct linear lever on command
+    // buffers per frame (196 gives 7) -- flipping it here would silently change submission
+    // cadence under cover of a correctness fix. It stays where measured behaviour has always
+    // been, and becomes a deliberate choice rather than an accident.
+    //
+    // Measured 2026-07-31: command buffer count does not move frame rate in BotW's open world
+    // (7 buffers in both a 20 fps and a 30 fps arm), so there is no evidence for 64 either.
+    m_defaultCommitTreshlod = 196;
 
     // Occlusion queries
     m_occlusionQuery.m_resultBuffer = m_device->newBuffer(OCCLUSION_QUERY_POOL_SIZE * sizeof(uint64), MTL::ResourceStorageModeShared);
@@ -1812,7 +1821,7 @@ MTL::CommandBuffer* MetalRenderer::GetCommandBuffer()
 			m_frameFirstCommandBufferNs = HighResolutionTimer::now().getTick();
 
 		// Wait for the previous command buffer
-		if (m_eventValue != -1)
+		if (m_eventValue != 0)
 		    mtlCommandBuffer->encodeWait(m_event, m_eventValue);
 
 		m_recordedDrawcalls = 0;
@@ -2007,7 +2016,16 @@ void MetalRenderer::CommitCommandBuffer()
         //});
 
         // Signal event
-        m_eventValue = (m_eventValue + 1) % EVENT_VALUE_WRAP;
+        // MTLEvent requires the signalled value to increase monotonically; a wait is
+        // satisfied when signalled >= waited. This used to be (v + 1) % 4096, which sends
+        // the value BACKWARDS every 4096 buffers -- at 7 buffers/frame and 20 fps that is
+        // every 29 seconds, i.e. ten times in a single telemetry run, not once in a blue
+        // moon. After a wrap the driver either unorders one buffer or (if it treats a
+        // backwards signal as a no-op) leaves the event stuck at 4095 and every subsequent
+        // wait passes immediately, silently disabling the serialisation for the rest of the
+        // process. Either way it was a confound in every A/B run against this subsystem.
+        // uint64 has no wrap worth worrying about: at 140 buffers/s it lasts 4 billion years.
+        m_eventValue++;
         auto mtlCommandBuffer = m_currentCommandBuffer.m_commandBuffer;
         mtlCommandBuffer->encodeSignalEvent(m_event, m_eventValue);
 

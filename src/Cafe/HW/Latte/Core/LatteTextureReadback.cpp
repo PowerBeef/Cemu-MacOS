@@ -2,6 +2,7 @@
 #include "Cafe/HW/Latte/Core/LattePerformanceMonitor.h"
 #include "Cafe/HW/Latte/Renderer/Renderer.h"
 #include "Cafe/HW/Latte/Core/LatteTexture.h"
+#include "Cemu/Telemetry/Telemetry.h"
 
 #define LOG_READBACK_TIME
 
@@ -103,8 +104,13 @@ void LatteTextureReadback_UpdateFinishedTransfers(bool forceFinish)
 {
 	if (forceFinish)
 	{
-		// start any delayed transfers
-		LatteTextureReadback_Update(true);
+		// Start any delayed transfers. Note what this means: a transfer force-started HERE has
+		// had zero time on the GPU before the loop below blocks on it, which is the worst
+		// possible arrangement. Counted separately from the finish, because "the 5-drawcall
+		// delay held it back" and "it has been in flight and the GPU is behind" need different
+		// fixes and cost the same on the clock.
+		if (LatteTextureReadback_Update(true))
+			TLM_INC(Gpu, GpuReadbackForceStart);
 	}
 	performanceMonitor.gpuTime_waitForAsync.beginMeasuring();
 	while (!sTextureActiveReadbackQueue.empty())
@@ -123,6 +129,11 @@ void LatteTextureReadback_UpdateFinishedTransfers(bool forceFinish)
 				}
 #endif
 				readbackInfo->forceFinish = true;
+				// How long this transfer actually got to run before we blocked on it. Near zero
+				// means it was force-started moments ago; milliseconds means it was in flight
+				// and the GPU is what we are really waiting for.
+				TLM_ADD(Gpu, GpuReadbackAgeAtWaitNs,
+						HighResolutionTimer().now().getTick() - readbackInfo->transferStartTime);
 				readbackInfo->ForceFinish();
 				// rerun logic since ->ForceFinish() can recurively call this function and thus modify the queue
 				continue;

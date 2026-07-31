@@ -104,6 +104,10 @@ TLM_COUNTER(GpuOcclusionFlushes,    "gpu.occlusion_flushes",     "count", Gpu)
 TLM_COUNTER(GpuOcclusionFlushNs,    "gpu.occlusion_flush_ns",    "ns",    Gpu)
 TLM_COUNTER(GpuReadbackForceFinishes,"gpu.readback_forcefinish",  "count", Gpu)
 TLM_COUNTER(GpuReadbackForceFinishNs,"gpu.readback_forcefinish_ns","ns",   Gpu)
+// Was the readback we block on at GX2DrawDone one that the forced update had just started
+// (so it got no GPU time at all), or one already in flight? Different fixes.
+TLM_COUNTER(GpuReadbackForceStart,  "gpu.readback_forcestart",   "count", Gpu)
+TLM_COUNTER(GpuReadbackAgeAtWaitNs, "gpu.readback_age_at_wait_ns","ns",   Gpu)
 
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)
