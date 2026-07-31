@@ -30,6 +30,16 @@ TLM_COUNTER(GpuShadersCompiledGS,   "gpu.shaders_compiled_gs",   "count", Gpu)
 TLM_COUNTER(GpuShadersCompiledPS,   "gpu.shaders_compiled_ps",   "count", Gpu)
 TLM_COUNTER(GpuPipelinesCompiled,   "gpu.pipelines_compiled",    "count", Gpu)
 TLM_COUNTER(GpuCpIdleNs,            "gpu.cp_idle_ns",            "ns",    Gpu)
+// Anatomy of the ring-starvation loop. cp_idle_notify counts every pass; rb_wait_parked
+// counts the ones that actually reached the wfe (~1250 ns each, verified by probe);
+// cp_idle_full_pass counts the ones that fell through to the periodic work and sched_yield.
+// The ratios say whether this loop is a cheap near-miss or a syscall storm.
+TLM_COUNTER(GpuRbWaitEarlyOut,      "gpu.rb_wait_early_out",     "count", Gpu)
+TLM_COUNTER(GpuRbWaitParked,        "gpu.rb_wait_parked",        "count", Gpu)
+TLM_COUNTER(GpuRbWaitParkedNs,      "gpu.rb_wait_parked_ns",     "ns",    Gpu)
+TLM_COUNTER(GpuCpIdleFullPass,      "gpu.cp_idle_full_pass",     "count", Gpu)
+TLM_COUNTER(GpuCpIdlePeriodicNs,    "gpu.cp_idle_periodic_ns",   "ns",    Gpu)
+TLM_COUNTER(GpuCpIdleYieldNs,       "gpu.cp_idle_yield_ns",      "ns",    Gpu)
 TLM_COUNTER(GpuCpFenceNs,           "gpu.cp_fence_ns",           "ns",    Gpu)
 // Where a frame's wall-clock goes when the GPU is not busy. The reporter subtracts these
 // from the frame interval to get the underlying *work* time, which is what says how far

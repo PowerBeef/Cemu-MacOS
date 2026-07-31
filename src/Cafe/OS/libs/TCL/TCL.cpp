@@ -2,6 +2,7 @@
 #include "Cafe/OS/libs/TCL/TCL.h"
 
 #include "HW/Latte/Core/LattePM4.h"
+#include "Cemu/Telemetry/Telemetry.h"
 
 namespace TCL
 {
@@ -110,9 +111,23 @@ namespace TCL
 		{
 			// data already available, don't arm a wait we would immediately regret
 			__asm__ volatile("clrex" ::: "memory");
+			TLM_INC(Gpu, GpuRbWaitEarlyOut);
 			return;
 		}
-		__asm__ volatile("wfe" ::: "memory");
+		// Counted because the two paths cost ~1250 ns and ~5 ns respectively, so the ratio is
+		// what decides whether this loop is a park or a spin. A probe (tools/probes/
+		// wfe_under_load.c) confirms the wfe genuinely holds ~1250 ns even with the machine
+		// fully busy, so a low average per pass means most passes leave above, not that the
+		// park stopped working.
+		TLM_INC(Gpu, GpuRbWaitParked);
+		// Time the wfe itself. In isolation it holds ~1250 ns (tools/probes/wfe_under_load.c,
+		// unchanged by machine load), but the whole loop measures ~147 ns/pass here, which is
+		// only possible if the wfe is returning immediately. ARM's WFE is a no-op whenever the
+		// event register is already set, and a great many things set it. This says which.
+		{
+			TLM_SCOPED_TIMER(Gpu, GpuRbWaitParkedNs);
+			__asm__ volatile("wfe" ::: "memory");
+		}
 	}
 
 	void TCLWaitForRBSpace(uint32be numU32s)

@@ -201,9 +201,21 @@ uint32 LatteCP_readU32Deprc()
 			LatteThread_Exit();
 
 		// still no command data available, do some other tasks
-		LatteTiming_HandleTimedVsync();
-		LatteAsyncCommands_checkAndExecute();
-		std::this_thread::yield();
+		// Only iterations that get all the way here pay for the periodic work and the
+		// sched_yield. How many that is relative to gpu.cp_idle_notify is the difference
+		// between "this loop is a cheap near-miss" and "this loop is a syscall storm".
+		TLM_INC(Gpu, GpuCpIdleFullPass);
+		{
+			TLM_SCOPED_TIMER(Gpu, GpuCpIdlePeriodicNs);
+			LatteTiming_HandleTimedVsync();
+			LatteAsyncCommands_checkAndExecute();
+		}
+		{
+			// The wfe above measures 0.7 ns -- it is a no-op in this process -- so the loop is
+			// a spin and this syscall runs ~138,000 times a frame. Sized before being touched.
+			TLM_SCOPED_TIMER(Gpu, GpuCpIdleYieldNs);
+			std::this_thread::yield();
+		}
 		performanceMonitor.gpuTime_idleTime.endMeasuring();
 	}
 	UNREACHABLE;

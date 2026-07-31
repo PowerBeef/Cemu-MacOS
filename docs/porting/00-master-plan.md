@@ -845,3 +845,46 @@ threshold — indeterminate memory deciding submission cadence. It now has an in
 threshold is set explicitly to the 196 that behaviour has always shown, rather than being switched to
 64 under cover of a correctness fix. There is no evidence for 64: command buffer count does not move
 frame rate in this scene.
+
+### The ring-buffer `wfe` park is a no-op, and `sched_yield` is 36% of a core
+
+`612d064` replaced the command processor's ring-starvation spin with an `ldxr`/`wfe` park and
+recorded *"a pass takes ~1269 ns instead of ~42 ns — about 30x fewer idle iterations"*. Measured
+inside BotW the same loop takes **150 ns/pass**, so something was wrong with either the claim or the
+park. Full anatomy, gameplay phase:
+
+| | per frame | per pass | share of `cp_idle` |
+|---|---|---|---|
+| ring-starvation passes | **134,928** (2.70 M/s) | | |
+| `cp_idle` total | 20.20 ms | 149.7 ns | 100% |
+| **`sched_yield`** | **17.95 ms** | **133.0 ns** | **88.9%** |
+| vsync + async checks | 0.67 ms | 4.9 ns | 3.3% |
+| **`wfe` (the "park")** | **0.09 ms** | **0.7 ns** | **0.4%** |
+| unattributed | 1.49 ms | 11.1 ns | 7.4% |
+
+**The `wfe` returns in 0.7 ns — it is a no-op.** `gpu.rb_wait_early_out` is 0, so it is executed on
+essentially every pass and simply does not wait.
+
+The claim in `612d064` is not wrong about the instruction, it is wrong about the context.
+`tools/probes/wfe_under_load.c` reproduces the original conditions and confirms **~1250 ns, and that
+figure does not move with 0, 1, 3 or 7 busy sibling threads** — so machine load alone is not the
+explanation. What differs in the emulator is that something clears the exclusive monitor or sets the
+event register continuously; ARM's WFE is defined to return immediately when the event register is
+already set. The producer writing the ring is the obvious candidate, the reservation granule covering
+neighbouring globals another. **Not yet pinned down, and it should be before anything is built on
+`wfe` again anywhere in this codebase.**
+
+The practical consequence is independent of the cause: the loop is a spin, and **`sched_yield` alone
+is 17.95 ms of every 49.90 ms frame — 36% of one core** — running 2.7 million times a second.
+
+**The fix is a genuine trade-off, not an obvious win, which is why nothing has been changed yet.**
+Removing the yield makes it a hotter spin, not a cooler one — the syscall is what currently paces the
+loop, so the pass rate would rise to fill the gap. Making the wait actually sleep (a short
+`nanosleep` after N consecutive failures, or a real blocking primitive) costs command-pickup latency,
+which is precisely what `612d064` was careful to preserve (it measured wakeup at 42–208 ns). Given
+`cp_idle` is 40% of the frame, tens of microseconds of pickup latency is likely irrelevant — but
+"likely" is not a measurement, and the precedent here is that freeing CPU in the command processor
+has never once moved the frame rate (`5933733`: 40 points of CPU, zero fps).
+
+So this is a **power and thermal** item on a machine already running three guest cores and the shader
+pools on four P-cores, not a frame-rate one, and it should be scheduled and measured as such.
