@@ -25,7 +25,9 @@ cmake --build build                                            # ~2 min clean on
 
 `MACOS_BUNDLE=OFF` for day-to-day work — bundle builds are for signing/entitlements. `RelWithDebInfo` deliberately has **LTO off**: it keeps relinks fast and keeps `.o` files as real Mach-O, so `llvm-objdump` can inspect generated code. `Release` turns ThinLTO on and the objects become LLVM bitcode.
 
-Useful launch flags (`src/config/LaunchSettings.cpp` has the full list): `--force-interpreter` to bypass the recompiler when isolating a JIT bug, `--ppcrec-lower-addr` / `--ppcrec-upper-addr` to bisect which recompiled function broke.
+Useful launch flags (`src/config/LaunchSettings.cpp` has the full list): `--force-interpreter` to bypass the recompiler when isolating a JIT bug, `--ppcrec-lower-addr` / `--ppcrec-upper-addr` to bisect which recompiled function broke, and
+`--telemetry <file.jsonl>` / `--telemetry-label <name>` to record the per-frame counters that
+everything below is measured with.
 
 There is **no test suite.** Verification is: it builds, it boots a title, the frame looks right, and nothing new appears in the log.
 
@@ -63,7 +65,7 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
 
 - **A BotW telemetry run is two workloads, not one, and the split is ~50/50.** `drive-botw.sh`
   spends its first **~4,050 frames in the title and save menus** — 113 draws, 4.2 ms GPU, 33.27 ms
-  frames — before ~4,750 frames of gameplay at 3,516 draws, 19.0 ms GPU, 49.90 ms frames. `--skip=60`
+  frames — before ~4,750 frames of gameplay at 3,516 draws, ~16.5 ms GPU, 49.90 ms frames. `--skip=60`
   removes none of it. A median over the whole file lands wherever the phase ratio falls and describes
   no frame that occurred, and because two runs of the same script never have quite the same ratio,
   **that difference shows up as a counter delta that looks like a treatment effect**. It produced a
@@ -99,7 +101,14 @@ Measured from `GPUEndTime - GPUStartTime` on every command buffer:
 
 So the GPU is **not** idle in gameplay, and `draws-per-pass` is a healthy 7–9 rather than the alarming 1.75 the title card shows. An earlier revision of this file claimed the opposite from title-card-only data; `docs/porting/00-master-plan.md` carries the full correction. Before drawing any conclusion about graphics work, check which scene you sampled.
 
-**Use BotW for graphics measurement, not MK8.** Breath of the Wild (US v208) at the Shrine of Resurrection with Link standing still, reachable unattended via `testing/drive-botw.sh`. It is *exactly* repeatable — `passes/f` holds within ±2 and `draws/f` within ±3 across every 60-frame window — which no MK8 scene is. Current numbers: 28.6 FPS, 149 passes/frame, ~1190 draws/frame, **GPU 15.6 ms/frame**, CPU ~205% of one core.
+**Use BotW for graphics measurement, not MK8.** Breath of the Wild (US v208) at the Shrine of Resurrection with Link standing still, reachable unattended via `testing/drive-botw.sh`. It is *exactly* repeatable — `passes/f` holds within ±2 and `draws/f` within ±3 across every 60-frame window — which no MK8 scene is.
+
+> **The two sets of Shrine numbers in this file disagree and have not been reconciled.** An older
+> xcprof/capture-scene reading gives 28.6 FPS, 149 passes/f, ~1190 draws/f, GPU 15.6 ms; the
+> telemetry table below gives 30.06 fps, 132 passes/f, 3784 draws/f, GPU 14.0 ms. Different
+> instruments and different counting (draw *calls* vs draw *sequences*), and the GPU figures predate
+> the `839466d` `busy_ns` fix. **Re-measure the Shrine with the current harness before quoting
+> either.** The Korok Forest gameplay numbers below are current (n=3, 2026-07-31).
 
 **Two BotW scenes, and the open world is the interesting one.** `testing/drive-botw.sh` reaches the
 Shrine of Resurrection. A Korok Forest save (dense foliage + fog, the "roaming the open world" case)
@@ -111,13 +120,19 @@ is the heavier scene. Measured with the telemetry harness:
 | frame ms median / p99 | 33.27 / 49.92 | 49.90 / **49.97** |
 | draws/frame | 3784 | **3480** (fewer!) |
 | render passes/frame | 132 | **201** |
-| GPU busy/frame | 14.0 ms | 18.7 ms |
-| GPU duty cycle | 42% | **38%** |
+| GPU busy/frame | 14.0 ms † | **16.4 – 16.5 ms** |
+| GPU duty cycle | 42% † | **33%** |
+
+† Shrine column measured before `839466d` and therefore inflated — see the note above. The Korok
+GPU figure is the current n=3 gameplay-phase median; the 18.7 ms an earlier revision carried here
+was the inflated pre-fix value.
 
 **The forest is not GPU-bound and is not draw-bound** — it issues *fewer* draws than the shrine and
 leaves the GPU idle 62% of the time. What it is, is **vsync-quantised**: 20.04 fps is exactly
 59.94/3, 49.90 ms is exactly 1.5x the shrine's 33.27 ms, and p99 equals the median, so there is
-essentially no variance. Something misses the 33.3 ms deadline and the software vsync timer
+essentially no variance (the frame is exactly three ~16.63 ms slots; an earlier revision wrote
+that as "exactly 59.94/3", which is 19.98 fps, not 20.04 — the implied refresh is ~60.1 Hz).
+Something misses the 33.3 ms deadline and the software vsync timer
 (`LatteTiming`, host-driven vsync is a stub on this fork) drops it to the next whole division rather
 than degrading smoothly.
 
@@ -138,9 +153,13 @@ frame / 20.04 fps, from `--telemetry`:
 | **all 3 guest cores busy** | **26.89** | **18% of 3-core capacity** |
 | Latte thread: waiting for guest commands (`cp_idle`) | 20.03 | 40% |
 | Latte thread: waiting for **vsync** (`cp_fence`) | 15.58 | 31% |
-| GPU busy (asynchronous) | 19.20 | 38% |
+| GPU busy (asynchronous) | 16.45 † | 33% |
 
-Guest cores ~18% busy, GPU ~38% busy, command processor ~71% waiting.
+Guest cores ~18% busy, GPU ~33% busy, command processor ~71% waiting.
+
+† The 19.20 ms this table originally carried was measured before `839466d` and double-counted
+overlapping command buffers; the current n=3 median is 16.45 ms. The other rows are unaffected —
+only `gpu.busy_ns` had the inflation.
 
 **`cp_fence` is solved and is not a defect: it is the emulated vsync timer.** The fence is released
 **10 µs** after a vsync signal (p99 30 µs), exactly one vsync and one flip fire per stall, and the
@@ -164,8 +183,9 @@ the Latte thread: **6.78 ms/frame, of which 6.75 ms is texture-readback force-fi
 (`gpu.occlusion_flush_ns` is 0.00). It collapses the intra-frame GPU gap from 16.39 ms to 0.25 ms.
 
 **Don't just flip the default** — it is a documented accuracy tradeoff, and the drain force-finishes
-*every* in-flight readback whether or not the guest wants one. A surgical version keeps the accuracy
-and recovers most of the 6.75 ms.
+*every* in-flight readback whether or not the guest wants one. A surgical version *looked* like it
+would keep the accuracy and recover most of the 6.75 ms; **it was tried three ways and does not
+exist** — see "The readback drain is not surgically improvable" below before proposing one.
 
 **Two Metal-side hypotheses are refuted, so don't re-raise them.** `queue_latency_ns`
 (14.29 → 14.69 ms) and `command_buffers` (7 → 7) do not move between the 20 fps and 30 fps arms, so
@@ -173,7 +193,7 @@ neither the `MTLEvent` chain nor the commit threshold is what holds this scene b
 second way by the event-wrap fix below: buffers *had* been overlapping for most of every run and it
 bought nothing.
 
-**`gpu.busy_ns` before commit `1616cd6` is inflated — do not compare across that boundary.**
+**`gpu.busy_ns` before commit `839466d` is inflated — do not compare across that boundary.**
 `EVENT_VALUE_WRAP` was 4096, so the signalled value went backwards every ~29 s and periodically
 disabled the serialisation. `gpu.busy_ns` sums per-buffer intervals, so overlapping buffers were
 double-counted. Fixed to a monotonic `uint64`; the same scene reads **16.8 ms** properly serialised
@@ -257,7 +277,7 @@ GPU busy all flat to within 0.6%. The guest's 15.4 ms wait is not for GPU work w
 **Don't re-raise this.**
 
 *(An earlier revision credited this change with −6.2% GPU busy. That was a menu/gameplay blend
-artifact — see "Phases" below — and on gameplay frames it is +0.5%, i.e. nothing.)*
+artifact — see "A BotW telemetry run is two workloads" above — and on gameplay frames it is +0.5%, i.e. nothing.)*
 
 Note the notification fires from two sites that look identical to the CP and are nothing alike:
 `RingStarvation` ~129,000×/frame inside a park-and-recheck loop, `FenceStall` once. Committing on
@@ -281,15 +301,15 @@ For Metal work: `MTL_HUD_ENABLED=1` for a frame-time overlay, `MTL_DEBUG_LAYER=1
 
 **Guest CPU.** PPC → IML (an SSA-ish IR) → AArch64, in `src/Cafe/HW/Espresso/Recompiler/`. `PPCRecompilerImlGen*.cpp` lowers PPC to IML; `IML/IMLOptimizer.cpp` runs the passes; `BackendAArch64/` emits code via the `xbyak_aarch64` submodule. There is currently **no backend peephole pass** — the only one that existed was x86-specific and was deleted. The `IMLUtil_*` helpers in `IMLOptimizer.cpp` were kept as substrate for an AArch64 replacement.
 
-`BackendAArch64.cpp` has 13 `static_assert`s pinning `PPCInterpreter_t` field offsets into AArch64's scaled-imm12 addressing range. **Any field added to or removed from `PPCState.h` is checked by these at compile time** — that is by design, not an obstacle.
+`BackendAArch64.cpp` has 14 `static_assert`s pinning `PPCInterpreter_t` field offsets into AArch64's scaled-imm12 addressing range. **Any field added to or removed from `PPCState.h` is checked by these at compile time** — that is by design, not an obstacle.
 
 Guest threads are `ucontext` fibers (`src/util/Fiber/FiberUnix.cpp`), not host threads. `makecontext` passes `int` arguments, so the 64-bit fiber parameter is split across two — hence `__OSFiberThreadEntry(uint32 _high, uint32 _low)`.
 
 **Guest memory** is pure fastmem: one 4 GB `PROT_NONE` reservation, sub-ranges `mprotect`'d on demand, guest→host is `memory_base + addr` with no bounds check. Unmapped accesses fault to SIGSEGV. **Apple Silicon uses 16 KB pages** — `MemMapperUnix.cpp` and the `MMURange` table in `MMU.cpp` still contain 4 KB assumptions (see `02-cpu-jit-memory.md`).
 
-**Graphics.** `LatteThread` is the single GPU command-processor thread; all renderer calls happen there. Latte (R700) shaders are decompiled to **MSL source text** and compiled at runtime — there is no compiled-shader cache, so every shader recompiles on every launch. The Metal backend keeps exactly one encoder alive at a time, so any mid-frame texture/buffer upload tears down the render pass.
+**Graphics.** `LatteThread` is the single GPU command-processor thread; all renderer calls happen there. Latte (R700) shaders are decompiled to **MSL source text** and compiled at runtime. There is a persistent *pipeline* cache (`shaderCache/transferable/{titleid}_mtlpipeline.bin`, `MetalPipelineCache.cpp:267`), but it stores pipeline **state descriptors**, not compiled binaries — it replays them on the loading screen, so **every shader still recompiles from MSL on every launch**. The `MTLBinaryArchive` code that would fix this exists in `MetalPipelineCompiler.cpp` but is entirely commented out. The Metal backend keeps exactly one encoder alive at a time, so any mid-frame texture/buffer upload tears down the render pass.
 
-**Threading.** ~40-50 threads with **zero QoS annotations** on a 4P+4E machine. `g_CPUFeatures` now exposes `performanceCores`/`efficiencyCores` for sizing worker pools; `hardware_concurrency()` reports 8 and causes the shader compiler pools to oversubscribe. Note `FSpinlock` is a pure spin with no priority donation — adding QoS before replacing it with `os_unfair_lock` converts a latent bug into a reproducible hang.
+**Threading.** ~45-47 threads on a 4P+4E machine. QoS **is** wired up now: `SetThreadName(name, ThreadRole)` (`util/helpers/helpers.cpp:121`) maps a role to a QoS class and applies it to the calling thread — guest cores and the GPU command thread `USER_INTERACTIVE`, input `USER_INITIATED`, compile/background `UTILITY` (deliberately not `BACKGROUND`, which macOS throttles hard). 16 call sites pass a role; anything still calling the one-argument form gets `UNSPECIFIED`. `g_CPUFeatures` exposes `performanceCores`/`efficiencyCores` for sizing worker pools, because `hardware_concurrency()` reports 8 and oversubscribes the shader compiler pools. `FSpinlock` is **no longer a spin** — it is `os_unfair_lock` (`util/helpers/fspinlock.h`), which donates priority; the old warning about QoS-before-`os_unfair_lock` producing a hang is discharged, both halves are done.
 
 ## Style
 

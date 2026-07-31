@@ -38,7 +38,7 @@ This fork exists to delete those layers rather than apologise for them.
 | Graphics path on a Mac  | Vulkan → MoltenVK → Metal      | **Metal, directly**              |
 | Minimum macOS           | 13.4                           | **26.0**                         |
 | Thread scheduling       | none                           | **QoS-aware, P/E-core split**    |
-| Performance measurement | frame counter                  | **96-counter telemetry harness** |
+| Performance measurement | frame counter                  | **107-counter telemetry harness** |
 
 Roughly **56,000 lines removed**: both non-Metal renderers, the GLSL shader emitter, the entire
 x86-64 recompiler backend, glslang, MoltenVK and the Vulkan headers. `precompiled.h` `#error`s on
@@ -131,7 +131,7 @@ codebase structurally could not use.
 ## Measuring instead of guessing
 
 Most emulator optimisation is folklore. This fork ships a **telemetry harness compiled into the
-core**: 96 counters across CPU, GPU, memory and accuracy, `__thread`-local and cache-line striped,
+core**: 107 counters across CPU, GPU, memory and accuracy, `__thread`-local and cache-line striped,
 gated behind a single branch on a global mask so that a disabled build measurably costs nothing.
 
 ```sh
@@ -180,8 +180,15 @@ Every measurement lands in `testing/golden/baseline.tsv`, alongside a window-onl
 
 The last row is the same scene with **`GX2DrawdoneSync`** — a user-facing accuracy option, on by
 default — turned off. It is listed separately rather than replacing the row above it, because the
-20 fps figure is what the emulator does out of the box and both numbers are real. The right fix is
-to make that drain surgical rather than to change the default, and it has not been done yet.
+20 fps figure is what the emulator does out of the box and both numbers are real.
+
+The obvious fix was to make that drain *surgical* — wait only for what the guest actually reads —
+rather than change the default. **Three attempts later, that fix does not exist.** The delayed-start
+theory, the position-in-command-buffer theory and the GPU-ordering theory were each instrumented and
+each came back empty; the last was a full A/B at n=3 per arm in which every performance range
+overlapped. What the emulator waits for is the GPU genuinely still having ~6 ms of work outstanding,
+which is what `GX2DrawDone` *means*. Only doing less GPU work can shorten it, and that is where the
+effort goes next.
 
 Everything above was measured on one machine — an **8 GB M2 Mac mini** (4P+4E, 16 KB pages,
 macOS 26.5) — against each title's own target frame rate: 60 FPS for Mario Kart 8, 30 for Breath of
@@ -201,7 +208,7 @@ command path, Cafe OS's *cooperative* scheduler, the audio DSP, and a register o
 accuracy gap.
 
 Every claim carries a provenance tag: `[SRC file:line]` for something read out of this codebase
-(**160 such anchors**, all machine-verified by `tools/docs/check-src-refs.py`), `[HW]` for a
+(**155 such anchors**, all machine-verified by `tools/docs/check-src-refs.py`), `[HW]` for a
 hardware datasheet, `[RE]` for community reverse engineering, `[EST]` for an estimate, and
 `[CONFLICT]` where sources disagree. Writing it found and fixed two real bugs.
 
