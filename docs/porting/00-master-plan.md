@@ -929,3 +929,71 @@ totalled **6** for the run, which looks alarming until you see *when* — one at
 across frames 4028–4031, the menu→gameplay transition where the workload jumps from 113 draws to
 3,375. **Flat across all 5,712 gameplay frames afterwards**, and RSS held at ~1.39 GB with no
 staircase. Growth to a working set is not a leak; a climb during steady state would be.
+
+### What BotW actually reads back: 21 KB of float arrays, delivered by draining the pipeline
+
+`enableReadback` is set for **any** `TM_LINEAR_ALIGNED` texture (`LatteTexture.cpp:1311`) on the
+theory that the CPU can read a linear surface directly. The hypothesis worth testing was that BotW's
+linear targets are never actually read, in which case the `GX2DrawDone` drain — 6.75 ms/frame, the
+whole 20-vs-30 fps gap — would be paid for nothing.
+
+44 distinct textures are mirrored over a run, but almost all are one-off asset loads during the
+menu→gameplay transition. **Steady state is six tiny surfaces**, each queued once every ~2 frames:
+
+| physAddr | size | format | bytes | queued |
+|---|---|---|---|---|
+| `3cdd6500`, `3cdd8600` | 64×8 | `R32_G32_B32_A32_FLOAT` | 8 KB each | 2,483 |
+| `3d110b00`, `3d112700` | 64×3 | `R16_G16_B16_A16_FLOAT` | 1.5 KB each | 2,483 |
+| `3d10d900`, `3d10de00` | 64×1 | `R32_G32_B32_A32_FLOAT` | 1 KB each | 1,649 |
+
+**~21 KB in total.** These are not images — 64-wide arrays of RGBA floats are a GPU-computed data
+table being handed back to the CPU, and a game does not build one of those by accident. So the
+hypothesis is **refuted: the readbacks are real and the game wants them.** Skipping them is not
+available.
+
+What the finding does establish is where the cost actually is. The transfer is 21 KB; measured
+`readback_age_at_wait_ns` is 14.19 ms and `readback_forcestart` is 0, so the copy is neither slow nor
+late. **The entire 6.75 ms is pipeline-drain latency to deliver 21 KB**, because the blit is encoded
+at the end of a command buffer holding a frame's worth of unrelated draws, and a command buffer's
+encoders execute in order.
+
+That points at a much narrower change than the one already refuted. Removing the `MTLEvent` chain
+globally does nothing (measured twice). But **exempting the readback's own command buffer from the
+chain** would leave it ordered against its true dependency by Metal's automatic hazard tracking —
+the blit reads a texture a render pass wrote, and every resource here is default-tracked — while
+freeing it from ~500 unrelated draws. Ceiling not yet measured: it depends on how early in the frame
+the source surface is produced, which nobody has looked at.
+
+### The 33 ms frame decomposed — and 60 fps is out of reach without cutting GPU work
+
+Every decomposition in this document was taken at 49.90 ms, a frame shape the drain creates. With
+`GX2DrawdoneSync` off, gameplay phase, n=1:
+
+| | 49.90 ms frame | **33.27 ms frame** |
+|---|---|---|
+| fps | 20.04 | **30.06** |
+| `cp_idle` | 20.05 ms (40%) | **19.93 ms (60%)** |
+| `cp_fence` (vsync wait) | 15.54 ms | 5.98 ms |
+| work (frame − waits) | 14.20 ms | **7.37 ms** |
+| GPU busy (concurrent) | 16.85 ms | **16.69 ms** |
+| critical path | 35.23 ms | **18.63 ms** |
+| gap: inter-frame / intra-frame | 16.73 / 16.40 | 16.25 / **0.33** |
+
+Three things fall out.
+
+**1. `cp_idle` is a constant, not a proportion.** It is ~20 ms in both configurations while the frame
+shrinks by a third. The command processor waits the same absolute time for guest commands either way,
+so it is now **60% of the frame** and the largest single term. It is also not obviously waste — it
+overlaps GPU execution.
+
+**2. 60 fps is arithmetically unavailable here.** One vsync slot is 16.63 ms and **GPU busy alone is
+16.69 ms**, already over. The CPU side has 55.8% headroom. So any further frame-rate work in this
+scene has to reduce GPU work — 203 render passes with `LoadActionLoad` + `StoreActionStore` on every
+attachment is the standing candidate — and nothing else will do.
+
+**3. The intra-frame gap really was entirely the drain**, 16.40 → 0.33 ms. What remains is the
+inter-frame gap, which is the GPU finishing early and waiting for vsync: correct behaviour.
+
+Note `gpu.gap_count` now reads 7 rather than the 2 recorded earlier. That is the in-order retirement
+fix working: previously buffers retiring out of order let `m_lastGpuEndTime` run ahead and swallowed
+most transitions, so the gap measurement itself was undercounting.

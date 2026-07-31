@@ -195,3 +195,6 @@ TLM_COUNTER(AccAudioUpdatePolls,    "acc.audio_update_polls",    "count", Accura
 // says whether the state it sets is ever actually on, which is what decides whether the
 // MSL emitter needs an ordered-dither path.
 TLM_COUNTER(AccAlphaToMaskDraws,    "acc.alpha_to_mask_draws",   "count", Accuracy)
+// Which textures get mirrored to CPU RAM, and how often. The detail lines carry
+// physAddr/size/format. Every one of these is a candidate cause of the GX2DrawDone drain.
+TLM_COUNTER(AccReadbackQueued,      "acc.readback_queued",       "count", Accuracy)

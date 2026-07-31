@@ -3,6 +3,7 @@
 #include "Cafe/HW/Latte/Renderer/Renderer.h"
 #include "Cafe/HW/Latte/Core/LatteTexture.h"
 #include "Cemu/Telemetry/Telemetry.h"
+#include <unordered_map>
 
 #define LOG_READBACK_TIME
 
@@ -12,6 +13,10 @@ struct LatteTextureReadbackQueueEntry
 	uint32 lastUpdateDrawcallIndex;
 	LatteTextureView* textureView;
 };
+
+// physAddr -> how many times a readback has been queued for it. The detail string is the
+// dedup key, so the varying count has to live outside it.
+std::unordered_map<uint32, uint64> sReadbackQueueCount;
 
 std::vector<LatteTextureReadbackQueueEntry> sTextureScheduledReadbacks; // readbacks that have been queued but the actual transfer has not yet been started
 std::queue<LatteTextureReadbackInfo*> sTextureActiveReadbackQueue; // readbacks in flight
@@ -92,6 +97,22 @@ void LatteTextureReadback_Initate(LatteTextureView* textureView)
 			return;
 		}
 	}
+	// Identify what is actually being mirrored to CPU RAM. enableReadback is set for ANY
+	// TM_LINEAR_ALIGNED texture (LatteTexture.cpp:1311) on the theory that the CPU can read a
+	// linear surface directly -- but the emulator cannot know whether the guest ever will, so
+	// it mirrors defensively. That defence costs a full GPU pipeline drain at every
+	// GX2DrawDone: 6.75 ms/frame in BotW, which is the entire 20-vs-30 fps gap. If the target
+	// turns out to be something the guest never reads, the whole cost is for nothing.
+	if (tlm::AreaEnabled(tlm::Area::Accuracy)) [[unlikely]]
+	{
+		LatteTexture* t = textureView->baseTexture;
+		tlm::NoteAccuracyDetail(tlm::CounterId::AccReadbackQueued,
+			fmt::format("{:08x} {}x{} fmt {:04x} tm {} mips {} depth {}",
+						t->physAddress, t->width, t->height, (uint32)t->format,
+						(uint32)t->tileMode, t->mipLevels, t->isDepth ? 1 : 0),
+			++sReadbackQueueCount[t->physAddress]);
+	}
+
 	// queue
 	LatteTextureReadbackQueueEntry queueEntry;
 	queueEntry.initiateTime = HighResolutionTimer().now().getTick();
