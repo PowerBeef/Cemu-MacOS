@@ -217,7 +217,17 @@ identical runs, while frame time, critical path and `queue_latency_ns` are stabl
 improvement" in the drain counter is noise; do not report one without a same-arm control.
 
 We are waiting for the GPU to catch up, which is what `GX2DrawDone` means. Reordering cannot help —
-only doing less GPU work can. See the master plan for what *is* still improvable.
+only doing less GPU work can.
+
+**And "less GPU work" means fewer ALU and texture operations, not less bandwidth — measured.** A
+`Metal GPU Counters` capture on Korok gameplay (179k samples, conditioned on the 42% of samples where
+the GPU is active) puts **ALU as the top limiter in 45.6%** of them and texture sampling in 22.8%,
+against **Last Level Cache 7.3% and MMU 5.5%**. Combined bandwidth is 41.26 GB/s mean. So the
+804 MB/frame of attachment traffic is real but not limiting, and the planned in-pass streamout copy —
+which would have removed 300 MB/frame of redundant tile store/reload — was **cancelled before being
+built** because it relieves a subsystem that bottlenecks the GPU about an eighth of the time.
+`Partial Renders Count` is 0 throughout, so there are no tile-memory spills either. See the master
+plan; the next lever is shader cost, which is a different project.
 
 Two numbers stand out as suspects:
 

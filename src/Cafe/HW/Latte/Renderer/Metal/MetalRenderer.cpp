@@ -387,6 +387,16 @@ void MetalRenderer::DrawEmptyFrame(bool mainWindow)
 
 void MetalRenderer::SwapBuffers(bool swapTV, bool swapDRC)
 {
+    // Streamout-read tracking is FRAME scoped, not pass scoped. Pass scope was unreachable by
+    // construction: the copy calls GetBlitCommandEncoder(), which ends the render pass, so the
+    // very act of recording a write also guaranteed the list was cleared before any read could
+    // arrive. Both counters read zero and the vertex control caught it.
+    //
+    // Frame scope over-approximates -- it counts reads in later passes, which a pass boundary
+    // would already order -- but it over-approximates in the safe direction: a ZERO here is
+    // strong evidence no reader exists, which is the answer that unblocks the in-pass copy.
+    m_streamoutWritesThisPass.clear();
+
     // Retirement only ran from CommitCommandBuffer and occlusionQuery_updateState, so an
     // emulator that stops committing -- paused, or a menu with almost no draws -- never
     // reclaimed staging memory at all. A frame boundary always happens, so pump it here too.
@@ -1069,6 +1079,9 @@ void MetalRenderer::bufferCache_copyStreamoutToMainBuffer(uint32 srcOffset, uint
     if (m_memoryManager->UseHostMemoryForCache())
         dstOffset -= m_memoryManager->GetImportedMemBaseAddress();
 
+    if (tlm::AreaEnabled(tlm::Area::Gpu)) [[unlikely]]
+        NoteStreamoutWrite(dstOffset, size);
+
     CopyBufferToBuffer(GetXfbRingBuffer(), srcOffset, m_memoryManager->GetBufferCache(), dstOffset, size, MTL::RenderStageVertex | MTL::RenderStageMesh, ALL_MTL_RENDER_STAGES);
 }
 
@@ -1481,6 +1494,8 @@ void MetalRenderer::draw_execute(uint32 baseVertex, uint32 baseInstance, uint32 
         if (offset != INVALID_OFFSET)
         {
             // Bind
+            if (tlm::AreaEnabled(tlm::Area::Gpu)) [[unlikely]]
+                NoteBufferCacheRead((uint32)offset, false);
             SetBuffer(renderCommandEncoder, GetMtlShaderType(vertexShader->shaderType, usesGeometryShader), m_memoryManager->GetBufferCache(), offset, GET_MTL_VERTEX_BUFFER_INDEX(i));
         }
     }
@@ -1871,6 +1886,42 @@ MTL::RenderCommandEncoder* MetalRenderer::GetTemporaryRenderCommandEncoder(MTL::
 }
 
 // Some render passes clear the attachments, forceRecreate is supposed to be used in those cases
+// Records a streamout destination range written during the current render pass.
+void MetalRenderer::NoteStreamoutWrite(uint32 dstOffset, uint32 size)
+{
+    if (size == 0)
+        return;
+    // Bounded: a pathological frame must not grow this without limit. 256 comfortably covers the
+    // ~70 streamout copies/frame measured on this scene, now that the scope is a whole frame.
+    if (m_streamoutWritesThisPass.size() < 256)
+        m_streamoutWritesThisPass.emplace_back(dstOffset, dstOffset + size);
+}
+
+// Flags a bind of the buffer cache at an offset that lands inside a streamout range written earlier
+// in this same render pass.
+//
+// The test is the offset alone, not an overlap, because the bind carries no size -- the read extent
+// is whatever the shader's block declares. An offset landing inside a written range is a definite
+// read of that range; a read starting before it and running into it would be missed. So this
+// under-reports, which is the safe direction: a zero here is weak evidence of "no reader", and the
+// vertex counter is what proves the detector works at all.
+void MetalRenderer::NoteBufferCacheRead(uint32 offset, bool isFragmentStage)
+{
+    if (m_streamoutWritesThisPass.empty())
+        return;
+    for (const auto& [begin, end] : m_streamoutWritesThisPass)
+    {
+        if (offset >= begin && offset < end)
+        {
+            if (isFragmentStage)
+                TLM_INC(Gpu, GpuStreamoutReadFragment);
+            else
+                TLM_INC(Gpu, GpuStreamoutReadVertex);
+            return;
+        }
+    }
+}
+
 // Attributes one same-FBO split to whoever ended the previous render pass.
 //
 // Symbolication is expensive, so it happens once per distinct call stack: the raw address tuple is
@@ -2588,6 +2639,8 @@ void MetalRenderer::BindStageResources(MTL::RenderCommandEncoder* renderCommandE
     		if (offset == INVALID_OFFSET)
                 continue;
 
+            if (tlm::AreaEnabled(tlm::Area::Gpu)) [[unlikely]]
+                NoteBufferCacheRead((uint32)offset, shader->shaderType == LatteConst::ShaderType::Pixel);
             SetBuffer(renderCommandEncoder, mtlShaderType, m_memoryManager->GetBufferCache(), offset, binding);
 		}
 	}

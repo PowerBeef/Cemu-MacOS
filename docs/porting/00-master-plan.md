@@ -1027,3 +1027,57 @@ inter-frame gap, which is the GPU finishing early and waiting for vsync: correct
 Note `gpu.gap_count` now reads 7 rather than the 2 recorded earlier. That is the in-order retirement
 fix working: previously buffers retiring out of order let `m_lastGpuEndTime` run ahead and swallowed
 most transitions, so the gap measurement itself was undercounting.
+
+
+---
+
+### The GPU is ALU- and texture-bound, not bandwidth-bound — the streamout work is cancelled
+
+`Metal GPU Counters` capture, Korok Forest gameplay, 20.5 s, 179,221 samples per counter
+(`testing/traces/step1-gpucounters.trace`, gitignored). Medians are meaningless here because the GPU
+idles ~67% of the frame, so everything below is conditioned on **active** samples — those where some
+limiter exceeds 5%, which is 42.1% of all samples and matches the ~33% duty cycle.
+
+| limiter | mean % during active samples | share of samples where it is THE top limiter |
+|---|---|---|
+| **ALU** | **35.34** | **45.6%** |
+| Texture Sample | 28.26 | 22.8% |
+| Texture Filter | 22.27 | 4.4% |
+| Texture Write | 15.31 | 13.3% |
+| **GPU Last Level Cache** | **17.62** | **7.3%** |
+| **MMU** | **13.15** | **5.5%** |
+| Buffer Read / Write | 0.88 / 0.00 | ~0% |
+
+GPU bandwidth during active samples: read 24.04 GB/s, write 17.22 GB/s, **combined 41.26 GB/s mean**
+(p95 98.33). `Partial Renders Count` is **0 across every sample** — no tile-memory spills, so the
+pass structure is not pathological in the way that would matter most.
+
+**The memory path is the bottleneck in only 12.8% of active samples (LLC 7.3% + MMU 5.5%). ALU and
+texture together are the bottleneck in 86.1%.**
+
+The 804 MB/frame of attachment traffic is real and the figure is confirmed — 16.1 GB/s at 20.04 fps,
+about 39% of measured active bandwidth. But eliminating the 300 MB/frame of same-FBO split waste
+would relieve a subsystem that limits the GPU roughly an eighth of the time. **It cannot convert into
+the 1.90 ms the deadline needs.**
+
+Per the plan's own gate: report and stop rather than build it anyway. **Step 4 (the in-pass streamout
+copy) is cancelled** — not because the mechanism would fail, but because the premise underneath it is
+false.
+
+**The other gate passed, and is recorded for whoever revisits this.** `gpu.streamout_read_fragment`
+is **0** while the `gpu.streamout_read_vertex` control reads **1,136/frame**, so nothing in the
+fragment stage reads a streamout range and a vertex-only intrapass barrier *would* be legal on Apple
+silicon. If the ALU bottleneck is ever addressed and bandwidth becomes the limiter, the in-pass copy
+is unblocked and this measurement is the evidence.
+
+> The first version of that detector read zero on **both** counters. The scope was self-defeating:
+> the streamout copy calls `GetBlitCommandEncoder()`, which ends the render pass, so recording a
+> write also guaranteed the list was cleared before any read arrived — "read within the pass that
+> wrote it" was unreachable by construction. The vertex control is the only reason this was caught
+> rather than published as "nothing reads streamout". Scope is now frame-wide.
+
+**Where GPU time actually goes, and what that means next.** Any further frame-rate work in this scene
+has to reduce **shader cost**, not memory traffic: ALU work and texture sampling/filtering. That is a
+different and harder project than anything attempted so far — it points at the MSL the Latte
+decompiler emits, and at texture filtering settings, rather than at the Metal backend's structure.
+Bandwidth-shaped optimisations are now closed by measurement alongside the ordering-shaped ones.

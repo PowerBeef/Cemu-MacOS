@@ -36,6 +36,18 @@ TLM_COUNTER(GpuPassAttachmentBytes, "gpu.pass_attachment_bytes", "bytes", Gpu)
 // the actual prize for eliminating a split -- one redundant store plus one redundant load -- and it
 // is NOT the frame total times the split fraction, because split passes need not be typical size.
 TLM_COUNTER(GpuPassSplitBytes,      "gpu.pass_split_bytes",      "bytes", Gpu)
+
+// --- Does anything READ a streamout range inside the pass that wrote it? (Step 1b) ---
+// Decides whether the in-pass streamout copy is legal at all. Apple: "Metal doesn't support
+// intrapass barriers that wait for the tile or fragment stages on ... TBDR architecture". So an
+// in-pass copy can only be ordered against VERTEX-stage readers. The buffer cache is bound to every
+// stage including Pixel (MetalRenderer.cpp:2591), so the fragment stage *can* read a copied range --
+// these counters say whether it *does*.
+//
+// The vertex counter is the positive control. If both read zero the detector is broken, not the
+// answer: a hook that silently measures nothing already cost a full run in this session.
+TLM_COUNTER(GpuStreamoutReadVertex, "gpu.streamout_read_vertex", "count", Gpu)
+TLM_COUNTER(GpuStreamoutReadFragment,"gpu.streamout_read_fragment","count", Gpu)
 // Draws that bind a depth-format texture as a sampler. The shrine measured EXACTLY ZERO, which is
 // the whole basis for "the final depth store each frame is dead". Korok is foliage + fog and fog
 // usually samples depth, so if this is non-zero here that conclusion does not transfer.

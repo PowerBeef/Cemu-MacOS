@@ -351,6 +351,8 @@ public:
 	MTL::RenderCommandEncoder* GetTemporaryRenderCommandEncoder(MTL::RenderPassDescriptor* renderPassDescriptor);
     void NotePassStructure(class LatteCachedFBO* fbo);
     void NoteSplitCause();
+    void NoteStreamoutWrite(uint32 dstOffset, uint32 size);
+    void NoteBufferCacheRead(uint32 offset, bool isFragmentStage);
 	MTL::RenderCommandEncoder* GetRenderCommandEncoder(bool forceRecreate = false);
     MTL::ComputeCommandEncoder* GetComputeCommandEncoder();
     MTL::BlitCommandEncoder* GetBlitCommandEncoder();
@@ -568,6 +570,11 @@ private:
 	// the same FBO (i.e. the teardown was waste).
 	void* m_lastRenderTeardownStack[10] = {};
 	int m_lastRenderTeardownDepth = 0;
+
+	// Streamout destination ranges written into the buffer cache during the CURRENT render pass,
+	// as [begin, end) byte offsets. Cleared when a pass starts. Used only to answer whether a later
+	// bind in the same pass reads one -- see gpu.streamout_read_{vertex,fragment}.
+	std::vector<std::pair<uint32, uint32>> m_streamoutWritesThisPass;
 	// Host time at the first GetCommandBuffer() of the current frame, for the critical path.
 	uint64 m_frameFirstCommandBufferNs = 0;
 	// Did the buffer retired just before this one carry the frame's present?
