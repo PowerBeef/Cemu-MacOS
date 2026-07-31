@@ -786,15 +786,14 @@ roughly one pipeline depth behind when it is asked.
 
 What remains genuinely improvable is narrower and should not be confused with the above:
 
-- The readback blit is appended to the **current** command buffer by `GetBlitCommandEncoder`
-  (`LatteTextureReadbackMtl.cpp:25`), which then commits. A command buffer's encoders execute in
-  order, so waiting for the blit means waiting for every draw encoded ahead of it in that buffer —
-  up to ~500. A blit issued into its **own** command buffer would need only its true dependency (the
-  render that wrote the source texture). That is a real decoupling, but it is bounded by that
-  dependency and it interacts with the `MTLEvent` chain, which would re-serialise it anyway.
+- ~~The readback blit is appended to the **current** command buffer, so waiting for it means waiting
+  for every draw encoded ahead of it — up to ~500. A blit in its **own** command buffer would need
+  only its true dependency.~~ **Refuted by measurement — see "the readbacks are real" below.** The
+  draws actually ahead of the blit are ~28, not ~500 (`gpu.readback_draws_ahead`), and giving it an
+  unchained buffer of its own moved nothing at n=3 per arm.
 - After the block the pipeline is empty and has to refill, which is where the 16.4 ms of
   `gap_intraframe` comes from. **That refill is not inherent to the semantics** and is the larger
-  number of the two.
+  number of the two — and it is now the only one of the pair still standing.
 
 Neither is a small change, and neither is justified by the evidence gathered so far. The honest
 status is: the accuracy option costs what it costs, the cost is now measured and documented
@@ -957,12 +956,43 @@ late. **The entire 6.75 ms is pipeline-drain latency to deliver 21 KB**, because
 at the end of a command buffer holding a frame's worth of unrelated draws, and a command buffer's
 encoders execute in order.
 
-That points at a much narrower change than the one already refuted. Removing the `MTLEvent` chain
-globally does nothing (measured twice). But **exempting the readback's own command buffer from the
-chain** would leave it ordered against its true dependency by Metal's automatic hazard tracking —
-the blit reads a texture a render pass wrote, and every resource here is default-tracked — while
-freeing it from ~500 unrelated draws. Ceiling not yet measured: it depends on how early in the frame
-the source surface is produced, which nobody has looked at.
+That pointed at a much narrower change than the one already refuted — and **it was implemented,
+measured, and came up empty. Do not re-raise it.**
+
+The idea: removing the `MTLEvent` chain globally does nothing (measured twice), but *exempting the
+readback's own command buffer* would leave the blit ordered against its true dependency by Metal's
+automatic hazard tracking — it reads a texture a render pass wrote, and every resource here is
+default-tracked — while freeing it from ~500 unrelated draws.
+
+Two counters killed it. First the premise: `gpu.readback_draws_ahead`, added for this, records the
+draw passes already in the buffer the blit joins. It is **169 per frame summed over all readbacks,
+~28 each**, against 3,516 draws/frame — so the "end of a command buffer holding a frame's worth of
+unrelated draws" framing above overstates the intra-buffer component by more than an order of
+magnitude. Then the experiment itself, `--readback-unchained`, n=3 per arm, gameplay phase:
+
+| metric | control | treatment | |
+|---|---|---|---|
+| frame ms | 49.90 – 49.90 | 49.89 – 49.90 | overlap |
+| fps | 20.04 – 20.04 | 20.04 – 20.04 | overlap |
+| `frame_critical_path_ns` | 35.13 – 35.22 | 35.10 – 35.23 | overlap |
+| `readback_forcefinish_ns` | 6.21 – 6.34 | 6.14 – 6.27 | overlap |
+| `sync_async_ns` | 6.23 – 6.37 | 6.17 – 6.30 | overlap |
+| `busy_ns` | 16.44 – 16.51 | 16.43 – 16.53 | overlap |
+| `command_buffers` | 7 – 7 | 9 – 9 | **separated** |
+
+Every performance range overlaps. The only separated metric is the buffer count, which just proves
+the arm was live (the exempt buffers were being minted). The mechanism was **reverted** — it rested
+on an unverified assumption about Metal's cross-command-buffer hazard tracking, and carrying that
+risk behind a default-off flag buys nothing. `gpu.readback_draws_ahead` was kept.
+
+The same batch gives the noise floor for this subsystem, which matters for anyone measuring here:
+**control vs control moves `readback_forcefinish_ns` by −2.1%**, while frame time, critical path and
+`queue_latency_ns` are stable to 0.0% and `command_buffers` is exact. A few percent on the drain
+counters is nothing; only a same-arm control can tell you which.
+
+So all three surgical avenues are now closed — start delay (`forcestart` = 0), intra-buffer position
+(~28 draws), and inter-buffer ordering (this experiment). The wait is the GPU genuinely still having
+~6 ms of work outstanding when `GX2DrawDone` asks. **Only reducing GPU work can shorten it.**
 
 ### The 33 ms frame decomposed — and 60 fps is out of reach without cutting GPU work
 

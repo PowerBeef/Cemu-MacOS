@@ -258,6 +258,9 @@ void Telemetry_WriteRunHeader()
 	add("buffer_cache_mode", fmt::format("{}", g_current_game_profile->GetBufferCacheMode()));
 	add("position_invariance", fmt::format("{}", g_current_game_profile->GetPositionInvariance()));
 #endif
+	// Launch-flag experiment. Not persisted anywhere, so without this an archived run with the
+	// flag is indistinguishable from one without it.
+	add("commit_on_fence_stall", LaunchSettings::GetCommitOnFenceStall() ? "true" : "false");
 	add("rpx_hash_updated", fmt::format("{:08x}", currentUpdatedApplicationHash));
 	add("rpx_hash_base", fmt::format("{:08x}", currentBaseApplicationHash));
 	tlm::OnTitleLoaded(CafeSystem::GetForegroundTitleId(), CafeSystem::GetForegroundTitleName(), settings);

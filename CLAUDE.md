@@ -180,10 +180,24 @@ double-counted. Fixed to a monotonic `uint64`; the same scene reads **16.8 ms** 
 against 19.1–19.4 before, with frame time and critical path identical. The inflation grows with run
 length (the first wrap is ~29 s in), so old figures are inconsistently wrong, not uniformly so.
 
-The readback drain is **not** surgically improvable, measured: `gpu.readback_forcestart` is 0 and
-`gpu.readback_age_at_wait_ns` is 14.19 ms, so the 5-drawcall start delay holds nothing back and the
-transfers we block on had already been running for ~7 ms each. We are waiting for the GPU to catch
-up, which is what `GX2DrawDone` means. See the master plan for what *is* still improvable.
+The readback drain is **not** surgically improvable, measured three ways. `gpu.readback_forcestart`
+is 0 and `gpu.readback_age_at_wait_ns` is 14.19 ms, so the 5-drawcall start delay holds nothing back
+and the transfers we block on had already been running for ~7 ms each. `gpu.readback_draws_ahead` is
+169/frame summed over all readbacks (~28 each) against 3,516 draws/frame, so the blit is not stuck
+behind its own command buffer either. And **giving the blit a command buffer outside the `MTLEvent`
+chain** — so it waited on neither the preceding buffer nor the ~500 draws in it — changed nothing at
+n=3 per arm: frame 49.90 both, critical path 35.13–35.22 vs 35.10–35.23, force-finish 6.21–6.34 vs
+6.14–6.27, GPU busy 16.44–16.51 vs 16.43–16.53. **Every performance range overlaps**; the only
+separated metric was `gpu.command_buffers` 7 → 9, which merely proves the arm was live. The
+mechanism was reverted (it rested on Metal's cross-command-buffer hazard tracking, unverified, for
+zero payoff); only the counter and this finding were kept.
+
+Note the control-vs-control pair from that batch: `readback_forcefinish_ns` swings **±2%** between
+identical runs, while frame time, critical path and `queue_latency_ns` are stable to 0.0%. A "3%
+improvement" in the drain counter is noise; do not report one without a same-arm control.
+
+We are waiting for the GPU to catch up, which is what `GX2DrawDone` means. Reordering cannot help —
+only doing less GPU work can. See the master plan for what *is* still improvable.
 
 Two numbers stand out as suspects:
 

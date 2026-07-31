@@ -121,6 +121,10 @@ TLM_COUNTER(GpuReadbackForceFinishNs,"gpu.readback_forcefinish_ns","ns",   Gpu)
 // (so it got no GPU time at all), or one already in flight? Different fixes.
 TLM_COUNTER(GpuReadbackForceStart,  "gpu.readback_forcestart",   "count", Gpu)
 TLM_COUNTER(GpuReadbackAgeAtWaitNs, "gpu.readback_age_at_wait_ns","ns",   Gpu)
+// Draw passes already recorded into the command buffer a readback blit joins. Small (~28 per
+// readback), which is one of the two reasons unchaining the blit was measured to do nothing --
+// see the comment at the TLM_ADD site in LatteTextureReadbackMtl.cpp.
+TLM_COUNTER(GpuReadbackDrawsAhead,  "gpu.readback_draws_ahead",  "count", Gpu)
 
 // ------------------------------------------------------------------------- CPU / JIT
 TLM_COUNTER(CpuGuestCyclesRetired,  "cpu.guest_cycles_retired",  "count", Cpu)

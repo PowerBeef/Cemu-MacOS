@@ -2030,6 +2030,9 @@ void MetalRenderer::CommitCommandBuffer()
         // wait passes immediately, silently disabling the serialisation for the rest of the
         // process. Either way it was a confound in every A/B run against this subsystem.
         // uint64 has no wrap worth worrying about: at 140 buffers/s it lasts 4 billion years.
+        //
+        // Exempting a buffer from this chain was measured and does nothing -- see the comment
+        // on gpu.readback_draws_ahead in LatteTextureReadbackMtl.cpp.
         m_eventValue++;
         auto mtlCommandBuffer = m_currentCommandBuffer.m_commandBuffer;
         mtlCommandBuffer->encodeSignalEvent(m_event, m_eventValue);

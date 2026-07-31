@@ -301,6 +301,11 @@ public:
     // Blocks until the given id has retired. Submits first if it is still being recorded.
     void WaitCommandBufferFinished(uint64 id);
 
+    uint32 GetRecordedDrawcalls() const
+    {
+        return m_recordedDrawcalls;
+    }
+
     void RequestSoonCommit()
     {
         m_commitTreshold = m_recordedDrawcalls + 8;
