@@ -229,9 +229,15 @@ be enforced on macOS 26, which downgraded a supposed blocker to an optional opti
 | `src/Cemu/Telemetry/`    | the counter harness                                    |
 | `docs/hardware/`         | the hardware reference                                 |
 | `docs/porting/`          | staged plans, risk register, per-workstream designs    |
+| `docs/status/`           | the live status tracker — every item tried, and its result |
 | `tools/probes/`          | standalone platform-behaviour probes                   |
 | `tools/icon/`            | renders the app icon from its SVG, reproducibly        |
 | `testing/`               | golden-scene capture, telemetry differ, baselines      |
+
+`docs/status/index.html` is a generated, self-contained page tracking every item attempted on this
+fork and what it measured — including the ones that were refuted, cancelled or reverted. Open it
+directly; regenerate it with `python3 docs/status/build-status.py`. Its commit list, diffstat,
+baseline table and counter totals are read from the repo rather than typed, so those cannot go stale.
 
 CI builds, signs, verifies and smoke-tests a real `.app` on every push. Internal identifiers still
 say `Cemu` — `cemuLog_*`, `CemuConfig`, the `CemuCafe` target — deliberately: renaming them would

@@ -14,6 +14,12 @@ Do not reintroduce portability shims, `#ifdef ARCH_X86_64`, or a second renderer
 
 Planning docs live in `docs/porting/`. `00-master-plan.md` is the staged plan and risk register; the three numbered files are the detailed per-workstream designs (foundation/platform, CPU/JIT/memory, graphics/Metal). **Read the relevant one before touching that subsystem** — they contain verified line-level findings that are expensive to rediscover.
 
+**`docs/status/index.html` is the fork's live record, and keeping it current is a standing obligation — not optional cleanup.** Every item attempted since the fork point and what it measured, in one filterable page. **When a work item lands, add an entry to `docs/status/ledger.json` naming its commits, run `python3 docs/status/build-status.py`, and commit the regenerated HTML alongside it.** A negative result is a first-class entry: `refuted` (tested against a control, false), `cancelled` (gated out before being built) and `reverted` (built, measured, removed) are distinct and all belong on the page.
+
+**Read `.claude/rules/status-tracker.md` before editing the ledger** — it is the full rule. The two things worth knowing up front: the generator derives the commit list, diffstat, baseline table and counter totals *from the repo*, so never type those into the ledger; and a verdict is one line plus a `ref`, because `docs/porting/00-master-plan.md` owns the reasoning and a second copy of an argument is a second thing to keep in sync.
+
+CI runs `build-status.py --verify` on every push and reports, in the job summary, any commit that landed without a ledger entry. It advises rather than blocks, because some lag is structural: a commit cannot name its own hash in the ledger it contains, so the tip is always unclaimed and is reported separately. `--verify` *does* exit nonzero on a malformed ledger or an unresolvable hash. `--check` is a local pre-commit convenience only — it cannot gate CI, because the page stamps itself with the commit that carries it and is therefore always one commit behind by construction.
+
 ## Build and run
 
 ```sh

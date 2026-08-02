@@ -1,0 +1,1002 @@
+#!/usr/bin/env python3
+"""Generate the fork status tracker.
+
+    docs/status/build-status.py            # regenerate docs/status/index.html
+    docs/status/build-status.py --verify   # validate + report drift as Markdown (this is what CI runs)
+    docs/status/build-status.py --check    # local pre-commit: did I forget to regenerate?
+    docs/status/build-status.py -o /tmp/x.html
+
+This repo's documentation has gone wrong the same way more than once: a number is typed
+into a Markdown file, the code moves, and the number quietly becomes a lie. Commit 938a472
+corrected fourteen of them in one pass. So the rule here is that **anything a file in the
+repo already knows is read from that file, never typed into the ledger**:
+
+    fork commit list, dates, subjects  <- git log
+    files changed / insertions / deletions, per-area rollup
+                                       <- git diff --numstat
+    every scene capture ever recorded  <- testing/golden/baseline.tsv
+    telemetry counter count and split  <- src/Cemu/Telemetry/TelemetryCounters.def
+
+`ledger.json` holds only what no file can derive: a one-line verdict per work item, its
+status, which commits it spans, and a pointer to the doc section that owns the reasoning.
+It deliberately does NOT restate that reasoning -- the master plan stays the source of
+truth, and a second copy of an argument is a second thing to keep in sync.
+
+Two self-checks run on every generation, and they are deliberately NOT equally severe:
+
+    1. every commit hash named in the ledger must resolve in git -- ABORTS. A hash that does
+       not exist is a broken file, always the author's fault, and rendering it would publish
+       a dead reference.
+    2. every fork commit must be claimed by some entry, or be listed in `unattributed` --
+       REPORTED, not fatal. It surfaces on the page as "Not in the ledger yet" and in
+       --verify's output, so new work shows up loudly instead of being silently absent.
+
+Why (2) cannot be fatal, and why --check cannot gate CI: both are self-reference.
+
+    A ledger entry cannot name the hash of the commit that contains it, so the newest commit
+    is ALWAYS unclaimed at the moment CI sees it. --verify therefore reports the tip commit
+    separately from real drift.
+
+    The page embeds `generated from <HEAD>` and `commits since fork: N`, and both change with
+    the very commit that carries the HTML. So the committed page is always one commit behind
+    by construction and a byte comparison can never pass in CI. --check is still useful
+    locally, where HEAD has not moved between regenerating and running it.
+
+Stdlib only, matching testing/telemetry-report.py.
+"""
+
+from __future__ import annotations
+
+import argparse
+import html
+import json
+import re
+import subprocess
+import sys
+from collections import Counter
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+LEDGER_PATH = HERE / "ledger.json"
+DEFAULT_OUT = HERE / "index.html"
+
+BASELINE_TSV = REPO / "testing" / "golden" / "baseline.tsv"
+COUNTERS_DEF = REPO / "src" / "Cemu" / "Telemetry" / "TelemetryCounters.def"
+
+# Order matters: it is the order statuses appear in the filter bar and the legend.
+STATUS_ORDER = ["landed", "refuted", "cancelled", "reverted", "open", "deferred", "blocked"]
+AREA_ORDER = ["platform", "cpu", "graphics", "audio", "input", "tooling", "docs"]
+
+
+class Abort(Exception):
+    """A self-check failed. Emitting the page anyway would publish something wrong."""
+
+
+# ----------------------------------------------------------------------------- sources
+
+
+def git(*args: str) -> str:
+    proc = subprocess.run(
+        ["git", "-C", str(REPO), *args], capture_output=True, text=True
+    )
+    if proc.returncode != 0:
+        raise Abort(f"git {' '.join(args)} failed:\n{proc.stderr.strip()}")
+    return proc.stdout
+
+
+def head_state() -> dict:
+    # "dirty" means *the measurement data this page quotes* is uncommitted -- a page showing
+    # numbers that are not in the repo. It deliberately excludes ledger.json, which is modified
+    # BY DEFINITION at the moment you regenerate: including it fires the badge on every single
+    # legitimate build, bakes the warning into every committed page, and trains the reader to
+    # ignore it. It excludes source edits too, since those cannot change the page at all.
+    inputs = [
+        str(BASELINE_TSV.relative_to(REPO)),
+        str(COUNTERS_DEF.relative_to(REPO)),
+    ]
+    return {
+        "short": git("rev-parse", "--short", "HEAD").strip(),
+        "date": git("log", "-1", "--format=%ad", "--date=short").strip(),
+        "branch": git("rev-parse", "--abbrev-ref", "HEAD").strip(),
+        "dirty": bool(git("status", "--porcelain", "--", *inputs).strip()),
+    }
+
+
+def fork_commits(fork_point: str) -> list[dict]:
+    """Every commit on this fork, oldest first. `index` is used for staleness math."""
+    fmt = "%H\x1f%h\x1f%ad\x1f%s"
+    out = git("log", "--reverse", f"--pretty={fmt}", "--date=short", f"{fork_point}..HEAD")
+    commits = []
+    for i, line in enumerate(out.splitlines()):
+        if not line.strip():
+            continue
+        full, short, date, subject = line.split("\x1f")
+        commits.append(
+            {"index": i, "full": full, "short": short, "date": date, "subject": subject}
+        )
+    return commits
+
+
+def divergence(fork_point: str) -> dict:
+    """Line-level divergence from the fork point, rolled up by top-two path components.
+
+    Binary files report '-' for both counts; they are counted as touched files but
+    contribute no lines, which is why `files` is not the sum of anything below it.
+    """
+    out = git("diff", "--numstat", f"{fork_point}..HEAD")
+    areas: dict[str, dict] = {}
+    files = added = removed = 0
+    for line in out.splitlines():
+        if not line.strip():
+            continue
+        add_s, del_s, path = line.split("\t", 2)
+        files += 1
+        parts = path.split("/")
+        key = "/".join(parts[:2]) if len(parts) > 1 else parts[0]
+        area = areas.setdefault(key, {"path": key, "files": 0, "added": 0, "removed": 0})
+        area["files"] += 1
+        if add_s != "-":  # binary
+            area["added"] += int(add_s)
+            area["removed"] += int(del_s)
+            added += int(add_s)
+            removed += int(del_s)
+    ranked = sorted(
+        areas.values(), key=lambda a: a["added"] + a["removed"], reverse=True
+    )
+    return {"files": files, "added": added, "removed": removed, "areas": ranked}
+
+
+def baselines() -> list[dict]:
+    """testing/golden/baseline.tsv -- the committed record of every scene capture."""
+    if not BASELINE_TSV.exists():
+        return []
+    cols = ["when", "commit", "scene", "fps", "backend", "rss", "threads", "cpu"]
+    rows = []
+    for line in BASELINE_TSV.read_text().splitlines():
+        if not line.strip():
+            continue
+        fields = line.split("\t")
+        fields += [""] * (len(cols) - len(fields))
+        rows.append(dict(zip(cols, fields[: len(cols)])))
+    return rows
+
+
+# Anchored at start-of-line: the .def's own header comment documents the macro shape as
+# `TLM_COUNTER(id, "dotted.name", "unit", Area)`, which an unanchored pattern happily counts
+# as a 114th counter. Caught by cross-checking against `grep -c '^TLM_COUNTER'`.
+COUNTER_RE = re.compile(
+    r'^TLM_COUNTER\(\s*(\w+)\s*,\s*"([^"]*)"\s*,\s*"([^"]*)"\s*,\s*(\w+)\s*\)',
+    re.MULTILINE,
+)
+
+
+def counters() -> dict:
+    """Counter total and per-area split, parsed from the X-macro .def.
+
+    Regex rather than a line count because at least one declaration carries a trailing
+    // comment, and a naive split on ',' would misread its area.
+    """
+    if not COUNTERS_DEF.exists():
+        return {"total": 0, "by_area": []}
+    text = COUNTERS_DEF.read_text()
+    found = COUNTER_RE.findall(text)
+    by_area = Counter(area for _, _, _, area in found)
+    return {
+        "total": len(found),
+        "by_area": sorted(by_area.items(), key=lambda kv: kv[1], reverse=True),
+    }
+
+
+# ------------------------------------------------------------------------ self-checks
+
+
+def check_hashes_resolve(ledger: dict) -> None:
+    """A typo'd or rebased-away hash must abort, not render as a dead reference."""
+    named: set[str] = set()
+    for bucket in ("items", "refuted", "roadmap"):
+        for entry in ledger.get(bucket, []):
+            named.update(entry.get("commits", []))
+    named.update(ledger.get("unattributed", []))
+    named.add(ledger["fork_point"])
+
+    bad = []
+    for sha in sorted(named):
+        proc = subprocess.run(
+            ["git", "-C", str(REPO), "cat-file", "-e", f"{sha}^{{commit}}"],
+            capture_output=True,
+        )
+        if proc.returncode != 0:
+            bad.append(sha)
+    if bad:
+        raise Abort(
+            "ledger.json names commits that do not resolve: " + ", ".join(bad)
+        )
+
+
+def check_coverage(ledger: dict, commits: list[dict]) -> list[dict]:
+    """Return fork commits no item claims and `unattributed` does not excuse.
+
+    Not fatal -- it is rendered on the page. Silently dropping new work is the failure
+    mode worth designing against; stopping the build for it is not.
+    """
+    claimed: set[str] = set(ledger.get("unattributed", []))
+    for bucket in ("items", "refuted", "roadmap"):
+        for entry in ledger.get(bucket, []):
+            claimed.update(entry.get("commits", []))
+    # Ledger entries use short hashes; match on either form.
+    claimed_full = set()
+    for c in commits:
+        if c["short"] in claimed or c["full"] in claimed:
+            claimed_full.add(c["full"])
+    return [c for c in commits if c["full"] not in claimed_full]
+
+
+# ---------------------------------------------------------------------------- render
+
+esc = html.escape
+
+
+def rich(text: str) -> str:
+    """Inline `code` and **bold** only. Escaped first, so the markup cannot inject."""
+    s = esc(text or "")
+    s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+    s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+    return s
+
+
+def num(n: int) -> str:
+    return f"{n:,}"
+
+
+def commit_chips(shas: list[str], by_short: dict[str, dict]) -> str:
+    out = []
+    for sha in shas:
+        info = by_short.get(sha)
+        title = esc(info["subject"]) if info else "not a commit on this fork"
+        cls = "sha" if info else "sha sha-foreign"
+        out.append(f'<span class="{cls}" title="{title}">{esc(sha)}</span>')
+    return " ".join(out)
+
+
+def staleness(entry: dict, commits: list[dict], by_short: dict[str, dict]) -> str:
+    """How much has landed since this was measured. Visible decay beats a silent one."""
+    m = entry.get("measured")
+    if not m:
+        return ""
+    bits = []
+    if m.get("scene"):
+        bits.append(f'<span class="k">scene</span> {esc(m["scene"])}')
+    if m.get("n"):
+        bits.append(f'<span class="k">n</span> {esc(str(m["n"]))}')
+    at = m.get("at_commit")
+    if at and at in by_short:
+        behind = len(commits) - 1 - by_short[at]["index"]
+        label = "at HEAD" if behind == 0 else f"{behind} commit{'s' if behind != 1 else ''} ago"
+        cls = "age" + (" age-stale" if behind >= 25 else "")
+        bits.append(
+            f'<span class="k">measured</span> <span class="{cls}">{esc(at)} &middot; {label}</span>'
+        )
+    elif m.get("date"):
+        bits.append(f'<span class="k">measured</span> {esc(m["date"])}')
+    return '<div class="meta">' + " ".join(bits) + "</div>"
+
+
+def item_card(entry: dict, commits: list[dict], by_short: dict[str, dict]) -> str:
+    status = entry.get("status", "open")
+    area = entry.get("area", "")
+    haystack = " ".join(
+        [entry.get("title", ""), entry.get("verdict", ""), entry.get("note", ""),
+         area, status, " ".join(entry.get("commits", []))]
+    ).lower()
+    parts = [
+        f'<article class="card" id="{esc(entry["id"])}" data-status="{esc(status)}" '
+        f'data-area="{esc(area)}" data-text="{esc(haystack)}">',
+        '<header class="card-head">',
+        f'<span class="pill pill-{esc(status)}">{esc(status)}</span>',
+        f'<h3><a class="anchor" href="#{esc(entry["id"])}">{rich(entry["title"])}</a></h3>',
+        f'<span class="area">{esc(area)}</span>',
+        "</header>",
+    ]
+    if entry.get("verdict"):
+        parts.append(f'<p class="verdict">{rich(entry["verdict"])}</p>')
+    if entry.get("note"):
+        parts.append(f'<p class="note">{rich(entry["note"])}</p>')
+    if entry.get("gate"):
+        parts.append(
+            f'<p class="gate"><span class="k">gate</span> {rich(entry["gate"])}</p>'
+        )
+    parts.append(staleness(entry, commits, by_short))
+    footer = []
+    if entry.get("commits"):
+        footer.append(commit_chips(entry["commits"], by_short))
+    if entry.get("ref"):
+        footer.append(f'<span class="ref">{rich(entry["ref"])}</span>')
+    if footer:
+        parts.append('<footer class="card-foot">' + "".join(footer) + "</footer>")
+    parts.append("</article>")
+    return "".join(parts)
+
+
+def table(columns: list[str], rows: list[list], align_right: set[int] | None = None) -> str:
+    align_right = align_right or set()
+    head = "".join(
+        f'<th class="{"r" if i in align_right else ""}">{rich(str(c))}</th>'
+        for i, c in enumerate(columns)
+    )
+    body = []
+    for row in rows:
+        cells = "".join(
+            f'<td class="{"r" if i in align_right else ""}">{rich(str(c))}</td>'
+            for i, c in enumerate(row)
+        )
+        body.append(f"<tr>{cells}</tr>")
+    return (
+        '<div class="scroll"><table><thead><tr>'
+        + head
+        + "</tr></thead><tbody>"
+        + "".join(body)
+        + "</tbody></table></div>"
+    )
+
+
+def section(sid: str, title: str, lead: str, body: str) -> str:
+    lead_html = f'<p class="lead">{rich(lead)}</p>' if lead else ""
+    return (
+        f'<section id="{esc(sid)}"><h2><a class="anchor" href="#{esc(sid)}">'
+        f"{esc(title)}</a></h2>{lead_html}{body}</section>"
+    )
+
+
+def render(ledger: dict, data: dict) -> str:
+    commits = data["commits"]
+    by_short = {c["short"]: c for c in commits}
+    div = data["divergence"]
+    ctr = data["counters"]
+    base = data["baselines"]
+    head = data["head"]
+    items = ledger.get("items", [])
+    unattributed = data["unattributed"]
+
+    status_counts = Counter(i.get("status", "open") for i in items)
+
+    # ---- masthead + at a glance
+    dirty_badge = (
+        '<span class="warn-badge" title="baseline.tsv or the counter .def had uncommitted '
+        'changes when this page was built, so it quotes numbers that are not in the repo">'
+        "built from uncommitted measurements</span>"
+        if head["dirty"]
+        else ""
+    )
+    stats = [
+        ("commits since fork", num(len(commits)), f'from {esc(ledger["fork_point"])}'),
+        ("files diverged", num(div["files"]), f'+{num(div["added"])} / -{num(div["removed"])}'),
+        ("telemetry counters", num(ctr["total"]),
+         " &middot; ".join(f"{esc(a)} {n}" for a, n in ctr["by_area"])),
+        ("scene captures", num(len(base)), "testing/golden/baseline.tsv"),
+        ("ledger items", num(len(items)),
+         " &middot; ".join(f"{esc(s)} {status_counts[s]}" for s in STATUS_ORDER if status_counts[s])),
+    ]
+    stat_html = "".join(
+        f'<div class="stat"><div class="stat-n">{v}</div>'
+        f'<div class="stat-l">{esc(label)}</div><div class="stat-s">{sub}</div></div>'
+        for label, v, sub in stats
+    )
+
+    # ---- headline scene numbers, from the ledger's curated tables
+    headline = ""
+    if ledger.get("headline"):
+        cards = "".join(
+            f'<div class="hl"><div class="hl-n">{rich(h["value"])}</div>'
+            f'<div class="hl-l">{rich(h["label"])}</div>'
+            f'<div class="hl-s">{rich(h.get("note", ""))}</div></div>'
+            for h in ledger["headline"]
+        )
+        headline = f'<div class="hl-grid">{cards}</div>'
+
+    # ---- divergence
+    narrative = "".join(
+        f'<div class="dcol"><h3>{esc(group["title"])}</h3><ul>'
+        + "".join(f"<li>{rich(x)}</li>" for x in group["entries"])
+        + "</ul></div>"
+        for group in ledger.get("divergence", [])
+    )
+    area_rows = [
+        [a["path"], num(a["files"]), f'+{num(a["added"])}', f'-{num(a["removed"])}']
+        for a in div["areas"][:18]
+    ]
+    div_body = (
+        f'<div class="dgrid">{narrative}</div>'
+        + '<h3 class="sub">Where the lines actually moved</h3>'
+        + f'<p class="lead">Top 18 paths by churn, from <code>git diff --numstat '
+        f'{esc(ledger["fork_point"])}..HEAD</code>. Translation catalogues dominate by line count '
+        "and mean almost nothing; <code>src/Cafe</code> is where the deletions are.</p>"
+        + table(["path", "files", "added", "removed"], area_rows, {1, 2, 3})
+    )
+
+    # ---- ledger
+    areas_present = [a for a in AREA_ORDER if any(i.get("area") == a for i in items)]
+    filters = (
+        '<div class="filters">'
+        '<input id="q" type="search" placeholder="Search titles, verdicts, commits…" '
+        'autocomplete="off" spellcheck="false">'
+        '<div class="chips" id="chips-status"><span class="chip-label">status</span>'
+        + "".join(
+            f'<button class="chip chip-{esc(s)}" data-kind="status" data-value="{esc(s)}">'
+            f'{esc(s)} <span class="chip-n">{status_counts[s]}</span></button>'
+            for s in STATUS_ORDER
+            if status_counts[s]
+        )
+        + "</div>"
+        '<div class="chips" id="chips-area"><span class="chip-label">area</span>'
+        + "".join(
+            f'<button class="chip" data-kind="area" data-value="{esc(a)}">{esc(a)}</button>'
+            for a in areas_present
+        )
+        + "</div>"
+        '<button id="reset" class="reset" hidden>clear</button>'
+        "</div>"
+    )
+    ordered = sorted(
+        items,
+        key=lambda i: max(
+            (by_short[s]["index"] for s in i.get("commits", []) if s in by_short),
+            default=-1,
+        ),
+        reverse=True,
+    )
+    cards = "".join(item_card(i, commits, by_short) for i in ordered)
+    ledger_body = filters + f'<div class="cards" id="cards">{cards}</div>' + (
+        '<p class="empty" id="empty" hidden>Nothing matches that filter.</p>'
+    )
+
+    # ---- unattributed
+    unattr = ""
+    if unattributed:
+        rows = [[c["short"], c["date"], c["subject"]] for c in unattributed]
+        unattr = section(
+            "unattributed",
+            f"Not in the ledger yet ({len(unattributed)})",
+            "These commits are on the fork but no ledger item claims them. Add an entry to "
+            "`docs/status/ledger.json`, or list the hash under `unattributed` if it is "
+            "genuinely not a work item.",
+            '<div class="warnbox">' + table(["commit", "date", "subject"], rows) + "</div>",
+        )
+
+    # ---- measurements
+    tables = "".join(
+        section_table(t) for t in ledger.get("tables", [])
+    )
+    base_rows = [
+        [r["when"][:10], r["commit"], r["scene"], r["fps"], r["rss"], r["threads"], r["cpu"]]
+        for r in reversed(base)
+    ]
+    measure_body = tables + (
+        '<h3 class="sub">Every scene capture on record</h3>'
+        '<p class="lead">Verbatim from <code>testing/golden/baseline.tsv</code>, newest first. '
+        "Written by <code>testing/capture-scene.sh</code>; the PNGs and traces beside it are "
+        "gitignored. Rows before <code>c03dbbb</code> predate the finding that a BotW run is two "
+        "workloads, so a single fps figure for those rows describes a blend.</p>"
+        + table(
+            ["date", "commit", "scene", "fps", "RSS", "threads", "CPU"],
+            base_rows,
+            {3, 4, 5, 6},
+        )
+    )
+
+    # ---- refuted
+    refuted_cards = "".join(
+        item_card(r, commits, by_short) for r in ledger.get("refuted", [])
+    )
+    refuted_body = f'<div class="cards">{refuted_cards}</div>'
+
+    # ---- traps
+    traps = "".join(
+        f'<article class="trap"><h3>{rich(t["title"])}</h3><p>{rich(t["body"])}</p></article>'
+        for t in ledger.get("traps", [])
+    )
+
+    # ---- roadmap
+    road_cards = "".join(
+        item_card(r, commits, by_short) for r in ledger.get("roadmap", [])
+    )
+
+    nav = "".join(
+        f'<a href="#{esc(sid)}">{esc(label)}</a>'
+        for sid, label in [
+            ("glance", "At a glance"),
+            ("divergence", "vs. upstream"),
+            ("ledger", "Work ledger"),
+            ("measurements", "Measurements"),
+            ("refuted", "Refuted"),
+            ("traps", "Traps"),
+            ("roadmap", "Roadmap"),
+        ]
+    )
+
+    body = "".join(
+        [
+            section("glance", "At a glance", ledger.get("summary", ""),
+                    headline + f'<div class="stats">{stat_html}</div>'),
+            section(
+                "divergence",
+                "Divergence from upstream Cemu",
+                f'Fork point is `{ledger["fork_point"]}` — the last upstream commit merged '
+                "before the retarget began. Everything below is what happened after it.",
+                div_body,
+            ),
+            section(
+                "ledger",
+                "Work ledger",
+                "Every item attempted on this fork, including the ones that did not work. "
+                "**`refuted` means the hypothesis was tested against a control and was false**; "
+                "`cancelled` means a gate killed it before it was built; `reverted` means it was "
+                "built, measured, and removed with only the finding kept. Those three are the "
+                "majority of the graphics work and are the most expensive knowledge here to "
+                "rediscover.",
+                ledger_body,
+            ),
+            unattr,
+            section(
+                "measurements",
+                "Measurements",
+                "Numbers below are read from the repo or copied from the commit that measured "
+                "them. Each carries the commit it was taken at, so staleness is visible rather "
+                "than assumed.",
+                measure_body,
+            ),
+            section(
+                "refuted",
+                "Refuted — do not re-raise",
+                "Each of these was a plausible idea, was implemented or instrumented, and was "
+                "killed by its own measurement. They are listed so the next person does not pay "
+                "for them twice.",
+                refuted_body,
+            ),
+            section(
+                "traps",
+                "Measurement traps",
+                "Ways this project has already produced confident, wrong numbers.",
+                f'<div class="traps">{traps}</div>',
+            ),
+            section(
+                "roadmap",
+                "Roadmap",
+                "Open work, each with the condition that would justify starting it. A gate that "
+                "has not been met is a reason not to begin, not a formality.",
+                f'<div class="cards">{road_cards}</div>',
+            ),
+        ]
+    )
+
+    gen_note = (
+        f'generated from <code>{esc(head["short"])}</code> on '
+        f'<code>{esc(head["branch"])}</code>, {esc(head["date"])} {dirty_badge}'
+    )
+
+    # str.format is unusable here: CSS and JS are full of braces. Token replacement instead.
+    fields = {
+        "CSS": CSS,
+        "JS": JS,
+        "TITLE": esc(ledger.get("title", "TesseraEmu — status")),
+        "TAGLINE": rich(ledger.get("tagline", "")),
+        "NAV": nav,
+        "GEN": gen_note,
+        "BODY": body,
+        "REGEN": esc("python3 docs/status/build-status.py"),
+    }
+    page = PAGE
+    for key, value in fields.items():
+        page = page.replace("<!--%" + key + "%-->", value)
+    return page
+
+
+def numeric_columns(columns: list[str], rows: list[list]) -> set[int]:
+    """Right-align a column only when every cell in it is short.
+
+    Blanket right-alignment looked fine on the counter tables and terrible on the
+    accuracy-lever table, whose last two columns are sentences.
+    """
+    right = set()
+    for i in range(1, len(columns)):
+        cells = [str(r[i]) for r in rows if i < len(r)]
+        if cells and all(len(re.sub(r"[*`]", "", c)) <= 16 for c in cells):
+            right.add(i)
+    return right
+
+
+def section_table(t: dict) -> str:
+    lead = f'<p class="lead">{rich(t["note"])}</p>' if t.get("note") else ""
+    right = numeric_columns(t["columns"], t["rows"])
+    return (
+        f'<h3 class="sub" id="{esc(t["id"])}">{rich(t["title"])}</h3>'
+        + lead
+        + table(t["columns"], t["rows"], right)
+    )
+
+
+# ------------------------------------------------------------------------- page shell
+
+CSS = """
+:root{
+  --bg:#fbfbfa; --panel:#fff; --ink:#1a1a19; --dim:#6b6b66; --line:#e3e2dd;
+  --accent:#8a5a2b; --code-bg:#f2f1ec;
+  --landed:#2f7d4f; --refuted:#b3701a; --cancelled:#6b6b66; --reverted:#7a4fa3;
+  --open:#2b6cb0; --deferred:#5a6b7d; --blocked:#b3352b; --warn:#b3701a;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme=light]){
+    --bg:#141413; --panel:#1c1c1a; --ink:#e8e6e1; --dim:#9a978f; --line:#2f2e2b;
+    --accent:#d4a373; --code-bg:#232320;
+    --landed:#6cc08b; --refuted:#e0a458; --cancelled:#9a978f; --reverted:#b48ed6;
+    --open:#7aaee0; --deferred:#93a5b8; --blocked:#e08b7f; --warn:#e0a458;
+  }
+}
+:root[data-theme=dark]{
+  --bg:#141413; --panel:#1c1c1a; --ink:#e8e6e1; --dim:#9a978f; --line:#2f2e2b;
+  --accent:#d4a373; --code-bg:#232320;
+  --landed:#6cc08b; --refuted:#e0a458; --cancelled:#9a978f; --reverted:#b48ed6;
+  --open:#7aaee0; --deferred:#93a5b8; --blocked:#e08b7f; --warn:#e0a458;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:15px/1.6 ui-sans-serif,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+code,.sha,.stat-n,.hl-n,td.r,th.r{
+  font-family:ui-monospace,"SF Mono",Menlo,monospace;
+}
+code{background:var(--code-bg); padding:.1em .35em; border-radius:3px; font-size:.88em}
+a{color:inherit}
+.wrap{max-width:1080px; margin:0 auto; padding:0 24px 96px}
+
+header.top{border-bottom:1px solid var(--line); background:var(--panel); margin-bottom:40px}
+.top-in{max-width:1080px; margin:0 auto; padding:36px 24px 0}
+h1{font-size:30px; letter-spacing:-.02em; margin:0 0 6px}
+.tagline{color:var(--dim); margin:0 0 14px; max-width:70ch}
+.gen{color:var(--dim); font-size:13px; margin:0 0 18px}
+.warn-badge{
+  background:var(--warn); color:var(--bg); border-radius:3px;
+  padding:.1em .45em; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+  margin-left:6px;
+}
+nav{display:flex; gap:18px; flex-wrap:wrap; padding-bottom:2px}
+nav a{
+  color:var(--dim); text-decoration:none; font-size:13px; padding:8px 0;
+  border-bottom:2px solid transparent;
+}
+nav a:hover{color:var(--ink); border-bottom-color:var(--accent)}
+#theme{
+  position:absolute; top:36px; right:24px; background:none; border:1px solid var(--line);
+  color:var(--dim); border-radius:5px; padding:5px 9px; cursor:pointer; font-size:12px;
+}
+.top-in{position:relative}
+
+section{margin:0 0 56px; scroll-margin-top:16px}
+h2{font-size:20px; letter-spacing:-.01em; margin:0 0 8px; padding-bottom:8px;
+   border-bottom:1px solid var(--line)}
+h3.sub{font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim);
+   margin:32px 0 8px}
+.anchor{text-decoration:none}
+.anchor:hover{color:var(--accent)}
+.lead{color:var(--dim); max-width:78ch; margin:0 0 16px}
+
+.hl-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px;
+  margin-bottom:18px}
+.hl{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent);
+  border-radius:6px; padding:14px 16px}
+.hl-n{font-size:21px; font-weight:600; letter-spacing:-.02em}
+.hl-l{font-size:13px; margin-top:2px}
+.hl-s{font-size:12px; color:var(--dim); margin-top:4px}
+
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px}
+.stat{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px 16px}
+.stat-n{font-size:22px; font-weight:600; letter-spacing:-.02em}
+.stat-l{font-size:13px; margin-top:2px}
+.stat-s{font-size:11.5px; color:var(--dim); margin-top:4px; line-height:1.45}
+
+.dgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px}
+.dcol h3{font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim);
+  margin:0 0 8px}
+.dcol ul{margin:0; padding-left:18px}
+.dcol li{margin-bottom:7px}
+
+.filters{display:flex; flex-direction:column; gap:10px; margin-bottom:18px;
+  padding:14px 16px; background:var(--panel); border:1px solid var(--line); border-radius:6px}
+#q{width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:5px;
+  background:var(--bg); color:var(--ink); font:inherit; font-size:14px}
+#q:focus{outline:2px solid var(--accent); outline-offset:-1px}
+.chips{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+.chip-label{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim);
+  width:52px}
+.chip{background:var(--bg); border:1px solid var(--line); color:var(--dim); cursor:pointer;
+  border-radius:20px; padding:4px 11px; font:inherit; font-size:12.5px}
+.chip:hover{color:var(--ink)}
+.chip[aria-pressed=true]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.chip-n{opacity:.6; font-size:11px}
+.reset{align-self:flex-start; background:none; border:none; color:var(--accent); cursor:pointer;
+  font:inherit; font-size:12.5px; padding:0; text-decoration:underline}
+
+.cards{display:flex; flex-direction:column; gap:10px}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:6px;
+  padding:14px 16px; border-left:3px solid var(--cancelled)}
+.card[data-status=landed]{border-left-color:var(--landed)}
+.card[data-status=refuted]{border-left-color:var(--refuted)}
+.card[data-status=reverted]{border-left-color:var(--reverted)}
+.card[data-status=open]{border-left-color:var(--open)}
+.card[data-status=deferred]{border-left-color:var(--deferred)}
+.card[data-status=blocked]{border-left-color:var(--blocked)}
+.card-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.card-head h3{font-size:15.5px; margin:0; font-weight:600; flex:1 1 320px; letter-spacing:-.01em}
+.pill{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; border-radius:3px;
+  padding:.2em .5em; color:var(--bg); background:var(--cancelled); white-space:nowrap}
+.pill-landed{background:var(--landed)} .pill-refuted{background:var(--refuted)}
+.pill-reverted{background:var(--reverted)} .pill-open{background:var(--open)}
+.pill-deferred{background:var(--deferred)} .pill-blocked{background:var(--blocked)}
+.area{font-size:11.5px; color:var(--dim); text-transform:uppercase; letter-spacing:.05em}
+.verdict{margin:8px 0 0}
+.note,.gate{margin:7px 0 0; color:var(--dim); font-size:13.5px}
+.gate{border-left:2px solid var(--line); padding-left:10px}
+.k{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim);
+  margin-right:2px}
+.meta{margin-top:8px; font-size:12px; color:var(--dim); display:flex; gap:14px; flex-wrap:wrap}
+.age-stale{color:var(--warn)}
+.card-foot{margin-top:10px; padding-top:9px; border-top:1px solid var(--line);
+  display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-size:12px}
+.sha{background:var(--code-bg); border-radius:3px; padding:.15em .4em; font-size:11.5px;
+  color:var(--dim); cursor:help}
+.sha-foreign{border:1px dashed var(--line)}
+.ref{color:var(--dim); font-size:12px; margin-left:auto}
+.empty{color:var(--dim); padding:24px 0}
+
+.traps{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px}
+.trap{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px 16px}
+.trap h3{font-size:14.5px; margin:0 0 6px}
+.trap p{margin:0; color:var(--dim); font-size:13.5px}
+
+.warnbox{border:1px solid var(--warn); border-radius:6px; padding:4px 12px; background:var(--panel)}
+
+.scroll{overflow-x:auto; border:1px solid var(--line); border-radius:6px; background:var(--panel)}
+table{border-collapse:collapse; width:100%; min-width:100%; font-size:13px}
+th,td{text-align:left; padding:8px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+th{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim);
+   font-weight:600}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--code-bg)}
+/* Only numeric columns are nowrap; prose columns must wrap or the page scrolls sideways. */
+td.r,th.r{text-align:right; white-space:nowrap}
+
+footer.end{color:var(--dim); font-size:12.5px; border-top:1px solid var(--line); padding-top:16px}
+@media(max-width:640px){
+  h1{font-size:24px} .wrap,.top-in{padding-left:16px; padding-right:16px}
+  #theme{top:16px; right:16px} .ref{margin-left:0}
+}
+"""
+
+JS = """
+(function(){
+  var root=document.documentElement, btn=document.getElementById('theme');
+  try{var t=localStorage.getItem('tessera-theme'); if(t) root.setAttribute('data-theme',t);}catch(e){}
+  btn.addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme');
+    if(!cur) cur=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+    var next=cur==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('tessera-theme',next);}catch(e){}
+  });
+
+  var q=document.getElementById('q'), reset=document.getElementById('reset');
+  var cards=Array.prototype.slice.call(document.querySelectorAll('#cards .card'));
+  var chips=Array.prototype.slice.call(document.querySelectorAll('.chip'));
+  var empty=document.getElementById('empty');
+  var active={status:new Set(),area:new Set()};
+
+  function apply(){
+    var term=(q.value||'').trim().toLowerCase();
+    var shown=0;
+    cards.forEach(function(c){
+      var ok=true;
+      if(active.status.size && !active.status.has(c.dataset.status)) ok=false;
+      if(ok && active.area.size && !active.area.has(c.dataset.area)) ok=false;
+      if(ok && term && c.dataset.text.indexOf(term)===-1) ok=false;
+      c.hidden=!ok; if(ok) shown++;
+    });
+    empty.hidden=shown!==0;
+    reset.hidden=!(term||active.status.size||active.area.size);
+  }
+  chips.forEach(function(ch){
+    ch.setAttribute('aria-pressed','false');
+    ch.addEventListener('click',function(){
+      var set=active[ch.dataset.kind], v=ch.dataset.value;
+      if(set.has(v)){set.delete(v); ch.setAttribute('aria-pressed','false');}
+      else{set.add(v); ch.setAttribute('aria-pressed','true');}
+      apply();
+    });
+  });
+  q.addEventListener('input',apply);
+  reset.addEventListener('click',function(){
+    q.value=''; active.status.clear(); active.area.clear();
+    chips.forEach(function(c){c.setAttribute('aria-pressed','false');});
+    apply();
+  });
+})();
+"""
+
+PAGE = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title><!--%TITLE%--></title>
+<style><!--%CSS%--></style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+<button id="theme" type="button">theme</button>
+<h1><!--%TITLE%--></h1>
+<p class="tagline"><!--%TAGLINE%--></p>
+<p class="gen"><!--%GEN%--></p>
+<nav><!--%NAV%--></nav>
+</div></header>
+<div class="wrap">
+<!--%BODY%-->
+<footer class="end">
+Generated by <code>docs/status/build-status.py</code> from <code>docs/status/ledger.json</code>
+plus git, <code>testing/golden/baseline.tsv</code> and
+<code>src/Cemu/Telemetry/TelemetryCounters.def</code>. Regenerate with <code><!--%REGEN%--></code>.
+Verdicts are summaries &mdash; <code>docs/porting/00-master-plan.md</code> owns the reasoning.
+</footer>
+</div>
+<script><!--%JS%--></script>
+</body>
+</html>
+"""
+
+
+# ------------------------------------------------------------------------------- main
+
+
+def collect() -> tuple[dict, dict]:
+    """Load, validate, and gather every derived source. Raises Abort on anything malformed."""
+    try:
+        ledger = json.loads(LEDGER_PATH.read_text())
+    except FileNotFoundError:
+        raise Abort(f"{LEDGER_PATH} does not exist")
+    except json.JSONDecodeError as e:
+        raise Abort(f"{LEDGER_PATH} is not valid JSON: {e}")
+    check_hashes_resolve(ledger)
+    commits = fork_commits(ledger["fork_point"])
+    if not commits:
+        raise Abort(
+            f'no commits between {ledger["fork_point"]} and HEAD -- is fork_point correct?'
+        )
+    data = {
+        "head": head_state(),
+        "commits": commits,
+        "divergence": divergence(ledger["fork_point"]),
+        "baselines": baselines(),
+        "counters": counters(),
+        "unattributed": check_coverage(ledger, commits),
+    }
+    return ledger, data
+
+
+def build() -> str:
+    ledger, data = collect()
+    return render(ledger, data)
+
+
+def verify_report(ledger: dict, data: dict) -> str:
+    """Markdown drift report. Written for a GitHub job summary; readable in a terminal too.
+
+    The tip commit is reported SEPARATELY and is not drift. A ledger entry cannot name the hash
+    of the commit that contains it, so the newest commit is always unclaimed at the moment CI
+    sees it. Lumping it in with real drift would make every single push report "1 unattributed"
+    and the signal would be worth nothing.
+    """
+    commits = data["commits"]
+    unattributed = data["unattributed"]
+    tip = commits[-1]
+
+    hashes = {
+        sha
+        for bucket in ("items", "refuted", "roadmap")
+        for entry in ledger.get(bucket, [])
+        for sha in entry.get("commits", [])
+    }
+    older = [c for c in unattributed if c["full"] != tip["full"]]
+    tip_unclaimed = any(c["full"] == tip["full"] for c in unattributed)
+
+    out = [
+        "## Status tracker",
+        "",
+        f'`docs/status/ledger.json` — {len(ledger.get("items", []))} items, '
+        f'{len(ledger.get("refuted", []))} refuted, {len(ledger.get("roadmap", []))} roadmap. '
+        f"All {len(hashes)} commit hashes resolve.",
+        "",
+        f'{len(commits)} commits since the fork point `{ledger["fork_point"]}`.',
+        "",
+    ]
+
+    if older:
+        out += [
+            f"### ⚠️ {len(older)} commit(s) landed without a ledger entry",
+            "",
+            "| commit | date | subject |",
+            "| --- | --- | --- |",
+        ]
+        out += [f'| `{c["short"]}` | {c["date"]} | {c["subject"]} |' for c in older]
+        out += [
+            "",
+            "Add an entry to `docs/status/ledger.json` naming these commits, or list a hash "
+            "under `unattributed` if it is genuinely not a work item. Then regenerate with "
+            "`python3 docs/status/build-status.py`.",
+            "",
+        ]
+    else:
+        out += ["Every commit older than the tip is accounted for. ✅", ""]
+
+    if tip_unclaimed:
+        out += [
+            f'The tip commit `{tip["short"]}` is unclaimed, which is expected — a commit cannot '
+            "name its own hash in the ledger it contains. The next ledger update should claim it.",
+            "",
+        ]
+    return "\n".join(out)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("-o", "--output", type=Path, default=DEFAULT_OUT)
+    ap.add_argument(
+        "--check",
+        action="store_true",
+        help="local pre-commit check: exit 1 if index.html does not match a fresh render at "
+        "the CURRENT HEAD. Catches 'I edited the ledger and forgot to regenerate'. Cannot be "
+        "used as a CI gate -- see --verify.",
+    )
+    ap.add_argument(
+        "--verify",
+        action="store_true",
+        help="validate the ledger and report drift as Markdown; writes nothing. Exit 2 if the "
+        "ledger is malformed, 0 otherwise (unclaimed commits are reported, not fatal).",
+    )
+    args = ap.parse_args()
+
+    if args.verify:
+        try:
+            ledger, data = collect()
+        except Abort as e:
+            print(f"build-status: {e}", file=sys.stderr)
+            return 2
+        print(verify_report(ledger, data))
+        return 0
+
+    try:
+        page = build()
+    except Abort as e:
+        print(f"build-status: {e}", file=sys.stderr)
+        return 2
+
+    if args.check:
+        if not args.output.exists():
+            print(f"build-status: {args.output} does not exist", file=sys.stderr)
+            return 1
+        if args.output.read_text() != page:
+            print(
+                f"build-status: {args.output} is stale -- run docs/status/build-status.py",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"build-status: {args.output} is current")
+        return 0
+
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(page)
+    print(f"build-status: wrote {args.output} ({len(page):,} bytes)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,48 @@
+name: Status tracker
+
+# docs/status/index.html is the fork's live record of what has been tried and what it measured.
+# It is only worth anything if it stays current, so this reports any commit that landed without
+# a ledger entry. Same motivation as the "Catalogs match their sources" step in generate_pot.yml:
+# two things are committed, they can drift, so make the drift visible.
+#
+# No paths-ignore. Unlike the build, a commit that touches only Markdown is still a commit the
+# ledger should account for, and this job is a few seconds of Ubuntu with nothing to compile.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    branches:
+      - main
+
+jobs:
+  ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout repo"
+        uses: actions/checkout@v6
+        with:
+          # REQUIRED, and not cargo-cult. actions/checkout defaults to a depth-1 clone, which
+          # contains neither the fork point b8f2cf4 nor any history to walk, so build-status.py
+          # reports every ledger hash as unresolvable and exits 2. Verified by reproducing it
+          # against `git clone --depth 1`: 1 commit visible, all 76 hashes unresolvable.
+          fetch-depth: 0
+
+      # Advisory by design. Commits missing a ledger entry are REPORTED, not fatal, because some
+      # lag is structural rather than sloppiness: a ledger entry cannot name the hash of the
+      # commit that contains it, so the tip commit is always unclaimed at the moment CI sees it.
+      # --verify reports the tip separately from real drift for exactly that reason.
+      #
+      # It does still exit 2 on a malformed ledger or a hash that does not resolve. That is a
+      # broken file, always the author's fault, and it should stop the build.
+      #
+      # stdlib only -- no pip install, matching testing/telemetry-report.py.
+      - name: "Ledger integrity and drift"
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 docs/status/build-status.py --verify | tee -a "$GITHUB_STEP_SUMMARY"
