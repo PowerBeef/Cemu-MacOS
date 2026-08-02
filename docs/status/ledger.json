@@ -608,6 +608,16 @@
       "verdict": "A config default, a Debug menu checkbox and a startup log line all reported a setting **nothing reads**. `CheckIfRenderPassNeedsFlush`, its declaration and its call site have been inside `/* */` since `26e40a4` — it arrived already-commented in the upstream Metal PR and has never run.",
       "note": "The fork therefore runs permanently in the barriers-off regime: the speed is already banked in every number here, and the correctness cost is already being paid. The setting itself was kept, inert, so `settings.xml` round-trips and the self-dependency work has something to hang off.",
       "ref": "03-graphics-metal.md — 3.1"
+    },
+    {
+      "id": "status-tracker",
+      "title": "This page, and the rule that keeps it current",
+      "area": "tooling",
+      "status": "landed",
+      "commits": ["a9cb9bf"],
+      "verdict": "One generated page for what changed versus upstream, what was tried and what it measured. Commit list, diffstat, baseline rows and counter totals are read from the repo — only verdicts are hand-maintained. CI reports any commit that lands without a ledger entry.",
+      "note": "It caught its own first bug: the counter parser read **114** against the real 113, matching the `TLM_COUNTER(...)` example inside the `.def`'s own header comment. Two self-references bound the design — a ledger entry cannot name the hash of the commit containing it, and the page embeds the commit that carries it — so CI advises rather than blocks, and `--check` is local-only.",
+      "ref": ".claude/rules/status-tracker.md"
     }
   ],
 
