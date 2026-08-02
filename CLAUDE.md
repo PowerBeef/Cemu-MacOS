@@ -79,6 +79,27 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
   now segments by draw load, prints the phases and analyses the longest; pass `--all` for the old
   behaviour, `--phase=N` to pick. Any BotW number in this repo predating that is suspect.
 
+- **GPU-time counters soak, so their median depends on how long you recorded.** Slice the Korok
+  gameplay phase into sixths and the *work* is flat — draws 3,472→3,518, render passes 202,
+  attachment bytes 800 MB, guest core busy 9.4–9.5 ms — while **`gpu.busy_ns` climbs 16.9 → 17.8 ms
+  and `gpu.readback_forcefinish_ns` climbs 6.5 → 7.5 ms**. Same frame, ~5% and ~15% more GPU time
+  after four minutes of continuous play, reproduced in all three runs. Frame time, fps and
+  `gpu.frame_critical_path_ns` drift **0.0%** because they are vsync-pinned, which is exactly why
+  this hides: the headline numbers look rock-steady while the GPU counters underneath them walk. So
+  **A/B arms must record for the same duration at the same point in the run**, or the longer arm
+  loses on GPU counters for free. This is also why the drain counter was described as swinging "±2%
+  between identical runs" — that was not noise, it was window placement, and today's three
+  equal-length runs agree on it to ±0.4%.
+
+- **Neither provenance stamp proves what the binary was built from.** `CMakeLists.txt:15` captures
+  `git log --format=%h -1` at **cmake configure time** and bakes it into `-DEMULATOR_HASH`, so a
+  binary compiled from `cebe17f` announced `build 064d9a7` — eight commits stale — in its window
+  title and in the `build` field of every `--telemetry` header. `testing/capture-scene.sh` has the
+  opposite failure: it stamps `baseline.tsv` with the *repo's* `git rev-parse HEAD`, which says
+  nothing about the binary at all. Re-run `cmake -S . -B build …` before any measurement you intend
+  to quote. The hash reaches every translation unit through `precompiled.h`, so refreshing it is a
+  full rebuild.
+
 Two traps already caught in this repo — both produce confident, wrong numbers:
 
 - **MK8's attract mode is not a fixed workload.** It cycles demo scenes with very different draw loads, so two traces taken minutes apart are not comparable, and neither are their sample counts. A first A/B here read as "4.4x faster" from sample counts; the real figure was 1.77x. To compare two implementations, **put a runtime toggle behind an env var, flip it every ~20 s inside one process**, discard any window that straddles a switch, and report the median of n≥5 per variant. Ranges that overlap mean you have not measured anything.
@@ -124,14 +145,18 @@ is the heavier scene. Measured with the telemetry harness:
 |---|---|---|
 | fps median | 30.06 | **20.04** |
 | frame ms median / p99 | 33.27 / 49.92 | 49.90 / **49.97** |
-| draws/frame | 3784 | **3480** (fewer!) |
-| render passes/frame | 132 | **201** |
-| GPU busy/frame | 14.0 ms † | **16.4 – 16.5 ms** |
-| GPU duty cycle | 42% † | **33%** |
+| draws/frame | 3784 | **3517 – 3528** (fewer!) |
+| render passes/frame | 132 | **202 – 203** |
+| GPU busy/frame | 14.0 ms † | **17.1 ms** ‡ |
+| GPU duty cycle | 42% † | **34%** |
 
-† Shrine column measured before `839466d` and therefore inflated — see the note above. The Korok
-GPU figure is the current n=3 gameplay-phase median; the 18.7 ms an earlier revision carried here
-was the inflated pre-fix value.
+† Shrine column measured before `839466d` and therefore inflated — see the note above.
+
+‡ **Re-measured at `cebe17f`, n=3, and the Korok column is confirmed** — every figure reproduced
+within 1.5%, frame time and fps to the decimal. The GPU number is the one that moved: 16.4–16.5 ms
+became 17.12–17.17. That is **not** a regression, it is the soak described below — GPU time in this
+scene rises ~5% over four minutes of continuous play at constant draw count, so the median depends
+on how long you recorded.
 
 **The forest is not GPU-bound and is not draw-bound** — it issues *fewer* draws than the shrine and
 leaves the GPU idle 62% of the time. What it is, is **vsync-quantised**: 20.04 fps is exactly
@@ -153,19 +178,23 @@ frame / 20.04 fps, from `--telemetry`:
 
 | | ms/frame | % of frame |
 |---|---|---|
-| guest core 0 busy / idle | 7.94 / 41.86 | 16% / 84% |
-| guest core 1 busy / idle | 9.42 / 39.61 | 19% / 79% |
-| guest core 2 busy / idle | 9.53 / 37.39 | 19% / 75% |
-| **all 3 guest cores busy** | **26.89** | **18% of 3-core capacity** |
-| Latte thread: waiting for guest commands (`cp_idle`) | 20.03 | 40% |
-| Latte thread: waiting for **vsync** (`cp_fence`) | 15.58 | 31% |
-| GPU busy (asynchronous) | 16.45 † | 33% |
+| guest core 0 busy / idle | 7.87 – 8.14 / 41.96 – 42.18 | 16% / 84% |
+| guest core 1 busy / idle | 9.39 – 9.47 / 39.64 – 39.72 | 19% / 79% |
+| guest core 2 busy / idle | 9.48 – 9.62 / 37.46 – 37.55 | 19% / 75% |
+| **all 3 guest cores busy** | **26.84 – 27.18** | **17.9 – 18.2% of 3-core capacity** |
+| Latte thread: waiting for guest commands (`cp_idle`) | 19.47 – 19.51 | 39% |
+| Latte thread: waiting for **vsync** (`cp_fence`) | 15.39 – 15.42 | 31% |
+| GPU busy (asynchronous) | 17.12 – 17.17 † | 34% |
 
-Guest cores ~18% busy, GPU ~33% busy, command processor ~71% waiting.
+Guest cores ~18% busy, GPU ~34% busy, command processor ~70% waiting.
 
-† The 19.20 ms this table originally carried was measured before `839466d` and double-counted
-overlapping command buffers; the current n=3 median is 16.45 ms. The other rows are unaffected —
-only `gpu.busy_ns` had the inflation.
+**This whole table is n=3 at `cebe17f` (2026-08-02) and every row reproduced** the n=1 values it
+replaces to within 1.3%, the ranges above being the actual min–max across the three runs. It was
+re-run because the original was single-sample and predated the phase split `491f4ef`; the conclusion
+is unchanged, which is the point of saying so.
+
+† `gpu.busy_ns` before `839466d` double-counted overlapping command buffers and read 19.20 ms here.
+It is also the counter that soaks — see below — so quote it with a recording-window length attached.
 
 **`cp_fence` is solved and is not a defect: it is the emulated vsync timer.** The fence is released
 **10 µs** after a vsync signal (p99 30 µs), exactly one vsync and one flip fire per stall, and the
@@ -187,6 +216,8 @@ The cost is `GX2DrawDone`'s `IT_HLE_SYNC_ASYNC_OPERATIONS` packet, which BotW em
 frame** and whose handler force-finishes readbacks and queries with bare `waitUntilCompleted()` on
 the Latte thread: **6.78 ms/frame, of which 6.75 ms is texture-readback force-finish**
 (`gpu.occlusion_flush_ns` is 0.00). It collapses the intra-frame GPU gap from 16.39 ms to 0.25 ms.
+(Re-measured at `cebe17f`, n=3: 6.96–7.00 ms and 6.93–6.98 ms. Same structure, and the difference is
+the soak — this counter drifts 6.5 → 7.5 ms *within* a run.)
 
 **Don't just flip the default** — it is a documented accuracy tradeoff, and the drain force-finishes
 *every* in-flight readback whether or not the guest wants one. A surgical version *looked* like it

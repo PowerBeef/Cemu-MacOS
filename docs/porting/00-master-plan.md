@@ -1109,3 +1109,74 @@ self-dependency raises pass count — the very thing the bandwidth work was tryi
 still be done: shipping wrong pixels quietly is worse than shipping fewer frames honestly. But it
 should be done with the expectation that frame rate drops, and it makes the (currently cancelled)
 streamout work more valuable, not less, by moving the GPU further toward the memory path.
+
+
+---
+
+### Re-measuring the Korok verdicts at HEAD — all four hold, and one counter turns out to soak
+
+Twelve of the sixteen measured ledger entries were taken before one of the two commits that
+invalidate earlier numbers wholesale — `491f4ef` (the phase split, before which whole-file medians
+blended menu and gameplay) and `839466d` (the `MTLEvent` wrap, before which `gpu.busy_ns`
+double-counted overlapping buffers). Rather than argue about which gate reached which counter, the
+four load-bearing ones were re-run: **`cebe17f`, n=3, default configuration, Korok Forest, the
+gameplay phase selected by `telemetry-report.py`'s own splitter** (4,652 / 4,674 / 4,666 frames).
+
+| claim | as recorded | re-measured, n=3 |
+|---|---|---|
+| frame median / p99 | 49.90 / 49.97 ms | 49.90 / 49.98 – 50.00 ms |
+| fps | 20.04 | 20.04 |
+| draws / passes per frame | 3,480 / 201 | 3,517 – 3,528 / 202 – 203 |
+| all three guest cores busy | 26.89 ms = 18% | 26.84 – 27.18 ms = 17.9 – 18.2% |
+| `cp_idle` / `cp_fence` | 20.03 / 15.58 ms | 19.47 – 19.51 / 15.39 – 15.42 ms |
+| HLE calls / thread switches | 52,330 / 3,143 | 51,974 – 53,276 / 3,138 – 3,142 |
+| yield / quantum / blocked split | 79.4 / 10.5 / 10.0% | 79.4 – 79.5 / 10.4 – 10.5 / 10.0% |
+| `hle_would_charge` ÷ retired | 163% | 163 – 164% |
+| `gap_count` / `gap_large` | 7 / 2 | 7 / 2 |
+| `frame_critical_path_ns` | 35.25 ms | 35.25 – 35.26 ms |
+| **`gpu.busy_ns`** | **16.45 ms** | **17.12 – 17.17 ms** |
+
+**Every verdict survives.** The blocked-thread breakdown reproduces exactly (sleep 52%, message
+queue 24%, event 15%, semaphore 9%), and the three runs agree with each other to ±0.4% on counters
+where the recorded value differs by 4%. That last fact is what makes the one discrepancy
+interesting rather than dismissible.
+
+**`gpu.busy_ns` soaks.** Slicing a single gameplay phase into sixths shows the *work* holding
+still while the *time* climbs:
+
+| slice | draws | passes | attach MB | GPU ms | drain ms | core1 ms | crit ms |
+|---|---|---|---|---|---|---|---|
+| 0 | 3,472 | 203 | 804.3 | 16.9 | 6.5 | 9.5 | 35.1 |
+| 1 | 3,539 | 202 | 800.6 | 16.8 | 6.5 | 9.5 | 35.3 |
+| 2 | 3,536 | 202 | 800.6 | 16.8 | 6.6 | 9.4 | 35.3 |
+| 3 | 3,518 | 202 | 800.6 | 17.5 | 7.2 | 9.4 | 35.3 |
+| 4 | 3,562 | 202 | 800.6 | 17.5 | 7.2 | 9.4 | 35.3 |
+| 5 | 3,518 | 202 | 800.6 | 17.8 | 7.5 | 9.5 | 35.1 |
+
+Identical draw count, identical pass count, identical attachment traffic, identical guest-CPU cost —
+and 5% more GPU time by the end, with the readback drain up 15%. All three runs show it
+(+3.6 / +4.7 / +4.2% first-quarter to last-quarter on `gpu.busy_ns`). The scene is not changing:
+if BotW's day/night cycle were responsible, draw count or attachment traffic would move with it.
+The GPU is doing the same work more slowly under sustained load.
+
+Three consequences.
+
+**1. The recorded 16.45 ms and today's 17.15 ms are the same measurement at different window
+lengths**, not a regression. Nothing between those commits touches GPU work.
+
+**2. `gpu.busy_ns` and `gpu.readback_forcefinish_ns` are only comparable between equal-length,
+equally-positioned windows.** A shorter arm wins on those counters for free. This retroactively
+explains the "`readback_forcefinish_ns` swings ±2% between identical runs" note recorded with the
+readback-exemption experiment — that was not noise, and the same-arm control it recommends is now
+doubly necessary.
+
+**3. The vsync-pinned metrics hid it.** Frame time, fps and `frame_critical_path_ns` drift 0.0%
+across the same window, because they are quantised to the flip. The headline numbers look
+rock-steady while the counters underneath them walk, which is precisely the shape of a trap that
+survives casual checking.
+
+> Found while doing this: the `build` field in every telemetry header is stale. `CMakeLists.txt:15`
+> captures the hash at cmake *configure* time, so a binary compiled from `cebe17f` reported
+> `064d9a7`. `capture-scene.sh` fails the other way, stamping `baseline.tsv` from the repo's HEAD
+> rather than the binary. Both are recorded in CLAUDE.md; the runs above were taken after an
+> explicit reconfigure, which is why their headers read `cebe17f`.

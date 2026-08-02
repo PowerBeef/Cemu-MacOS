@@ -400,7 +400,8 @@
       "status": "landed",
       "commits": ["7f2c0e4", "6ad76dd"],
       "verdict": "Korok Forest issues **fewer** draws than the shrine and leaves the GPU idle 62% of the time, yet runs slower. 49.90 ms is exactly three vsync slots, and p99 equals the median — no variance, which is the signature of quantisation, not of variable work.",
-      "measured": { "scene": "botw-korok", "at_commit": "7f2c0e4", "date": "2026-07-26" },
+      "note": "**Re-measured at HEAD and confirmed**, n=3: 49.90 ms median, p99 49.98–50.00, 3,517–3,528 draws and 202–203 passes per frame. The original derivation predates the phase-split fix `491f4ef`, so it was re-run with the segmenting reporter rather than assumed to still hold.",
+      "measured": { "scene": "botw-korok", "at_commit": "cebe17f", "date": "2026-08-02", "n": 3 },
       "ref": "00-master-plan.md — The 33 ms frame decomposed"
     },
     {
@@ -410,7 +411,8 @@
       "status": "landed",
       "commits": ["e3ba7a0"],
       "verdict": "All three guest cores together are busy 26.89 ms of a 49.90 ms frame — **18% of three-core capacity**. There is no CPU wall to knock down.",
-      "measured": { "scene": "botw-korok", "at_commit": "e3ba7a0", "date": "2026-07-26" },
+      "note": "**Re-measured at HEAD and confirmed**, n=3: 26.84–27.18 ms across the three cores, 17.9–18.2% of capacity. This is the number that deprioritised the whole CPU workstream, and it was originally n=1 taken before the phase split, so it was the one most worth re-running.",
+      "measured": { "scene": "botw-korok", "at_commit": "cebe17f", "date": "2026-08-02", "n": 3 },
       "ref": "00-master-plan.md — Telemetry, phase 4"
     },
     {
@@ -420,8 +422,8 @@
       "status": "landed",
       "commits": ["d81aa90"],
       "verdict": "Every HLE call advances guest time by **zero cycles**, including `FSReadFile`, which on hardware is an IPC round trip to IOSU. And **79.4% of the 3,143 thread switches per frame are the guest voluntarily calling `OSYieldThread`** — BotW polling, faithfully emulated, because Cafe OS scheduling is cooperative.",
-      "note": "A flat per-call charge is ruled out by measurement, not opinion: `cpu.hle_would_charge_cycles` sums a hypothetical 500/call to **163% of the cycles actually retired**. The volume is `OSFastMutex_Lock/Unlock`, `OSGetCoreId` and GX2 register setters — tens of cycles each on hardware. Any charge must be tiered per function.",
-      "measured": { "scene": "botw-korok", "at_commit": "d81aa90", "date": "2026-07-26" },
+      "note": "A flat per-call charge is ruled out by measurement, not opinion: `cpu.hle_would_charge_cycles` sums a hypothetical 500/call to **163% of the cycles actually retired**. The volume is `OSFastMutex_Lock/Unlock`, `OSGetCoreId` and GX2 register setters — tens of cycles each on hardware. Any charge must be tiered per function. **Re-measured at HEAD and confirmed**, n=3: 51,974–53,276 calls, 3,138–3,142 switches, the yield/quantum/blocked split 79.4–79.5% / 10.4–10.5% / 10.0%, and the charge ratio 163–164%. The blocked breakdown reproduces exactly: sleep 52%, message queue 24%, event 15%, semaphore 9%.",
+      "measured": { "scene": "botw-korok", "at_commit": "cebe17f", "date": "2026-08-02", "n": 3 },
       "ref": "00-master-plan.md — Correct the HLE-charge claim"
     },
     {
@@ -523,7 +525,8 @@
       "status": "landed",
       "commits": ["e34facb"],
       "verdict": "The idle is not diffuse — it is two large contiguous gaps, which is what made the next commit's single-cause explanation findable.",
-      "measured": { "scene": "botw-korok", "at_commit": "e34facb", "date": "2026-07-30" },
+      "note": "**Re-measured at HEAD and confirmed**, n=3: `gpu.gap_count` 7, `gpu.gap_large` 2, 32.67–32.68 ms of gap per frame, identical to three decimal places across runs.",
+      "measured": { "scene": "botw-korok", "at_commit": "cebe17f", "date": "2026-08-02", "n": 3 },
       "ref": "00-master-plan.md — cp_idle and the GPU's 33 ms of dead air"
     },
     {
@@ -618,6 +621,16 @@
       "verdict": "One generated page for what changed versus upstream, what was tried and what it measured. Commit list, diffstat, baseline rows and counter totals are read from the repo — only verdicts are hand-maintained. CI reports any commit that lands without a ledger entry.",
       "note": "It caught its own first bug: the counter parser read **114** against the real 113, matching the `TLM_COUNTER(...)` example inside the `.def`'s own header comment. Two self-references bound the design — a ledger entry cannot name the hash of the commit containing it, and the page embeds the commit that carries it — so CI advises rather than blocks, and `--check` is local-only.",
       "ref": ".claude/rules/status-tracker.md"
+    },
+    {
+      "id": "korok-remeasure",
+      "title": "Re-measure the four oldest Korok verdicts at HEAD — all four hold",
+      "area": "tooling",
+      "status": "landed",
+      "verdict": "Twelve of sixteen measured entries were taken before one of the two commits that invalidate earlier numbers wholesale, so the four load-bearing ones were re-run at HEAD, n=3, default configuration. **Every claim reproduced**, most of them to the decimal: frame 49.90 ms, three-core busy 17.9–18.2%, 3,138–3,142 switches at a 79.4% yield share, `gap_count` 7 with `gap_large` 2.",
+      "note": "The screen that selected them was mechanical — *does this entry predate `491f4ef` or `839466d`* — and mechanical screens over-select: a ratio like the yield share is insensitive to phase blending, and `839466d` only ever touched `gpu.busy_ns`. Re-running was still the cheap move, because one telemetry run refreshes all four at once and the alternative was arguing about which ones the gates really reached.",
+      "measured": { "scene": "botw-korok", "at_commit": "cebe17f", "date": "2026-08-02", "n": 3 },
+      "ref": "00-master-plan.md — Re-measuring the Korok verdicts at HEAD"
     }
   ],
 
@@ -749,6 +762,14 @@
     {
       "title": "A pixel diff of the MK8 title screen proves nothing",
       "body": "The \"Press A to start\" prompt pulses and the background animates, so **~22% of pixels differ between any two captures**. Use targeted instrumentation to show a rendering change is live. Relatedly, `capture-scene.sh` uses `screencapture -R`, which grabs a screen *region* — raise the window first or you capture whatever is on top of it."
+    },
+    {
+      "title": "GPU-time counters soak: the same frame costs 5% more GPU after four minutes",
+      "body": "Across the Korok gameplay phase, sliced into sixths, **draws (3,472→3,518), render passes (202), attachment bytes (800 MB) and CPU core-busy (9.4–9.5 ms) are all flat, while `gpu.busy_ns` climbs 16.9→17.8 ms and `gpu.readback_forcefinish_ns` climbs 6.5→7.5 ms** — identical work, more GPU time, reproduced in all three runs. So the *median* of those counters is a function of how long you recorded and where in the run you sampled, and two arms of an A/B must be equal-length and equally-positioned or the longer one loses. Frame time, fps and `frame_critical_path_ns` do not drift at all (0.0%) because they are vsync-pinned, which is why this hides. It also explains the recorded 16.45 ms against today's 17.12–17.15, and retroactively explains the \"±2% swing between identical runs\" noted for the drain counter — that was not noise, it was window placement."
+    },
+    {
+      "title": "The build hash in every telemetry header is captured at cmake *configure* time",
+      "body": "`CMakeLists.txt:15` runs `git log --format=%h -1` inside `execute_process` and bakes the result into `-DEMULATOR_HASH`, which only re-evaluates when cmake reconfigures. A binary built from `cebe17f` reported `build 064d9a7` — eight commits stale — in its window title and in the `build` field of every `--telemetry` run header. `testing/capture-scene.sh` has the mirror-image problem: it stamps `baseline.tsv` with the *repo's* `git rev-parse HEAD`, which says nothing about what the binary was built from. **Neither surface proves provenance**; run `cmake -S . -B build …` before a measurement that will be quoted. The hash reaches everything through `precompiled.h`, so refreshing it costs a full rebuild."
     }
   ],
 
