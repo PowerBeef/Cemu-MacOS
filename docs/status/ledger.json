@@ -975,6 +975,24 @@
       "verdict": "`CLAUDE.md` still said `MemMapperUnix.cpp` and the `MMURange` table \"contain 4 KB assumptions\" long after Stage 3 fixed both. `03-graphics-metal.md` told the next person to scan `m_state.m_textures` (a sticky global that is never cleared → spurious pass splits), called blend factors `0x0B`/`0x0C` constant-alpha when `LatteReg.h:778-779` names them `BLEND_BOTH_SRC_ALPHA`/`_INV_` and constant alpha is `0x13`/`0x14` already mapped, and asserted an `MTLBinaryArchive` payoff the code path disputes.",
       "note": "The blend-factor entry is the one that matters: it was written as a two-line fix and following it would have duplicated an existing mapping onto the wrong tokens. The `MTLBinaryArchive` paragraph is flagged for re-verification rather than deleted — the descriptor's functions come from `newLibrary(m_mslCode)`, so the archive may skip only the backend compile. Also noted there: cold-launch cost is **unmeasurable today**, because the shader-cache timer is inside `#if BOOST_OS_WINDOWS` and has never run on this fork's only platform.",
       "ref": "00-master-plan.md — An audit with no game image"
+    },
+    {
+      "id": "cpu-conformance",
+      "title": "First CPU conformance result — and the recompiler is not the problem",
+      "area": "cpu",
+      "status": "landed",
+      "commits": [
+        "59d8f21"
+      ],
+      "verdict": "`ppc750cl.s` — 23,502 lines of public-domain PowerPC assembly **validated by its author against real Espresso silicon** — now runs as Wii U homebrew. **1,030 failures, and the recompiler and interpreter arms are identical: zero unique to either.** 676 are FPSCR state bits the emulator does not maintain; **354 are wrong values**, of which only **3 are integer**.",
+      "note": "The identical-arms result is the load-bearing one: whatever is wrong is in shared decode/semantics, not the AArch64 backend, which is the riskiest part of this fork and had never been conformance-tested. The FPSCR split was established by rebuilding with `IGNORE_FPSCR_STATE=1`, which the suite provides for implementations that skip that bookkeeping and which shifts no test address, so the two runs are directly comparable. Needs no game image, console, keys or SDK — which is why it was possible at all with `Roms/` empty.",
+      "measured": {
+        "scene": "ppc750cl-rpx",
+        "at_commit": "59d8f21",
+        "date": "2026-08-03",
+        "n": 1
+      },
+      "ref": "docs/testing/00-test-strategy.md — First result"
     }
   ],
   "refuted": [
@@ -1147,6 +1165,10 @@
     {
       "title": "An update and DLC in mlc01 do not make a title bootable",
       "body": "`~/Library/Application Support/TesseraEmu/mlc01/usr/title/` held `0005000e/101c9400` (BotW update, 3.0 GB, containing `U-King.rpx`) and `0005000c/101c9400` (DLC, 2.0 GB) — 5 GB of convincing-looking content with an executable in it. The **base** title is `00050000/…` and lives in `Roms/` as a disc image; an update carries only changed files, so with `Roms/` emptied nothing boots. Worth checking before planning any work whose verification is a run: the presence of `U-King.rpx` is not the presence of a game."
+    },
+    {
+      "title": "A toolchain can be blocked two independent ways at once",
+      "body": "Building Wii U homebrew here needed devkitPPC, and the two obvious routes were both closed: the installer needs `sudo`, which cannot be answered when driving this repo remotely (and the agent shell has no TTY, so sudo's credential cache cannot carry across either), while `downloads.devkitpro.org` returns **403 via Cloudflare** — including its root, though `github.com` and `cloudflare.com` return 200, so it is site-specific. Critically that host serves **every** source devkitPro's buildscripts fetch, binutils/gcc/newlib included, not just their own components. The way through was that their download loop skips files that already exist and honours `BUILD_DKPRO_SRCDIR`, so pre-staging all six archives from GNU/sourceware/GitHub made the stock scripts work. Two genuine bugs in those scripts surfaced on the way: a three-argument call to a four-argument function in the mn10200 step, and no `--with-system-zlib`, whose bundled zlib defines `fdopen` to `NULL` and breaks the macOS SDK's `stdio.h`. All recorded in `docs/testing/00-test-strategy.md` §4."
     }
   ],
   "roadmap": [
@@ -1317,6 +1339,21 @@
         "n": 3
       },
       "ref": "00-master-plan.md — An audit with no game image"
+    },
+    {
+      "id": "rm-fp-conformance",
+      "title": "Fix the 354 real floating-point and paired-single conformance failures",
+      "area": "cpu",
+      "status": "open",
+      "verdict": "175 paired-single, 120 double-extended, 36 single-extended, 19 `psq_*`, 3 integer. These are wrong *values*, not wrong status bits, and they are shared between the interpreter and the recompiler.",
+      "gate": "None — the measurement exists and the failing instruction words are recorded. Start with the 34 instruction words that fail more than once, since a repeated word is one defect rather than N. `report.py` groups them. Note the FPSCR *state* half (676) is a separate and deliberate omission; do not conflate the two.",
+      "measured": {
+        "scene": "ppc750cl-rpx",
+        "at_commit": "59d8f21",
+        "date": "2026-08-03",
+        "n": 1
+      },
+      "ref": "docs/testing/00-test-strategy.md — First result"
     }
   ],
   "unattributed": []

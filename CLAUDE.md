@@ -35,7 +35,16 @@ Useful launch flags (`src/config/LaunchSettings.cpp` has the full list): `--forc
 `--telemetry <file.jsonl>` / `--telemetry-label <name>` to record the per-frame counters that
 everything below is measured with.
 
-There is **no test suite.** Verification is: it builds, it boots a title, the frame looks right, and nothing new appears in the log.
+There is **no automated test suite for graphics**; verification there is still: it builds, it boots a
+title, the frame looks right, and nothing new appears in the log.
+
+**The CPU now has one.** `testing/cpu-tests/` runs `ppc750cl.s` — 23,502 lines of public-domain
+PowerPC assembly validated against real Espresso silicon — as Wii U homebrew, needing no game
+image, console, keys or SDK. First result: **1,030 failures, recompiler and interpreter
+identical (zero unique to either arm)**, of which 676 are FPSCR state bits this emulator does not
+maintain and **354 are wrong values — only 3 of them integer**. So the AArch64 backend is exactly
+as correct as the interpreter, and the real defects are in shared FP/paired-single semantics.
+See `docs/testing/00-test-strategy.md`.
 
 ## Verifying a change
 
