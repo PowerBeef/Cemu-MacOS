@@ -126,7 +126,7 @@ paired-singles are exactly where this fork is most likely to be wrong.
 thread cancel, filesystem read. Small, but it is the only Cafe OS test material in existence. Keep it
 in a separate repo to avoid licence entanglement.
 
-### 3.4 Graphics — self-dependency reproducer — **not built**
+### 3.4 Graphics — self-dependency reproducer — **built, runs, does not yet reproduce**
 
 The targeted test for the defect the last audit found. Design borrowed from piglit's
 `blending-in-shader-arb.c` (MIT), whose key trick is an **integer render target so comparison is
@@ -146,6 +146,17 @@ must therefore cover both, and is expected to fail Case B. That failure is the d
 
 Run it under the `acc.render_self_dependency` / `acc.self_dep_fbfetch` / `acc.self_dep_nonpixel`
 counters landed alongside the detector.
+
+**Current state: the ROM builds and runs, and all three counters read zero.** Both sides of the
+covered/uncovered split being zero means the emulator saw no alias at all, which is either a test
+that does not create the aliasing the emulator recognises or a detector that does not fire. Not yet
+separated — see `testing/graphics-tests/README.md`. **Until it is, a zero from these counters is not
+evidence about item 3.1.**
+
+Getting this far did establish the toolchain path it depends on: CafeGLSL's `glslcompiler.rpl` loads
+from `cafeLibs/` and compiles GLSL to Latte bytecode at runtime *inside* the emulator, which our
+decompiler then lowers to MSL (`gpu.shaders_compiled_vs`/`ps` both incremented). That means graphics
+tests can be written in ordinary GLSL and still exercise the real Latte→MSL path.
 
 ### 3.5 Golden frames — **exists, and is weak**
 
@@ -274,7 +285,7 @@ conformance-tested. Every failure is a finding and belongs in `docs/status/ledge
 | `report.py` classification and `--compare` | **working against real logs** |
 | Interpreter-vs-JIT fuzzer | not built |
 | HLE / `coreinit` tests | not built |
-| Self-dependency reproducer | not built |
+| Self-dependency reproducer | **built and runs — but the counters read zero**, see `testing/graphics-tests/README.md` |
 | CI integration | **build gate only** (`.github/workflows/cpu_tests.yml`) — see below |
 
 ### What CI does and does not check
