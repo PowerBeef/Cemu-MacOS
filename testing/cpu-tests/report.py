@@ -56,6 +56,39 @@ def family(insn: int) -> str:
     return PRIMARY.get((insn >> 26) & 0x3F, f"primary-{(insn >> 26) & 0x3F}")
 
 
+def disassemble(words):
+    """Map instruction words to mnemonics via powerpc-eabi-objdump.
+
+    Grouping by primary opcode (below) says "floating point"; grouping by mnemonic
+    says "the multiply-add family", which is the difference between a category and
+    a lead. Derived rather than tabulated so it cannot go stale.
+
+    Returns {} if the toolchain is not on PATH -- the rest of the report still works.
+    """
+    import shutil, subprocess, tempfile, os
+    as_, objdump = shutil.which("powerpc-eabi-as"), shutil.which("powerpc-eabi-objdump")
+    if not (as_ and objdump):
+        return {}
+    d = tempfile.mkdtemp()
+    try:
+        src, obj = os.path.join(d, "i.s"), os.path.join(d, "i.o")
+        with open(src, "w") as f:
+            f.write("\t.text\n" + "".join(f"\t.long 0x{w:08X}\n" for w in words))
+        if subprocess.run([as_, "-m750cl", "-o", obj, src],
+                          capture_output=True).returncode != 0:
+            return {}
+        out = subprocess.run([objdump, "-d", "-M750cl", obj],
+                             capture_output=True, text=True).stdout
+        mnem = []
+        for line in out.splitlines():
+            parts = line.split("\t")
+            if len(parts) >= 3 and parts[2].strip():
+                mnem.append(parts[2].split()[0])
+        return dict(zip(words, mnem)) if len(mnem) == len(words) else {}
+    finally:
+        import shutil as sh; sh.rmtree(d, ignore_errors=True)
+
+
 def parse(path):
     text = sys.stdin.read() if path == "-" else open(path, encoding="utf-8", errors="replace").read()
     result, count, notes, fails = None, None, {}, []
@@ -103,6 +136,23 @@ def emit(run, label):
     print("\n  failures by instruction family:")
     for fam, n in by_family.most_common():
         print(f"    {n:>6}  {fam}")
+
+    words = sorted({f["insn"] for f in run["fails"]})
+    mnem = disassemble(words)
+    if mnem:
+        by_mnem = Counter(mnem[f["insn"]] for f in run["fails"] if f["insn"] in mnem)
+        print(f"\n  failures by mnemonic ({len(by_mnem)} distinct instructions):")
+        for m, n in by_mnem.most_common(20):
+            print(f"    {n:>6}  {m}")
+        # The Espresso deviates from IEEE most visibly in the multiply-add family and
+        # in single-precision rounding, so call that grouping out explicitly.
+        madd = sum(n for m, n in by_mnem.items() if "madd" in m or "msub" in m)
+        if madd:
+            print(f"\n    {madd} of these are multiply-add/subtract forms -- the suite's own"
+                  f"\n    changelog cites tests for 'fmadds/ps_madd is not rounded twice' and"
+                  f"\n    'non-rounding of the product using single-precision inputs'.")
+    else:
+        print("\n  (mnemonic breakdown needs powerpc-eabi-as/objdump on PATH)")
 
     # Repeated instruction words usually mean one broken handler, not N bugs.
     by_insn = Counter(f["insn"] for f in run["fails"])

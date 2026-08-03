@@ -28,6 +28,25 @@ Three conclusions, each of which is the point of having done this:
    175 paired-single, 120 double-extended, 36 single-extended, 19 `psq_*`, and only **3 integer**.
    **The integer core is essentially correct; the FP and paired-single paths are not.**
 
+`report.py` groups those 354 by mnemonic (derived via `powerpc-eabi-objdump`, not tabulated), and
+the shape is a lead rather than a category:
+
+| group | count | instructions |
+|---|---|---|
+| **multiply-add / subtract** | **131** | `ps_nmadd` 18, `ps_madd` 16, `ps_nmsub` 16, `fnmadd` 11, `ps_msub` 11, `fmsub` 10, `fmadd` 9, `fnmsub` 9, `fmadds` 7, … |
+| multiply | 29 | `ps_mul` 14, `fmuls` 11, `fmul` 4 |
+| reciprocal estimates | 29 | `ps_res` 10, `ps_rsqrte` 8, `fres` 6, `frsqrte` 5 |
+| quantised store | 16 | `psq_st` |
+| compare / convert | 42 | `frsp` 15, `ps_cmpo1` 14, `fctiw` 13 |
+
+**37% being the multiply-add family is the strongest signal in the whole result**, and it points at a
+documented Espresso deviation rather than a random bug: the suite's own changelog records tests added
+to verify that *"the result of fmadds/ps_madd is not rounded twice (to double and then to single
+precision)"* and *"non-rounding of the product using single-precision inputs"*. The 750CL does not
+round the `frC` mantissa to 24 bits the way a naive IEEE implementation would. libbinrec's Espresso
+test names (`750cl-fast-fmadds`, `750cl-fast-fmuls`, `750cl-single-prec-inputs`) enumerate the same
+family independently. That is where to start.
+
 ---
 
 ## 1. The problem
@@ -256,7 +275,26 @@ conformance-tested. Every failure is a finding and belongs in `docs/status/ledge
 | Interpreter-vs-JIT fuzzer | not built |
 | HLE / `coreinit` tests | not built |
 | Self-dependency reproducer | not built |
-| CI integration | not built — the toolchain is not available to CI |
+| CI integration | **build gate only** (`.github/workflows/cpu_tests.yml`) — see below |
+
+### What CI does and does not check
+
+`.github/workflows/cpu_tests.yml` runs on `macos-26`, installs devkitPPC + wut (CI runners have
+passwordless sudo and are not subject to the Cloudflare block described in §4), builds the ROM, and
+asserts that:
+
+- `vendor/ppc750cl.s` still carries its licence and validation lines and is still 23,502 lines, so
+  the suite cannot silently stop being the upstream-validated one;
+- the built ROM still contains ≥1000 `ps_*` and ≥80 `psq_*` instructions and exports
+  `ppc750cl_test`. **A ROM that assembles without paired-single support would build cleanly and test
+  nothing** — this is the check that catches that;
+- `report.py` still classifies a known log.
+
+**It does not run the ROM.** That needs the emulator binary (a ~22 minute build) plus a window server
+for the Metal backend, and a job that rebuilds the emulator merely to launch a ROM would duplicate
+`build_check` for a weaker signal. Running remains a local step. This is a real limitation, not an
+oversight: **there is currently no automated gate on FP conformance regressions**, only on the test
+infrastructure that measures them.
 
 ### Known deviations from a stock devkitPro install
 

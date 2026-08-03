@@ -1,0 +1,96 @@
+# Builds the PowerPC 750CL conformance ROM and checks it is intact.
+#
+# What this does NOT do is run it. Running requires the emulator binary (a ~22 min
+# build) plus a window server for the Metal backend, and a CI job that builds the
+# emulator only to launch a ROM would duplicate build_check for a weaker signal.
+# The value here is narrower and real: the ROM is built from a 23,502-line assembly
+# file through a cross-toolchain, and both the toolchain and the assembly settings
+# are easy to break silently. This catches that.
+#
+# See docs/testing/00-test-strategy.md for the suite and its results.
+name: CPU conformance ROM
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'testing/cpu-tests/**'
+      - '.github/workflows/cpu_tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'testing/cpu-tests/**'
+      - '.github/workflows/cpu_tests.yml'
+
+jobs:
+  build-rom:
+    # macOS because that is what this fork targets; devkitPro publishes a macOS
+    # installer and CI runners have passwordless sudo, neither of which is true of
+    # the environment this suite was originally built in.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install devkitPPC and wut
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 -o dkp.pkg \
+            https://github.com/devkitPro/pacman/releases/download/v6.0.2/devkitpro-pacman-installer.pkg
+          sudo installer -pkg dkp.pkg -target /
+          sudo dkp-pacman -Syu --noconfirm
+          sudo dkp-pacman -S --noconfirm wiiu-dev
+          echo "DEVKITPRO=/opt/devkitpro" >> "$GITHUB_ENV"
+          echo "DEVKITPPC=/opt/devkitpro/devkitPPC" >> "$GITHUB_ENV"
+          echo "/opt/devkitpro/tools/bin:/opt/devkitpro/devkitPPC/bin" >> "$GITHUB_PATH"
+
+      - name: Verify ppc750cl.s is unmodified upstream
+        run: |
+          set -euo pipefail
+          # The file is public domain and committed verbatim so it can be re-fetched
+          # and diffed. If this drifts, the suite is no longer the validated one.
+          grep -q 'No copyright is claimed on this file' testing/cpu-tests/vendor/ppc750cl.s
+          grep -q 'validated against' testing/cpu-tests/vendor/ppc750cl.s
+          lines=$(wc -l < testing/cpu-tests/vendor/ppc750cl.s | tr -d ' ')
+          echo "ppc750cl.s: $lines lines"
+          [ "$lines" -eq 23502 ] || { echo "::error::expected 23502 lines, got $lines"; exit 1; }
+
+      - name: Build the ROM
+        working-directory: testing/cpu-tests
+        run: make
+
+      - name: Check the paired-single tests survived into the ROM
+        working-directory: testing/cpu-tests
+        run: |
+          set -euo pipefail
+          # -m750cl silently assembling without paired-single support, or the entry
+          # wrapper failing to .include the suite, would both produce a ROM that
+          # builds and tests nothing. Assert the instructions are actually present.
+          ps=$(powerpc-eabi-objdump -d -M750cl ppc750cl.elf | grep -cE '\bps_' || true)
+          psq=$(powerpc-eabi-objdump -d -M750cl ppc750cl.elf | grep -cE '\bpsq_' || true)
+          echo "ps_* = $ps, psq_* = $psq"
+          [ "$ps" -ge 1000 ] || { echo "::error::only $ps ps_* instructions, expected ~1105"; exit 1; }
+          [ "$psq" -ge 80 ] || { echo "::error::only $psq psq_* instructions, expected ~93"; exit 1; }
+          powerpc-eabi-nm ppc750cl.elf | grep -q ' T ppc750cl_test' \
+            || { echo "::error::entry symbol ppc750cl_test missing"; exit 1; }
+
+      - name: Check report.py parses a known log
+        working-directory: testing/cpu-tests
+        run: |
+          set -euo pipefail
+          cat > /tmp/synth.log <<'EOF'
+          TESSERA-CPUTEST RESULT=FAIL failures=2
+          FAIL 0 insn=10012A2E addr=01001234 aux=00000001,00000000,20000000,00000000 extra=00000000,00000000
+          FAIL 1 insn=7C640214 addr=01005678 aux=DEADBEEF,00000000,40000000,00000000 extra=00000000,00000000
+          EOF
+          # Exits 1 on FAIL by design, so invert; assert on the classification instead.
+          ./report.py /tmp/synth.log > /tmp/out.txt || true
+          cat /tmp/out.txt
+          grep -q 'paired-single' /tmp/out.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ppc750cl-rom
+          path: |
+            testing/cpu-tests/ppc750cl.rpx
+            testing/cpu-tests/ppc750cl.wuhb
