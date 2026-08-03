@@ -982,10 +982,12 @@
       "area": "cpu",
       "status": "landed",
       "commits": [
-        "59d8f21"
+        "59d8f21",
+        "00ddd2e",
+        "1a2749f"
       ],
       "verdict": "`ppc750cl.s` — 23,502 lines of public-domain PowerPC assembly **validated by its author against real Espresso silicon** — now runs as Wii U homebrew. **1,030 failures, and the recompiler and interpreter arms are identical: zero unique to either.** 676 are FPSCR state bits the emulator does not maintain; **354 are wrong values**, of which only **3 are integer**.",
-      "note": "The identical-arms result is the load-bearing one: whatever is wrong is in shared decode/semantics, not the AArch64 backend, which is the riskiest part of this fork and had never been conformance-tested. The FPSCR split was established by rebuilding with `IGNORE_FPSCR_STATE=1`, which the suite provides for implementations that skip that bookkeeping and which shifts no test address, so the two runs are directly comparable. Needs no game image, console, keys or SDK — which is why it was possible at all with `Roms/` empty.",
+      "note": "The identical-arms result is the load-bearing one: whatever is wrong is in shared decode/semantics, not the AArch64 backend, which is the riskiest part of this fork and had never been conformance-tested. The FPSCR split was established by rebuilding with `IGNORE_FPSCR_STATE=1`, which the suite provides for implementations that skip that bookkeeping and which shifts no test address, so the two runs are directly comparable. Needs no game image, console, keys or SDK — which is why it was possible at all with `Roms/` empty. Failures are grouped by mnemonic in `report.py` (derived via objdump): **131 of the 354 are multiply-add/subtract forms**, which matches a documented Espresso deviation rather than a random distribution. CI gates the test infrastructure but deliberately does not run the ROM — see the strategy doc.",
       "measured": {
         "scene": "ppc750cl-rpx",
         "at_commit": "59d8f21",
@@ -1354,6 +1356,15 @@
         "n": 1
       },
       "ref": "docs/testing/00-test-strategy.md — First result"
+    },
+    {
+      "id": "rm-homebrew-exit-crash",
+      "title": "Every homebrew title that exits normally SIGSEGVs the emulator",
+      "area": "platform",
+      "status": "open",
+      "verdict": "When the *guest* requests exit, `MainWindow::OnRequestGameExit` → `Close()` → `wxTopLevelWindowMac::Destroy()` → `wxWindow::Show(false)` faults in `objc_msgSend` on an `NSView`. Reproducible on every `.rpx` run, and the CLI branch it happens in is explicitly commented as existing *\"for homebrew testing setups that use Cemu via CLI\"*.",
+      "gate": "None. It does not corrupt results — the crash is strictly after the ROM's last output — but it makes the exit code useless, which blocks using a plain process exit status as a CI gate. **Two hypotheses already refuted, do not retry them:** (1) that the canvas was destroyed while the Latte thread was still presenting — adding `CafeSystem::ShutdownTitle()` + `DestroyCanvas()` before `Close()` changed nothing; (2) that closing from inside a dispatched event was the problem — deferring via `CallAfter` changed nothing. The identical backtrace in both cases points inside wx's own top-level teardown, not at our shutdown ordering.",
+      "ref": "docs/testing/00-test-strategy.md — Known issues"
     }
   ],
   "unattributed": []

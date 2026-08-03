@@ -296,6 +296,29 @@ for the Metal backend, and a job that rebuilds the emulator merely to launch a R
 oversight: **there is currently no automated gate on FP conformance regressions**, only on the test
 infrastructure that measures them.
 
+### Known issues
+
+**Every homebrew title that exits normally crashes the emulator on the way out.** The guest
+requesting exit reaches `MainWindow::OnRequestGameExit` → `Close()` →
+`wxTopLevelWindowMac::Destroy()` → `wxWindow::Show(false)`, which faults in `objc_msgSend` on an
+`NSView`. It is reproducible on every run and is newly visible only because nothing had ever run
+homebrew on this fork before.
+
+It does **not** affect results — the crash is strictly after the ROM's final output, so the verdict
+is always complete — but it makes the process exit code meaningless, which is why `run.sh` asserts on
+the log text rather than on `$?`.
+
+Two hypotheses were tested and refuted; do not retry them:
+
+1. *The canvas was destroyed while the Latte thread was still presenting to it.* Adding
+   `CafeSystem::ShutdownTitle()` + `DestroyCanvas()` before `Close()` (matching what the non-CLI
+   branch does via `EndEmulation()`) changed nothing.
+2. *Closing a top-level window from inside an event dispatched to it.* Deferring with `CallAfter`
+   changed nothing.
+
+Both produced a byte-identical backtrace, which places the fault inside wx's own top-level teardown
+rather than in our shutdown ordering. Tracked as `rm-homebrew-exit-crash`.
+
 ### Known deviations from a stock devkitPro install
 
 The toolchain was built from upstream sources because devkitPro's package host is unreachable here.
