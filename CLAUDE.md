@@ -100,6 +100,22 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
   to quote. The hash reaches every translation unit through `precompiled.h`, so refreshing it is a
   full rebuild.
 
+- **A counter reading zero is not evidence until you check it has an increment site.** Sweeping all
+  113 `TLM_COUNTER` declarations against `src/` found **14 that nothing ever writes**:
+  `gpu.pipelines_compiled`, `acc.render_self_dependency`, and **all twelve `mem.*`**. The `mem.*`
+  block covers buffer-cache uploads, texture-cache reloads and shader-cache hit/miss — exactly the
+  subsystem behind the largest graphics finding on file, which had to be established by backtrace
+  attribution *because these counters do not work*. A zero from an unwired counter is
+  indistinguishable from a zero that means something. Check the hook exists, and prefer a positive
+  control in the same code path (`gpu.depth_sampled_draws` reads 392/frame beside the
+  self-dependency detector for exactly this reason).
+
+- **The instrument only sees the scene you point it at.** A confirmed out-of-bounds write —
+  geometry-shader texture bindings landing past the end of `MetalState::m_textures` — survived in a
+  heavily measured fork because `gpu.draws_mesh` is **0** in the only scene anyone measures. Absence
+  of a signal in BotW Korok is not absence of the bug. Where a defect is structural, prove it with a
+  `static_assert` rather than waiting for a run to show it.
+
 Two traps already caught in this repo — both produce confident, wrong numbers:
 
 - **MK8's attract mode is not a fixed workload.** It cycles demo scenes with very different draw loads, so two traces taken minutes apart are not comparable, and neither are their sample counts. A first A/B here read as "4.4x faster" from sample counts; the real figure was 1.77x. To compare two implementations, **put a runtime toggle behind an env var, flip it every ~20 s inside one process**, discard any window that straddles a switch, and report the median of n≥5 per variant. Ranges that overlap mean you have not measured anything.
@@ -352,7 +368,7 @@ For Metal work: `MTL_HUD_ENABLED=1` for a frame-time overlay, `MTL_DEBUG_LAYER=1
 
 Guest threads are `ucontext` fibers (`src/util/Fiber/FiberUnix.cpp`), not host threads. `makecontext` passes `int` arguments, so the 64-bit fiber parameter is split across two — hence `__OSFiberThreadEntry(uint32 _high, uint32 _low)`.
 
-**Guest memory** is pure fastmem: one 4 GB `PROT_NONE` reservation, sub-ranges `mprotect`'d on demand, guest→host is `memory_base + addr` with no bounds check. Unmapped accesses fault to SIGSEGV. **Apple Silicon uses 16 KB pages** — `MemMapperUnix.cpp` and the `MMURange` table in `MMU.cpp` still contain 4 KB assumptions (see `02-cpu-jit-memory.md`).
+**Guest memory** is pure fastmem: one 4 GB `PROT_NONE` reservation, sub-ranges `mprotect`'d on demand, guest→host is `memory_base + addr` with no bounds check. Unmapped accesses fault to SIGSEGV. **Apple Silicon uses 16 KB pages, and both places that assumed 4 KB are fixed** — `MemMapperUnix.cpp:36-47` derives the page size from `getpagesize()` and widens every range outward before `mprotect`, and every `MMURange` entry in `MMU.cpp:113-126` is 16 KB-aligned in base *and* size (`CORE0/1/2_LC` rounded up from `0x5000`, `HIGHMEM` widened down from `0xFFFFF000` to the containing page). An earlier revision of this file said these "still contain 4 KB assumptions" long after Stage 3 landed the fix; see `02-cpu-jit-memory.md` §4.3 for what the bugs actually were.
 
 **Graphics.** `LatteThread` is the single GPU command-processor thread; all renderer calls happen there. Latte (R700) shaders are decompiled to **MSL source text** and compiled at runtime. There is a persistent *pipeline* cache (`shaderCache/transferable/{titleid}_mtlpipeline.bin`, `MetalPipelineCache.cpp:267`), but it stores pipeline **state descriptors**, not compiled binaries — it replays them on the loading screen, so **every shader still recompiles from MSL on every launch**. The `MTLBinaryArchive` code that would fix this exists in `MetalPipelineCompiler.cpp` but is entirely commented out. The Metal backend keeps exactly one encoder alive at a time, so any mid-frame texture/buffer upload tears down the render pass.
 

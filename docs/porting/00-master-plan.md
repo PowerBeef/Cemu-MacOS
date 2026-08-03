@@ -1180,3 +1180,124 @@ survives casual checking.
 > `064d9a7`. `capture-scene.sh` fails the other way, stamping `baseline.tsv` from the repo's HEAD
 > rather than the binary. Both are recorded in CLAUDE.md; the runs above were taken after an
 > explicit reconfigure, which is why their headers read `cebe17f`.
+
+---
+
+### An audit with no game image: three findings from source and the runs already on disk
+
+Taken 2026-08-03 at `5da85cc`, with `Roms/` empty — mlc01 holds BotW's update and DLC but not the
+base title, so nothing boots. That constraint shaped the work: everything below is derived from the
+source tree or from the three Korok runs recorded at `cebe17f`, and **nothing here is newly
+measured.** Where a number would settle a question and cannot be obtained, that is said rather than
+estimated.
+
+#### 1. A geometry-shader texture binding wrote out of bounds
+
+`MetalState::m_textures` was declared `[LATTE_NUM_MAX_TEX_UNITS * 3]` — 54 slots — but texture units
+are addressed as *stage base + unit*, and the bases are strided by 32: PS 0, VS 32, **GS 64**
+(`LatteConst.h:22-24`). So the array needed 82 slots, and every geometry-shader binding wrote at
+64–81, past the end and into `m_uniformBufferOffsets`, the very next member. Neither
+`texture_setLatteTexture` (write) nor `BindStageResources` (read) bounds-checked the unit; the latter
+checks only `binding` against `MAX_MTL_TEXTURES`, which is a different quantity.
+
+It has never been observed because `gpu.draws_mesh` is 0 across all three Korok runs — the measured
+scene issues no geometry-shader draws at all. That is the whole reason a fork this heavily measured
+carried a memory-corruption bug: **the instrument only sees the scene you point it at.**
+
+Fixed by sizing the array to 128 and adding a `static_assert` tying it to the stage bases, so the two
+constants cannot drift apart again. That assert, not a run, is the verification — the same approach
+`BackendAArch64.cpp` already uses for its 14 `PPCInterpreter_t` field offsets.
+
+#### 2. Item 3.1 is not the bug we thought, and the half that runs is wrong
+
+`docs/porting/03` said render-pass self-dependency is "not implemented (Metal)", and
+`CafeSystem.cpp` logs that at startup. Half true. The *splitter* is commented out, but
+`LatteDecompilerAnalyzer.cpp:888-957` does detect pixel-stage self-dependency at decompile time and
+`LatteDecompilerEmitMSL.cpp:2322-2328` rewrites the sample into a framebuffer fetch —
+`src->addFmt("col{}", renderTargetIndex)` — **discarding the texture coordinate.**
+
+So a sample of a bound render target returns the current fragment's own colour, whatever coordinate
+the guest asked for. An offset tap, a blur, a downsample: all silently read self.
+`LatteDecompilerEmitMSL.cpp:2708` compounds it, returning a hardcoded `int4(1920,1080,1,1)` from
+`GET_TEXTURE_INFO`, so a shader computing offsets from `textureSize` gets wrong offsets and then has
+them ignored anyway.
+
+"We never split, so effects read stale data" is a scheduling bug a splitter fixes. "We substitute a
+coordinate-free read and compile it into the shader" is a decompiler bug a splitter does not touch.
+**These are different items and the second may be the larger one.** Neither should be built before
+the frequency of each is known, which is what the detector below is for.
+
+`acc.render_self_dependency` — the counter that would have told us — **had no increment site
+anywhere in `src/`.** Its reading of 0 in every run to date meant nothing. It is now wired, along
+with `acc.self_dep_fbfetch` (the covered case, counted at the framebuffer-fetch `continue`) and
+`acc.self_dep_nonpixel` (the vertex/geometry subset, which framebuffer fetch can never cover and
+which therefore floors any splitter's cost). The split between covered and uncovered is the actual
+answer, and it falls out of where the two hooks sit.
+
+The detector lives inside the loop `BindStageResources` already runs, beside the
+`gpu.depth_sampled_draws` hook that reads 392/frame and serves as its positive control. It is
+detection only: no pass splitting, no behaviour change, guarded by `tlm::AreaEnabled`. **It has never
+been run.** It counts draws rather than splits, because `BindStageResources` executes after
+`GetRenderCommandEncoder()` — a real fix has to move the check ahead of that call.
+
+#### 3. Fourteen counters were declared and never written
+
+Sweeping all 113 `TLM_COUNTER` declarations against every reference in `src/`: `gpu.pipelines_compiled`,
+`acc.render_self_dependency`, and **all twelve `mem.*`** have no increment site (the twelfth,
+`mem.bufcache.upload_bytes`, is mentioned only in a doc comment at `Telemetry.h:27`).
+
+The `mem.*` block is the sharp one. It covers buffer-cache scans and uploads, texture-cache reloads
+and shader-cache hit/miss — *exactly* the subsystem behind this plan's largest graphics finding, that
+`UploadToBufferCache` fires ~25/frame and breaks render passes. That finding had to be established by
+backtrace attribution at every pass teardown **because these counters do not work.** The
+instrumentation for the question was sitting in the file, reading zero, and zero was
+indistinguishable from "not wired".
+
+Hence a new trap, which generalises past this repo: **a declared counter reading zero is not evidence
+until you have checked it has an increment site.** Every "exactly zero" verdict on file was re-checked
+against this; the ones that hold are listed next.
+
+#### What the accuracy register actually says about BotW
+
+Re-derived from the three `cebe17f` Korok runs, gameplay phase, n=3. Every **wired** accuracy counter
+reads exactly zero across all 8,881 frames: `d24_s8_use`, `unsupported_tex_format`,
+`unsupported_primitive`, `geometry_draw_dropped`, `draw_skipped_no_target`, `draw_skipped_shader_err`,
+`alpha_to_mask_draws`, `dcstorerange_no_notify`. The only non-zero is `acc.unsupported_hle_calls` at
+44/frame.
+
+This is a genuinely positive result that nobody had recorded, and it retires a priority label:
+`acc.d24_s8_use` is the counter behind item 3.3's "live corruption path on every M-series Mac". The
+path is real, the format table does disagree with the decoder — but **BotW never takes it.** Do not
+promote that item until a title reads non-zero.
+
+Two caveats, both load-bearing. First, one title is not coverage; these zeros say BotW is clean, not
+that the emulator is. Second, **the evidence is untracked**: `testing/.gitignore` excludes `traces/`,
+so the three runs exist only on one machine, and `git ls-files testing` returns five files, none of
+them a `.jsonl`. A finding whose evidence cannot be regenerated (no game image) and is not committed
+is one `rm` from being a claim with nothing behind it.
+
+#### The readback drain is 96% six tiny surfaces
+
+Not acted on, recorded because it reframes a question previously closed. `acc.readback_queued` writes
+into the `{"t":"acc"}` detail stream rather than the frame vector, which is why summing the counter
+column showed zero. Parsed properly, across all three runs:
+
+| | r1 | r2 | r3 |
+|---|---|---|---|
+| distinct surfaces mirrored | 44 | 44 | 44 |
+| total readbacks | 12,881 | 12,834 | 12,877 |
+| **share held by the top 6 addresses** | **96.2%** | **96.1%** | **96.2%** |
+
+The six are stable across runs, all `TM_LINEAR_ALIGNED`, non-depth, and ≤512 texels — 64×8, 64×3,
+64×1. `enableReadback` is set defensively at `LatteTexture.cpp:1311` for *any* linear-aligned surface,
+on the theory that the CPU might read it. So the 6.9 ms/frame drain that costs this scene 30 fps is
+paid to mirror roughly 1.5 KB, 1.45 times per frame.
+
+**This does not overturn "the readback drain is not surgically improvable."** That verdict was about
+*reordering* the drain — starting it earlier, unchaining its command buffer, moving it off the fence
+path — and all three of those measured negative and stay refuted. What it opens is a question the
+earlier work never asked: not *when* to drain, but *whether these six surfaces need mirroring at
+all*. That is a policy question at `LatteTexture.cpp:1311`, not a scheduling one.
+
+The open question is whether the guest ever reads those addresses, and it is answerable with
+instrumentation rather than argument. It is gated on a game image like everything else here.

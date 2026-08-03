@@ -219,7 +219,28 @@ TLM_COUNTER(MemIndexUploadBytes,    "mem.index.upload_bytes",    "bytes", Mem)
 // row in docs/hardware/09-accuracy-gap-register.md.
 TLM_COUNTER(AccUnsupportedHleCalls, "acc.unsupported_hle_calls", "count", Accuracy)
 TLM_COUNTER(AccDepth24Stencil8Use,  "acc.d24_s8_use",            "count", Accuracy)
+// Render-pass self-dependency: a draw samples a texture that is also an attachment of the
+// render pass it is inside. These three split the picture, and the split is the point.
+//
+//   acc.self_dep_fbfetch  -- COVERED. The decompiler spotted the aliasing at compile time
+//                            (LatteDecompilerAnalyzer.cpp) and rewrote the sample into a
+//                            framebuffer fetch, so the texture is never bound. Note this is
+//                            only approximately correct: the rewrite discards the texture
+//                            coordinate and returns the current fragment, so an offset tap or
+//                            a blur silently becomes a read of self.
+//   acc.render_self_dependency -- UNCOVERED. Reached the binding path anyway, so it reads
+//                            undefined data. This is the real defect, and the number here is
+//                            what sizes a pass-splitting fix (docs/porting/03, item 3.1).
+//   acc.self_dep_nonpixel -- the subset of the above on a vertex/geometry stage, which
+//                            framebuffer fetch can never cover and which therefore sets the
+//                            floor on any splitter's cost.
+//
+// These count DRAWS, not render-pass splits. BindStageResources runs after
+// GetRenderCommandEncoder(), so the pass is already open by the time the check happens; a fix
+// that actually splits passes has to move the check ahead of that call.
 TLM_COUNTER(AccSelfDependency,      "acc.render_self_dependency","count", Accuracy)
+TLM_COUNTER(AccSelfDepFbFetch,      "acc.self_dep_fbfetch",      "count", Accuracy)
+TLM_COUNTER(AccSelfDepNonPixel,     "acc.self_dep_nonpixel",     "count", Accuracy)
 TLM_COUNTER(AccDcStoreRangeMissed,  "acc.dcstorerange_no_notify","count", Accuracy)
 TLM_COUNTER(AccGeometryDrawDropped, "acc.geometry_draw_dropped", "count", Accuracy)
 TLM_COUNTER(AccUnsupportedTexFormat,"acc.unsupported_tex_format","count", Accuracy)

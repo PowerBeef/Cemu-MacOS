@@ -160,7 +160,11 @@ namespace tlm
 		bool s_detailsDirty = false;
 		void (*s_detailFlush[8])() = {};
 		size_t s_detailFlushCount = 0;
-		constexpr size_t kMaxDetails = 256;
+		// Raised from 256: a Korok run already carries ~206 details from the readback and HLE
+		// streams alone, and per-shader-hash detail keys blow past that easily. Overflow is
+		// silent (see NoteAccuracyDetail below), so a cap that is merely close to the real
+		// count reads as a complete list when it is a truncated one.
+		constexpr size_t kMaxDetails = 1024;
 
 		std::mutex s_metaMutex;
 		uint64_t s_titleId = 0;

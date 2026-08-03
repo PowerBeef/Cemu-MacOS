@@ -113,7 +113,20 @@ struct MetalState
     bool m_fboChanged = false;
 
     size_t m_vertexBufferOffsets[MAX_MTL_VERTEX_BUFFERS];
-    class LatteTextureViewMtl* m_textures[LATTE_NUM_MAX_TEX_UNITS * 3] = {nullptr};
+
+    // Texture units are addressed as stage base + unit, and the bases are strided by 32
+    // (PS 0, VS 32, GS 64 -- see LatteConst.h), not packed one stage after another. The array
+    // therefore has to span the highest base plus a full stage's worth of units, i.e. 82.
+    // Sizing it LATTE_NUM_MAX_TEX_UNITS * 3 == 54 meant every geometry-shader texture binding
+    // wrote past the end into m_uniformBufferOffsets below. The static_assert is the guard: it
+    // fires if any base or the unit count is ever changed without resizing this.
+    static constexpr size_t kNumTextureSlots = 128;
+    static_assert(LATTE_CEMU_PS_TEX_UNIT_BASE + LATTE_NUM_MAX_TEX_UNITS <= kNumTextureSlots &&
+                  LATTE_CEMU_VS_TEX_UNIT_BASE + LATTE_NUM_MAX_TEX_UNITS <= kNumTextureSlots &&
+                  LATTE_CEMU_GS_TEX_UNIT_BASE + LATTE_NUM_MAX_TEX_UNITS <= kNumTextureSlots,
+                  "m_textures must span the highest stage base plus one stage of texture units");
+    class LatteTextureViewMtl* m_textures[kNumTextureSlots] = {nullptr};
+
     size_t m_uniformBufferOffsets[METAL_GENERAL_SHADER_TYPE_TOTAL][MAX_MTL_BUFFERS];
 
     MTL::Viewport m_viewport;
@@ -364,6 +377,10 @@ public:
 
     //bool CheckIfRenderPassNeedsFlush(LatteDecompilerShader* shader);
     void BindStageResources(MTL::RenderCommandEncoder* renderCommandEncoder, LatteDecompilerShader* shader, bool usesGeometryShader);
+
+    // Detection only -- records that a draw samples one of its own attachments, and changes
+    // nothing about how the draw is issued. See TelemetryCounters.def above AccSelfDependency.
+    void NoteSelfDependency(const LatteDecompilerShader* shader, const LatteTexture* baseTexture);
 
     void ClearColorTextureInternal(MTL::Texture* mtlTexture, sint32 sliceIndex, sint32 mipIndex, float r, float g, float b, float a);
 

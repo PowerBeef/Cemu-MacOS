@@ -69,6 +69,24 @@ Verified: `MTLBinaryArchive.h` carries no `API_DEPRECATED`; macOS 26 continues t
 
 So a runtime-harvested `MTLBinaryArchive` **subsumes the deleted RAM-disk/`xcrun metal` AIR cache entirely**: it stores GPU binaries *and* AIR, and degrades gracefully to "skip the MSL frontend, redo only the backend" after an OS update. That is strictly better than what the disabled code was trying to build, with zero `system()` calls.
 
+> **This paragraph is disputed and must be re-verified before the item is scheduled (2026-08-03).**
+> The code path argues against it. `addRenderPipelineFunctions` takes a *descriptor*, and the
+> descriptor's functions are set from `m_vertexShaderMtl->GetFunction()`
+> (`MetalPipelineCompiler.cpp:353-370`), whose only source in this fork is
+> `RendererShaderMtl::LibraryFromSource()` → `newLibrary(m_mslCode)` (`RendererShaderMtl.cpp:296`).
+> If an `MTLFunction` must exist *before* the archive can be consulted, then **the MSL frontend
+> compile happens either way** and the archive skips only the backend — which is the opposite of the
+> claim above, and `RendererShaderMtl.cpp:36-38`'s own comment asserts the frontend is the expensive
+> half. `newLibrary(dispatch_data)` at `:312` can *load* AIR, but nothing at runtime *produces* AIR
+> without invoking the compiler toolchain, which is exactly what the rejected RAM-disk approach did.
+>
+> Do not schedule this item on the strength of the payoff sentence. Confirm the API semantics against
+> Apple's documentation (sosumi) first, **and** measure the real cold-launch cost — which is
+> currently unmeasurable, because the shader-cache load timer and its log line are inside
+> `#if BOOST_OS_WINDOWS` (`LatteShaderCache.cpp:492-500`) and so have never run on this fork's only
+> platform. The timer also stops before `LatteShaderCache_LoadPipelineCache` at `:505`, so it
+> excluded pipeline replay even on Windows. Un-gating those five lines is the cheap first step.
+
 ### F5. Graphic-pack output shaders are already broken on Metal.
 
 `src/Cafe/GraphicPack/GraphicPack2.cpp:1185,1195,1209,1219` unconditionally construct `RendererOutputShader(RendererOutputShader::GetOpenGlVertexSource(...), m_output_shader_source)` — GLSL, fed to `newLibrary()`. Any pack shipping `output.glsl`/`upscaling.glsl`/`downscaling.glsl` fails to compile under Metal today. (Per-shader replacements are fine — `GraphicPack2.cpp:757` already detects the `_msl` filename suffix.)
@@ -198,14 +216,64 @@ Ordered by payoff/risk.
 > `m_state.m_isFirstDrawInRenderPass` (`MetalRenderer.h:108`) is still maintained but has no reader
 > outside the commented block.
 
+> **Correction (2026-08-03): "never executed in this fork" is true of the *splitter* and false of the
+> mechanism, and the part that does run is itself wrong.** The commented-out code is only half the
+> story. `LatteDecompilerAnalyzer.cpp:888-957` **does** detect pixel-stage self-dependency at
+> decompile time — matching a sampled texture's physAddr + format + tileMode against the active
+> colour buffers, restricted to `lastMip == 0` — and records it in `textureRenderTargetIndex`.
+> `LatteDecompilerEmitMSL.cpp:2322-2328` then rewrites the sample into a framebuffer fetch. So the
+> pixel/colour case is *covered*, and the bullet below claiming framebuffer fetch "already handles it
+> correctly with zero cost" is the claim that needs fixing, not the status line.
+>
+> **It does not handle it correctly. The texture coordinate is discarded:**
+>
+> ```cpp
+> uint8 renderTargetIndex = shaderContext->shader->textureRenderTargetIndex[...];
+> if (SupportsFramebufferFetch() && renderTargetIndex != 255)
+> { src->addFmt("col{}", renderTargetIndex); }     // <- the coordinate is never read
+> ```
+>
+> Every sample of a bound render target returns the *current fragment's* colour regardless of what
+> coordinate the guest asked for. A blur, a downsample or any offset tap silently becomes a no-op
+> read of self. The two `// TODO`s on the same lines (comparison samplers, swizzling) are further
+> gaps in the same substitution, and `LatteDecompilerEmitMSL.cpp:2708` compounds it by returning a
+> hardcoded `int4(1920,1080,1,1)` from `GET_TEXTURE_INFO`, so a shader deriving texel offsets from
+> `textureSize` gets wrong offsets *and* then has them ignored.
+>
+> **This changes what 3.1 is.** "We never split, so effects read stale data" is a scheduling problem
+> a pass-splitter solves. "We substitute a coordinate-free read and bake it into the shader" is a
+> *decompiler* problem that a splitter does not touch at all. Restricting the substitution to the
+> cases where it is actually valid is plausibly the larger correctness win, and it is a different
+> piece of work. Size both before building either.
+>
+> **Detector landed 2026-08-03, unmeasured.** `MetalRenderer::NoteSelfDependency` records the
+> uncovered case as `acc.render_self_dependency`, the covered case as `acc.self_dep_fbfetch` at the
+> framebuffer-fetch `continue`, and the vertex/geometry subset as `acc.self_dep_nonpixel`. It lives
+> inside the existing `BindStageResources` loop rather than in a new `CachedFBOMtl` method — see the
+> correction to the design bullet below. **It has never been run**: no game image is currently
+> available. Until it is, every frequency claim about this item is a guess.
+
 Metal has no automatic hazard tracking *within* a render pass. Today the renderer merges render passes aggressively (`GetRenderCommandEncoder()`, `:1768-1836`) and never splits them for read-after-write on an attachment. Any game that samples a render target it is simultaneously drawing to reads stale or undefined data. This is a whole class of visual bugs (BotW lava/waterfall are the known cases, hence the special-case shader hashes in the dead code).
 
 **Design — port the *current* Vulkan mechanism, not the commented-out one:**
 
 - Add `uint32 m_selfDependencyCheckIndex` + `uint8 m_selfDependencyAspect` to `LatteTextureMtl` (`LatteTextureMtl.h`), mirroring `LatteTextureVk`.
-- Add `CachedFBOMtl::CheckForSelfDependency(...)` mirroring `CachedFBOVk.cpp:200-240`: stamp each attachment's base texture with a fresh monotonic index + aspect (color / depth / stencil), then scan the bound texture set for matches. Metal binds textures through `m_state.m_textures[LATTE_NUM_MAX_TEX_UNITS * 3]` (`MetalRenderer.h:116`) — iterate that directly; it's the analogue of Vulkan's `list_fboCandidates` and is cheaper.
+- Add `CachedFBOMtl::CheckForSelfDependency(...)` mirroring `CachedFBOVk.cpp:200-240`: stamp each attachment's base texture with a fresh monotonic index + aspect (color / depth / stencil), then scan the bound texture set for matches. ~~Metal binds textures through `m_state.m_textures[LATTE_NUM_MAX_TEX_UNITS * 3]` (`MetalRenderer.h:116`) — iterate that directly; it's the analogue of Vulkan's `list_fboCandidates` and is cheaper.~~
+  > **Wrong, corrected 2026-08-03 — do not iterate `m_state.m_textures`.** It is not the analogue of
+  > `list_fboCandidates`. Vulkan built that list per descriptor set from the shader's *own* units;
+  > `m_state.m_textures` is a **sticky global array** — `texture_setLatteTexture`
+  > (`MetalRenderer.cpp:942-947`) only ever writes, never clears, and
+  > `LatteTexture_updateTexturesForStage` skips units with `physAddr == MPTR_NULL`. Scanning it blind
+  > yields false positives from bindings a previous shader left behind, i.e. spurious pass splits —
+  > precisely the failure mode this item's own risk register warns about. Use the shader's
+  > resource-mapped unit list instead, which is what `BindStageResources` already walks and what the
+  > landed detector uses.
+  >
+  > (That array was also mis-sized: the stage bases are strided by 32 with GS at 64, so 18*3 = 54
+  > slots could not hold a geometry-shader binding at all and every GS texture write landed in
+  > `m_uniformBufferOffsets`. Fixed 2026-08-03 with a `static_assert` tying the size to the bases.)
 - Call it from `draw_execute` **only when the texture bindings or the active FBO changed**, not per draw. Track a `m_state.m_textureBindingsChanged` flag set in `texture_setLatteTexture` (`MetalRenderer.cpp:~1000`).
-- **Apple-specific win:** where the self-dependency is *pixel-only* and the sampled texel is the one at the current fragment coordinate, framebuffer fetch already handles it correctly with zero cost (`LatteDecompilerEmitMSL.cpp:2295-2302`, `LatteDecompilerEmitMSLHeader.hpp:463`). This is the direct analogue of Vulkan's `feedbackLoopHandlesSelfDependency` (`VulkanRendererCore.cpp:1203`). So: `needsPassSplit = hasSelfDependency && !(framebufferFetchCoversIt)`. On an Apple7+ GPU with framebuffer fetch enabled, the *common* case costs nothing — this is why Metal can be faster than Vulkan here, not slower.
+- **Apple-specific win — but read the correction above first.** Where the self-dependency is *pixel-only* **and the sampled texel really is the one at the current fragment coordinate**, framebuffer fetch handles it with zero cost (`LatteDecompilerEmitMSL.cpp:2322-2328`, `LatteDecompilerEmitMSLHeader.hpp:463`). The emitter does **not** check that precondition — it substitutes unconditionally and drops the coordinate — so today this is a correctness bug wearing a performance win's clothes. This is the direct analogue of Vulkan's `feedbackLoopHandlesSelfDependency` (`VulkanRendererCore.cpp:1203`). So: `needsPassSplit = hasSelfDependency && !(framebufferFetchCoversIt)`. On an Apple7+ GPU with framebuffer fetch enabled, the *common* case costs nothing — this is why Metal can be faster than Vulkan here, not slower.
 - Vertex/geometry-stage self-dependency always forces `EndEncoding()`.
 - Gate the non-framebuffer-fetch split behind the renamed `accurate_barriers` config with the same per-shader `neverSkipAccurateBarrier` override list (the two BotW hashes at `MetalRenderer.cpp:1136-1141`).
 
@@ -224,7 +292,7 @@ Per F3, `setLodBias` exists in macOS 26. Uncomment `iLodBias`, add `samplerDescr
 - `:168` `D24_S8_FLOAT` uses `TextureDecoder_NullData64` (`// TODO: why?`) — depth uploads for this format silently produce garbage/zero. Determine the real GX2 layout and write a decoder.
 - `:173-179` when `!supportsDepth24Unorm_Stencil8`, `D24_S8_UNORM` is remapped to `Depth32Float_Stencil8` with the decoder line commented out — the pixel format and the decoder disagree. **On Apple Silicon `depth24Stencil8PixelFormatSupported` is `false`, so this branch is always taken on your target hardware.** This is a live corruption path on every M-series Mac, not a fallback. Implement `TextureDecoder_D24_S8_To_D32_S8`. High priority.
 - `:86-87` `R10_G10_B10_A2_UINT/SINT`, `A2_B10_G10_R10_UNORM/UINT` unimplemented — `A2_B10_G10_R10_UNORM` is used by Resident Evil Revelations (there's already a comp-sel special case for it at `LatteTextureViewMtl.cpp:33-38`, so the swizzle path expects it to work). Map to `MTL::PixelFormatRGB10A2Unorm`/`Uint` with a channel-reversing decoder.
-- `:414-415` blend factors `0x0B`/`0x0C` → `BlendFactorZero`. These are `CONSTANT_ALPHA`/`ONE_MINUS_CONSTANT_ALPHA` in R700; map to `MTL::BlendFactorBlendAlpha` / `OneMinusBlendAlpha`.
+- ~~`:414-415` blend factors `0x0B`/`0x0C` → `BlendFactorZero`. These are `CONSTANT_ALPHA`/`ONE_MINUS_CONSTANT_ALPHA` in R700; map to `MTL::BlendFactorBlendAlpha` / `OneMinusBlendAlpha`.~~ **Wrong — following this introduces a bug.** `LatteReg.h:778-779` names `0x0B`/`0x0C` `BLEND_BOTH_SRC_ALPHA` / `BLEND_BOTH_INV_SRC_ALPHA`. Constant alpha is `0x13`/`0x14` and is **already** mapped to `BlendAlpha`/`OneMinusBlendAlpha` at `LatteToMtl.cpp:437-438`, so the prescribed change would duplicate an existing entry onto the wrong tokens. `BOTH_SRC_ALPHA` is the legacy GL form that sets RGB and alpha factors differently from one value, so it cannot be a single table entry in Metal at all; upstream Vulkan mapped it to `VK_BLEND_FACTOR_MAX_ENUM`, which is worse than the current `Zero`. Leave the TODOs and treat this as unresolved, not as a two-line fix.
 - `:182-200` unknown formats silently fall back to `R8Unorm`/`Depth16Unorm`. Add `cemuLog_logOnce(LogType::Force, ...)` so unknown formats become visible instead of rendering wrong. **Do this first** — it converts "mysterious visual bug" into a log line and will likely surface the real-world priority order for the rest of this item.
 - The ~20 `// TODO: correct?` on BC1-BC5: these are almost certainly fine (the mappings are the obvious ones and match the Vulkan table). Verify once against `VKRPipelineInfo.cpp`'s table and delete the comments. **Not worth deep investigation.**
 

@@ -941,6 +941,8 @@ LatteTexture* MetalRenderer::texture_createTextureEx(Latte::E_DIM dim, MPTR phys
 
 void MetalRenderer::texture_setLatteTexture(LatteTextureView* textureView, uint32 textureUnit)
 {
+    // textureUnit is a stage base plus a unit index, so it reaches LATTE_CEMU_GS_TEX_UNIT_BASE + 17
+    cemu_assert_debug(textureUnit < MetalState::kNumTextureSlots);
     m_state.m_textures[textureUnit] = static_cast<LatteTextureViewMtl*>(textureView);
 }
 
@@ -2402,6 +2404,45 @@ bool MetalRenderer::CheckIfRenderPassNeedsFlush(LatteDecompilerShader* shader)
 }
 */
 
+void MetalRenderer::NoteSelfDependency(const LatteDecompilerShader* shader, const LatteTexture* baseTexture)
+{
+	const auto* fbo = m_state.m_activeFBO.m_fbo;
+	if (!fbo)
+		return;
+
+	// Compare base textures, not views: a game can sample through a different view (mip, slice,
+	// swizzle) of the same underlying surface it is rendering into, and that still aliases.
+	const char* attachment = nullptr;
+	for (uint32 i = 0; i < LATTE_NUM_COLOR_TARGET; i++)
+	{
+		const LatteTextureView* view = fbo->colorBuffer[i].texture;
+		if (view && view->baseTexture == baseTexture)
+		{
+			attachment = "color";
+			break;
+		}
+	}
+	if (!attachment)
+	{
+		const LatteTextureView* view = fbo->depthBuffer.texture;
+		if (view && view->baseTexture == baseTexture)
+			attachment = "depth";
+	}
+	if (!attachment)
+		return;
+
+	TLM_INC(Accuracy, AccSelfDependency);
+	if (shader->shaderType != LatteConst::ShaderType::Pixel)
+		TLM_INC(Accuracy, AccSelfDepNonPixel);
+
+	// Keyed on the shader hash pair so the detail list names *which* shaders alias. The two
+	// BotW hashes in the commented-out block further up (lava, waterfall foam) are the
+	// prediction this is meant to test once a title is available to run.
+	tlm::NoteAccuracyDetail(tlm::CounterId::AccSelfDependency,
+		fmt::format("{:016x}/{:016x} stage {} {} {:08x}", shader->baseHash, shader->auxHash,
+					(uint32)shader->shaderType, attachment, baseTexture->physAddress), 1);
+}
+
 void MetalRenderer::BindStageResources(MTL::RenderCommandEncoder* renderCommandEncoder, LatteDecompilerShader* shader, bool usesGeometryShader)
 {
     auto mtlShaderType = GetMtlShaderType(shader->shaderType, usesGeometryShader);
@@ -2414,7 +2455,13 @@ void MetalRenderer::BindStageResources(MTL::RenderCommandEncoder* renderCommandE
 
 		// Don't bind textures that are accessed with a framebuffer fetch
 		if (m_supportsFramebufferFetch && shader->textureRenderTargetIndex[relative_textureUnit] != 255)
+		{
+			// The COVERED half of the self-dependency picture -- see the block comment above
+			// AccSelfDependency in TelemetryCounters.def. Counted here so the uncovered half,
+			// recorded further down, can be read as a fraction rather than an absolute.
+			TLM_INC(Accuracy, AccSelfDepFbFetch);
             continue;
+		}
 
 		auto textureDim = shader->textureUnitDim[relative_textureUnit];
 		auto texUnitRegIndex = hostTextureUnit * 7;
@@ -2530,6 +2577,12 @@ void MetalRenderer::BindStageResources(MTL::RenderCommandEncoder* renderCommandE
 				fmt::format("{:08x} {}x{} fmt {:04x}", baseTexture->physAddress,
 							baseTexture->width, baseTexture->height, (uint32)baseTexture->format), 1);
 		}
+		// The UNCOVERED half. Anything still here is about to be bound as a texture, so if it
+		// is also an attachment of the pass we are inside, this draw reads undefined data.
+		// Guarded rather than relying on TLM_INC's own check because the scan and the format
+		// call are not free.
+		if (tlm::AreaEnabled(tlm::Area::Accuracy)) [[unlikely]]
+			NoteSelfDependency(shader, baseTexture);
 		SetTexture(renderCommandEncoder, mtlShaderType, mtlTexture, binding);
 	}
 
