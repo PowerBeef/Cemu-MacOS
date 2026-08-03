@@ -1,0 +1,10 @@
+# build artifacts
+build/
+*.rpx
+*.wuhb
+*.elf
+*.o
+*.a
+*.map
+*.log
+Makefile.bak
