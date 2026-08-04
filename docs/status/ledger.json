@@ -1208,6 +1208,25 @@
         "n": 1
       },
       "ref": "testing/graphics-tests/README.md"
+    },
+    {
+      "id": "fbfetch-off-dropped-draws",
+      "title": "The analyzer and the emitter disagreed about framebuffer-fetch coverage",
+      "area": "graphics",
+      "stage": "s6",
+      "status": "landed",
+      "commits": [
+        "a42b2dc"
+      ],
+      "verdict": "`_initTextureBindingPointsMTL` stripped a covered unit's binding point unconditionally while the emitter's substitution was gated on the runtime option, so with `FramebufferFetch=false` every pixel-stage self-dependent draw emitted a sample against a unit with no binding, failed to compile and was refused. One predicate, `LatteMtl_IsUnitCoveredByFramebufferFetch`, now answers the question for all five sites.",
+      "note": "Measured with the option off, before → after: `acc.pipeline_no_function` **4 → 0**, `acc.self_dep_fbfetch` **287 → 0** (it had been reporting coverage in the one arm where no rewrite happens), `acc.self_dep_pass_splits` and `acc.render_self_dependency` **1 → 250** as the pixel draws reach the uncovered path. Default arm unchanged. **Explicitly not fixed:** with the option off `selfdep_caseA_same_texel` still fails, now because the draw runs and samples 0 rather than because it vanished. Splitting resolves prior writes but the surface remains an attachment of the new pass, so sampling it stays undefined — a splitter cannot fix that, and `FramebufferFetch=true` remains strictly better and stays the default.",
+      "measured": {
+        "scene": "self_dependency.rpx, both FramebufferFetch arms",
+        "at_commit": "a42b2dc",
+        "date": "2026-08-04",
+        "n": 1
+      },
+      "ref": "testing/graphics-tests/README.md"
     }
   ],
   "refuted": [
@@ -1679,21 +1698,6 @@
       "verdict": "`docs/porting/03-graphics-metal.md` prescribes gating the split behind `accurate_barriers` *with* the per-shader `neverSkipAccurateBarrier` override list, so the two known BotW shader hashes (lava, waterfall foam) split even when the global setting is off. The landed split honours the global gate only.",
       "gate": "Needs a title to verify against. The two hashes in the commented-out block are a prediction about BotW that nothing has tested, and implementing an override list keyed on unverified hashes would bake in a guess. Do this when `rm-self-dep-measure` can run.",
       "ref": "docs/porting/03-graphics-metal.md"
-    },
-    {
-      "id": "rm-fbfetch-off-no-mechanism",
-      "title": "Turning off the FramebufferFetch option silently drops every pixel-stage self-dependent draw",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "Measured, not predicted. With `FramebufferFetch=false` the reproducer's Case A control goes **PASS -> FAIL** with all 16 texels still holding their seed value, `acc.pipeline_no_function` reads **4**, and `acc.self_dep_fbfetch` reads 0. The draws are not mis-rendered, they are dropped. Root cause: `LatteDecompilerAnalyzer.cpp` contains **zero** references to `SupportsFramebufferFetch`, so `_initTextureBindingPointsMTL:527` strips the binding point of any unit with `textureRenderTargetIndex != 255` unconditionally — while the emitter's substitution at `LatteDecompilerEmitMSL.cpp:2323` *is* gated on the runtime option. The two disagree, so the shader emits a real sample against a unit that was never given a binding.",
-      "gate": "None — this is a live defect in a shipped user-facing option, not a roadmap idea. Before `2bd3e06` it aborted the process rather than dropping a draw. The fix is to make the strip at `_initTextureBindingPointsMTL:527` agree with the emitter's condition, after which units keep their binding points when the option is off, real samples are emitted and bound, and the pass splitter sees them. Verify by re-running the reproducer with the option off: Case A must return to PASS and `acc.pipeline_no_function` to 0.",
-      "ref": "testing/graphics-tests/README.md",
-      "measured": {
-        "scene": "self_dependency.rpx with FramebufferFetch=false",
-        "at_commit": "bad31b2",
-        "date": "2026-08-04",
-        "n": 1
-      }
     }
   ],
   "unattributed": [],
