@@ -1291,6 +1291,27 @@
         "n": 1
       },
       "ref": "docs/porting/03-graphics-metal.md"
+    },
+    {
+      "id": "self-dependency-3-1",
+      "title": "Item 3.1 is shipped, and its headline warning was wrong",
+      "area": "graphics",
+      "stage": "s6",
+      "status": "landed",
+      "commits": [
+        "2bd3e06",
+        "bad31b2",
+        "3db0cfc"
+      ],
+      "verdict": "The pass splitter, the alias detection behind it and the `accurate_barriers` gate are all in. The remaining half of 3.1 — restricting the framebuffer-fetch substitution to cases where it is valid — is tracked separately as `rm-fbfetch-coordinate`, because it is a decompiler change rather than a scheduling one.",
+      "note": "This entry stood open for months carrying the warning \"expect it to **cost** frame rate — splitting passes raises pass count, the very thing the bandwidth work was trying to reduce.\" Measured on Korok Forest with equal-length arms: 15 splits/frame against 0, 204 passes/frame against 203, and 49.90 ms / 20.04 fps in **both**. The cost is not small, it is absent. It also predicted BotW lava and waterfalls as \"the known cases\"; the six shaders actually observed on the uncovered path are neither, though the scene contains neither hazard so that is untested rather than refuted. See `selfdep-pass-split`, `selfdep-alias-physaddr` and `self-dep-sized-on-botw`.",
+      "measured": {
+        "scene": "BotW Korok Forest, vkAccurateBarriers A/B",
+        "at_commit": "3d4fca9",
+        "date": "2026-08-04",
+        "n": 1
+      },
+      "ref": "docs/porting/03-graphics-metal.md"
     }
   ],
   "refuted": [
@@ -1504,15 +1525,6 @@
       "verdict": "Where the counters now point, and the only remaining frame-rate lever in this scene. Ordering- and bandwidth-shaped work is closed by measurement.",
       "gate": "None — the measurement that closes every other avenue is what opens this one. But it is a materially different project from anything attempted so far and should be scoped rather than started from momentum.",
       "ref": "00-master-plan.md — Where GPU time actually goes"
-    },
-    {
-      "id": "rm-self-dependency",
-      "title": "Item 3.1 — implement render-pass self-dependency on Metal",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "A real correctness gap, not a latent option: anything sampling a render target while writing it currently reads undefined data. BotW lava and waterfalls are the known cases.",
-      "gate": "None. But expect it to **cost** frame rate — splitting passes for self-dependency raises pass count, the very thing the bandwidth work was trying to reduce. Shipping wrong pixels quietly is worse than shipping fewer frames honestly.",
-      "ref": "03-graphics-metal.md — 3.1"
     },
     {
       "id": "rm-binary-archive",
