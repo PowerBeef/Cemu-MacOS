@@ -959,7 +959,8 @@
         "66d3d4d",
         "91ae78c",
         "8a980f4",
-        "516881f"
+        "516881f",
+        "8ee1b17"
       ],
       "verdict": "One generated page for what changed versus upstream, what was tried and what it measured. Commit list, diffstat, baseline rows and counter totals are read from the repo — only verdicts are hand-maintained. CI reports any commit that lands without a ledger entry.",
       "note": "It caught its own first bug: the counter parser read **114** against the real 113, matching the `TLM_COUNTER(...)` example inside the `.def`'s own header comment. Two self-references bound the design — a ledger entry cannot name the hash of the commit containing it, and the page embeds the commit that carries it — so CI advises rather than blocks, and `--check` is local-only. The tracker's own upkeep (claiming commits, stamping measurements, correcting the ledger) is claimed by this entry rather than excused under `unattributed`, so the act of tracking is itself tracked.",
@@ -1036,9 +1037,10 @@
       "stage": "s6",
       "status": "landed",
       "commits": [
-        "99003ba"
+        "99003ba",
+        "968c724"
       ],
-      "verdict": "`CLAUDE.md` still said `MemMapperUnix.cpp` and the `MMURange` table \"contain 4 KB assumptions\" long after Stage 3 fixed both. `03-graphics-metal.md` told the next person to scan `m_state.m_textures` (a sticky global that is never cleared → spurious pass splits), called blend factors `0x0B`/`0x0C` constant-alpha when `LatteReg.h:778-779` names them `BLEND_BOTH_SRC_ALPHA`/`_INV_` and constant alpha is `0x13`/`0x14` already mapped, and asserted an `MTLBinaryArchive` payoff the code path disputes.",
+      "verdict": "`CLAUDE.md` still said `MemMapperUnix.cpp` and the `MMURange` table \"contain 4 KB assumptions\" long after Stage 3 fixed both. `03-graphics-metal.md` told the next person to scan `m_state.m_textures` (a sticky global that is never cleared → spurious pass splits), called blend factors `0x0B`/`0x0C` constant-alpha when `LatteReg.h:778-779` names them `BLEND_BOTH_SRC_ALPHA`/`_INV_` and constant alpha is `0x13`/`0x14` already mapped, and asserted an `MTLBinaryArchive` payoff the code path disputes. A fifth correction (`968c724`): CLAUDE.md said the graphics ROM did not reproduce and all three `acc.self_dep_*` counters read zero. True before `97ae3ad` moved the detector, stale after it, and it was describing the fork's only graphics test as useless while that test was producing the measurement `rm-fbfetch-coordinate` rests on.",
       "note": "The blend-factor entry is the one that matters: it was written as a two-line fix and following it would have duplicated an existing mapping onto the wrong tokens. The `MTLBinaryArchive` paragraph is flagged for re-verification rather than deleted — the descriptor's functions come from `newLibrary(m_mslCode)`, so the archive may skip only the backend compile. Also noted there: cold-launch cost is **unmeasurable today**, because the shader-cache timer is inside `#if BOOST_OS_WINDOWS` and has never run on this fork's only platform.",
       "ref": "00-master-plan.md — An audit with no game image"
     },
@@ -1130,6 +1132,24 @@
         "n": 1
       },
       "ref": "testing/graphics-tests/probe-pack/README.md"
+    },
+    {
+      "id": "selfdep-pixel-oracle",
+      "title": "A pixel oracle for the self-dependency reproducer, and what it caught",
+      "area": "graphics",
+      "status": "landed",
+      "commits": [
+        "69451df"
+      ],
+      "verdict": "The offset-texel case does not merely get rewritten to a framebuffer fetch, it reads the wrong pixel: 16 of 16 texels in the strip returned their own value instead of the neighbour's, with nothing in the `other` bucket. `rm-fbfetch-coordinate` now has a failing test instead of an inference.",
+      "note": "`UINT_R32` so the compare is bit-exact with no filtering tolerance, which is piglit's `blending-in-shader` trick. The strip at `[0,16)` reads `[16,32)`, which it does not write, so no feedback race can explain the result away. Two controls: `selfdep_seed` caught the first run outright, where inherited render state left colour writes off and the whole surface read zero — without it, two real verdicts would have been misread as emulator bugs. `selfdep_caseA_same_texel` passes, which is what makes the Case B line trustworthy, since a real sample and a framebuffer fetch must agree on a fragment's own texel. `run.sh` warns when a control fails and deliberately does not gate on Case B, which is expected to fail until the fix lands.",
+      "measured": {
+        "scene": "self_dependency.rpx pixel oracle",
+        "at_commit": "69451df",
+        "date": "2026-08-03",
+        "n": 1
+      },
+      "ref": "testing/graphics-tests/README.md"
     }
   ],
   "refuted": [
@@ -1491,7 +1511,7 @@
       "area": "graphics",
       "status": "open",
       "verdict": "**Confirmed by measurement.** The emitter rewrites every pixel-stage self-dependency to a coordinate-free framebuffer fetch — including the offset-sampling case, where it silently returns the current fragment instead of the neighbour. The reproducer alternates same-texel and offset-texel draws and both report as covered.",
-      "gate": "None — the measurement exists. Restrict the substitution in `LatteDecompilerAnalyzer.cpp` to units sampled at their own fragment coordinate; everything else must keep its binding point and fall to the uncovered path. Expect `acc.render_self_dependency` to become non-zero when this lands, which is the check that it worked.  **Sequencing trap:** restricting the substitution gives those units binding points again and drops them to the *uncovered* path, where nothing splits the render pass — converting 'wrong but deterministic' into 'undefined'. The fix may therefore look *worse* on screen while being more correct in principle, which means it is really one piece of work with item 3.1's splitter (`rm-self-dependency`), and it needs `rm-selfdep-pixel-oracle` first to tell an improvement from a regression.",
+      "gate": "None, and it now has a **failing test** rather than an inference: `selfdep_caseB_offset_texel` reports 16/16 texels reading self instead of the neighbour (`69451df`). Restrict the substitution in `LatteDecompilerAnalyzer.cpp` to units sampled at their own fragment coordinate; everything else must keep its binding point and fall to the uncovered path. Expect `acc.render_self_dependency` to become non-zero and that test to flip to PASS — if the test does not flip, the fix did not do what it claims. Keep the sequencing trap in mind: the uncovered path is item 3.1, which is not implemented, so restricting the substitution without it trades wrong pixels for undefined ones.",
       "ref": "03-graphics-metal.md — 3.1",
       "measured": {
         "scene": "self-dependency-rpx",
@@ -1538,15 +1558,6 @@
       "verdict": "When the *guest* requests exit, `MainWindow::OnRequestGameExit` → `Close()` → `wxTopLevelWindowMac::Destroy()` → `wxWindow::Show(false)` faults in `objc_msgSend` on an `NSView`. Reproducible on every `.rpx` run, and the CLI branch it happens in is explicitly commented as existing *\"for homebrew testing setups that use Cemu via CLI\"*.",
       "gate": "None. It does not corrupt results — the crash is strictly after the ROM's last output — but it makes the exit code useless, which blocks using a plain process exit status as a CI gate. **Two hypotheses already refuted, do not retry them:** (1) that the canvas was destroyed while the Latte thread was still presenting — adding `CafeSystem::ShutdownTitle()` + `DestroyCanvas()` before `Close()` changed nothing; (2) that closing from inside a dispatched event was the problem — deferring via `CallAfter` changed nothing. The identical backtrace in both cases points inside wx's own top-level teardown, not at our shutdown ordering.",
       "ref": "docs/testing/00-test-strategy.md — Known issues"
-    },
-    {
-      "id": "rm-selfdep-pixel-oracle",
-      "title": "Give the self-dependency reproducer a pixel oracle before fixing anything",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "The reproducer proves **classification** (covered vs uncovered) but not **pixels**. A fix to `rm-fbfetch-coordinate` would currently be validated only by a counter moving between two buckets, which does not show that Case B samples the right texel.",
-      "gate": "None — do this **before** `rm-fbfetch-coordinate`, not after. Integer render target (`r32Uint`), CPU-computed expected buffer, `GX2CopySurface` readback, bit-exact compare. It should demonstrate *today* that Case A is right and Case B returns the current fragment instead of the neighbour — which is currently inferred from reading the emitter, not observed. Without it there is no way to tell a fix from a regression.",
-      "ref": "testing/graphics-tests/README.md"
     },
     {
       "id": "rm-mesh-topology-vertex-count",
