@@ -348,6 +348,16 @@ built** because it relieves a subsystem that bottlenecks the GPU about an eighth
 `Partial Renders Count` is 0 throughout, so there are no tile-memory spills either. See the master
 plan; the next lever is shader cost, which is a different project.
 
+**Self-dependency is common, and almost all of it is covered.** Korok Forest runs **498 pixel-stage
+self-dependencies per frame** (`acc.self_dep_fbfetch`), against **1–2 uncovered**
+(`acc.render_self_dependency`), from six distinct shaders. Two things follow. The pass splitter
+landed for the uncovered case is **free**: `vkAccurateBarriers` on vs off is 15 splits/frame vs 0 with
+frame time and fps identical at 49.90 ms / 20.04 fps, so the design doc's expectation that item 3.1
+would cost frame rate is not borne out. And `rm-fbfetch-coordinate` matters far more than it looked:
+the rewrite that **discards the texture coordinate** is applied 498 times a frame, and the reproducer
+proved it returns the wrong pixel for any offset tap. How many of those 498 are offset taps is not
+yet known and is the question that decides the size of that item.
+
 Two numbers stand out as suspects:
 
 - **52,330 HLE calls per frame** (1.05M/s) that cost the guest **nothing**. The `-= 500` at

@@ -1170,11 +1170,11 @@
         "bad31b2"
       ],
       "verdict": "The uncovered self-dependency case now ends the encoder before joining a pass, and the result is verified in pixels, not inferred: `selfdep_caseC_vertex_stage` PASSES, with all 16 texels of the strip returning the seeded value after a vertex shader sampled the surface being rendered into. `acc.render_self_dependency` and `acc.self_dep_nonpixel` read non-zero for the first time in this fork's history.",
-      "note": "The decisive detail is placement: the detector that has run since `97ae3ad` lives inside `BindStageResources`, where the encoder is already open and it can only count. `ShaderHasUncoveredSelfDependency` answers the same question *above* `GetRenderCommandEncoder()`, walking the shader's own resource-mapped units rather than the sticky global `m_state.m_textures`, per the correction already in the design doc. Units the framebuffer-fetch rewrite covered are skipped — never bound, so they cannot alias — which is why the common pixel case still costs nothing. `vk_accurate_barriers` was marked inert in `CemuConfig.h` and now does something for the first time. **Measured:** `acc.self_dep_pass_splits` 1, firing on exactly the one uncovered draw, against `acc.self_dep_fbfetch` 377 correctly not split. **Three defects in the first cut were found by adversarial review and fixed in `bad31b2`.** It scanned `m_activeFBO` while the pass actually open belongs to `m_lastUsedFBO`, and `GetRenderCommandEncoder`'s reuse tests are one-sided, so a *dropped* attachment stayed live in the encoder unseen — the MRT case this item most needs to catch. It did not mirror `BindStageResources`' dim-mismatch substitution, so it split for units resolving to a null texture. And the aliasing test is pointer identity on `LatteTexture*`, which is documented in place and filed as `rm-selfdep-alias-identity`.",
+      "note": "The decisive detail is placement: the detector that has run since `97ae3ad` lives inside `BindStageResources`, where the encoder is already open and it can only count. `ShaderHasUncoveredSelfDependency` answers the same question *above* `GetRenderCommandEncoder()`, walking the shader's own resource-mapped units rather than the sticky global `m_state.m_textures`, per the correction already in the design doc. Units the framebuffer-fetch rewrite covered are skipped — never bound, so they cannot alias — which is why the common pixel case still costs nothing. `vk_accurate_barriers` was marked inert in `CemuConfig.h` and now does something for the first time. **Measured:** `acc.self_dep_pass_splits` 1, firing on exactly the one uncovered draw, against `acc.self_dep_fbfetch` 377 correctly not split. **Three defects in the first cut were found by adversarial review and fixed in `bad31b2`.** It scanned `m_activeFBO` while the pass actually open belongs to `m_lastUsedFBO`, and `GetRenderCommandEncoder`'s reuse tests are one-sided, so a *dropped* attachment stayed live in the encoder unseen — the MRT case this item most needs to catch. It did not mirror `BindStageResources`' dim-mismatch substitution, so it split for units resolving to a null texture. And the aliasing test is pointer identity on `LatteTexture*`, which is documented in place and filed as `rm-selfdep-alias-identity`. **Validated on a real title (2026-08-04, Korok Forest, equal-length arms).** `vkAccurateBarriers` on vs off: **15 splits/frame vs 0**, and everything else flat — 204 vs 203 passes/frame, 49.90 ms and 20.04 fps in both. The design doc's expectation that this item would *cost* frame rate is not borne out: 15 splits per frame add about one render pass and no measurable time. The scene reproduces the committed baseline (3516 draws/f against 3517–3528 on file), so it is the right scene and the arms differ only in the setting.",
       "measured": {
-        "scene": "self_dependency.rpx pixel oracle",
-        "at_commit": "bad31b2",
-        "date": "2026-08-03",
+        "scene": "BotW Korok Forest, vkAccurateBarriers A/B",
+        "at_commit": "3d4fca9",
+        "date": "2026-08-04",
         "n": 1
       },
       "ref": "docs/porting/03-graphics-metal.md"
@@ -1254,6 +1254,43 @@
         "n": 1
       },
       "ref": "testing/graphics-tests/README.md"
+    },
+    {
+      "id": "self-dep-sized-on-botw",
+      "title": "Self-dependency, sized on real content at last: 498 per frame, 99.7% of it covered",
+      "area": "graphics",
+      "stage": "s6",
+      "status": "landed",
+      "commits": [
+        "3d4fca9"
+      ],
+      "verdict": "BotW Korok Forest runs **498 pixel-stage self-dependencies per frame**, of which all but one or two are covered by the decompiler's framebuffer-fetch rewrite. Six distinct shaders account for the uncovered remainder, every one of them pixel stage against a colour attachment.",
+      "note": "This is the number every frequency claim about item 3.1 was previously guessing at. It also makes `rm-fbfetch-coordinate` far more consequential than it looked: the rewrite that discards the texture coordinate is applied **498 times a frame** in ordinary open-world play, and the reproducer proved it returns the wrong pixel for any offset tap. How many of the 498 are offset taps is the next question and is not answered here. Measured with the splitter enabled; the uncovered count is the same either way, since splitting changes what happens after detection, not what is detected.",
+      "measured": {
+        "scene": "BotW Korok Forest",
+        "at_commit": "3d4fca9",
+        "date": "2026-08-04",
+        "n": 1
+      },
+      "ref": "docs/porting/03-graphics-metal.md"
+    },
+    {
+      "id": "selfdep-never-skip-override",
+      "title": "The per-shader accurate-barrier override is not worth building",
+      "area": "graphics",
+      "status": "cancelled",
+      "commits": [
+        "3d4fca9"
+      ],
+      "verdict": "Its entire premise is that users turn accurate barriers off for performance, so known-problematic shaders must force them back on. Measured on Korok Forest, accurate barriers cost **nothing**: 49.90 ms and 20.04 fps with the splitter doing 15 splits/frame, identical to the arm with it disabled. If the setting is free there is no reason to disable it, and therefore nothing for an override to rescue.",
+      "note": "The two BotW hashes the design doc names (`6f6f6e7b9aae57af` lava, `4c0bd596e3aef4a6` waterfall foam) appear **zero times** in the run. That is *not* a refutation — Korok Forest has neither lava nor waterfalls, so the scene never exercises them. What it does show is that the six shaders which genuinely do hit the uncovered path in ordinary play are none of the two, so an override list built from those hashes would have missed every case actually observed. Cancelled on the cost measurement, not on the hashes.",
+      "measured": {
+        "scene": "BotW Korok Forest, vkAccurateBarriers A/B",
+        "at_commit": "3d4fca9",
+        "date": "2026-08-04",
+        "n": 1
+      },
+      "ref": "docs/porting/03-graphics-metal.md"
     }
   ],
   "refuted": [
@@ -1595,21 +1632,6 @@
       "ref": ".github/workflows/generate_pot.yml"
     },
     {
-      "id": "rm-self-dep-measure",
-      "title": "Size item 3.1 on real content",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "**Answered for the synthetic case**: every pixel-stage self-dependency is rewritten to a framebuffer fetch (`acc.self_dep_fbfetch` 1.0/frame, uncovered 0). What is unmeasured is the rate on a real title, and whether any vertex/geometry-stage case exists at all.",
-      "gate": "Needs a bootable title. The synthetic ROM cannot answer how often this happens in practice, nor produce a non-pixel case — nothing in it creates one. Until then the covered/uncovered ratio is known only for a test designed to be covered.",
-      "ref": "testing/graphics-tests/README.md",
-      "measured": {
-        "scene": "self-dependency-rpx",
-        "at_commit": "97ae3ad",
-        "date": "2026-08-04",
-        "n": 1
-      }
-    },
-    {
       "id": "rm-fbfetch-coordinate",
       "title": "Restrict the framebuffer-fetch substitution to cases where it is valid",
       "area": "graphics",
@@ -1707,15 +1729,6 @@
       "verdict": "The MetalState::m_textures sizing bug (54 entries for indices reaching 81, so geometry-shader bindings wrote into m_uniformBufferOffsets) is still live at upstream's tip, as is the graphic-pack sampler override writing through into LatteGPUState.contextNew.SQ_TEX_SAMPLER. Both are small, portable and reviewable by reading. The three defects in gp-output-shader-path are upstream's too.",
       "gate": "Upstream's contribution policy asks that submitted code be written and understood by a human, and this fork's changes were written with AI assistance. Anything sent must be re-derived and written by a person. That is a real cost and the reason this is deferred rather than open — see the note in README.md.",
       "ref": "README.md"
-    },
-    {
-      "id": "rm-selfdep-never-skip-override",
-      "title": "The per-shader accurate-barrier override prescribed for item 3.1 is not implemented",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "`docs/porting/03-graphics-metal.md` prescribes gating the split behind `accurate_barriers` *with* the per-shader `neverSkipAccurateBarrier` override list, so the two known BotW shader hashes (lava, waterfall foam) split even when the global setting is off. The landed split honours the global gate only.",
-      "gate": "Needs a title to verify against. The two hashes in the commented-out block are a prediction about BotW that nothing has tested, and implementing an override list keyed on unverified hashes would bake in a guess. Do this when `rm-self-dep-measure` can run.",
-      "ref": "docs/porting/03-graphics-metal.md"
     }
   ],
   "unattributed": [],
