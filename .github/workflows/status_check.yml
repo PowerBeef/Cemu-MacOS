@@ -32,13 +32,21 @@ jobs:
           # against `git clone --depth 1`: 1 commit visible, all 76 hashes unresolvable.
           fetch-depth: 0
 
-      # Advisory by design. Commits missing a ledger entry are REPORTED, not fatal, because some
-      # lag is structural rather than sloppiness: a ledger entry cannot name the hash of the
-      # commit that contains it, so the tip commit is always unclaimed at the moment CI sees it.
-      # --verify reports the tip separately from real drift for exactly that reason.
+      # Three severities, and the split is the whole point:
       #
-      # It does still exit 2 on a malformed ledger or a hash that does not resolve. That is a
-      # broken file, always the author's fault, and it should stop the build.
+      #   exit 2  the ledger is structurally broken -- unresolvable hash, duplicate id, a status
+      #           that is not legal for its array, a `ref` naming a file that does not exist.
+      #           Never correct, always the author's fault.
+      #   exit 1  an entry has drifted out of sync with the repo -- a `ref` naming a heading that
+      #           no longer exists, or a verdict quoting a measurement with no `measured` block.
+      #           Also always a mistake, but it rots SILENTLY, which is why it is enforced rather
+      #           than reported: twelve refs went stale before this check existed.
+      #   exit 0  reported but tolerated -- commits not yet claimed, and measurements ageing past
+      #           the staleness threshold. Both have legitimate causes.
+      #
+      # Unclaimed commits stay advisory because the lag is structural rather than sloppiness: a
+      # ledger entry cannot name the hash of the commit that contains it, so the tip is always
+      # unclaimed at the moment CI sees it. --verify reports the tip separately for that reason.
       #
       # stdlib only -- no pip install, matching testing/telemetry-report.py.
       - name: "Ledger integrity and drift"

@@ -255,6 +255,7 @@
       "id": "stage1-metal-baseline",
       "title": "Stage 1 — a Metal-first baseline that boots on arm64",
       "area": "platform",
+      "stage": "s1",
       "status": "landed",
       "commits": [
         "084b514"
@@ -267,6 +268,7 @@
       "id": "delete-gl-vulkan",
       "title": "Delete the OpenGL and Vulkan backends",
       "area": "graphics",
+      "stage": "s2",
       "status": "landed",
       "commits": [
         "f2e6f6d"
@@ -279,6 +281,7 @@
       "id": "probe-mapjit",
       "title": "The documented one-`MAP_JIT`-region-per-process limit is not enforced",
       "area": "cpu",
+      "stage": "s1",
       "status": "refuted",
       "commits": [
         "21a502a",
@@ -296,6 +299,7 @@
       "id": "stale-disclaimer",
       "title": "Remove the stale macOS \"preview version\" disclaimer",
       "area": "docs",
+      "stage": "s2",
       "status": "landed",
       "commits": [
         "f2945df"
@@ -307,6 +311,7 @@
       "id": "golden-harness",
       "title": "Golden-scene capture harness",
       "area": "tooling",
+      "stage": "s1",
       "status": "landed",
       "commits": [
         "0dd8c14",
@@ -321,6 +326,7 @@
       "id": "delete-x86-backend",
       "title": "Delete the x86-64 recompiler backend and all x86 IML machinery",
       "area": "cpu",
+      "stage": "s2",
       "status": "landed",
       "commits": [
         "1354549"
@@ -333,6 +339,7 @@
       "id": "cpu-features-arm64",
       "title": "Rewrite `cpu_features` for arm64",
       "area": "cpu",
+      "stage": "s2",
       "status": "landed",
       "commits": [
         "0beefe5"
@@ -344,6 +351,7 @@
       "id": "macos26-target",
       "title": "Target macOS 26 / arm64 only; normalize the architecture macros",
       "area": "platform",
+      "stage": "s2",
       "status": "landed",
       "commits": [
         "8d34f3a",
@@ -357,6 +365,7 @@
       "id": "page-16kb",
       "title": "Fix 16 KB page handling in `MemMapper` and the MMU range table",
       "area": "cpu",
+      "stage": "s3",
       "status": "landed",
       "commits": [
         "d7c425e"
@@ -369,6 +378,7 @@
       "id": "jit-cursor",
       "title": "Fix the JIT code-size and emitter-cursor bugs in the AArch64 backend",
       "area": "cpu",
+      "stage": "s3",
       "status": "landed",
       "commits": [
         "6ab5fe1",
@@ -382,6 +392,7 @@
       "id": "bundle-signing",
       "title": "Sign the app bundle from CMake; split release and debug entitlements",
       "area": "platform",
+      "stage": "s3",
       "status": "landed",
       "commits": [
         "135a6c9"
@@ -393,6 +404,7 @@
       "id": "crash-diagnostics",
       "title": "Crash diagnostics: alternate signal stack, arm64 PC recovery, real backtraces",
       "area": "platform",
+      "stage": "s3",
       "status": "landed",
       "commits": [
         "043b358"
@@ -404,6 +416,7 @@
       "id": "jit-leak",
       "title": "Instrument the JIT code leak instead of building reclamation for it",
       "area": "cpu",
+      "stage": "s3",
       "status": "landed",
       "commits": [
         "9579074",
@@ -416,6 +429,7 @@
       "id": "qos-unfair-lock",
       "title": "Stage 4 — `FSpinlock` becomes `os_unfair_lock`, then thread QoS",
       "area": "platform",
+      "stage": "s4",
       "status": "landed",
       "commits": [
         "966b1a9"
@@ -428,6 +442,7 @@
       "id": "audio-ring",
       "title": "Audio: lock-free SPSC ring, and a latency request above the device floor",
       "area": "audio",
+      "stage": "s4",
       "status": "landed",
       "commits": [
         "94fe786"
@@ -440,18 +455,26 @@
       "id": "native-macos",
       "title": "Native macOS integration: screensaver, SDL event thread, Info.plist, no Carbon",
       "area": "platform",
+      "stage": "s4",
       "status": "landed",
       "commits": [
         "755f7ad"
       ],
       "verdict": "Screensaver inhibition through `NSProcessInfo`; SDL input off a 5 ms main-thread timer onto its own thread; Carbon key codes dropped; `NSHighResolutionCapable` added.",
       "note": "Without `NSHighResolutionCapable` macOS ran the whole app magnified and handed Metal a **half-resolution drawable**. SDL's own screensaver path was disabled on macOS because it initialises `SDL_INIT_VIDEO` inside a wx app that already owns `NSApplication`.",
-      "ref": "01-foundation-platform-packaging.md — 5.1, 5.3, 5.4, 5.5"
+      "ref": "01-foundation-platform-packaging.md — 5.1, 5.3, 5.4, 5.5",
+      "measured": {
+        "scene": "mk8-attract",
+        "at_commit": "755f7ad",
+        "date": "2026-07-25",
+        "n": 1
+      }
     },
     {
       "id": "gamecontroller",
       "title": "Native `GameController.framework` input provider",
       "area": "input",
+      "stage": "s4",
       "status": "landed",
       "commits": [
         "b9178ae"
@@ -464,6 +487,7 @@
       "id": "idle-spins",
       "title": "Three idle spins removed from the scheduler and command processor",
       "area": "cpu",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "a7ed8ed",
@@ -483,6 +507,7 @@
       "id": "lod-bias",
       "title": "Apply sampler LOD bias, and stop graphic packs corrupting GPU registers",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "3bb1049"
@@ -494,6 +519,7 @@
       "id": "tbdr-shrine-verdict",
       "title": "The TBDR work was rejected — then the rejection was found to be scene-dependent",
       "area": "graphics",
+      "stage": "s5",
       "status": "refuted",
       "commits": [
         "ba952a7",
@@ -514,6 +540,7 @@
       "id": "memoryless-depth",
       "title": "Memoryless depth and load/store action audit",
       "area": "graphics",
+      "stage": "s5",
       "status": "cancelled",
       "commits": [
         "ffe1a0b"
@@ -525,6 +552,7 @@
       "id": "deferred-copy",
       "title": "The deferred texture copy is retired — the pass churn was buffer uploads",
       "area": "graphics",
+      "stage": "s5",
       "status": "reverted",
       "commits": [
         "5cb0620"
@@ -549,6 +577,7 @@
       "id": "telemetry-harness",
       "title": "The telemetry harness — counters compiled into the core",
       "area": "tooling",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "8b9b546",
@@ -558,12 +587,13 @@
       ],
       "verdict": "X-macro `.def` → enum → `__thread` TLS rows, cache-line striped and summed at the frame boundary. Proven free when disabled *before* anything was instrumented. Every performance claim on this page comes from it.",
       "note": "Phase 1 deliberately re-derived a result already known by other means, as a check on the instrument. Phase 3 found BotW was missing 31 imports. The follow-up fixed a race and a hot-path allocation the harness itself had introduced.",
-      "ref": "00-master-plan.md — Telemetry phases"
+      "ref": "00-master-plan.md — Instrumenting three open questions at once"
     },
     {
       "id": "frame-decomposition",
       "title": "Decompose the frame: the open world is not GPU-bound, it is vsync-quantised",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "7f2c0e4",
@@ -583,6 +613,7 @@
       "id": "cpu-counters",
       "title": "CPU counters: nothing is saturated",
       "area": "cpu",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "e3ba7a0"
@@ -595,12 +626,13 @@
         "date": "2026-08-02",
         "n": 3
       },
-      "ref": "00-master-plan.md — Telemetry, phase 4"
+      "ref": "00-master-plan.md — The 33 ms frame decomposed"
     },
     {
       "id": "hle-and-switches",
       "title": "52,330 free HLE calls per frame, and where the context switches come from",
       "area": "cpu",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "d81aa90"
@@ -613,12 +645,13 @@
         "date": "2026-08-02",
         "n": 3
       },
-      "ref": "00-master-plan.md — Correct the HLE-charge claim"
+      "ref": "00-master-plan.md — The 33 ms frame decomposed"
     },
     {
       "id": "cp-fence-park",
       "title": "Park the GPU fence wait instead of spinning",
       "area": "cpu",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "a297d1a",
@@ -631,12 +664,13 @@
         "at_commit": "5933733",
         "date": "2026-07-27"
       },
-      "ref": "00-master-plan.md — Attribute cp_fence"
+      "ref": "00-master-plan.md — The menu waits on the fence exactly as long as the open world does"
     },
     {
       "id": "rebrand",
       "title": "Rebrand to TesseraEmu, and migrate the user data directory in place",
       "area": "platform",
+      "stage": "s2",
       "status": "landed",
       "commits": [
         "74dc839",
@@ -691,6 +725,7 @@
       "id": "fiber-switch",
       "title": "Measure the fiber switch: 454 ns, a 70× gap, and not a frame-rate fix",
       "area": "cpu",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "6be6636"
@@ -708,6 +743,7 @@
       "id": "three-questions",
       "title": "Instrument three open questions at once; two answers killed the work",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "7603cab"
@@ -725,18 +761,26 @@
       "id": "phase-split",
       "title": "A BotW run is two workloads, and blending them invented a result",
       "area": "tooling",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "491f4ef"
       ],
       "verdict": "`drive-botw.sh` spends its first ~4,050 frames in menus at 113 draws and 33.27 ms, then ~4,750 frames of gameplay at 3,516 draws and 49.90 ms. A whole-file median lands wherever the phase ratio falls and **describes no frame that occurred**.",
       "note": "This is not hypothetical. It produced a confident **\"−6.2% GPU busy\"** for a change whose real effect is +0.5%, because two runs of the same script had slightly different menu-to-gameplay ratios. `telemetry-report.py` now segments by draw load and analyses the longest phase. Any BotW number in this repo predating it is suspect.",
-      "ref": "testing/telemetry-report.py"
+      "ref": "testing/telemetry-report.py",
+      "measured": {
+        "scene": "botw-korok",
+        "at_commit": "491f4ef",
+        "date": "2026-07-30",
+        "n": 1
+      }
     },
     {
       "id": "cp-fence-vsync",
       "title": "`cp_fence` is the vsync timer — solved, and never a defect",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "d889caf"
@@ -748,12 +792,13 @@
         "at_commit": "d889caf",
         "date": "2026-07-30"
       },
-      "ref": "00-master-plan.md — cp_fence solved"
+      "ref": "00-master-plan.md — `cp_fence` solved: it is the vsync timer"
     },
     {
       "id": "gpu-dead-air",
       "title": "The GPU's dead air: 33 ms idle per 50 ms frame, in two blocks",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "e34facb"
@@ -766,12 +811,13 @@
         "date": "2026-08-02",
         "n": 3
       },
-      "ref": "00-master-plan.md — cp_idle and the GPU's 33 ms of dead air"
+      "ref": "00-master-plan.md — `cp_idle` and the GPU's 33 ms of dead air"
     },
     {
       "id": "drawdone-sync",
       "title": "BotW is 20 fps instead of 30 because of one config default",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "c03dbbb",
@@ -791,6 +837,7 @@
       "id": "mtlevent-wrap",
       "title": "The `MTLEvent` wrap was real, and fixing it corrects every `gpu.busy_ns` ever recorded",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "839466d"
@@ -808,6 +855,7 @@
       "id": "cb-timeline",
       "title": "Give command buffers a timeline instead of a pointer identity",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "323e93f"
@@ -819,6 +867,7 @@
       "id": "readback-targets",
       "title": "What BotW actually reads back: 21 KB of float arrays per frame",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "1ba16d9"
@@ -847,6 +896,7 @@
       "id": "pass-structure-audit",
       "title": "Pass-structure audit on the open world — the shrine verdict does not transfer",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "745b671"
@@ -859,12 +909,13 @@
         "date": "2026-07-31",
         "n": 2
       },
-      "ref": "00-master-plan.md — Pass-structure audit"
+      "ref": "00-master-plan.md — The rest of the G-list TBDR work is not worth doing"
     },
     {
       "id": "alu-bound",
       "title": "The GPU is ALU- and texture-bound, so the streamout work is cancelled",
       "area": "graphics",
+      "stage": "s5",
       "status": "cancelled",
       "commits": [
         "fa24ab0"
@@ -882,6 +933,7 @@
       "id": "accurate-barriers-surfaces",
       "title": "Three surfaces that lied about accurate barriers on Metal",
       "area": "graphics",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "abca397"
@@ -908,6 +960,7 @@
       "id": "korok-remeasure",
       "title": "Re-measure the four oldest Korok verdicts at HEAD — all four hold",
       "area": "tooling",
+      "stage": "s5",
       "status": "landed",
       "commits": [
         "273b81e"
@@ -926,6 +979,7 @@
       "id": "gs-texture-overflow",
       "title": "A geometry-shader texture binding wrote past the end of the array",
       "area": "graphics",
+      "stage": "s3",
       "status": "landed",
       "commits": [
         "99003ba"
@@ -938,6 +992,7 @@
       "id": "self-dep-detector",
       "title": "Wire the self-dependency counter — and find that item 3.1 is a different bug",
       "area": "graphics",
+      "stage": "s6",
       "status": "landed",
       "commits": [
         "99003ba"
@@ -950,6 +1005,7 @@
       "id": "accuracy-register-botw",
       "title": "What the accuracy register actually says about BotW: eight signals at zero",
       "area": "graphics",
+      "stage": "s6",
       "status": "landed",
       "commits": [
         "99003ba"
@@ -968,6 +1024,7 @@
       "id": "audit-record-corrections",
       "title": "Four corrections to the record, one of which would have written a bug",
       "area": "docs",
+      "stage": "s6",
       "status": "landed",
       "commits": [
         "99003ba"
@@ -980,6 +1037,7 @@
       "id": "cpu-conformance",
       "title": "First CPU conformance result — and the recompiler is not the problem",
       "area": "cpu",
+      "stage": "s6",
       "status": "landed",
       "commits": [
         "59d8f21",
@@ -1002,6 +1060,7 @@
       "id": "self-dep-reproducer",
       "title": "A self-dependency reproducer that runs, and reads zero",
       "area": "graphics",
+      "stage": "s6",
       "status": "landed",
       "commits": [
         "a2e441b",
@@ -1021,6 +1080,7 @@
       "id": "doc-coverage-audit",
       "title": "Audit the new test docs for reproducibility — and CLAUDE.md for accuracy",
       "area": "docs",
+      "stage": "s6",
       "status": "landed",
       "commits": [
         "ab78ce7",
@@ -1043,7 +1103,13 @@
         "b7c0367"
       ],
       "verdict": "`queue_latency_ns` (14.29 → 14.69 ms) and `command_buffers` (7 → 7) do not move between the 20 fps and 30 fps arms. Confirmed a second way by the wrap fix: buffers **had** been overlapping for most of every run, and it bought nothing.",
-      "ref": "00-master-plan.md — Two Metal-side hypotheses are refuted"
+      "ref": "00-master-plan.md — Two Metal-side hypotheses are refuted",
+      "measured": {
+        "scene": "botw-korok",
+        "at_commit": "b7c0367",
+        "date": "2026-07-31",
+        "n": 1
+      }
     },
     {
       "id": "r-commit-threshold",
@@ -1077,7 +1143,13 @@
         "1ba16d9"
       ],
       "verdict": "Measured three ways, all negative. `readback_forcestart` is 0, `readback_age_at_wait_ns` is 14.19 ms (the transfers had already been running ~7 ms each), and `readback_draws_ahead` is 169/frame against 3,516 draws — the blit is not stuck behind its own command buffer either.",
-      "ref": "00-master-plan.md — The readback drain is not surgically improvable"
+      "ref": "00-master-plan.md — The readback drain is not surgically improvable",
+      "measured": {
+        "scene": "botw-korok",
+        "at_commit": "1ba16d9",
+        "date": "2026-07-30",
+        "n": 1
+      }
     },
     {
       "id": "r-readback-exemption",
@@ -1089,7 +1161,7 @@
       ],
       "verdict": "n=3 per arm, **every performance range overlaps**: frame 49.90 both, critical path 35.13–35.22 vs 35.10–35.23, force-finish 6.21–6.34 vs 6.14–6.27. The only separated metric was `command_buffers` 7 → 9, which merely proves the arm was live.",
       "note": "Note the control-vs-control pair from that batch: `readback_forcefinish_ns` swings **±2% between identical runs** while frame time and critical path are stable to 0.0%. A \"3% improvement\" in that counter is noise.",
-      "ref": "00-master-plan.md — Unchaining the readback command buffer"
+      "ref": "00-master-plan.md — The readback drain is not surgically improvable"
     },
     {
       "id": "r-inpass-streamout",
@@ -1101,7 +1173,13 @@
       ],
       "verdict": "Cancelled by its own gate before being built. It would have removed 300 MB/frame of redundant tile traffic from a GPU that is bandwidth-limited **12.8%** of the time.",
       "note": "Unblocked only if the ALU bottleneck is ever addressed and bandwidth becomes the limiter. The legality question is already answered in its favour.",
-      "ref": "00-master-plan.md — The GPU is ALU- and texture-bound"
+      "ref": "00-master-plan.md — The GPU is ALU- and texture-bound",
+      "measured": {
+        "scene": "botw-korok",
+        "at_commit": "fa24ab0",
+        "date": "2026-07-31",
+        "n": 1
+      }
     },
     {
       "id": "r-mem-semaphore",
@@ -1135,7 +1213,7 @@
         "dfaa971"
       ],
       "verdict": "It is a no-op. `sched_yield` is **36% of a core** in the same path.",
-      "ref": "00-master-plan.md — The ring-buffer wfe park is a no-op"
+      "ref": "00-master-plan.md — The ring-buffer `wfe` park is a no-op"
     },
     {
       "id": "r-flat-hle-charge",
@@ -1146,7 +1224,7 @@
         "d81aa90"
       ],
       "verdict": "A hypothetical 500 cycles/call sums to **25,103,500 against 15,384,240 actually retired — 163%.** It would more than double emulated guest time. Any charge must be tiered per function.",
-      "ref": "00-master-plan.md — Correct the HLE-charge claim"
+      "ref": "00-master-plan.md — The 33 ms frame decomposed"
     }
   ],
   "traps": [
@@ -1241,7 +1319,7 @@
       "status": "open",
       "verdict": "The persistent cache stores pipeline **state descriptors**, not compiled binaries, and replays them on the loading screen. The `MTLBinaryArchive` code that would fix this exists in `MetalPipelineCompiler.cpp` and is entirely commented out.",
       "gate": "None. Highest-value item in the graphics plan after the correctness backlog; affects launch time rather than steady-state frame rate.",
-      "ref": "03-graphics-metal.md — Phase 2, F4"
+      "ref": "03-graphics-metal.md — Phase 2 — Shader binary caching"
     },
     {
       "id": "rm-inpass-copy",
@@ -1277,7 +1355,7 @@
       "status": "open",
       "verdict": "An accuracy gap, not a speed one: guest threads issue a million library calls a second at zero emulated cost, including calls that on hardware are IPC round trips to IOSU.",
       "gate": "A flat charge is **ruled out by measurement** — it would inflate guest time to 163%. The histogram shows the volume is cheap primitives and the expensive calls are rare, so the tiering must be per function.",
-      "ref": "00-master-plan.md — Correct the HLE-charge claim"
+      "ref": "00-master-plan.md — The 33 ms frame decomposed"
     },
     {
       "id": "rm-peephole",
@@ -1409,5 +1487,43 @@
       "ref": "docs/testing/00-test-strategy.md — Known issues"
     }
   ],
-  "unattributed": []
+  "unattributed": [],
+  "stages": [
+    {
+      "id": "s1",
+      "title": "Bootstrap and de-risk",
+      "goal": "Get a Metal-only arm64 build running at all, and retire the risks that would have invalidated the plan — chiefly whether MAP_JIT's documented one-region limit breaks the recompiler.",
+      "ref": "00-master-plan.md — Approach"
+    },
+    {
+      "id": "s2",
+      "title": "The purge",
+      "goal": "Delete the alternatives rather than #ifdef around them: BackendX64, the x86 IML machinery, OpenGL, Vulkan/MoltenVK, glslang and the GLSL emitter.",
+      "ref": "00-master-plan.md — Approach"
+    },
+    {
+      "id": "s3",
+      "title": "Correctness foundations",
+      "goal": "Fix what silently corrupts before optimising anything: 16 KB pages, the JIT cursor truncating I-cache flushes, signing, and arm64 crash diagnostics.",
+      "ref": "00-master-plan.md — Approach"
+    },
+    {
+      "id": "s4",
+      "title": "Scheduling and native integration",
+      "goal": "Core counts before QoS, os_unfair_lock before priority donation, then native macOS integration.",
+      "ref": "00-master-plan.md — Approach"
+    },
+    {
+      "id": "s5",
+      "title": "Performance, measured",
+      "goal": "Build the measurement harness first; nothing is claimable without it. Then follow the counters rather than intuition.",
+      "ref": "00-master-plan.md — Approach"
+    },
+    {
+      "id": "s6",
+      "title": "Correctness and verification",
+      "goal": "Establish what the emulator actually gets wrong, with tests rather than opinion. Opened by the CPU conformance suite.",
+      "ref": "docs/testing/00-test-strategy.md"
+    }
+  ]
 }

@@ -58,8 +58,35 @@ python3 docs/status/build-status.py --verify   # validate + report drift (what C
 python3 docs/status/build-status.py --check    # local: did I forget to regenerate?
 ```
 
-`--verify` exits **2** if the ledger is malformed or names a hash that does not resolve — that is a
-broken file, not lag. Unclaimed commits are **reported, never fatal**.
+## What `--verify` enforces, and why the tiers differ
+
+The question behind every severity is: **is this always a mistake, or is some lag legitimate?**
+
+**Exit 2 — structurally broken.** Never correct. A hash that does not resolve, a duplicate `id`, a
+`status` that is not legal for its array (`deferred` in `items[]` once hid a roadmap entry among
+landed work), or a `ref` naming a file that does not exist.
+
+**Exit 1 — drifted.** Also always a mistake, but it rots *silently*, which is why it fails CI rather
+than being reported:
+
+- **a `ref` naming a section that no longer exists.** Twelve of eighty-four refs had gone stale
+  before this check existed, because `ref` was written as a paraphrase of a heading rather than as an
+  anchor. **Write the ref so it still matches the heading**, or the check will tell you it does not.
+- **a verdict quoting a measurement with no `measured` block.** `at_commit` is what lets the page
+  show how far a number has drifted; an unstamped number cannot be checked at all. Roadmap entries
+  are exempt — a gate *citing* a measurement made elsewhere should point at it, not restate it.
+- **a roadmap entry with no `gate`.**
+
+**Exit 0 — reported, tolerated.** Unclaimed commits (the tip is always unclaimed; that is
+self-reference, not sloppiness) and measurements more than 40 commits behind HEAD. A number does not
+become false because commits happened — it becomes *unverified*.
+
+## Goals are derived, not asserted
+
+`stages[]` carries the staged plan; items claim a stage with `"stage": "s3"`. The page computes how
+much of each stage landed. **Do not hand-write a stage's completion** — that is exactly the surface
+that drifted before, when the master plan said "Stage 3: complete" while CLAUDE.md still described
+one of its defects as open. An item that belongs to no stage is fine and is listed as cross-cutting.
 
 ## Two things that are structural, not sloppiness
 

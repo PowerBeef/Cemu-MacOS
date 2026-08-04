@@ -237,6 +237,138 @@ def check_coverage(ledger: dict, commits: list[dict]) -> list[dict]:
 esc = html.escape
 
 
+# --------------------------------------------------------------------------------------
+# The linter.
+#
+# The two original checks (hashes resolve, commits claimed) catch a ledger that is broken
+# or behind. They do not catch a ledger that is *wrong*, which is the failure mode this
+# project actually keeps hitting: an entry that still points at a renamed section, a number
+# quoted with no provenance, a claim that contradicts the doc it cites.
+#
+# Severity is tiered on one question: is this ALWAYS a mistake, or is some lag legitimate?
+#
+#   FATAL  the file is structurally broken. Never correct. Aborts.
+#   ERROR  always an authoring mistake, and silently rots if unchecked. Fails CI.
+#   WARN   lag that can be legitimate -- an ageing measurement, an unclaimed tip. Reported.
+#
+# Nothing here re-derives a fact the repo already owns; these check that what IS typed
+# stays true.
+# --------------------------------------------------------------------------------------
+
+FATAL, ERROR, WARN = "FATAL", "ERROR", "WARN"
+
+# Statuses are not interchangeable between buckets. `deferred` in items[] once hid a
+# roadmap entry among landed work for weeks.
+ITEM_STATUSES = {"landed", "refuted", "cancelled", "reverted"}
+ROADMAP_STATUSES = {"open", "deferred", "blocked"}
+
+# A verdict quoting a duration, a rate or a percentage is a measurement, and a measurement
+# without provenance is exactly the thing `measured.at_commit` exists to prevent.
+MEASUREMENT_RE = re.compile(r"\b\d[\d,]*\.?\d*\s*(?:ms|fps|%|GB/s|MB|ns)\b")
+
+# How far behind HEAD a measurement may drift before it is worth re-running. Not fatal:
+# a number does not become false because commits happened, it becomes *unverified*.
+STALE_COMMITS = 40
+
+
+def resolve_ref_path(raw: str) -> Path | None:
+    """Find the file a `ref` names, trying the places refs are actually written."""
+    for base in (REPO, REPO / "docs", REPO / "docs" / "porting", REPO / "docs" / "hardware",
+                 REPO / "docs" / "status", REPO / "docs" / "testing"):
+        p = base / raw
+        if p.is_file():
+            return p
+    return None
+
+
+def ref_section_found(path: Path, section: str) -> bool:
+    """Does `section` still name something in `path`?
+
+    Deliberately lenient about *form* and strict about *existence*: refs are written as
+    "4.2" or as a heading fragment, and either is fine so long as it still resolves. What
+    is not fine is naming a heading that no longer exists, which is how 12 refs silently
+    went stale before this check existed.
+    """
+    text = path.read_text(errors="replace")
+    headings = re.findall(r"^#{1,6}\s*(.+)$", text, re.M)
+    number = re.match(r"([\d.]+)", section)
+    if number and any(h.strip().startswith(number.group(1)) for h in headings):
+        return True
+    probe = section.lower()[:35]
+    return any(probe in h.lower() for h in headings) or probe in text.lower()
+
+
+def lint(ledger: dict, commits: list[dict]) -> list[tuple[str, str, str]]:
+    """Return [(severity, entry-id, message)]. Pure; callers decide what to do with it."""
+    out: list[tuple[str, str, str]] = []
+    buckets = {b: ledger.get(b, []) for b in ("items", "refuted", "roadmap")}
+    by_full = {c["full"]: c for c in commits}
+    short_to_full = {c["short"]: c["full"] for c in commits}
+
+    seen_ids: dict[str, str] = {}
+    for bucket, entries in buckets.items():
+        for e in entries:
+            eid = e.get("id", "<no id>")
+
+            if eid in seen_ids:
+                out.append((FATAL, eid, f"duplicate id (also in `{seen_ids[eid]}`)"))
+            seen_ids[eid] = bucket
+
+            allowed = ROADMAP_STATUSES if bucket == "roadmap" else ITEM_STATUSES
+            if e.get("status") not in allowed:
+                out.append((FATAL, eid, f'status `{e.get("status")}` is not valid in `{bucket}` '
+                                        f'(expected one of {sorted(allowed)})'))
+
+            raw_ref = e.get("ref", "")
+            if not raw_ref:
+                out.append((ERROR, eid, "no `ref` — every entry must point at the doc that owns "
+                                        "its reasoning"))
+            else:
+                parts = re.split(r"\s+[—–-]{1,2}\s+", raw_ref, maxsplit=1)
+                path = resolve_ref_path(parts[0].strip())
+                if path is None:
+                    out.append((FATAL, eid, f"`ref` names a file that does not exist: "
+                                            f"`{parts[0].strip()}`"))
+                elif len(parts) == 2 and path.suffix == ".md":
+                    if not ref_section_found(path, parts[1].strip()):
+                        out.append((ERROR, eid, f"`ref` names a section that no longer exists: "
+                                                f'"{parts[1].strip()}" in `{path.name}`'))
+
+            measured = e.get("measured")
+            if measured is None:
+                # Only items[] and refuted[] MAKE measurements. A roadmap gate quoting a
+                # number is citing one made elsewhere, and restamping it there would create
+                # the second copy this ledger exists to avoid.
+                if bucket != "roadmap" and MEASUREMENT_RE.search(e.get("verdict", "")):
+                    out.append((ERROR, eid, "verdict quotes a measurement but the entry has no "
+                                            "`measured` block — an unstamped number cannot be "
+                                            "checked for staleness"))
+            else:
+                for key in ("at_commit", "date"):
+                    if key not in measured:
+                        out.append((ERROR, eid, f"`measured` is missing `{key}`"))
+                at = measured.get("at_commit")
+                if at:
+                    full = short_to_full.get(at, at)
+                    if full in by_full:
+                        behind = len(commits) - 1 - commits.index(by_full[full])
+                        if behind > STALE_COMMITS:
+                            out.append((WARN, eid, f"measured at `{at}`, now {behind} commits "
+                                                   f"behind HEAD — re-run before quoting"))
+
+            if bucket == "roadmap" and not e.get("gate"):
+                out.append((ERROR, eid, "roadmap entry has no `gate` — every open item must say "
+                                        "what would justify starting it"))
+
+    for stage in ledger.get("stages", []):
+        sid = stage.get("id", "<no id>")
+        claimed = [e for e in buckets["items"] if e.get("stage") == sid]
+        if not claimed and stage.get("status") == "complete":
+            out.append((WARN, sid, "stage is marked complete but no item claims it — its status "
+                                   "is asserted rather than derived"))
+    return out
+
+
 def rich(text: str) -> str:
     """Inline `code` and **bold** only. Escaped first, so the markup cannot inject."""
     s = esc(text or "")
@@ -345,6 +477,45 @@ def section(sid: str, title: str, lead: str, body: str) -> str:
     return (
         f'<section id="{esc(sid)}"><h2><a class="anchor" href="#{esc(sid)}">'
         f"{esc(title)}</a></h2>{lead_html}{body}</section>"
+    )
+
+
+def stages_body(ledger: dict) -> str:
+    """Goals, with completion DERIVED from which items claim each stage.
+
+    The point is that a stage's status is a computed fact, not a sentence someone has to
+    remember to update. The master plan once said "Stage 3: complete" while CLAUDE.md still
+    described one of its defects as open; deriving it removes the surface that can disagree.
+
+    Emits its own markup rather than going through table(), because table() routes cells
+    through rich(), which escapes first by design -- that injection guard is worth keeping.
+    """
+    items = ledger.get("items", [])
+    rows = []
+    for st in ledger.get("stages", []):
+        mine = [e for e in items if e.get("stage") == st["id"]]
+        landed = sum(1 for e in mine if e["status"] == "landed")
+        pct = round(100 * landed / len(mine)) if mine else 0
+        bar = (f'<div class="bar"><span style="width:{pct}%"></span></div>' if mine else "—")
+        count = f"{landed}/{len(mine)}" if mine else "—"
+        rows.append(
+            "<tr>"
+            f'<td><strong>{esc(st["title"])}</strong><br>'
+            f'<span class="muted">{rich(st["goal"])}</span></td>'
+            f'<td class="r">{count}</td>'
+            f"<td>{bar}</td>"
+            "</tr>"
+        )
+    unassigned = [e for e in items if "stage" not in e]
+    tail = ""
+    if unassigned:
+        ids = ", ".join(f"<code>{esc(e['id'])}</code>" for e in unassigned)
+        tail = (f'<p class="lead">{len(unassigned)} item(s) are cross-cutting and claim no '
+                f"stage: {ids}.</p>")
+    return (
+        '<div class="scroll"><table><thead><tr>'
+        "<th>stage</th><th class=\"r\">landed</th><th></th>"
+        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table></div>" + tail
     )
 
 
@@ -519,6 +690,14 @@ def render(ledger: dict, data: dict) -> str:
             section("glance", "At a glance", ledger.get("summary", ""),
                     headline + f'<div class="stats">{stat_html}</div>'),
             section(
+                "stages",
+                "Goals",
+                "The staged plan, with completion **derived from the ledger** rather than "
+                "asserted — a stage is as done as the items that claim it. Reasoning lives in "
+                "`docs/porting/00-master-plan.md`; this is only the status.",
+                stages_body(ledger),
+            ),
+            section(
                 "divergence",
                 "Divergence from upstream Cemu",
                 f'Fork point is `{ledger["fork_point"]}` — the last upstream commit merged '
@@ -623,6 +802,7 @@ CSS = """
   --accent:#8a5a2b; --code-bg:#f2f1ec;
   --landed:#2f7d4f; --refuted:#b3701a; --cancelled:#6b6b66; --reverted:#7a4fa3;
   --open:#2b6cb0; --deferred:#5a6b7d; --blocked:#b3352b; --warn:#b3701a;
+  --bar:#2f855a;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme=light]){
@@ -656,6 +836,8 @@ header.top{border-bottom:1px solid var(--line); background:var(--panel); margin-
 h1{font-size:30px; letter-spacing:-.02em; margin:0 0 6px}
 .tagline{color:var(--dim); margin:0 0 14px; max-width:70ch}
 .gen{color:var(--dim); font-size:13px; margin:0 0 18px}
+.bar{background:rgba(128,128,128,.22);border-radius:3px;height:8px;width:120px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--bar)}
 .warn-badge{
   background:var(--warn); color:var(--bg); border-radius:3px;
   padding:.1em .45em; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
@@ -943,6 +1125,25 @@ def verify_report(ledger: dict, data: dict) -> str:
             "name its own hash in the ledger it contains. The next ledger update should claim it.",
             "",
         ]
+
+    findings = lint(ledger, commits)
+    for sev, label, blurb in (
+        (FATAL, "🛑 Structural errors — the ledger is malformed",
+         "These are never correct. Fix before anything else."),
+        (ERROR, "❌ Drift — an entry no longer matches the repo",
+         "Always an authoring mistake, and it rots silently if unchecked. Fails CI."),
+        (WARN, "⚠️ Ageing — legitimate lag, worth a look",
+         "Not wrong, just unverified. Re-run or re-check when convenient."),
+    ):
+        rows = [f for f in findings if f[0] == sev]
+        if not rows:
+            continue
+        out += [f"### {label} ({len(rows)})", "", blurb, "",
+                "| entry | problem |", "| --- | --- |"]
+        out += [f"| `{eid}` | {msg} |" for _, eid, msg in rows]
+        out += [""]
+    if not findings:
+        out += ["No structural, drift or staleness findings. ✅", ""]
     return "\n".join(out)
 
 
@@ -960,7 +1161,8 @@ def main() -> int:
         "--verify",
         action="store_true",
         help="validate the ledger and report drift as Markdown; writes nothing. Exit 2 if the "
-        "ledger is malformed, 0 otherwise (unclaimed commits are reported, not fatal).",
+        "ledger is malformed, 1 if an entry has drifted out of sync with the repo, 0 "
+        "otherwise (unclaimed commits and ageing measurements are reported, not fatal).",
     )
     args = ap.parse_args()
 
@@ -971,7 +1173,12 @@ def main() -> int:
             print(f"build-status: {e}", file=sys.stderr)
             return 2
         print(verify_report(ledger, data))
-        return 0
+        findings = lint(ledger, data["commits"])
+        if any(f[0] == FATAL for f in findings):
+            return 2
+        # Drift fails CI; unclaimed commits and ageing measurements deliberately do not,
+        # because both have legitimate causes (see the module docstring).
+        return 1 if any(f[0] == ERROR for f in findings) else 0
 
     try:
         page = build()
