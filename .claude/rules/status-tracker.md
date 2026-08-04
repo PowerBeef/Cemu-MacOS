@@ -31,6 +31,21 @@ status that is actually true:
 Deleting a failed attempt from the record, or quietly filing it as `open`, is how the next person
 pays for it a second time. Six attempts at the same 1.90 ms are on file for exactly this reason.
 
+## Documentation and upkeep are work items
+
+A commit that only touches docs still lands and still gets claimed. `area: "docs"` exists for exactly
+this and already carries the README, the hardware reference and the documentation audits. The
+tracker's *own* upkeep, meaning claiming commits, stamping measurements and correcting a wrong entry,
+is claimed by `status-tracker`.
+
+`unattributed` is for commits that genuinely are not work: a merge, a typo, a `.gitignore` line. It is
+**not** an escape hatch for "this measured nothing." Most documentation commits measure nothing and
+are still part of the record.
+
+This is written down because the judgement was once made wrongly, in a session where six `area: docs`
+items were already on file: a README rewrite was declared "not a work item" and left unclaimed. Look
+for precedent in the ledger before deciding something is out of scope.
+
 ## Never type a number the repo already knows
 
 The generator derives the commit list, the diffstat, every `testing/golden/baseline.tsv` row and the
