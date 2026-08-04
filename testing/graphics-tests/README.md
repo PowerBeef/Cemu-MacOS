@@ -70,6 +70,53 @@ Two controls, and they are the point of trusting the third line:
 `selfdep_caseB_offset_texel`, because that test is expected to fail until `rm-fbfetch-coordinate`
 lands — at which point it becomes the regression test that proves the fix.
 
+## Case C — the vertex stage, and the one case that proves the splitter
+
+```
+TEST selfdep_caseC_vertex_stage  PASS
+```
+
+A **vertex** shader samples the surface being rendered into. That case is uncovered by construction
+rather than by luck: `LatteDecompilerAnalyzer` fills `textureRenderTargetIndex` only for
+`shaderType == Pixel`, so the framebuffer-fetch rewrite can never reach it. It is therefore the only
+draw in this ROM that the pass splitter has to notice, and the only one that can show the splitter
+produces *correct pixels* rather than merely firing.
+
+It passes: all 16 texels of the strip return the seeded value the vertex shader read.
+
+| counter | reading |
+|---|---|
+| `acc.self_dep_pass_splits` | 1 — exactly the one uncovered draw |
+| `acc.render_self_dependency` | 1 — **first non-zero in this fork's history** |
+| `acc.self_dep_nonpixel` | 1 |
+| `acc.self_dep_fbfetch` | 394 — every pixel-stage alias, correctly *not* split |
+
+### It did not pass at first, and the reason was worth finding
+
+The vertex shader produced no Metal function, so its pipeline was refused and the draw silently
+vanished. The first diagnosis — *"vertex-stage texture sampling does not survive the MSL emitter"* —
+was **wrong and far too broad**. Vertex texture sampling works.
+
+What actually failed is texel-coordinate access (`GPU7_TEX_INST_LD`, or a `SAMPLE` with all four
+coordinates unnormalized) in any **non-pixel** stage. `LatteDecompilerAnalyzer.cpp:593` gated the
+`texUnitUsesTexelCoordinates → hasUniformVarBlock` promotion on the pixel stage, while the
+`float2 tex{}Scale` SupportBuffer member and the `*supportBuffer.tex{}Scale` body reference are
+emitted for *every* stage. Only the `constant SupportBuffer&` **parameter** was gated. The MSL
+therefore referenced a parameter the function had never been given:
+
+```
+error: use of undeclared identifier 'supportBuffer'
+```
+
+Established by running three variants, not by reading alone: `usampler2D`+`texelFetch` failed,
+`sampler2D`+`texelFetch` failed **identically**, and `sampler2D`+`texture()` compiled. So the
+discriminator is texel coordinates, not the integer sampler. One gate removed fixes it.
+
+It stayed hidden because any *other* reason to set `hasUniformVarBlock` — streamout, point size, a
+disabled viewport scale, a remapped uniform mode — rescues the shader. Only a minimal non-pixel
+texelFetch trips it, which is exactly what a purpose-built test ROM writes and what a real game
+rarely does.
+
 > The GPU writes `UINT_R32` in the opposite byte order to how the PPC core reads a `uint32_t`, so a
 > seeded 1 comes back as `0x01000000`. The swap is done on read, in `rd()`, deliberately: the shader
 > is the thing under test and should stay the simplest possible expression of "write x", with no
