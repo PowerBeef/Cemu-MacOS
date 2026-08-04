@@ -18,17 +18,32 @@
  *             the texture coordinate -- so it silently returns the current
  *             fragment instead of the neighbour.
  *
- * What this ROM is for: making the counters fire, so `rm-self-dep-measure` gets a
- * number and the covered/uncovered split becomes visible. It deliberately does NOT
- * verify pixel values -- that needs GPU->CPU readback and an exact integer format,
- * and is tracked separately. Read the counters, not the screen:
+ * This ROM does two separate things, and the difference matters:
  *
- *   --telemetry out.jsonl --telemetry-areas accuracy,gpu
- *     acc.self_dep_fbfetch        -> covered by framebuffer fetch
- *     acc.render_self_dependency  -> NOT covered; reads undefined data
- *     acc.self_dep_nonpixel       -> vertex/geometry stage, never coverable
+ *   1. A PIXEL ORACLE, run once at startup. Integer format, GPU->CPU readback,
+ *      bit-exact compare. It answers "is the output wrong", and the answer is yes:
+ *
+ *        TEST selfdep_seed                PASS
+ *        TEST selfdep_caseA_same_texel    PASS   <- substitution valid here
+ *        TEST selfdep_caseB_offset_texel  FAIL   <- 16/16 texels returned self
+ *
+ *      Case A passing is the control. If it ever fails, suspect this harness
+ *      before suspecting the emulator.
+ *
+ *   2. A COUNTER LOOP, running forever after. It answers "how often does the
+ *      substitution get applied", which the oracle cannot, because the oracle is
+ *      three draws:
+ *
+ *        --telemetry out.jsonl --telemetry-areas accuracy,gpu
+ *          acc.self_dep_fbfetch        -> covered by framebuffer fetch
+ *          acc.render_self_dependency  -> NOT covered; reads undefined data
+ *          acc.self_dep_nonpixel       -> vertex/geometry stage, never coverable
+ *
+ * An earlier revision of this comment said the ROM "deliberately does NOT verify
+ * pixel values". That was true until the oracle below landed.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
@@ -98,6 +113,69 @@ void main()
 }
 )";
 
+/* ==========================================================================
+ * The pixel oracle.
+ *
+ * The counter loop below proves the framebuffer-fetch substitution is APPLIED
+ * to the offset case. It cannot prove the resulting pixel is wrong, because it
+ * never reads one back. This does.
+ *
+ * Integer format, so the comparison is exact and there is no filtering slop to
+ * argue about -- the trick borrowed from piglit's blending-in-shader test.
+ *
+ * Seed the surface so every texel holds its own X coordinate. Then draw a strip
+ * that samples 16 texels to the right and writes what it read:
+ *
+ *   correct        output[x] == x + 16   (it really sampled the neighbour)
+ *   substitution   output[x] == x        (coordinate discarded, read of self)
+ *
+ * The strip is [0,16) and it samples from [16,32), which the strip does not
+ * write. So there is no feedback race to explain a result away with: the source
+ * texels are untouched by this draw whichever path the emulator takes.
+ * ========================================================================== */
+#define ORACLE_STRIP_W  CASE_B_OFFSET   /* [0,16) reads [16,32) */
+#define ORACLE_A_X0     32              /* Case A control strip: [32,48) */
+#define ORACLE_PROBE_Y  128             /* any row; the pattern is column-only */
+#define ORACLE_A_BIAS   1000u
+
+/* Writes each texel's own X. uvec4 out, because the target is UINT_R32. */
+static const char *s_ps_seed = R"(
+#version 450
+layout(location = 0) out uvec4 FragColor;
+void main()
+{
+   FragColor = uvec4(uint(gl_FragCoord.x), 0u, 0u, 0u);
+}
+)";
+
+/* Case B, exactly: read a DIFFERENT texel of the surface being rendered to. */
+static const char *s_ps_oracle_offset = R"(
+#version 450
+#extension GL_ARB_shading_language_420pack: enable
+layout(location = 0) out uvec4 FragColor;
+layout(binding = 0) uniform usampler2D selfTexture;
+void main()
+{
+   ivec2 c = ivec2(int(gl_FragCoord.x) + 16, int(gl_FragCoord.y));
+   FragColor = uvec4(texelFetch(selfTexture, c, 0).r, 0u, 0u, 0u);
+}
+)";
+
+/* Case A control: read this fragment's OWN texel. A real sample and a
+ * framebuffer fetch must agree here -- that is what makes the substitution
+ * valid for this case. If this one fails, the harness is broken, not Latte. */
+static const char *s_ps_oracle_same = R"(
+#version 450
+#extension GL_ARB_shading_language_420pack: enable
+layout(location = 0) out uvec4 FragColor;
+layout(binding = 0) uniform usampler2D selfTexture;
+void main()
+{
+   ivec2 c = ivec2(int(gl_FragCoord.x), int(gl_FragCoord.y));
+   FragColor = uvec4(texelFetch(selfTexture, c, 0).r + 1000u, 0u, 0u, 0u);
+}
+)";
+
 /* --- CafeGLSL, loaded from cafeLibs/glslcompiler.rpl ---------------------- */
 static OSDynLoad_Module s_glsl;
 static GX2VertexShader *(*CompileVS)(const char *, char *, int, int);
@@ -161,6 +239,223 @@ static BOOL rt_init(void)
    return TRUE;
 }
 
+/* --- oracle surfaces: an integer RT, plus a linear copy the CPU can read ---- */
+static GX2Texture s_ort;        /* UINT_R32, both sampled and rendered to */
+static GX2ColorBuffer s_ocb;    /* aliases s_ort.surface -- the self-dependency */
+static GX2Surface s_olin;       /* LINEAR_SPECIAL destination for GX2CopySurface */
+
+static int s_pass, s_fail;
+
+static void verdict(const char *name, BOOL ok, const char *expected, const char *got)
+{
+   if (ok) { s_pass++; WHBLogPrintf("TEST %s PASS", name); }
+   else    { s_fail++; WHBLogPrintf("TEST %s FAIL expected=%s got=%s", name, expected, got); }
+}
+
+static BOOL oracle_surfaces_init(void)
+{
+   memset(&s_ort, 0, sizeof(s_ort));
+   s_ort.surface.use = GX2_SURFACE_USE_TEXTURE_COLOR_BUFFER_TV;
+   s_ort.surface.dim = GX2_SURFACE_DIM_TEXTURE_2D;
+   s_ort.surface.width = RT_SIZE;
+   s_ort.surface.height = RT_SIZE;
+   s_ort.surface.depth = 1;
+   s_ort.surface.mipLevels = 1;
+   s_ort.surface.format = GX2_SURFACE_FORMAT_UINT_R32;
+   s_ort.surface.aa = GX2_AA_MODE1X;
+   s_ort.surface.tileMode = GX2_TILE_MODE_DEFAULT;
+   s_ort.viewNumMips = 1;
+   s_ort.viewNumSlices = 1;
+   s_ort.compMap = 0x00010203;
+   GX2CalcSurfaceSizeAndAlignment(&s_ort.surface);
+   GX2InitTextureRegs(&s_ort);
+   s_ort.surface.image = memalign(s_ort.surface.alignment, s_ort.surface.imageSize);
+   if (!s_ort.surface.image) return FALSE;
+   memset(s_ort.surface.image, 0, s_ort.surface.imageSize);
+   GX2Invalidate(GX2_INVALIDATE_MODE_CPU_TEXTURE, s_ort.surface.image, s_ort.surface.imageSize);
+
+   memset(&s_ocb, 0, sizeof(s_ocb));
+   s_ocb.surface = s_ort.surface;
+   s_ocb.viewNumSlices = 1;
+   GX2InitColorBufferRegs(&s_ocb);
+
+   /* LINEAR_SPECIAL so GX2CopySurface untiles for us. Doing the untiling on the
+    * CPU instead would mean reimplementing addrlib to read a test result, and a
+    * bug in that would look exactly like a bug in the thing under test. */
+   memset(&s_olin, 0, sizeof(s_olin));
+   s_olin.use = GX2_SURFACE_USE_TEXTURE;
+   s_olin.dim = GX2_SURFACE_DIM_TEXTURE_2D;
+   s_olin.width = RT_SIZE;
+   s_olin.height = RT_SIZE;
+   s_olin.depth = 1;
+   s_olin.mipLevels = 1;
+   s_olin.format = GX2_SURFACE_FORMAT_UINT_R32;
+   s_olin.aa = GX2_AA_MODE1X;
+   s_olin.tileMode = GX2_TILE_MODE_LINEAR_SPECIAL;
+   GX2CalcSurfaceSizeAndAlignment(&s_olin);
+   s_olin.image = memalign(s_olin.alignment, s_olin.imageSize);
+   if (!s_olin.image) return FALSE;
+   memset(s_olin.image, 0, s_olin.imageSize);
+   GX2Invalidate(GX2_INVALIDATE_MODE_CPU_TEXTURE, s_olin.image, s_olin.imageSize);
+   return TRUE;
+}
+
+/* The GPU writes UINT_R32 in the opposite byte order to how the PPC core reads a
+ * uint32_t, so a seeded value of 1 comes back as 0x01000000. Byte-swap on read
+ * rather than in the shader: the shader is the thing under test and should stay
+ * the simplest possible expression of "write x", with no endian arithmetic in it
+ * that could itself be wrong. First run of this oracle had every texel "wrong" for
+ * exactly this reason, which is what the raw dump above exists to catch. */
+static inline uint32_t rd(const uint32_t *px, uint32_t pitch, int x, int y)
+{
+   return __builtin_bswap32(px[(uint32_t)y * pitch + (uint32_t)x]);
+}
+
+/* One pass over the strip, so a failure reports how many texels agreed with each
+ * hypothesis rather than the value of a single lucky pixel. */
+static void tally(const uint32_t *px, uint32_t pitch, int x0, int w,
+                  uint32_t (*expect)(int), uint32_t (*bug)(int),
+                  int *nExpect, int *nBug, int *nOther, uint32_t *firstOther)
+{
+   *nExpect = *nBug = *nOther = 0;
+   for (int x = x0; x < x0 + w; x++) {
+      uint32_t v = rd(px, pitch, x, ORACLE_PROBE_Y);
+      if (v == expect(x))   (*nExpect)++;
+      else if (v == bug(x)) (*nBug)++;
+      else { if (*nOther == 0) *firstOther = v; (*nOther)++; }
+   }
+}
+
+static uint32_t exp_offset(int x) { return (uint32_t)(x + CASE_B_OFFSET); }
+static uint32_t bug_offset(int x) { return (uint32_t)x; }
+static uint32_t exp_same(int x)   { return (uint32_t)x + ORACLE_A_BIAS; }
+static uint32_t bug_same(int x)   { return (uint32_t)x; }
+
+static void run_pixel_oracle(WHBGfxShaderGroup *group, GX2RBuffer *posBuf, GX2RBuffer *uvBuf,
+                             GX2PixelShader *psSeed, GX2PixelShader *psOff, GX2PixelShader *psSame,
+                             GX2Sampler *sampler)
+{
+   WHBLogPrintf("TESSERA-GFXTEST oracle begin fmt=UINT_R32 strip=[0,%d) reads=[%d,%d)",
+                ORACLE_STRIP_W, CASE_B_OFFSET, CASE_B_OFFSET + ORACLE_STRIP_W);
+
+   WHBGfxBeginRender();
+   GX2SetColorBuffer(&s_ocb, GX2_RENDER_TARGET_0);
+   GX2SetViewport(0.0f, 0.0f, (float)RT_SIZE, (float)RT_SIZE, 0.0f, 1.0f);
+
+   /* Do not inherit whatever WHBGfxBeginRender left set. A render-to-texture with
+    * depth testing on, colour writes off or the red channel masked produces exactly
+    * what the first run of this oracle produced: a surface of zeros and three
+    * failures that look like emulator bugs and are not. */
+   GX2SetDepthOnlyControl(FALSE, FALSE, GX2_COMPARE_FUNC_ALWAYS);
+   GX2SetColorControl(GX2_LOGIC_OP_COPY, 0, FALSE, TRUE);
+   GX2SetTargetChannelMasks(GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_RGBA,
+                            GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_RGBA,
+                            GX2_CHANNEL_MASK_RGBA, GX2_CHANNEL_MASK_RGBA);
+
+   GX2SetFetchShader(&group->fetchShader);
+   GX2SetVertexShader(group->vertexShader);
+   GX2RSetAttributeBuffer(posBuf, 0, posBuf->elemSize, 0);
+   GX2RSetAttributeBuffer(uvBuf, 1, uvBuf->elemSize, 0);
+
+   /* 1. Seed: every texel gets its own X. No texture bound, so no self-dependency. */
+   GX2SetScissor(0, 0, RT_SIZE, RT_SIZE);
+   GX2SetPixelShader(psSeed);
+   GX2DrawEx(GX2_PRIMITIVE_MODE_QUADS, 4, 0, 1);
+   /* The test draws must observe the seed. Without this they may sample a surface
+    * whose writes are still in flight, and a wrong answer would be unattributable. */
+   GX2DrawDone();
+
+   /* 2. Case A control, strip [32,48): read own texel, add a bias. */
+   GX2SetScissor(ORACLE_A_X0, 0, ORACLE_STRIP_W, RT_SIZE);
+   GX2SetPixelShader(psSame);
+   if (psSame->samplerVarCount > 0) {
+      uint32_t loc = psSame->samplerVars[0].location;
+      GX2SetPixelTexture(&s_ort, loc);
+      GX2SetPixelSampler(sampler, loc);
+   }
+   GX2DrawEx(GX2_PRIMITIVE_MODE_QUADS, 4, 0, 1);
+   GX2DrawDone();
+
+   /* 3. Case B, strip [0,16): read 16 to the right. This is the one under test. */
+   GX2SetScissor(0, 0, ORACLE_STRIP_W, RT_SIZE);
+   GX2SetPixelShader(psOff);
+   if (psOff->samplerVarCount > 0) {
+      uint32_t loc = psOff->samplerVars[0].location;
+      GX2SetPixelTexture(&s_ort, loc);
+      GX2SetPixelSampler(sampler, loc);
+   }
+   GX2DrawEx(GX2_PRIMITIVE_MODE_QUADS, 4, 0, 1);
+   GX2DrawDone();
+
+   /* 4. Untile into a surface the CPU can index. */
+   GX2CopySurface(&s_ort.surface, 0, 0, &s_olin, 0, 0);
+   GX2DrawDone();
+   GX2Invalidate(GX2_INVALIDATE_MODE_CPU_TEXTURE, s_olin.image, s_olin.imageSize);
+
+   WHBGfxBeginRenderTV();  WHBGfxClearColor(0,0,0,1); WHBGfxFinishRenderTV();
+   WHBGfxBeginRenderDRC(); WHBGfxClearColor(0,0,0,1); WHBGfxFinishRenderDRC();
+   WHBGfxFinishRender();
+
+   const uint32_t *px = (const uint32_t *)s_olin.image;
+   const uint32_t pitch = s_olin.pitch;
+
+   /* Raw state before any verdict. A surface of zeros is the failure mode with the
+    * most possible causes -- seed did not draw, copy did not run, pitch is wrong,
+    * cache not invalidated -- and these three lines separate them. */
+   {
+      uint32_t nzTiled = 0, nzLin = 0;
+      const uint32_t *t = (const uint32_t *)s_ort.surface.image;
+      for (uint32_t i = 0; i < s_ort.surface.imageSize / 4; i++) if (t[i]) nzTiled++;
+      for (uint32_t i = 0; i < s_olin.imageSize / 4; i++)         if (px[i]) nzLin++;
+      WHBLogPrintf("TESSERA-GFXTEST oracle raw pitch=%u linSize=%u tiledSize=%u nonzero_tiled=%u nonzero_linear=%u",
+                   (unsigned)pitch, (unsigned)s_olin.imageSize, (unsigned)s_ort.surface.imageSize,
+                   (unsigned)nzTiled, (unsigned)nzLin);
+      WHBLogPrintf("TESSERA-GFXTEST oracle row%d[0..7] = %u %u %u %u %u %u %u %u",
+                   ORACLE_PROBE_Y,
+                   (unsigned)rd(px, pitch, 0, ORACLE_PROBE_Y), (unsigned)rd(px, pitch, 1, ORACLE_PROBE_Y),
+                   (unsigned)rd(px, pitch, 2, ORACLE_PROBE_Y), (unsigned)rd(px, pitch, 3, ORACLE_PROBE_Y),
+                   (unsigned)rd(px, pitch, 4, ORACLE_PROBE_Y), (unsigned)rd(px, pitch, 5, ORACLE_PROBE_Y),
+                   (unsigned)rd(px, pitch, 6, ORACLE_PROBE_Y), (unsigned)rd(px, pitch, 7, ORACLE_PROBE_Y));
+      WHBLogPrintf("TESSERA-GFXTEST oracle row%d[96..103] = %u %u %u %u %u %u %u %u",
+                   ORACLE_PROBE_Y,
+                   (unsigned)rd(px, pitch, 96, ORACLE_PROBE_Y),  (unsigned)rd(px, pitch, 97, ORACLE_PROBE_Y),
+                   (unsigned)rd(px, pitch, 98, ORACLE_PROBE_Y),  (unsigned)rd(px, pitch, 99, ORACLE_PROBE_Y),
+                   (unsigned)rd(px, pitch, 100, ORACLE_PROBE_Y), (unsigned)rd(px, pitch, 101, ORACLE_PROBE_Y),
+                   (unsigned)rd(px, pitch, 102, ORACLE_PROBE_Y), (unsigned)rd(px, pitch, 103, ORACLE_PROBE_Y));
+   }
+   char expected[64], got[96];
+   int nE, nB, nO; uint32_t other = 0;
+
+   /* Control first. A seed that did not land makes every later verdict noise, so
+    * this is checked outside both strips and reported as its own test. */
+   const int sx = 100;
+   uint32_t seen = rd(px, pitch, sx, ORACLE_PROBE_Y);
+   snprintf(expected, sizeof(expected), "%d", sx);
+   snprintf(got, sizeof(got), "%u", (unsigned)seen);
+   verdict("selfdep_seed", seen == (uint32_t)sx, expected, got);
+
+   tally(px, pitch, ORACLE_A_X0, ORACLE_STRIP_W, exp_same, bug_same, &nE, &nB, &nO, &other);
+   snprintf(expected, sizeof(expected), "%d/%d texels x+%u", ORACLE_STRIP_W, ORACLE_STRIP_W,
+            (unsigned)ORACLE_A_BIAS);
+   snprintf(got, sizeof(got), "correct=%d unbiased=%d other=%d first_other=%u",
+            nE, nB, nO, (unsigned)other);
+   verdict("selfdep_caseA_same_texel", nE == ORACLE_STRIP_W, expected, got);
+
+   tally(px, pitch, 0, ORACLE_STRIP_W, exp_offset, bug_offset, &nE, &nB, &nO, &other);
+   snprintf(expected, sizeof(expected), "%d/%d texels x+%d (sampled the neighbour)",
+            ORACLE_STRIP_W, ORACLE_STRIP_W, CASE_B_OFFSET);
+   snprintf(got, sizeof(got), "neighbour=%d self=%d other=%d first_other=%u",
+            nE, nB, nO, (unsigned)other);
+   verdict("selfdep_caseB_offset_texel", nE == ORACLE_STRIP_W, expected, got);
+
+   if (nB == ORACLE_STRIP_W) {
+      WHBLogPrintf("TESSERA-GFXTEST oracle DIAGNOSIS: every texel in the strip returned its own "
+                   "value, not the neighbour's. That is the coordinate-discarding framebuffer-fetch "
+                   "substitution, observed in pixels rather than inferred from a counter.");
+   }
+   WHBLogPrintf("TESSERA-GFXTEST oracle end pass=%d fail=%d", s_pass, s_fail);
+}
+
 int main(int argc, char **argv)
 {
    WHBProcInit();
@@ -192,6 +487,30 @@ int main(int argc, char **argv)
    GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, psSame->program, psSame->size);
    GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, psOffset->program, psOffset->size);
 
+   /* Oracle shaders are compiled separately and are allowed to fail without taking
+    * the counter loop with them: they need usampler2D and texelFetch, and whether
+    * CafeGLSL supports those is a property of CafeGLSL, not of this emulator. A
+    * SKIP that says so is worth more than a suite that will not build. */
+   char olog[1024] = {0};
+   GX2PixelShader *psSeed       = CompilePS(s_ps_seed,           olog, sizeof(olog), 0);
+   GX2PixelShader *psOracleOff  = CompilePS(s_ps_oracle_offset,  olog, sizeof(olog), 0);
+   GX2PixelShader *psOracleSame = CompilePS(s_ps_oracle_same,    olog, sizeof(olog), 0);
+   BOOL oracleReady = (psSeed && psOracleOff && psOracleSame) ? oracle_surfaces_init() : FALSE;
+   if (oracleReady) {
+      GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, psSeed->program, psSeed->size);
+      GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, psOracleOff->program, psOracleOff->size);
+      GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, psOracleSame->program, psOracleSame->size);
+   } else if (!psSeed || !psOracleOff || !psOracleSame) {
+      WHBLogPrintf("TEST selfdep_seed SKIP reason=oracle-shader-compile-failed");
+      WHBLogPrintf("TEST selfdep_caseA_same_texel SKIP reason=oracle-shader-compile-failed");
+      WHBLogPrintf("TEST selfdep_caseB_offset_texel SKIP reason=oracle-shader-compile-failed");
+      WHBLogPrintf("TESSERA-GFXTEST oracle skipped log=%s", olog);
+   } else {
+      WHBLogPrintf("TEST selfdep_seed SKIP reason=oracle-surface-alloc-failed");
+      WHBLogPrintf("TEST selfdep_caseA_same_texel SKIP reason=oracle-surface-alloc-failed");
+      WHBLogPrintf("TEST selfdep_caseB_offset_texel SKIP reason=oracle-surface-alloc-failed");
+   }
+
    WHBGfxShaderGroup group;
    memset(&group, 0, sizeof(group));
    group.vertexShader = vs;
@@ -221,6 +540,16 @@ int main(int argc, char **argv)
 
    GX2Sampler sampler;
    GX2InitSampler(&sampler, GX2_TEX_CLAMP_MODE_CLAMP, GX2_TEX_XY_FILTER_MODE_LINEAR);
+
+   /* POINT, not LINEAR. The oracle compares exact integers, and a filtered read of
+    * an integer surface is not a thing worth reasoning about. */
+   GX2Sampler pointSampler;
+   GX2InitSampler(&pointSampler, GX2_TEX_CLAMP_MODE_CLAMP, GX2_TEX_XY_FILTER_MODE_POINT);
+
+   /* Runs once, before the counter loop, and prints TEST lines in the same shape as
+    * testing/rom-tests so one runner can consume both. */
+   if (oracleReady)
+      run_pixel_oracle(&group, &posBuf, &uvBuf, psSeed, psOracleOff, psOracleSame, &pointSampler);
 
    uint32_t frame = 0;
    WHBLogPrintf("TESSERA-GFXTEST shader_info psSame.samplerVars=%u psOffset.samplerVars=%u",
@@ -272,6 +601,8 @@ int main(int argc, char **argv)
 
    WHBLogPrintf("TESSERA-GFXTEST end frames=%u", (unsigned)frame);
    free(s_rt.surface.image);
+   if (s_ort.surface.image) free(s_ort.surface.image);
+   if (s_olin.image) free(s_olin.image);
    GX2RDestroyBufferEx(&posBuf, (GX2RResourceFlags)0);
    GX2RDestroyBufferEx(&uvBuf, (GX2RResourceFlags)0);
    WHBGfxShutdown();

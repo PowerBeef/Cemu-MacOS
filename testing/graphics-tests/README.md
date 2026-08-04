@@ -27,6 +27,55 @@ fragment instead of the neighbour. That is `rm-fbfetch-coordinate`, and this is 
 pixel-stage only, and the pixel stage is exactly what the rewrite covers. A vertex- or
 geometry-stage self-dependency would land in that counter, and nothing in this ROM creates one.
 
+## The pixel oracle — the substitution is not just applied, the output is wrong
+
+A counter says a rewrite happened. It cannot say the result is incorrect. The oracle reads pixels
+back and compares them exactly:
+
+```
+TEST selfdep_seed                PASS
+TEST selfdep_caseA_same_texel    PASS
+TEST selfdep_caseB_offset_texel  FAIL expected=16/16 texels x+16 (sampled the neighbour)
+                                      got=neighbour=0 self=16 other=0
+```
+
+**16 of 16 texels returned their own value instead of the neighbour's.** Unanimous, with nothing in
+the `other` bucket, so there is no partial or racy result to argue about.
+
+How it works. The target is `UINT_R32`, so comparison is bit-exact and there is no filtering
+tolerance to negotiate — the trick borrowed from piglit's `blending-in-shader` test. A seed pass
+writes each texel's own X. Then a strip at `[0,16)` samples 16 texels to the right and writes what it
+read, giving two distinguishable outcomes:
+
+| | `output[x]` |
+|---|---|
+| sampled the neighbour, as written | `x + 16` |
+| coordinate discarded, read of self | `x` |
+
+The strip reads from `[16,32)`, which the strip does not write, **so there is no feedback race**: the
+source texels are untouched by this draw whichever path the emulator takes. A failure here cannot be
+explained away as undefined ordering.
+
+Two controls, and they are the point of trusting the third line:
+
+- **`selfdep_seed`** checks a texel outside both strips. If the seed did not land, every later verdict
+  is noise. It caught exactly that on the first run, when inherited render state left colour writes
+  off and the whole surface read zero.
+- **`selfdep_caseA_same_texel`** samples its *own* texel. A real sample and a framebuffer fetch must
+  agree here — that agreement is what makes the substitution valid for Case A. It passes, which is
+  what says the harness reads correct pixels correctly. **If Case A ever fails, suspect this harness
+  before suspecting the emulator.**
+
+`run.sh` reports all three and warns loudly if a *control* fails. It does not gate on
+`selfdep_caseB_offset_texel`, because that test is expected to fail until `rm-fbfetch-coordinate`
+lands — at which point it becomes the regression test that proves the fix.
+
+> The GPU writes `UINT_R32` in the opposite byte order to how the PPC core reads a `uint32_t`, so a
+> seeded 1 comes back as `0x01000000`. The swap is done on read, in `rd()`, deliberately: the shader
+> is the thing under test and should stay the simplest possible expression of "write x", with no
+> endian arithmetic of its own that could be wrong. The raw-dump line in the output exists so this
+> class of mistake shows up as obviously-shifted values rather than as a mysterious failure.
+
 ### Why the first attempt read zero
 
 All three counters read zero at first, and the cause was placement, not the test. `BindStageResources`

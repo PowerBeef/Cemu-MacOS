@@ -41,6 +41,23 @@ echo "=== ROM output ==="
 grep 'TESSERA-GFXTEST' "$log" || { echo "none -- did the ROM boot?"; tail -20 "$log"; }
 
 echo
+echo "=== pixel oracle ==="
+oracle="$(grep -E '^TEST (selfdep|.*)' "$log" || true)"
+if [ -z "$oracle" ]; then
+	echo "  no TEST lines -- the oracle did not run (shader compile? surface alloc?)"
+else
+	printf '%s\n' "$oracle" | sed 's/^/  /'
+fi
+# selfdep_caseB_offset_texel is EXPECTED to fail until rm-fbfetch-coordinate lands, so
+# this reports rather than gates. What must not happen quietly is caseA or seed failing:
+# those are the controls, and if they break the oracle is measuring nothing.
+for ctl in selfdep_seed selfdep_caseA_same_texel; do
+	if printf '%s\n' "$oracle" | grep -q "^TEST $ctl FAIL"; then
+		echo "  !! CONTROL FAILED ($ctl) -- suspect this harness before the emulator"
+	fi
+done
+
+echo
 echo "=== counters (zeros shown deliberately: a zero here IS the current result) ==="
 python3 - "$tel" <<'PY'
 import json, statistics, sys, pathlib
