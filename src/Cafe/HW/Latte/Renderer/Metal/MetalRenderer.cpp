@@ -2457,9 +2457,13 @@ void MetalRenderer::NoteSelfDependencyCovered(const LatteDecompilerShader* shade
 	//
 	// This is where the earlier "all three counters read zero" came from: both hooks were
 	// inside a loop that a covered unit can never enter.
+	// Must ask the same question the emitter asked, not just "did the analyzer mark this unit".
+	// With FramebufferFetch off the analyzer still marks units, so testing the index alone made
+	// this counter read 287 in a configuration where no rewrite happened at all -- reporting
+	// coverage that did not exist, in exactly the arm where knowing that matters most.
 	for (uint32 i = 0; i < LATTE_NUM_MAX_TEX_UNITS; i++)
 	{
-		if (shader->textureRenderTargetIndex[i] != 255)
+		if (LatteMtl_IsUnitCoveredByFramebufferFetch(shader->textureRenderTargetIndex[i]))
 			TLM_INC(Accuracy, AccSelfDepFbFetch);
 	}
 }
@@ -2527,7 +2531,7 @@ bool MetalRenderer::ShaderHasUncoveredSelfDependency(LatteDecompilerShader* shad
 		// Covered by the framebuffer-fetch rewrite, so it is never bound as a texture and cannot
 		// alias. Note this is the same test BindStageResources uses, and it is why the covered
 		// case needs no split: the aliasing is resolved in the shader, not by the encoder.
-		if (m_supportsFramebufferFetch && shader->textureRenderTargetIndex[relative_textureUnit] != 255)
+		if (LatteMtl_IsUnitCoveredByFramebufferFetch(shader->textureRenderTargetIndex[relative_textureUnit]))
 			continue;
 
 		uint32 hostTextureUnit = relative_textureUnit;
@@ -2601,7 +2605,7 @@ void MetalRenderer::BindStageResources(MTL::RenderCommandEncoder* renderCommandE
 		// point to any unit whose textureRenderTargetIndex != 255, so a framebuffer-fetch unit
 		// is stripped from the resource mapping and never appears in this loop. Kept as a
 		// belt-and-braces guard, not as a measurement point.
-		if (m_supportsFramebufferFetch && shader->textureRenderTargetIndex[relative_textureUnit] != 255)
+		if (LatteMtl_IsUnitCoveredByFramebufferFetch(shader->textureRenderTargetIndex[relative_textureUnit]))
             continue;
 
 		auto textureDim = shader->textureUnitDim[relative_textureUnit];

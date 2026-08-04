@@ -647,3 +647,22 @@ private:
 	void StartCapture();
 	void EndCapture();
 };
+
+// The ONE definition of "this texture unit is handled by a framebuffer fetch".
+//
+// The decompiler's analyzer and its MSL emitter must agree on this exactly. The analyzer strips a
+// covered unit out of the resource mapping (no binding point, not counted), and the emitter replaces
+// the sample with a `col{N}` read. If either does its half while the other does not, the shader
+// references a texture parameter that was never emitted and the MSL fails to compile.
+//
+// They disagreed for as long as the FramebufferFetch option has existed: the analyzer's strip was
+// unconditional, the emitter's substitution was gated on the option. With the option off, every
+// pixel-stage self-dependent draw was dropped -- and before 2bd3e06 the nil function aborted the
+// process instead. Anything that needs this question answered must call this, not re-spell it.
+inline bool LatteMtl_IsUnitCoveredByFramebufferFetch(uint8 renderTargetIndex)
+{
+	if (renderTargetIndex == 255)
+		return false;
+	auto* mtlr = static_cast<MetalRenderer*>(g_renderer.get());
+	return mtlr && mtlr->SupportsFramebufferFetch();
+}

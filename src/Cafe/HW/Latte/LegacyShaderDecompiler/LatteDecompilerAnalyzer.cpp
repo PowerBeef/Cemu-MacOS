@@ -12,6 +12,7 @@
 #include "HW/Latte/ISA/LatteReg.h"
 #ifdef ENABLE_METAL
 #include "HW/Latte/Renderer/Metal/MetalCommon.h"
+#include "Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h"
 #endif
 
 // Defined in LatteTextureLegacy.cpp
@@ -524,7 +525,13 @@ namespace LatteDecompiler
 		sint32 relBindingPointIndex = 0;
 		for (sint32 i = 0; i < LATTE_NUM_MAX_TEX_UNITS; i++)
 		{
-			if (!decompilerContext->output->textureUnitMask[i] || decompilerContext->shader->textureRenderTargetIndex[i] != 255)
+			// Strip only the units the emitter will ACTUALLY replace with a framebuffer fetch.
+			// Testing `textureRenderTargetIndex != 255` alone strips them regardless of whether
+			// framebuffer fetch is enabled, while the emitter's substitution is gated on the
+			// runtime option -- so with FramebufferFetch off the emitter wrote a real sample
+			// against a unit that had been given no binding point, and the MSL did not compile.
+			if (!decompilerContext->output->textureUnitMask[i] ||
+			    LatteMtl_IsUnitCoveredByFramebufferFetch(decompilerContext->shader->textureRenderTargetIndex[i]))
 				continue;
 			decompilerContext->output->resourceMappingMTL.textureUnitToBindingPoint[i] = decompilerContext->currentTextureBindingPointMTL;
 			decompilerContext->output->resourceMappingMTL.relBindingPointToRelTextureUnit[relBindingPointIndex] = i;
