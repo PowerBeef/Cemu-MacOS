@@ -1089,6 +1089,19 @@
       "verdict": "Two independent audits, judged strictly against the committed repo rather than against what the author remembered. The documentation audit found the graphics ROM had **no way to stop it and no way to read its result** — `telemetry-report.py` prints \"non-zero only\", and the entire published result is three zeros. The CLAUDE.md audit found ~20 inaccuracies including two wrong logging claims, two architecture claims that had drifted past their code, and one sentence that refuted itself.",
       "note": "The most useful finding was self-inflicted: the dead-counter trap bullet still listed `acc.render_self_dependency` after the same session wired it, so an agent trusting CLAUDE.md would have dismissed a real unresolved measurement as a missing hook. The recurring mechanism across three separate findings is **appending a correction without deleting what it corrects** — 'eight commits stale' (twenty), '20.04 fps is exactly 59.94/3' (which the same sentence then refutes), and the graphics negative retracted nine lines later. Worth watching for, since this file accumulates corrections by design.",
       "ref": "docs/testing/00-test-strategy.md"
+    },
+    {
+      "id": "rom-test-harness",
+      "title": "The named-test ROM harness the plan actually specified",
+      "area": "tooling",
+      "stage": "s6",
+      "status": "landed",
+      "commits": [
+        "6329314"
+      ],
+      "verdict": "`testing/rom-tests/` — a growable suite of independently named assertions with per-test `.expected` files, a blacklist, and a two-arm config matrix. **17 assertions, all passing** across both recompiler and interpreter.",
+      "note": "This step was previously marked done by redefining the deliverable: what existed was two suites each emitting one aggregate verdict, not the named-test harness with expectations and a blacklist that the plan specified. The distinction is that a named-test suite grows — a new test is a function and a table entry. Verified by injection: a regression exits 1, a missing expectation exits 1, a clean run exits 0, and the blacklist suppresses. One real hole was found and closed during that testing — iterating only over *actual* results means a ROM that crashes halfway reports a clean run, so expectations are now iterated too and a test emitting no verdict counts as `MISSING`.",
+      "ref": "testing/rom-tests/README.md"
     }
   ],
   "refuted": [
