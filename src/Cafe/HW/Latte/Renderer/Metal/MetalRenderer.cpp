@@ -2469,27 +2469,39 @@ void MetalRenderer::NoteSelfDependencyCovered(const LatteDecompilerShader* shade
 }
 
 
+// Pointer identity is not enough. Cemu builds a SECOND LatteTexture over the same guest memory
+// whenever a mapping is view-incompatible, and a format difference alone is sufficient for that
+// (LatteTexture_CanTextureBeRepresentedAsView, LatteTexture.cpp:858, even with physAddr, pitch,
+// width and height all equal). Sampling a different-format view of the surface being rendered into
+// is therefore a real hazard that a pointer comparison cannot see -- demonstrated by the
+// reproducer's Case D, which executed while acc.render_self_dependency stayed flat.
+//
+// Matching physAddress as well is deliberately conservative: exact base-address equality, not
+// range overlap. It catches the case the view-incompatibility path actually produces, and it
+// cannot fire on two textures that merely sit near each other -- over-splitting is this item's
+// named risk. Textures that partially overlap at DIFFERENT base addresses remain invisible;
+// Cemu tracks those in list_dataOverlap, which is the raw material if it ever proves necessary.
+static bool SameSurface(const LatteTextureView* view, const LatteTexture* baseTexture)
+{
+	if (!view || !view->baseTexture)
+		return false;
+	if (view->baseTexture == baseTexture)
+		return true;
+	return view->baseTexture->physAddress == baseTexture->physAddress;
+}
+
 static const char* AliasesFBO(const CachedFBOMtl* fbo, const LatteTexture* baseTexture)
 {
 	if (!fbo)
 		return nullptr;
 	// Compare base textures, not views: a game can sample through a different view (mip, slice,
 	// swizzle) of the same underlying surface it is rendering into, and that still aliases.
-	//
-	// KNOWN LIMIT: this is pointer identity, so it cannot see two distinct LatteTexture objects
-	// mapped over the same guest memory. LatteTexture_CanTextureBeRepresentedAsView rejects a
-	// mapping on format alone (LatteTexture.cpp:858), so sampling an RGBA8 render target through
-	// a different-format view creates a second object at the same physAddr that this test misses.
-	// Cemu tracks the co-residency in list_compatibleRelations and list_dataOverlap; neither is
-	// consulted here. Documented rather than fixed -- see the roadmap.
 	for (uint32 i = 0; i < LATTE_NUM_COLOR_TARGET; i++)
 	{
-		const LatteTextureView* view = fbo->colorBuffer[i].texture;
-		if (view && view->baseTexture == baseTexture)
+		if (SameSurface(fbo->colorBuffer[i].texture, baseTexture))
 			return "color";
 	}
-	const LatteTextureView* view = fbo->depthBuffer.texture;
-	if (view && view->baseTexture == baseTexture)
+	if (SameSurface(fbo->depthBuffer.texture, baseTexture))
 		return "depth";
 	return nullptr;
 }

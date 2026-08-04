@@ -139,6 +139,8 @@ void main()
 #define ORACLE_A_BIAS   1000u
 #define ORACLE_C_X0     64              /* Case C strip: [64,80), vertex-stage read */
 #define ORACLE_C_SRC_X  200             /* the texel the vertex shader reads */
+#define ORACLE_D_X0     96              /* Case D strip: [96,112), different-format alias */
+#define ORACLE_D_MARKER 4242u           /* proves the Case D draw executed at all */
 
 /* Writes each texel's own X. uvec4 out, because the target is UINT_R32. */
 static const char *s_ps_seed = R"(
@@ -196,6 +198,38 @@ layout(location = 0) out uvec4 FragColor;
 void main()
 {
    FragColor = uvec4(uint(SampledValue + 0.5), 0u, 0u, 0u);
+}
+)";
+
+/* Case D: sample a DIFFERENT-FORMAT view of the very memory being rendered into.
+ *
+ * The render target is UINT_R32; this samples the same physAddr declared as
+ * UNORM_R8_G8_B8_A8. Same 32 bits per texel, different format enum, and that
+ * is enough to make LatteTexture_CanTextureBeRepresentedAsView return
+ * VIEW_NOT_COMPATIBLE at LatteTexture.cpp:858 -- so Cemu builds a SECOND
+ * LatteTexture over the same guest memory.
+ *
+ * Both halves of the self-dependency machinery are then blind to it:
+ *
+ *   the analyzer compares physAddr AND format when setting
+ *   textureRenderTargetIndex, so the unit is left uncovered;
+ *
+ *   AliasesActiveAttachment compares baseTexture POINTERS, and this is a
+ *   different object, so the renderer does not see the alias either.
+ *
+ * The write is a fixed marker rather than the sampled value: what is being
+ * tested is whether the emulator NOTICES the alias, which only the
+ * acc.render_self_dependency counter can answer. The marker exists so a
+ * missing counter cannot be confused with a draw that never ran. */
+static const char *s_ps_alias = R"(
+#version 450
+#extension GL_ARB_shading_language_420pack: enable
+layout(location = 0) out uvec4 FragColor;
+layout(binding = 0) uniform sampler2D aliasTexture;
+void main()
+{
+   vec4 v = texture(aliasTexture, vec2(0.5, 0.5));
+   FragColor = uvec4(4242u + uint(v.r * 255.0 + 0.5), 0u, 0u, 0u);
 }
 )";
 
@@ -281,6 +315,7 @@ static BOOL rt_init(void)
 static GX2Texture s_ort;        /* UINT_R32, both sampled and rendered to */
 static GX2ColorBuffer s_ocb;    /* aliases s_ort.surface -- the self-dependency */
 static GX2Surface s_olin;       /* LINEAR_SPECIAL destination for GX2CopySurface */
+static GX2Texture s_oalias;     /* same memory as s_ort, declared UNORM_R8_G8_B8_A8 */
 
 static int s_pass, s_fail;
 
@@ -325,6 +360,17 @@ static BOOL oracle_surfaces_init(void)
    /* LINEAR_SPECIAL so GX2CopySurface untiles for us. Doing the untiling on the
     * CPU instead would mean reimplementing addrlib to read a test result, and a
     * bug in that would look exactly like a bug in the thing under test. */
+   /* Same image pointer, same geometry, DIFFERENT format. That single difference is what
+    * makes Cemu build a second LatteTexture instead of a view (LatteTexture.cpp:858). */
+   memset(&s_oalias, 0, sizeof(s_oalias));
+   s_oalias.surface = s_ort.surface;
+   s_oalias.surface.format = GX2_SURFACE_FORMAT_UNORM_R8_G8_B8_A8;
+   s_oalias.surface.use = GX2_SURFACE_USE_TEXTURE;
+   s_oalias.viewNumMips = 1;
+   s_oalias.viewNumSlices = 1;
+   s_oalias.compMap = 0x00010203;
+   GX2InitTextureRegs(&s_oalias);
+
    memset(&s_olin, 0, sizeof(s_olin));
    s_olin.use = GX2_SURFACE_USE_TEXTURE;
    s_olin.dim = GX2_SURFACE_DIM_TEXTURE_2D;
@@ -377,10 +423,13 @@ static uint32_t bug_same(int x)   { return (uint32_t)x; }
 static void run_pixel_oracle(WHBGfxShaderGroup *group, WHBGfxShaderGroup *groupC,
                              GX2RBuffer *posBuf, GX2RBuffer *uvBuf,
                              GX2PixelShader *psSeed, GX2PixelShader *psOff, GX2PixelShader *psSame,
-                             GX2Sampler *sampler)
+                             GX2PixelShader *psAlias, GX2Sampler *sampler)
 {
    WHBLogPrintf("TESSERA-GFXTEST oracle begin fmt=UINT_R32 strip=[0,%d) reads=[%d,%d)",
                 ORACLE_STRIP_W, CASE_B_OFFSET, CASE_B_OFFSET + ORACLE_STRIP_W);
+   /* If this reads 0 the alias fetch was optimised away and Case D tests nothing. */
+   WHBLogPrintf("TESSERA-GFXTEST oracle caseD_samplerVars=%u",
+                (unsigned)(psAlias ? psAlias->samplerVarCount : 0));
 
    WHBGfxBeginRender();
    GX2SetColorBuffer(&s_ocb, GX2_RENDER_TARGET_0);
@@ -450,6 +499,26 @@ static void run_pixel_oracle(WHBGfxShaderGroup *group, WHBGfxShaderGroup *groupC
       GX2DrawDone();
    }
 
+   /* 3c. Case D, strip [96,112): sample a different-format view of this same memory.
+    * Neither the analyzer (compares format) nor the renderer (compares pointers) can see
+    * this alias. Read acc.render_self_dependency to find out; the marker only proves the
+    * draw happened. */
+   if (psAlias) {
+      GX2SetScissor(ORACLE_D_X0, 0, ORACLE_STRIP_W, RT_SIZE);
+      GX2SetFetchShader(&group->fetchShader);
+      GX2SetVertexShader(group->vertexShader);
+      GX2SetPixelShader(psAlias);
+      GX2RSetAttributeBuffer(posBuf, 0, posBuf->elemSize, 0);
+      GX2RSetAttributeBuffer(uvBuf, 1, uvBuf->elemSize, 0);
+      if (psAlias->samplerVarCount > 0) {
+         uint32_t loc = psAlias->samplerVars[0].location;
+         GX2SetPixelTexture(&s_oalias, loc);
+         GX2SetPixelSampler(sampler, loc);
+      }
+      GX2DrawEx(GX2_PRIMITIVE_MODE_QUADS, 4, 0, 1);
+      GX2DrawDone();
+   }
+
    /* 4. Untile into a surface the CPU can index. */
    GX2CopySurface(&s_ort.surface, 0, 0, &s_olin, 0, 0);
    GX2DrawDone();
@@ -491,7 +560,10 @@ static void run_pixel_oracle(WHBGfxShaderGroup *group, WHBGfxShaderGroup *groupC
 
    /* Control first. A seed that did not land makes every later verdict noise, so
     * this is checked outside both strips and reported as its own test. */
-   const int sx = 100;
+   /* Must sit outside EVERY strip: B=[0,16), A=[32,48), C=[64,80), D=[96,112), and clear of
+    * texel 200 which Case C reads. x=180 satisfies all of it. Using 100 put the probe inside
+    * Case D's strip, so the seed control failed against Case D's own marker. */
+   const int sx = 180;
    uint32_t seen = rd(px, pitch, sx, ORACLE_PROBE_Y);
    snprintf(expected, sizeof(expected), "%d", sx);
    snprintf(got, sizeof(got), "%u", (unsigned)seen);
@@ -533,6 +605,22 @@ static void run_pixel_oracle(WHBGfxShaderGroup *group, WHBGfxShaderGroup *groupC
          verdict("selfdep_caseC_vertex_stage", nC == ORACLE_STRIP_W, expected, got);
    } else {
       WHBLogPrintf("TEST selfdep_caseC_vertex_stage SKIP reason=vertex-selfread-shader-unavailable");
+   }
+
+   if (psAlias) {
+      int nD = 0;
+      for (int x = ORACLE_D_X0; x < ORACLE_D_X0 + ORACLE_STRIP_W; x++) {
+         uint32_t v = rd(px, pitch, x, ORACLE_PROBE_Y);
+         if (v >= ORACLE_D_MARKER && v <= ORACLE_D_MARKER + 255u) nD++;
+      }
+      snprintf(expected, sizeof(expected), "%d/%d texels in [%u,%u] (draw ran)", ORACLE_STRIP_W,
+               ORACLE_STRIP_W, (unsigned)ORACLE_D_MARKER, (unsigned)ORACLE_D_MARKER + 255u);
+      snprintf(got, sizeof(got), "marked=%d first=%u", nD,
+               (unsigned)rd(px, pitch, ORACLE_D_X0, ORACLE_PROBE_Y));
+      /* This asserts only that the draw EXECUTED. Whether the emulator noticed the alias is
+       * a question only acc.render_self_dependency answers, and the whole point of the case
+       * is that it is expected NOT to. */
+      verdict("selfdep_caseD_alias_draw_ran", nD == ORACLE_STRIP_W, expected, got);
    }
 
    if (nB == ORACLE_STRIP_W) {
@@ -582,6 +670,7 @@ int main(int argc, char **argv)
    GX2PixelShader *psSeed       = CompilePS(s_ps_seed,           olog, sizeof(olog), 0);
    GX2PixelShader *psOracleOff  = CompilePS(s_ps_oracle_offset,  olog, sizeof(olog), 0);
    GX2PixelShader *psOracleSame = CompilePS(s_ps_oracle_same,    olog, sizeof(olog), 0);
+   GX2PixelShader *psAlias      = CompilePS(s_ps_alias,          olog, sizeof(olog), 0);
    GX2VertexShader *vsSelfRead  = CompileVS(s_vs_selfread,       olog, sizeof(olog), 0);
    GX2PixelShader *psPassthru   = CompilePS(s_ps_passthrough,    olog, sizeof(olog), 0);
    BOOL oracleReady = (psSeed && psOracleOff && psOracleSame) ? oracle_surfaces_init() : FALSE;
@@ -652,7 +741,7 @@ int main(int argc, char **argv)
    }
    if (oracleReady)
       run_pixel_oracle(&group, haveC ? &groupC : NULL, &posBuf, &uvBuf,
-                       psSeed, psOracleOff, psOracleSame, &pointSampler);
+                       psSeed, psOracleOff, psOracleSame, psAlias, &pointSampler);
 
    uint32_t frame = 0;
    WHBLogPrintf("TESSERA-GFXTEST shader_info psSame.samplerVars=%u psOffset.samplerVars=%u",
