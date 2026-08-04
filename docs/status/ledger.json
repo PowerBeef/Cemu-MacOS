@@ -1171,6 +1171,14 @@
     {
       "title": "A toolchain can be blocked two independent ways at once",
       "body": "Building Wii U homebrew here needed devkitPPC, and the two obvious routes were both closed: the installer needs `sudo`, which cannot be answered when driving this repo remotely (and the agent shell has no TTY, so sudo's credential cache cannot carry across either), while `downloads.devkitpro.org` returns **403 via Cloudflare** — including its root, though `github.com` and `cloudflare.com` return 200, so it is site-specific. Critically that host serves **every** source devkitPro's buildscripts fetch, binutils/gcc/newlib included, not just their own components. The way through was that their download loop skips files that already exist and honours `BUILD_DKPRO_SRCDIR`, so pre-staging all six archives from GNU/sourceware/GitHub made the stock scripts work. Two genuine bugs in those scripts surfaced on the way: a three-argument call to a four-argument function in the mn10200 step, and no `--with-system-zlib`, whose bundled zlib defines `fdopen` to `NULL` and breaks the macOS SDK's `stdio.h`. All recorded in `docs/testing/00-test-strategy.md` §4."
+    },
+    {
+      "title": "A homebrew sample reading zero frames is usually its own asset path, not the emulator",
+      "body": "wut's `gx2_triangle` booted cleanly, issued two command buffers and rendered **zero frames**, which reads exactly like a renderer defect. It is not. The sample loads its shader from the **SD card** — `WHBGetSdCardMountPath()`, backed by `<userdata>/sdcard/` — and **not** from the `.wuhb` bundle's `/vol/content`, so `WHBReadWholeFile` returned NULL and it `goto exit`ed before the render loop. Two compounding reasons it stayed invisible: the sample reports the failure through `WHBLogUdpInit` (**UDP**, port 4405) rather than OSReport, so `--forward-console-logging` showed nothing at all; and a title that exits early looks identical to one that renders nothing. `wut-tools` ships `udplogserver` to receive that stream. **Check a sample's own I/O and logging transport before suspecting the renderer**, and prefer `WHBLogCafeInit` in ROMs we write so the standard flag works."
+    },
+    {
+      "title": "The graphics-test toolchain is three separate installs, and two of them are optional-looking but are not",
+      "body": "Building a Wii U test ROM needs devkitPPC (compiler), **wut-tools** (host utilities: `elf2rpl`, `rplimportgen`, `wuhbtool`) and **wut** (the library) — three separate builds. Missing wut-tools fails deep inside wut's build with `rplimportgen: No such file or directory` rather than anything resembling \"a tool is missing\". `wuhbtool` additionally needs **libfreeimage**, whose absence fails at *configure* time with `'libfreeimage' not found` and takes the whole tools build with it. And graphics tests additionally need **CafeGLSL**'s `glslcompiler.rpl` in `cafeLibs/` — without it a ROM builds fine and reports `glslcompiler.rpl-not-found` at runtime. `testing/toolchain/build-devkitppc.sh` does all of it; `testing/toolchain/README.md` explains why each piece is there."
     }
   ],
   "roadmap": [
@@ -1313,10 +1321,10 @@
       "id": "rm-self-dep-measure",
       "title": "Run the self-dependency detector and size item 3.1",
       "area": "graphics",
-      "status": "blocked",
-      "verdict": "The instrumentation is landed and inert; the number it exists to produce does not exist yet. Until it does, both the splitter and the decompiler fix are being scheduled on a guess.",
-      "gate": "**A bootable title.** `Roms/` is empty — mlc01 holds BotW's update and DLC but not the base title, and an update carries only changed files. Then: n=3 Korok for comparability, plus a lava or waterfall save if reachable, because `MetalRenderer.cpp` names two specific BotW pixel-shader hashes as the cases upstream believed needed accurate barriers. Those hashes appearing under one counter or the other is a falsifiable prediction — the closest thing to a test this repo can generate.",
-      "ref": "03-graphics-metal.md — 3.1"
+      "status": "open",
+      "verdict": "The detector is landed and a reproducer now exists and runs — but **all three `acc.self_dep_*` counters read zero**, so there is still no number. Both sides of the covered/uncovered split reading zero means no alias was seen at all.",
+      "gate": "**No longer blocked on a title** — `testing/graphics-tests/` builds and boots without any game image. Blocked instead on separating two candidates: the test may not create the aliasing the emulator recognises (the detector compares `baseTexture` pointers, and one surface allocation may still resolve to two `LatteTexture` objects), or the detector may not fire when it should — it has never produced a non-zero reading on any workload. One instrumented run logging the FBO attachment and bound-texture pointers at draw time separates them. Sampler binding is already ruled out (`samplerVars=1`, `location=0`).",
+      "ref": "testing/graphics-tests/README.md"
     },
     {
       "id": "rm-fbfetch-coordinate",

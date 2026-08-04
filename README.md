@@ -230,6 +230,7 @@ be enforced on macOS 26, which downgraded a supposed blocker to an optional opti
 | `docs/hardware/`         | the hardware reference                                 |
 | `docs/porting/`          | staged plans, risk register, per-workstream designs    |
 | `docs/status/`           | the live status tracker — every item tried, and its result |
+| `docs/testing/`          | test strategy, provenance, and what is actually verified |
 | `tools/probes/`          | standalone platform-behaviour probes                   |
 | `tools/icon/`            | renders the app icon from its SVG, reproducibly        |
 | `testing/`               | golden-scene capture, telemetry differ, baselines      |

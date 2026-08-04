@@ -14,6 +14,12 @@ Do not reintroduce portability shims, `#ifdef ARCH_X86_64`, or a second renderer
 
 Planning docs live in `docs/porting/`. `00-master-plan.md` is the staged plan and risk register; the three numbered files are the detailed per-workstream designs (foundation/platform, CPU/JIT/memory, graphics/Metal). **Read the relevant one before touching that subsystem** — they contain verified line-level findings that are expensive to rediscover.
 
+**Testing docs live in `docs/testing/`.** `00-test-strategy.md` is the plan of record for the whole
+test effort — what exists in the world (mostly nothing, for Wii U), what we built, the provenance and
+licence of every borrowed artefact, and an honest status table. The test suites themselves are Wii U
+homebrew and need a toolchain; `testing/toolchain/` builds one, including for the case where
+devkitPro's installer and package host are both unavailable.
+
 **`docs/status/index.html` is the fork's live record, and keeping it current is a standing obligation — not optional cleanup.** Every item attempted since the fork point and what it measured, in one filterable page. **When a work item lands, add an entry to `docs/status/ledger.json` naming its commits, run `python3 docs/status/build-status.py`, and commit the regenerated HTML alongside it.** A negative result is a first-class entry: `refuted` (tested against a control, false), `cancelled` (gated out before being built) and `reverted` (built, measured, removed) are distinct and all belong on the page.
 
 **Read `.claude/rules/status-tracker.md` before editing the ledger** — it is the full rule. The two things worth knowing up front: the generator derives the commit list, diffstat, baseline table and counter totals *from the repo*, so never type those into the ledger; and a verdict is one line plus a `ref`, because `docs/porting/00-master-plan.md` owns the reasoning and a second copy of an argument is a second thing to keep in sync.
