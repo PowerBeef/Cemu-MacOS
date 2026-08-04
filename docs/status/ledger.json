@@ -1283,7 +1283,7 @@
         "3d4fca9"
       ],
       "verdict": "Its entire premise is that users turn accurate barriers off for performance, so known-problematic shaders must force them back on. Measured on Korok Forest, accurate barriers cost **nothing**: 49.90 ms and 20.04 fps with the splitter doing 15 splits/frame, identical to the arm with it disabled. If the setting is free there is no reason to disable it, and therefore nothing for an override to rescue.",
-      "note": "The two BotW hashes the design doc names (`6f6f6e7b9aae57af` lava, `4c0bd596e3aef4a6` waterfall foam) appear **zero times** in the run. That is *not* a refutation — Korok Forest has neither lava nor waterfalls, so the scene never exercises them. What it does show is that the six shaders which genuinely do hit the uncovered path in ordinary play are none of the two, so an override list built from those hashes would have missed every case actually observed. Cancelled on the cost measurement, not on the hashes.",
+      "note": "**Correction to the first reading.** The lava base hash `6f6f6e7b9aae57af` IS present in Korok Forest. The earlier \"appears zero times\" was an artefact of instrumentation: that run carried no shader detail on the *covered* counter, so the hash had nothing to appear in. With the detail added it shows up immediately — in the **covered** set, handled by framebuffer fetch, not on the uncovered path an override would force a split for. The waterfall-foam hash `4c0bd596e3aef4a6` is still absent, and Korok has no waterfalls, so that one remains untested rather than refuted. None of this changes the cancellation, which rests on the cost being zero: if accurate barriers are free, nobody disables them, and an override has nothing to rescue.",
       "measured": {
         "scene": "BotW Korok Forest, vkAccurateBarriers A/B",
         "at_commit": "3d4fca9",
@@ -1308,6 +1308,25 @@
       "measured": {
         "scene": "BotW Korok Forest, vkAccurateBarriers A/B",
         "at_commit": "3d4fca9",
+        "date": "2026-08-04",
+        "n": 1
+      },
+      "ref": "docs/porting/03-graphics-metal.md"
+    },
+    {
+      "id": "fbfetch-coordinate-sized",
+      "title": "Every self-dependent sample in Korok Forest is a same-texel projective read",
+      "area": "graphics",
+      "stage": "s6",
+      "status": "landed",
+      "commits": [
+        "55362e8"
+      ],
+      "verdict": "The 498 covered self-dependencies per frame resolve to **11 distinct shaders, 22 (shader, unit) pairs**, and every one samples at `varying.xy / varying.w` — a perspective divide of an interpolated clip-space position, i.e. the fragment's own screen position. **Not one adds an offset.** So the coordinate-discarding framebuffer-fetch substitution is valid for 100% of the self-dependencies in this scene, and `rm-fbfetch-coordinate` is a guard against future shaders rather than a fix for current wrong pixels.",
+      "note": "Read from the emitted MSL, dumped with `FramebufferFetch=false` — with the substitution enabled the coordinate is already replaced by `col{N}` and the evidence is gone. The last write to the coordinate register before every sample is the multiply by the reciprocal, so \"no offset\" is a property of the code rather than of where I stopped looking. **Single scene.** Korok Forest has no waterfalls, no heat haze and no refraction, which are exactly the effects that would produce an offset tap; the waterfall-foam shader the design doc names never appears. This bounds the item for open-world play and says nothing about the rest of the game.",
+      "measured": {
+        "scene": "BotW Korok Forest, MSL dump with FramebufferFetch=false",
+        "at_commit": "55362e8",
         "date": "2026-08-04",
         "n": 1
       },
@@ -1649,7 +1668,7 @@
       "area": "graphics",
       "status": "open",
       "verdict": "**Confirmed by measurement.** The emitter rewrites every pixel-stage self-dependency to a coordinate-free framebuffer fetch — including the offset-sampling case, where it silently returns the current fragment instead of the neighbour. The reproducer alternates same-texel and offset-texel draws and both report as covered.",
-      "gate": "None, and it now has a **failing test** rather than an inference: `selfdep_caseB_offset_texel` reports 16/16 texels reading self instead of the neighbour (`69451df`). Restrict the substitution in `LatteDecompilerAnalyzer.cpp` to units sampled at their own fragment coordinate; everything else must keep its binding point and fall to the uncovered path. Expect `acc.render_self_dependency` to become non-zero and that test to flip to PASS — if the test does not flip, the fix did not do what it claims. Keep the sequencing trap in mind: the uncovered path is item 3.1, which is not implemented, so restricting the substitution without it trades wrong pixels for undefined ones.",
+      "gate": "Still ungated and still has a failing test (`selfdep_caseB_offset_texel`), but **the urgency is now measured and it is low for open-world play**: all 22 self-dependent (shader, unit) pairs in Korok Forest are same-texel projective reads, so the substitution is valid for every one of them (`fbfetch-coordinate-sized`). Do it as a correctness guard, not as a fix for visible breakage. Before spending real effort, dump MSL from a scene that *would* break — a waterfall, heat haze, or water refraction — since a single scene cannot clear the whole game.",
       "ref": "03-graphics-metal.md — 3.1",
       "measured": {
         "scene": "self-dependency-rpx",

@@ -2463,8 +2463,19 @@ void MetalRenderer::NoteSelfDependencyCovered(const LatteDecompilerShader* shade
 	// coverage that did not exist, in exactly the arm where knowing that matters most.
 	for (uint32 i = 0; i < LATTE_NUM_MAX_TEX_UNITS; i++)
 	{
-		if (LatteMtl_IsUnitCoveredByFramebufferFetch(shader->textureRenderTargetIndex[i]))
-			TLM_INC(Accuracy, AccSelfDepFbFetch);
+		if (!LatteMtl_IsUnitCoveredByFramebufferFetch(shader->textureRenderTargetIndex[i]))
+			continue;
+		TLM_INC(Accuracy, AccSelfDepFbFetch);
+
+		// Keyed by shader so the 498-per-frame total resolves into a list of DISTINCT shaders.
+		// The count alone cannot size `rm-fbfetch-coordinate`: what decides that item is how many
+		// of those samples read a coordinate other than the fragment's own, and proving that at
+		// decompile time needs dataflow the legacy decompiler does not have. A bounded list of
+		// shader hashes can be read by hand instead, which is why this detail exists.
+		// Mirrors the uncovered half in NoteSelfDependency.
+		tlm::NoteAccuracyDetail(tlm::CounterId::AccSelfDepFbFetch,
+			fmt::format("{:016x}/{:016x} unit {} rt {}", shader->baseHash, shader->auxHash,
+						i, (uint32)shader->textureRenderTargetIndex[i]), 1);
 	}
 }
 

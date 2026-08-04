@@ -1,3 +1,4 @@
+#include <fstream>
 #include "Cafe/HW/Latte/Renderer/Metal/RendererShaderMtl.h"
 #include "Common/cpu_features.h"
 #include "Cafe/HW/Latte/Renderer/Metal/MetalRenderer.h"
@@ -279,8 +280,37 @@ bool RendererShaderMtl::ShouldCountCompilation() const
     return !s_isLoadingShadersMtl && m_isGameShader;
 }
 
+// Write the emitted MSL to $TESSERA_DUMP_MSL/<type>_<baseHash>_<auxHash>.msl.
+//
+// `ActiveSettings::DumpShadersEnabled()` exists and has no callers anywhere in the tree, so there
+// was no way to read what the decompiler actually emits. That matters for questions the counters
+// cannot answer -- notably whether a framebuffer-fetch substitution replaced a same-texel read or an
+// offset one, which decides the size of `rm-fbfetch-coordinate`. Note the substitution runs BEFORE
+// this point: with framebuffer fetch enabled the coordinate is already gone and the MSL says
+// `col{N}`. Dump with `FramebufferFetch=false` to see the coordinate the guest actually asked for.
+//
+// Env var rather than a config key: this is a diagnostic, and a setting nobody reads is how the
+// dead facility above came to exist.
+static void DumpMslIfRequested(RendererShader::ShaderType type, uint64 baseHash, uint64 auxHash, const std::string& msl)
+{
+	static const char* dir = getenv("TESSERA_DUMP_MSL");
+	if (!dir || !*dir) [[likely]]
+		return;
+	const char* kind = type == RendererShader::ShaderType::kVertex ? "vs"
+	                 : type == RendererShader::ShaderType::kFragment ? "ps"
+	                 : type == RendererShader::ShaderType::kGeometry ? "gs" : "other";
+	fs::path out = fs::path(dir) / fmt::format("{}_{:016x}_{:016x}.msl", kind, baseHash, auxHash);
+	std::error_code ec;
+	fs::create_directories(out.parent_path(), ec);
+	std::ofstream f(out, std::ios::binary | std::ios::trunc);
+	if (f)
+		f << msl;
+}
+
 MTL::Library* RendererShaderMtl::LibraryFromSource()
 {
+	DumpMslIfRequested(m_type, m_baseHash, m_auxHash, m_mslCode);
+
     // Compile from source
     NS_STACK_SCOPED MTL::CompileOptions* options = MTL::CompileOptions::alloc()->init();
     if (g_current_game_profile->GetShaderFastMath())
