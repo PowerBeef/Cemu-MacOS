@@ -515,6 +515,28 @@ void PPCInterpreter_setRoundingModeFromFPSCR(PPCInterpreter_t* hCPU)
 	fesetround(kHostMode[rn]);
 }
 
+
+// mtfsfi crfD,IMM -- set one 4-bit FPSCR field to an immediate. It was not implemented at all:
+// the opcode-63 dispatcher had no case 134, so it fell through to cemu_assert_unimplemented and
+// the instruction did nothing. That matters more than the usual unimplemented-instruction gap,
+// because `mtfsfi 7,n` is the standard way a guest selects a rounding mode, and field 7 is the
+// one holding FPSCR[RN]. Caught by testing/rom-tests' fp_rounding_mode_honoured.
+//
+// Field crfD spans FPSCR bits 4*crfD .. 4*crfD+3 in PowerPC's MSB-0 numbering, which is a shift
+// of 28 - 4*crfD in a plain uint32.
+void PPCInterpreter_MTFSFI(PPCInterpreter_t* hCPU, uint32 Opcode)
+{
+	FPUCheckAvailable();
+
+	const uint32 crfD = (Opcode >> 23) & 7;
+	const uint32 imm = (Opcode >> 12) & 0xF;
+	const uint32 shift = 28u - 4u * crfD;
+	hCPU->fpscr = (hCPU->fpscr & ~(0xFu << shift)) | (imm << shift);
+	PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
+
+	PPCInterpreter_nextInstruction(hCPU);
+}
+
 void PPCInterpreter_MTFSF(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();

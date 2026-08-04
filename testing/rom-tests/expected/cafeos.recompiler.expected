@@ -1,4 +1,7 @@
 core_id_in_range PASS
+fp_fmadds_is_fused PASS
+fp_ps_madd_is_fused PASS
+fp_rounding_mode_honoured PASS
 gx2_mip_base_ge_flat PASS
 gx2_mipmap_size_nonzero PASS
 gx2_surface_align_pow2 PASS

@@ -1227,6 +1227,9 @@ public:
 				case 583:
 					PPCInterpreter_MFFS(hCPU, opcode);
 					break;
+				case 134:
+					PPCInterpreter_MTFSFI(hCPU, opcode);
+					break;
 				case 711:
 					PPCInterpreter_MTFSF(hCPU, opcode);
 					break;

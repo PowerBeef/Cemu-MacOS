@@ -1334,18 +1334,18 @@
     },
     {
       "id": "fpscr-rounding-mode",
-      "title": "FPSCR[RN] was never read, and implementing it fixed none of the 1030",
+      "title": "FPSCR[RN] was never read, and mtfsfi was never implemented",
       "area": "cpu",
       "stage": "s6",
       "status": "landed",
       "commits": [
         "8bf3e79"
       ],
-      "verdict": "Nothing in `src/Cafe/HW/Espresso/` read the guest's rounding mode: every conversion was a plain C++ cast or a host FP instruction, so the guest got round-to-nearest-even whatever FPSCR[RN] said. Now synced to the host FPU on `mtfsf`, `mtfsb1x` and guest-thread context load, which covers the recompiler too since both arms run guest FP on the host FPU. **The conformance count is unchanged at 1030.**",
-      "note": "Kept because the divergence was real, not because it paid: a guest asking for round-toward-negative-infinity was silently given round-to-nearest. The suite only sets a non-default mode **3 times** in a whole run, verified by probe, which is why fixing it moves nothing. Two process errors worth recording. I read the `cemuLog_log` probe on stdout and saw zero hits, concluding the hook never fired — `LogType::Force` still needs `--verbose` to reach stdout, exactly as CLAUDE.md warns, and the hits were in log.txt all along. And I chased `frsp` as the top failure by reading the mnemonic table, which spans all 1030 records including the **676 FPSCR-state** failures that the roadmap gate explicitly says not to conflate with the 354 wrong values. The decoded `frsp` 'results' were not single-representable because they were not results.",
+      "verdict": "Nothing read the guest's rounding mode, so a guest asking for round-toward-negative-infinity got round-to-nearest. Wiring it fixed **zero** on its own — because `mtfsfi`, the standard way a guest selects a rounding mode, **was not implemented at all** and never reached the FPSCR. Implementing it took the wrong-value count **350 → 325**.",
+      "note": "The rounding sync looked like a failure and was a prerequisite: without it, implementing `mtfsfi` would have set FPSCR bits no arithmetic consulted. The gap was found by a test written *after* the sync landed — `fp_rounding_mode_honoured` in `testing/rom-tests`, which uses `mtfsfi 7,2` and failed immediately. The opcode-63 dispatcher had no `case 134`, so it fell through to `cemu_assert_unimplemented` and did nothing. **Two process errors on the way:** I read a `LogType::Force` probe on stdout and saw nothing, concluding the hook was dead, when it needs `--verbose` and was in log.txt; and I ranked targets off `report.py`'s default table, which spans the 676 FPSCR-state failures the gate says not to conflate with the 354 values.",
       "measured": {
-        "scene": "ppc750cl.s, both arms",
-        "at_commit": "8bf3e79",
+        "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1, and rom-tests",
+        "at_commit": "a2761e9",
         "date": "2026-08-04",
         "n": 1
       },
@@ -1369,6 +1369,25 @@
         "n": 1
       },
       "ref": "testing/cpu-tests/README.md"
+    },
+    {
+      "id": "fp-regression-coverage",
+      "title": "The ROM suite had no floating-point coverage at all, while FP semantics were being changed",
+      "area": "tooling",
+      "stage": "s6",
+      "status": "landed",
+      "commits": [
+        "a2761e9"
+      ],
+      "verdict": "Three assertions added to `testing/rom-tests`: `fp_fmadds_is_fused`, `fp_ps_madd_is_fused`, `fp_rounding_mode_honoured`. All three now pass on both arms, and one of them found a real gap within minutes of being written.",
+      "note": "Nine existing assertions, **zero** touching float, while two FP semantic changes landed the same day. The only regression signal was the conformance suite, which measures FP correctness rather than whether a title still runs. These are exact comparisons with no epsilon: the fused test picks `a = 1+2^-13, b = 1-2^-13` so that a rounded product gives exactly `0.0` and a fused one does not, which makes the property observable rather than a last-bit difference. `fp_rounding_mode_honoured` failed on first run and exposed that `mtfsfi` was unimplemented. Separately, BotW Korok after all three changes: frame time 49.90 ms and 20.04 fps identical to the committed baseline, 204 passes/frame in range, draws 3472 at the low end of the documented 3472–3518 slice range.",
+      "measured": {
+        "scene": "rom-tests both arms, and BotW Korok",
+        "at_commit": "a2761e9",
+        "date": "2026-08-04",
+        "n": 1
+      },
+      "ref": "testing/rom-tests/README.md"
     }
   ],
   "refuted": [

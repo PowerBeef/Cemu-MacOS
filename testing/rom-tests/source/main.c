@@ -198,6 +198,88 @@ static void test_gx2_mipmapped(void)
    check("gx2_mip_base_ge_flat", s.imageSize >= 512u * 512u * 4u, ">=1048576", got);
 }
 
+/* ---------------------------------------------------------------- FP semantics
+ *
+ * These exist because nothing else here touched floating point, and the emulator's FP
+ * semantics were changed twice in one day (fused ps_madd, FPSCR rounding mode) with no
+ * automated way to tell whether a real title still behaved. ppc750cl.s covers this far
+ * more thoroughly, but it is a separate 23,502-line suite whose count is dominated by a
+ * deliberate FPSCR-state omission; these are the two properties a change is most likely
+ * to break, asserted where a regression fails the build.
+ *
+ * Both are exact: no tolerance, no epsilon. A float comparison with a fudge factor would
+ * pass for an implementation that is subtly wrong, which is the whole failure mode. */
+
+/* PowerPC multiply-add is FUSED: the product is NOT rounded before the add. Chosen so the
+ * two behaviours give visibly different answers rather than differing in the last bit.
+ *
+ *   a = 1 + 2^-13, b = 1 - 2^-13, both exactly representable in single.
+ *   a*b = 1 - 2^-26 exactly, which needs 27 bits and is NOT representable in single.
+ *
+ *   fused   : (1 - 2^-26) - 1  =  -2^-26   (exact, and a power of two, so exact in single)
+ *   rounded : round(a*b) = 1.0, then 1.0 - 1.0 = 0.0
+ *
+ * So a rounded product yields exactly zero and a fused one does not. This is the property
+ * PPCInterpreter_PS_MADD got wrong. */
+static void test_fp_fused_madd(void)
+{
+   volatile float a = 1.0f + 0x1p-13f;
+   volatile float b = 1.0f - 0x1p-13f;
+   volatile float negone = -1.0f;
+   float r;
+   /* fmadds frD, frA, frC, frB  ->  frD = frA*frC + frB */
+   __asm__ __volatile__("fmadds %0, %1, %2, %3" : "=f"(r) : "f"(a), "f"(b), "f"(negone));
+
+   char got[64];
+   snprintf(got, sizeof(got), "%.10e", (double)r);
+   /* Any nonzero result means the product was not rounded. Asserting the exact value would
+    * also be defensible, but "did the product get rounded" is the property under test. */
+   check("fp_fmadds_is_fused", r != 0.0f, "!=0 (fused)", got);
+}
+
+/* Same property on the paired-single unit, which is the one that was actually broken.
+ * ps_madd frD, frA, frC, frB -> both slots = frA*frC + frB. */
+static void test_fp_ps_madd_fused(void)
+{
+   volatile float a = 1.0f + 0x1p-13f;
+   volatile float b = 1.0f - 0x1p-13f;
+   volatile float negone = -1.0f;
+   double r0;
+   __asm__ __volatile__(
+      "ps_merge00 %0, %1, %1\n\t"
+      "ps_merge00 5, %2, %2\n\t"
+      "ps_merge00 6, %3, %3\n\t"
+      "ps_madd %0, %0, 5, 6"
+      : "=&f"(r0) : "f"(a), "f"(b), "f"(negone) : "fr5", "fr6");
+
+   char got[64];
+   snprintf(got, sizeof(got), "%.10e", r0);
+   check("fp_ps_madd_is_fused", r0 != 0.0, "!=0 (fused)", got);
+}
+
+/* FPSCR[RN] selects the rounding mode, and the emulator ignored it entirely until it was
+ * wired up. 1 + 2^-30 is not representable in single: round-to-nearest gives 1.0, but
+ * round-toward-positive-infinity (RN=10) must give the next float above 1.0. If the two
+ * agree, the rounding mode is being ignored. */
+static void test_fp_rounding_mode(void)
+{
+   volatile double x = 1.0 + 0x1p-30;
+   float nearest, upward;
+   uint32_t fpscr_words[2];
+
+   __asm__ __volatile__("frsp %0, %1" : "=f"(nearest) : "f"(x));
+
+   /* mtfsfi 7, 2 sets FPSCR field 7 (the low nibble, containing RN) to 0b0010 = toward +inf */
+   __asm__ __volatile__("mtfsfi 7, 2");
+   __asm__ __volatile__("frsp %0, %1" : "=f"(upward) : "f"(x));
+   __asm__ __volatile__("mtfsfi 7, 0");   /* restore round-to-nearest */
+   (void)fpscr_words;
+
+   char got[80];
+   snprintf(got, sizeof(got), "nearest=%.10e upward=%.10e", (double)nearest, (double)upward);
+   check("fp_rounding_mode_honoured", upward > nearest, "upward>nearest", got);
+}
+
 /* ---------------------------------------------------------------- runner */
 
 struct test { const char *name; void (*fn)(void); };
@@ -212,6 +294,9 @@ static const struct test TESTS[] = {
    {"core_id",         test_core_id},
    {"gx2_surface",     test_gx2_surface},
    {"gx2_mipmapped",   test_gx2_mipmapped},
+   {"fp_fused_madd",   test_fp_fused_madd},
+   {"fp_ps_madd",      test_fp_ps_madd_fused},
+   {"fp_rounding",     test_fp_rounding_mode},
 };
 
 int main(int argc, char **argv)

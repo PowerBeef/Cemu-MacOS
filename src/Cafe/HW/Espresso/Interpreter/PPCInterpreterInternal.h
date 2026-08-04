@@ -311,3 +311,4 @@ void PPCInterpreter_PS_CMPU1(PPCInterpreter_t* hCPU, uint32 Opcode);
 // it is applied only when the guest's mode actually changes -- games change it rarely, the
 // conformance suite changes it constantly, and that asymmetry is the whole design.
 void PPCInterpreter_setRoundingModeFromFPSCR(PPCInterpreter_t* hCPU);
+void PPCInterpreter_MTFSFI(PPCInterpreter_t* hCPU, uint32 Opcode);
