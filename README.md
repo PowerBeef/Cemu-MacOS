@@ -60,17 +60,48 @@ it cannot, it leaves your data alone and tells you what to run.
 
 See [BUILD.md](/BUILD.md) for app bundles, code signing and the full flag list.
 
-## How it is built
+## What is done so far
 
-Every change here is measured before and after, and the results are published whether or not they
-flattered the idea. Roughly half the optimisations tried did not work, and those are on the record
-too, because knowing what fails is the part that saves the next person time.
+**Performance**
 
-- [`docs/status/`](/docs/status/) is the live record: every item attempted, what it measured, and
-  which ones were refuted, cancelled or reverted.
-- [`docs/hardware/`](/docs/hardware/) is a reference on the Wii U's actual silicon, with every claim
-  tagged by where it came from.
-- [`testing/`](/testing/) holds the test ROMs, which are homebrew and need no game image.
+- Removed three idle spins in the scheduler and command processor. Mario Kart 8 went from 184% to
+  104% of one core at an identical locked 60 FPS.
+- Parked a guest fence wait that was being spun on 65 million times a second, worth a further 20% of
+  process CPU in Breath of the Wild.
+- Thread QoS by role: guest cores and the GPU command thread run `USER_INTERACTIVE`, compilation
+  runs `UTILITY` and is sized against the efficiency cluster rather than total core count.
+- `FSpinlock` is now `os_unfair_lock`, so the kernel knows who holds a lock on an asymmetric CPU.
+- Title decryption uses the ARMv8 AES instructions instead of a software table.
+- Audio mixing moved to a lock-free ring, off a mutex that was being taken on CoreAudio's realtime
+  thread.
+
+**Correctness**
+
+- Fixed a constructor writing 248 bytes past the end of an array on every startup, which had been
+  papered over with a `// HACK: ... garbage data` comment for years.
+- Fixed geometry-shader texture bindings writing past the end of the renderer's texture array.
+- Fixed graphic packs with custom output shaders crashing on boot, and writing a pipeline pointer
+  out of bounds once per frame.
+- Fixed guest memory ranges failing to unmap on 16 KB pages, which left them writable across a title
+  switch.
+- Fixed the JIT invalidating only part of its generated code, a stale-instruction hazard on cold
+  paths.
+- Fixed sampler LOD bias never being applied, and graphic packs corrupting GPU registers.
+- Draws that sample the surface they are rendering into now split the render pass, including when
+  the two are separate texture objects over the same memory.
+- A shader stage that fails to compile now drops its draw instead of aborting the emulator.
+
+**Platform**
+
+- Native `GameController.framework` input, screensaver inhibition through `NSProcessInfo`, SDL input
+  off the main thread, and Carbon removed.
+- `NSHighResolutionCapable`, without which macOS handed Metal a half-resolution drawable.
+- Crash reports with real symbolicated arm64 backtraces, and a signal handler that survives stack
+  overflow.
+- Code signing and entitlements handled by the build rather than by hand.
+
+Details and measurements for all of it are in [`docs/status/`](/docs/status/). There is also a
+[hardware reference](/docs/hardware/) and a set of [test ROMs](/testing/) that need no game image.
 
 ## Credit
 
