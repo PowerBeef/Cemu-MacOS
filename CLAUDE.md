@@ -139,6 +139,19 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
   of a signal in BotW Korok is not absence of the bug. Where a defect is structural, prove it with a
   `static_assert` rather than waiting for a run to show it.
 
+- **A test ROM that prints and exits presents no frames, so every renderer counter reads zero and the
+  run looks clean.** `testing/rom-tests/rom_tests.rpx` reports its verdicts through `OSReport` and
+  never swaps a scanbuffer: the telemetry summary says **`"frames":0`**, `DrawBackbufferQuad` is never
+  called, and a probe aimed at the presentation path measured nothing while appearing to pass. Use
+  `testing/graphics-tests/self_dependency.rpx`, which renders continuously, for anything downstream of
+  a draw. **Check `frames` in the telemetry header before believing a zero.**
+
+- **Reachability is a question about the *caller*, not the defect.** The graphic-pack output-shader
+  crash looked exotic until `LatteRenderTarget.cpp:900-927` showed the pack branch runs *before* the
+  built-in selection, so any pack shipping `output.glsl` takes it — and `acc.output_shader_custom`
+  then read **1409 over 1409 frames**, once per present. A defect on a path taken every frame is not
+  an edge case. Read upward from the defect to whoever chooses to call it.
+
 Two traps already caught in this repo — both produce confident, wrong numbers:
 
 - **MK8's attract mode is not a fixed workload.** It cycles demo scenes with very different draw loads, so two traces taken minutes apart are not comparable, and neither are their sample counts. A first A/B here read as "4.4x faster" from sample counts; the real figure was 1.77x. To compare two implementations, **put a runtime toggle behind an env var, flip it every ~20 s inside one process**, discard any window that straddles a switch, and report the median of n≥5 per variant. Ranges that overlap mean you have not measured anything.
@@ -409,6 +422,18 @@ Guest threads are `ucontext` fibers (`src/util/Fiber/FiberUnix.cpp`), not host t
 - **Deleting a backend exposes hidden coupling that only the linker finds.** The MSL emitter forward-declared four helpers that were *defined in the GLSL emitter's* translation unit; several files received headers (`robin_hood`, `StringBuf`) only transitively through Vulkan/Zir includes.
 - **Scripted edits fail silently.** Source uses tabs; a heredoc written with spaces will no-op a Python `str.replace` and report success. Regex-based block removal is worse — a greedy pattern once deleted 474 lines including the NEON code it was meant to keep. Prefer explicit line ranges, and always `git diff --stat` before building.
 - **Probe the pattern the code actually uses, not the one the docs describe.** Apple documents a one-`MAP_JIT`-region-per-process limit; it is not enforced on macOS 26 (4000 succeed under hardened runtime). A first probe that "confirmed" the limit was testing an RWX pattern xbyak never uses. Probes preserved in `tools/probes/`.
+- **`RendererShader::WaitForCompiled()` returns true on a *failed* Metal compile.** So
+  `RendererOutputShader`'s `if (!m_vertex_shader->WaitForCompiled()) throw` — a guard written for
+  exactly this case — never fires, `GetFunction()` hands Metal a nil function, and Metal aborts the
+  whole process from the Latte thread with `validateWithDevice: ... vertexFunction must not be nil`.
+  That is how a graphic pack with an `output.glsl` crashed every boot (`92a9885`). **Do not treat a
+  successful `WaitForCompiled()` as evidence a shader compiled**; check the function pointer.
+- **A `255` sentinel and a small array are a bad pair.** `DrawBackbufferQuad` sets
+  `shaderIndex = 255` and overwrites it only if the shader is one of six statics — a graphic pack's
+  shader is none of them, so 255 survived into a 12-element array as both a read *and* a write. The
+  sRGB branch was worse, not better: `6 + 255` wraps in `uint8` to **5**, so it silently aliased a
+  real slot instead of going out of bounds. When a sentinel shares a type with an index, the
+  overflow case and the wrap case need separate thought.
 
 ## MCP servers worth reaching for
 

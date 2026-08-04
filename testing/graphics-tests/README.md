@@ -87,3 +87,10 @@ dedicated thread doing raw `write()`, so at most the in-flight queue is lost.
 Do **not** read these counters with `testing/telemetry-report.py` — it prints "non-zero only" and
 skips any counter whose total is zero, which is exactly the current result. `run.sh` reads the
 per-frame arrays directly so the zeros are visible.
+
+## `probe-pack/`
+
+A sibling fixture, not part of this ROM. Installing [`probe-pack/`](probe-pack/README.md) forces the
+graphic-pack branch of the backbuffer path and is how three inherited defects on it were reproduced,
+including one that aborted the process on every boot. It uses this ROM as its workload, because a ROM
+that prints and exits presents no frames and measures nothing.
