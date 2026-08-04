@@ -44,9 +44,21 @@ everything below is measured with, `--telemetry-areas <cpu,gpu,mem,accuracy>` to
 suites report their results.
 
 Graphics has one automated ROM (`testing/graphics-tests/`, driven by its own `run.sh`; CI builds it
-but cannot run it) and it does **not yet reproduce** the case it targets — all three
-`acc.self_dep_*` counters read zero. So graphics verification is in practice still: it builds, it
-boots a title, the frame looks right, and nothing new appears in the log.
+but cannot run it). **It reproduces, and the result is sharper than "it works".** Measured at
+`92a9885`: `acc.self_dep_fbfetch` fires on **1409 of 1409 frames**, while
+`acc.render_self_dependency` and `acc.self_dep_nonpixel` stay at 0. The ROM alternates
+`caseB = (frame & 1)`, Case A (same texel) on even frames and Case B (offset texel) on odd — so a
+counter that fires on *every* frame says the coordinate-discarding framebuffer-fetch rewrite is
+being applied to the offset case too, which is exactly where it is wrong. That is the evidence
+`rm-fbfetch-coordinate` rests on.
+
+What it still does **not** do is check a pixel: the ROM prints `RESULT=RUNNING` and defers to the
+counters, so "the wrong substitution was applied" is proven and "the output is wrong" is not. That
+is `rm-selfdep-pixel-oracle`, and the roadmap sequences it *before* touching the decompiler.
+
+An earlier revision of this file said the ROM "does not yet reproduce the case it targets — all
+three `acc.self_dep_*` counters read zero." That was true before `97ae3ad` moved the detector to a
+place the covered case can reach, and stale after it.
 
 **The CPU now has one.** `testing/cpu-tests/` runs `ppc750cl.s` — 23,502 lines of public-domain
 PowerPC assembly validated against real Espresso silicon — as Wii U homebrew, needing no game
