@@ -1682,12 +1682,18 @@
     },
     {
       "id": "rm-fbfetch-off-no-mechanism",
-      "title": "With framebuffer fetch disabled, pixel-stage self-dependency has no mechanism at all",
+      "title": "Turning off the FramebufferFetch option silently drops every pixel-stage self-dependent draw",
       "area": "graphics",
       "status": "open",
-      "verdict": "The pixel-stage case is covered by the decompiler's framebuffer-fetch rewrite, and the splitter deliberately skips those units because they are never bound. Turn the user-facing FramebufferFetch option off and both disappear together: no rewrite, and no split either, since the skip is keyed on the same condition rather than on whether a hazard exists.",
-      "gate": "Decide whether the option is meant to be usable. If it is, the splitter's skip must be conditioned on the rewrite having actually happened rather than on the unit's index, and the pixel case then costs pass splits. If it is not, the option should say so. Cheap to check either way — flip it and re-run the reproducer.",
-      "ref": "testing/graphics-tests/README.md"
+      "verdict": "Measured, not predicted. With `FramebufferFetch=false` the reproducer's Case A control goes **PASS -> FAIL** with all 16 texels still holding their seed value, `acc.pipeline_no_function` reads **4**, and `acc.self_dep_fbfetch` reads 0. The draws are not mis-rendered, they are dropped. Root cause: `LatteDecompilerAnalyzer.cpp` contains **zero** references to `SupportsFramebufferFetch`, so `_initTextureBindingPointsMTL:527` strips the binding point of any unit with `textureRenderTargetIndex != 255` unconditionally — while the emitter's substitution at `LatteDecompilerEmitMSL.cpp:2323` *is* gated on the runtime option. The two disagree, so the shader emits a real sample against a unit that was never given a binding.",
+      "gate": "None — this is a live defect in a shipped user-facing option, not a roadmap idea. Before `2bd3e06` it aborted the process rather than dropping a draw. The fix is to make the strip at `_initTextureBindingPointsMTL:527` agree with the emitter's condition, after which units keep their binding points when the option is off, real samples are emitted and bound, and the pass splitter sees them. Verify by re-running the reproducer with the option off: Case A must return to PASS and `acc.pipeline_no_function` to 0.",
+      "ref": "testing/graphics-tests/README.md",
+      "measured": {
+        "scene": "self_dependency.rpx with FramebufferFetch=false",
+        "at_commit": "bad31b2",
+        "date": "2026-08-04",
+        "n": 1
+      }
     }
   ],
   "unattributed": [],
