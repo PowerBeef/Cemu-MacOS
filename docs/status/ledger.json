@@ -1016,6 +1016,19 @@
         "n": 1
       },
       "ref": "testing/graphics-tests/README.md"
+    },
+    {
+      "id": "doc-coverage-audit",
+      "title": "Audit the new test docs for reproducibility — and CLAUDE.md for accuracy",
+      "area": "docs",
+      "status": "landed",
+      "commits": [
+        "ab78ce7",
+        "e1e7330"
+      ],
+      "verdict": "Two independent audits, judged strictly against the committed repo rather than against what the author remembered. The documentation audit found the graphics ROM had **no way to stop it and no way to read its result** — `telemetry-report.py` prints \"non-zero only\", and the entire published result is three zeros. The CLAUDE.md audit found ~20 inaccuracies including two wrong logging claims, two architecture claims that had drifted past their code, and one sentence that refuted itself.",
+      "note": "The most useful finding was self-inflicted: the dead-counter trap bullet still listed `acc.render_self_dependency` after the same session wired it, so an agent trusting CLAUDE.md would have dismissed a real unresolved measurement as a missing hook. The recurring mechanism across three separate findings is **appending a correction without deleting what it corrects** — 'eight commits stale' (twenty), '20.04 fps is exactly 59.94/3' (which the same sentence then refutes), and the graphics negative retracted nine lines later. Worth watching for, since this file accumulates corrections by design.",
+      "ref": "docs/testing/00-test-strategy.md"
     }
   ],
   "refuted": [
