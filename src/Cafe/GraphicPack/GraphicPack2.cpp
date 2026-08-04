@@ -1174,6 +1174,16 @@ bool GraphicPack2::HasShaders() const
 	|| !m_output_shader_source.empty() || !m_upscaling_shader_source.empty() || !m_downscaling_shader_source.empty();
 }
 
+// The three getters below build a RendererOutputShader from the pack's own fragment source.
+// All six construction sites used to pass GetOpenGlVertexSource, even on Metal -- the built-in
+// shaders pick their vertex source by renderer (RendererOuputShader.cpp InitShaders), but these
+// did not. The Metal compiler cannot compile GLSL, so the vertex function came back nil, and
+// RendererOutputShader's `if (!WaitForCompiled()) throw` did not catch it: WaitForCompiled
+// returns true on a failed Metal compile. Metal then aborted the process inside
+// newRenderPipelineState with "vertexFunction must not be nil", on the Latte thread.
+//
+// Reproduced by installing any pack carrying output.glsl and booting; the backtrace runs
+// LatteRenderTarget_copyToBackbuffer -> DrawBackbufferQuad -> MetalOutputShaderCache.
 RendererOutputShader* GraphicPack2::GetOuputShader(bool render_upside_down)
 {
 	if(render_upside_down)
@@ -1182,7 +1192,7 @@ RendererOutputShader* GraphicPack2::GetOuputShader(bool render_upside_down)
 			return m_output_shader_ud.get();
 
 		if (!m_output_shader_source.empty())
-			m_output_shader_ud = std::make_unique<RendererOutputShader>(RendererOutputShader::GetOpenGlVertexSource(render_upside_down), m_output_shader_source);
+			m_output_shader_ud = std::make_unique<RendererOutputShader>(RendererOutputShader::GetMetalVertexSource(render_upside_down), m_output_shader_source);
 
 		return m_output_shader_ud.get();
 	}
@@ -1192,7 +1202,7 @@ RendererOutputShader* GraphicPack2::GetOuputShader(bool render_upside_down)
 			return m_output_shader.get();
 
 		if (!m_output_shader_source.empty())
-			m_output_shader = std::make_unique<RendererOutputShader>(RendererOutputShader::GetOpenGlVertexSource(render_upside_down), m_output_shader_source);
+			m_output_shader = std::make_unique<RendererOutputShader>(RendererOutputShader::GetMetalVertexSource(render_upside_down), m_output_shader_source);
 
 		return m_output_shader.get();
 	}
@@ -1206,7 +1216,7 @@ RendererOutputShader* GraphicPack2::GetUpscalingShader(bool render_upside_down)
 			return m_upscaling_shader_ud.get();
 
 		if (!m_upscaling_shader_source.empty())
-			m_upscaling_shader_ud = std::make_unique<RendererOutputShader>(RendererOutputShader::GetOpenGlVertexSource(render_upside_down), m_upscaling_shader_source);
+			m_upscaling_shader_ud = std::make_unique<RendererOutputShader>(RendererOutputShader::GetMetalVertexSource(render_upside_down), m_upscaling_shader_source);
 
 		return m_upscaling_shader_ud.get();
 	}
@@ -1216,7 +1226,7 @@ RendererOutputShader* GraphicPack2::GetUpscalingShader(bool render_upside_down)
 			return m_upscaling_shader.get();
 
 		if (!m_upscaling_shader_source.empty())
-			m_upscaling_shader = std::make_unique<RendererOutputShader>(RendererOutputShader::GetOpenGlVertexSource(render_upside_down), m_upscaling_shader_source);
+			m_upscaling_shader = std::make_unique<RendererOutputShader>(RendererOutputShader::GetMetalVertexSource(render_upside_down), m_upscaling_shader_source);
 
 		return m_upscaling_shader.get();
 	}
@@ -1230,7 +1240,7 @@ RendererOutputShader* GraphicPack2::GetDownscalingShader(bool render_upside_down
 			return m_downscaling_shader_ud.get();
 
 		if (!m_downscaling_shader_source.empty())
-			m_downscaling_shader_ud = std::make_unique<RendererOutputShader>(RendererOutputShader::GetOpenGlVertexSource(render_upside_down), m_downscaling_shader_source);
+			m_downscaling_shader_ud = std::make_unique<RendererOutputShader>(RendererOutputShader::GetMetalVertexSource(render_upside_down), m_downscaling_shader_source);
 
 		return m_downscaling_shader_ud.get();
 	}
@@ -1240,7 +1250,7 @@ RendererOutputShader* GraphicPack2::GetDownscalingShader(bool render_upside_down
 			return m_downscaling_shader.get();
 
 		if (!m_downscaling_shader_source.empty())
-			m_downscaling_shader = std::make_unique<RendererOutputShader>(RendererOutputShader::GetOpenGlVertexSource(render_upside_down), m_downscaling_shader_source);
+			m_downscaling_shader = std::make_unique<RendererOutputShader>(RendererOutputShader::GetMetalVertexSource(render_upside_down), m_downscaling_shader_source);
 
 		return m_downscaling_shader.get();
 	}

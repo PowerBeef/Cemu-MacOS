@@ -1,0 +1,7 @@
+[Definition]
+titleIds = *
+name = zz Tessera output-shader probe (diagnostic)
+path = "Debug/zz Tessera output-shader probe"
+description = Diagnostic fixture, not a real graphic pack. Forces the custom output-shader branch of LatteRenderTarget_copyToBackbuffer so that acc.output_shader_custom becomes measurable. titleIds=* and default=1 make it universal and self-enabling, which is what makes it convenient and also what makes it dangerous to leave installed. Remove it after use. See testing/graphics-tests/probe-pack/README.md.
+version = 7
+default = 1

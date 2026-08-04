@@ -780,6 +780,13 @@ void MetalRenderer::rendertarget_deleteCachedFBO(LatteCachedFBO* cfbo)
 {
 	if (cfbo == (LatteCachedFBO*)m_state.m_activeFBO.m_fbo)
 	    m_state.m_activeFBO = {nullptr};
+
+	// m_lastUsedFBO deliberately outlives EndEncoding, so deleting the FBO it names leaves it
+	// dangling rather than null -- and GetRenderCommandEncoder dereferences it on the next FBO
+	// change (m_lastUsedFBO.m_fbo->colorBuffer[i].texture, ->depthBuffer.texture) behind a
+	// guard that only tests for nullptr. Clear it here or that read is a use-after-free.
+	if (cfbo == (LatteCachedFBO*)m_state.m_lastUsedFBO.m_fbo)
+	    m_state.m_lastUsedFBO = {nullptr};
 }
 
 void MetalRenderer::rendertarget_bindFramebufferObject(LatteCachedFBO* cfbo)
@@ -1522,14 +1529,27 @@ void MetalRenderer::draw_execute(uint32 baseVertex, uint32 baseInstance, uint32 
 		renderCommandEncoder->setObjectBytes(&hostIndexTypeU8, sizeof(hostIndexTypeU8), vertexShader->resourceMapping.indexTypeBinding);
         encoderState.m_buffers[METAL_SHADER_TYPE_OBJECT][vertexShader->resourceMapping.indexTypeBinding] = {nullptr};
 
+		// GetMtlPrimitiveType translates TRIANGLE_STRIP, TRIANGLE_FAN, QUADS, QUAD_STRIP,
+		// LINE_LOOP and LINE_STRIP_ADJACENT without complaint, but GetVerticesPerPrimitive
+		// knows none of them and returns 0. Dividing by that does not trap on AArch64 -- udiv
+		// by zero yields zero -- so this dispatched drawMeshThreadgroups(0, ..., 0) and the
+		// geometry vanished. It does log at Force level, so it was never truly silent, but a
+		// log line is not a measurement. Count it and skip the nonsense dispatch.
 		uint32 verticesPerPrimitive = GetVerticesPerPrimitive(primitiveMode);
-		uint32 threadgroupCount = count * instanceCount;
-		if (PrimitiveRequiresConnection(primitiveMode))
-		    threadgroupCount -= verticesPerPrimitive - 1;
+		if (verticesPerPrimitive == 0) [[unlikely]]
+		{
+			TLM_INC(Accuracy, AccMeshDrawNoVertexCount);
+		}
 		else
-		    threadgroupCount /= verticesPerPrimitive;
+		{
+			uint32 threadgroupCount = count * instanceCount;
+			if (PrimitiveRequiresConnection(primitiveMode))
+			    threadgroupCount -= verticesPerPrimitive - 1;
+			else
+			    threadgroupCount /= verticesPerPrimitive;
 
-		renderCommandEncoder->drawMeshThreadgroups(MTL::Size(threadgroupCount, 1, 1), MTL::Size(verticesPerPrimitive, 1, 1), MTL::Size(1, 1, 1));
+			renderCommandEncoder->drawMeshThreadgroups(MTL::Size(threadgroupCount, 1, 1), MTL::Size(verticesPerPrimitive, 1, 1), MTL::Size(1, 1, 1));
+		}
 	}
 	else
 	{

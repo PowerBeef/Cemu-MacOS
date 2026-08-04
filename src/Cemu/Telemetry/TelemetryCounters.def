@@ -257,3 +257,15 @@ TLM_COUNTER(AccAlphaToMaskDraws,    "acc.alpha_to_mask_draws",   "count", Accura
 // Which textures get mirrored to CPU RAM, and how often. The detail lines carry
 // physAddr/size/format. Every one of these is a candidate cause of the GX2DrawDone drain.
 TLM_COUNTER(AccReadbackQueued,      "acc.readback_queued",       "count", Accuracy)
+// A graphic pack supplied its own output/upscaling/downscaling shader, so the shader is not
+// one of the six RendererOutputShader statics. That path used to leave shaderIndex at 255 and
+// index a 12-element pipeline array with it -- an out-of-bounds read AND write, or, with sRGB,
+// a uint8 wrap to slot 5 that aliased s_hermit_shader_ud in both directions. This counter is
+// what proves the path is live; it is not itself an accuracy gap.
+TLM_COUNTER(AccOutputShaderCustom,  "acc.output_shader_custom",  "count", Accuracy)
+// A geometry-shader draw whose primitive topology GetVerticesPerPrimitive does not know.
+// GetMtlPrimitiveType accepts TRIANGLE_STRIP, TRIANGLE_FAN, QUADS, QUAD_STRIP, LINE_LOOP and
+// LINE_STRIP_ADJACENT; GetVerticesPerPrimitive returns 0 for every one of them, and the mesh
+// path divides the threadgroup count by it. AArch64 udiv by zero does not trap, so the draw
+// dispatched nothing. Counted rather than divided.
+TLM_COUNTER(AccMeshDrawNoVertexCount,"acc.mesh_draw_no_vtx_count","count", Accuracy)
