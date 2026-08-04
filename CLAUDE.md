@@ -8,7 +8,7 @@ A hard fork of Cemu (Wii U emulator, C++20) retargeted at **Apple Silicon + macO
 
 - **arm64 only.** `precompiled.h` `#error`s on any other target. `BackendX64/` and all x86 IML machinery are deleted.
 - **macOS 26.0 minimum.** Verify with `otool -l bin/... | grep -A4 LC_BUILD_VERSION` → `minos 26.0`.
-- **Metal only.** OpenGL, Vulkan/MoltenVK, the GLSL shader emitter and glslang are deleted. The binary links Metal and QuartzCore, nothing else graphical.
+- **Metal only.** OpenGL, Vulkan/MoltenVK, the GLSL shader emitter and glslang are deleted. The binary links **no graphics API but Metal** — `otool -L` shows Metal and QuartzCore and no GL/Vulkan/MoltenVK. (CoreGraphics/ImageIO/AppKit are still there for the wx UI; that is expected.)
 
 Do not reintroduce portability shims, `#ifdef ARCH_X86_64`, or a second renderer. If something looks like it needs a runtime arch/backend check, it doesn't.
 
@@ -24,7 +24,7 @@ devkitPro's installer and package host are both unavailable.
 
 **Read `.claude/rules/status-tracker.md` before editing the ledger** — it is the full rule. The two things worth knowing up front: the generator derives the commit list, diffstat, baseline table and counter totals *from the repo*, so never type those into the ledger; and a verdict is one line plus a `ref`, because `docs/porting/00-master-plan.md` owns the reasoning and a second copy of an argument is a second thing to keep in sync.
 
-CI runs `build-status.py --verify` on every push and reports, in the job summary, any commit that landed without a ledger entry. It advises rather than blocks, because some lag is structural: a commit cannot name its own hash in the ledger it contains, so the tip is always unclaimed and is reported separately. `--verify` *does* exit nonzero on a malformed ledger or an unresolvable hash. `--check` is a local pre-commit convenience only — it cannot gate CI, because the page stamps itself with the commit that carries it and is therefore always one commit behind by construction.
+CI runs `build-status.py --verify` on every push to `main` and on every pull request, and reports, in the job summary, any commit that landed without a ledger entry. It advises rather than blocks, because some lag is structural: a commit cannot name its own hash in the ledger it contains, so the tip is always unclaimed and is reported separately. `--verify` *does* exit nonzero on a malformed ledger or an unresolvable hash. `--check` is a local pre-commit convenience only — it cannot gate CI, because the page stamps itself with the commit that carries it and is therefore always one commit behind by construction.
 
 ## Build and run
 
@@ -43,8 +43,10 @@ everything below is measured with, `--telemetry-areas <cpu,gpu,mem,accuracy>` to
 `--forward-console-logging` to route the guest's `OSReport` to stdout — which is how both test
 suites report their results.
 
-There is **no automated test suite for graphics**; verification there is still: it builds, it boots a
-title, the frame looks right, and nothing new appears in the log.
+Graphics has one automated ROM (`testing/graphics-tests/`, driven by its own `run.sh`; CI builds it
+but cannot run it) and it does **not yet reproduce** the case it targets — all three
+`acc.self_dep_*` counters read zero. So graphics verification is in practice still: it builds, it
+boots a title, the frame looks right, and nothing new appears in the log.
 
 **The CPU now has one.** `testing/cpu-tests/` runs `ppc750cl.s` — 23,502 lines of public-domain
 PowerPC assembly validated against real Espresso silicon — as Wii U homebrew, needing no game
@@ -52,9 +54,8 @@ image, console, keys or SDK. First result: **1,030 failures, recompiler and inte
 identical (zero unique to either arm)**, of which 676 are FPSCR state bits this emulator does not
 maintain and **354 are wrong values — only 3 of them integer**. So the AArch64 backend is exactly
 as correct as the interpreter, and the real defects are in shared FP/paired-single semantics.
-There is also `testing/graphics-tests/`, a render-pass self-dependency reproducer that builds and
-runs but whose counters currently read **zero** — an unresolved result, not a passing test. See
-`docs/testing/00-test-strategy.md` and `testing/graphics-tests/README.md`.
+See `docs/testing/00-test-strategy.md`, `testing/cpu-tests/README.md` and
+`testing/graphics-tests/README.md`.
 
 ## Verifying a change
 
@@ -64,9 +65,9 @@ A green build proves very little here. The real gate is booting a real title:
 ./testing/capture-scene.sh <pid> <scene-name>    # window-only frame + FPS/RSS/threads -> testing/golden/baseline.tsv
 ```
 
-`testing/golden/baseline.tsv` is the committed record of every measurement; the PNGs and traces are gitignored (large, machine-specific). Requires `~/Library/Application Support/TesseraEmu/keys.txt` with the Wii U common key and the title's disc key — without it decryption fails and nothing boots. Game images live in `Roms/` (gitignored).
+`testing/golden/baseline.tsv` is the committed record of every `capture-scene.sh` measurement — telemetry runs are **not** committed (`testing/.gitignore` ignores `traces/`), so their numbers survive only in prose here and in `docs/`; the PNGs and traces are gitignored (large, machine-specific). Requires `~/Library/Application Support/TesseraEmu/keys.txt` with the Wii U common key and the title's disc key — without it decryption fails and nothing boots. Game images live in `Roms/` (gitignored).
 
-TesseraEmu writes no `log.txt` until clean exit, and `CemuApp::OnExit` calls `_Exit()`, so **`kill -9` loses buffered log and shader-cache writes.** Use `--verbose` and read stdout instead.
+`log.txt` is written continuously — a writer thread flushes after every batch (`CemuLogging.cpp:148`) — so `kill -9` loses at most the few lines still queued. What it *does* lose is **shader-cache** writes, which go to a background writer (`FileCache::AddFileAsync`, `FileCache.cpp:509`). `CemuApp::OnExit` calls `_Exit()`, and the guest-initiated exit path currently crashes before reaching it (`b4d3d82`), so never count on a clean shutdown. `--verbose` also mirrors every log line to stdout (`CemuLogging.cpp:206`).
 
 When a launch appears to hang at low CPU, it is almost always a modal dialog. Read it without screenshotting the user's screen:
 
@@ -112,16 +113,19 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
 
 - **Neither provenance stamp proves what the binary was built from.** `CMakeLists.txt:15` captures
   `git log --format=%h -1` at **cmake configure time** and bakes it into `-DEMULATOR_HASH`, so a
-  binary compiled from `cebe17f` announced `build 064d9a7` — eight commits stale — in its window
+  binary compiled from `cebe17f` announced `build 064d9a7` — **twenty** commits stale, spanning the `839466d` counter-semantics fix — in its window
   title and in the `build` field of every `--telemetry` header. `testing/capture-scene.sh` has the
   opposite failure: it stamps `baseline.tsv` with the *repo's* `git rev-parse HEAD`, which says
   nothing about the binary at all. Re-run `cmake -S . -B build …` before any measurement you intend
   to quote. The hash reaches every translation unit through `precompiled.h`, so refreshing it is a
   full rebuild.
 
-- **A counter reading zero is not evidence until you check it has an increment site.** Sweeping all
-  113 `TLM_COUNTER` declarations against `src/` found **14 that nothing ever writes**:
-  `gpu.pipelines_compiled`, `acc.render_self_dependency`, and **all twelve `mem.*`**. The `mem.*`
+- **A counter reading zero is not evidence until you check it has an increment site.** Sweeping every
+  `TLM_COUNTER` declaration against `src/` found **13 that nothing ever writes**:
+  `gpu.pipelines_compiled` and **all twelve `mem.*`**. (`acc.render_self_dependency` was on that list
+  and is now wired at `MetalRenderer.cpp:2434`, so *its* zero is a real unresolved measurement, not a
+  missing hook — see `testing/graphics-tests/README.md`. Do not restate the counter total here; the
+  status page derives it.) The `mem.*`
   block covers buffer-cache uploads, texture-cache reloads and shader-cache hit/miss — exactly the
   subsystem behind the largest graphics finding on file, which had to be established by backtrace
   attribution *because these counters do not work*. A zero from an unwired counter is
@@ -142,7 +146,7 @@ Two traps already caught in this repo — both produce confident, wrong numbers:
 
 Prefer `ps -p <pid> -o cputime=` deltas over `%cpu` (a decaying average) for headline numbers.
 
-- **`cemuLog_log` writes to `~/Library/Application Support/TesseraEmu/log.txt`, not stdout.** Grepping the process's redirected stdout for errors, or for your own instrumentation, silently finds nothing and reads as "clean".
+- **`cemuLog_log` is gated by the log-type mask, and only reaches stdout with `--verbose`.** It writes to `~/Library/Application Support/TesseraEmu/log.txt` always, and additionally to stdout when `--verbose` is set (`CemuLogging.cpp:206`). The real trap is the mask: `cemuLog_log` returns early when that log type is disabled (`:203`), so instrumentation added under a non-`Force` type vanishes from *both* destinations and reads as "clean". Use `LogType::Force`, or `--forward-console-logging` for guest-side `OSReport`.
 - **`testing/capture-scene.sh` uses `screencapture -R`, which grabs a screen *region*** — TesseraEmu must be frontmost or you capture whatever is on top of it. Raise it first (`set frontmost of ... to true`).
 - **A before/after pixel diff of the MK8 title screen proves nothing**: the "Press A to start" prompt pulses and the background animates, so ~22% of pixels differ between any two captures. Use targeted instrumentation to show a rendering change is live.
 
@@ -161,7 +165,7 @@ Measured from `GPUEndTime - GPUStartTime` on every command buffer:
 | title card | 2.6 – 3.0 | 16 – 18% | 29 | 51 | 1.75 |
 | demo race, peak | **14.6** | **87.7%** | 222 | 1466 | 6.6 |
 
-So the GPU is **not** idle in gameplay, and `draws-per-pass` is a healthy 7–9 rather than the alarming 1.75 the title card shows. An earlier revision of this file claimed the opposite from title-card-only data; `docs/porting/00-master-plan.md` carries the full correction. Before drawing any conclusion about graphics work, check which scene you sampled.
+So the GPU is **not** idle in gameplay, and `draws-per-pass` is a healthy 6.6 on the peak row above (7–9 on the typical race frames tabulated in `docs/porting/00-master-plan.md`) rather than the alarming 1.75 the title card shows. An earlier revision of this file claimed the opposite from title-card-only data; `docs/porting/00-master-plan.md` carries the full correction. Before drawing any conclusion about graphics work, check which scene you sampled.
 
 **Use BotW for graphics measurement, not MK8.** Breath of the Wild (US v208) at the Shrine of Resurrection with Link standing still, reachable unattended via `testing/drive-botw.sh`. It is *exactly* repeatable — `passes/f` holds within ±2 and `draws/f` within ±3 across every 60-frame window — which no MK8 scene is.
 
@@ -194,10 +198,10 @@ scene rises ~5% over four minutes of continuous play at constant draw count, so 
 on how long you recorded.
 
 **The forest is not GPU-bound and is not draw-bound** — it issues *fewer* draws than the shrine and
-leaves the GPU idle 62% of the time. What it is, is **vsync-quantised**: 20.04 fps is exactly
-59.94/3, 49.90 ms is exactly 1.5x the shrine's 33.27 ms, and p99 equals the median, so there is
-essentially no variance (the frame is exactly three ~16.63 ms slots; an earlier revision wrote
-that as "exactly 59.94/3", which is 19.98 fps, not 20.04 — the implied refresh is ~60.1 Hz).
+leaves the GPU idle ~66% of the time. What it is, is **vsync-quantised**: 20.04 fps is exactly the
+emulated **60.12 Hz** refresh divided by three — `LatteTiming.cpp:16-31` computes 1000/(1002×60) s =
+16.63 ms, *not* 59.94 Hz, which would give 19.98 — 49.90 ms is exactly 1.5x the shrine's 33.27 ms,
+and p99 equals the median, so there is essentially no variance.
 Something misses the 33.3 ms deadline and the software vsync timer
 (`LatteTiming`, host-driven vsync is a stub on this fork) drops it to the next whole division rather
 than degrading smoothly.
@@ -238,7 +242,7 @@ fence is parked in `GX2WaitForFlip`; the flip comes from `LatteTiming`'s polled 
 which the fence wait loop itself drives. That is frame pacing working. **Do not try to recover this
 time** — and note it retroactively explains why parking the spin (`5933733`) and committing work
 early both changed nothing: the guest was never waiting for the GPU. One flip per vsync also pins
-`swapInterval = 1`, so the grid is 16.68 ms and a 49.90 ms frame is the title taking three slots.
+`swapInterval = 1`, so the grid is **16.63 ms** (`LatteTiming.cpp:16-31` computes 1000/(1002x60) s = 60.12 Hz) and a 49.90 ms frame is the title taking three slots.
 
 **Korok Forest is 20 fps instead of 30 because of one config default, and it is not a renderer
 problem.** `gpu.frame_critical_path_ns` (first `GetCommandBuffer()` of a frame → that frame's
@@ -304,7 +308,7 @@ plan; the next lever is shader cost, which is a different project.
 Two numbers stand out as suspects:
 
 - **52,330 HLE calls per frame** (1.05M/s) that cost the guest **nothing**. The `-= 500` at
-  `BackendAArch64.cpp:874` applies *only* to the `0xFFD0` unresolved-import branch, which is 1.1% of
+  `BackendAArch64.cpp:876` applies *only* to the `0xFFD0` unresolved-import branch, which is 1.1% of
   calls (0.47% of one core). Every real HLE call — including `FSReadFile`, which on hardware is an
   IPC round trip to IOSU — advances guest time by zero cycles. That is a far larger timing
   divergence than a wrong flat charge would be, and it is why guest threads can issue a million
@@ -312,7 +316,10 @@ Two numbers stand out as suspects:
 
   **A flat charge is now ruled out by measurement.** `cpu.hle_would_charge_cycles` sums a
   hypothetical 500/call without applying it: **25,103,500 cycles/frame against 15,384,240 actually
-  retired, i.e. 163%** — it would more than double emulated guest time. The named histogram
+  retired, i.e. 163%** — it would more than double emulated guest time. (Those two figures are from
+  one run of 50,207 calls/frame; the three `cebe17f` runs give 51,965–53,264 calls and the same
+  163–164% ratio. The `52,330` above is a different run — quote a call count and a ratio from the
+  same file.) The named histogram
   (`cpu.hle_calls` accuracy details, top 64) shows the volume is `OSFastMutex_Lock/Unlock`,
   `OSGetCoreId`, `OSBlockMove` and GX2 register setters, all worth tens of cycles on hardware, while
   the calls that matter are rare. **Any charge must be tiered per function.**
@@ -339,9 +346,9 @@ Two numbers stand out as suspects:
   switches/frame that is **1.43 ms/frame today**, 2.9% of a 49.9 ms frame. The earlier ~700 ns
   estimate was ~35% high.
 
-  **But it is not a frame-rate fix.** In gameplay the frame decomposes as **13.91 ms of work inside
-  a 49.90 ms frame** quantised to three vsync periods, and that work already fits in *one* period
-  with 16.6% headroom. Removing 1.4 ms from a stage with 35 ms of slack crosses no boundary. Same
+  **But it is not a frame-rate fix.** In gameplay the frame decomposes as **~14.95 ms of work inside
+  a 49.90 ms frame** quantised to three vsync periods, and that work already fits in *one* 16.63 ms
+  period with ~10% headroom. Removing 1.4 ms from a stage with 35 ms of slack crosses no boundary. Same
   shape as the `DeviceShared` change: worth doing for power and headroom, not for fps.
 
   A microbenchmark is the right instrument and an in-process probe is not: `Fiber::Switch` does not
@@ -362,16 +369,16 @@ GPU busy all flat to within 0.6%. The guest's 15.4 ms wait is not for GPU work w
 artifact — see "A BotW telemetry run is two workloads" above — and on gameplay frames it is +0.5%, i.e. nothing.)*
 
 Note the notification fires from two sites that look identical to the CP and are nothing alike:
-`RingStarvation` ~129,000×/frame inside a park-and-recheck loop, `FenceStall` once. Committing on
+`RingStarvation` is essentially all of them (~139,500×/frame in the run above) inside a park-and-recheck loop, `FenceStall` exactly once. Committing on
 the first would mint a command buffer per spin. `NotifyLatteCommandProcessorIdle` takes a reason
 now for exactly that reason.
 
 Already struck off by measurement, so don't re-raise them: `IT_MEM_SEMAPHORE` and the wait-for-flip
 spin are **exactly zero** in BotW, and snapshotting guest threads at fence-stall entry proved
-nothing — it found the cores idle 95% of the time, which is just their 96% baseline idle rate. A
+nothing — it found the cores idle 95% of the time on the shrine, which is just their ~96% baseline idle rate *there* — in Korok the cores run 75–84% idle, per the decomposition above. A
 probe with no control sample cannot discriminate.
 
-**Do not divide BotW's GPU time by 16.67 ms.** BotW targets **30 FPS**, so the budget is 33.3 ms. An earlier revision of this file divided by the 60 FPS budget and concluded the GPU was at "108–147% of budget" and "is what caps the frame rate" — both wrong. At 15.6–18.5 ms against a ~35 ms wall-clock frame, the GPU sits at roughly **50% duty cycle and is not the limiter in this scene**: cutting GPU time 16% moved the frame rate not at all. Check what the title actually targets before computing a percentage.
+**Do not divide BotW's GPU time by 16.67 ms.** BotW targets **30 FPS**, so the budget is 33.3 ms. An earlier revision of this file divided by the 60 FPS budget and concluded the GPU was at "108–147% of budget" and "is what caps the frame rate" — both wrong. At 15.6–18.5 ms against a ~35 ms wall-clock frame, the GPU sits at **34–42% duty cycle and is not the limiter in either scene**: cutting GPU time 16% moved the frame rate not at all. Check what the title actually targets before computing a percentage.
 
 ### Driving a game without a controller (needed for the above)
 
@@ -383,15 +390,15 @@ For Metal work: `MTL_HUD_ENABLED=1` for a frame-time overlay, `MTL_DEBUG_LAYER=1
 
 **Guest CPU.** PPC → IML (an SSA-ish IR) → AArch64, in `src/Cafe/HW/Espresso/Recompiler/`. `PPCRecompilerImlGen*.cpp` lowers PPC to IML; `IML/IMLOptimizer.cpp` runs the passes; `BackendAArch64/` emits code via the `xbyak_aarch64` submodule. There is currently **no backend peephole pass** — the only one that existed was x86-specific and was deleted. The `IMLUtil_*` helpers in `IMLOptimizer.cpp` were kept as substrate for an AArch64 replacement.
 
-`BackendAArch64.cpp` has 14 `static_assert`s pinning `PPCInterpreter_t` field offsets into AArch64's scaled-imm12 addressing range. **Any field added to or removed from `PPCState.h` is checked by these at compile time** — that is by design, not an obstacle.
+`BackendAArch64.cpp:367-379` has 13 `static_assert`s pinning `PPCInterpreter_t` field offsets into AArch64's scaled-imm12 addressing range. **Any field added to or removed from `PPCState.h` is checked by these at compile time** — that is by design, not an obstacle.
 
 Guest threads are `ucontext` fibers (`src/util/Fiber/FiberUnix.cpp`), not host threads. `makecontext` passes `int` arguments, so the 64-bit fiber parameter is split across two — hence `__OSFiberThreadEntry(uint32 _high, uint32 _low)`.
 
 **Guest memory** is pure fastmem: one 4 GB `PROT_NONE` reservation, sub-ranges `mprotect`'d on demand, guest→host is `memory_base + addr` with no bounds check. Unmapped accesses fault to SIGSEGV. **Apple Silicon uses 16 KB pages, and both places that assumed 4 KB are fixed** — `MemMapperUnix.cpp:36-47` derives the page size from `getpagesize()` and widens every range outward before `mprotect`, and every `MMURange` entry in `MMU.cpp:113-126` is 16 KB-aligned in base *and* size (`CORE0/1/2_LC` rounded up from `0x5000`, `HIGHMEM` widened down from `0xFFFFF000` to the containing page). An earlier revision of this file said these "still contain 4 KB assumptions" long after Stage 3 landed the fix; see `02-cpu-jit-memory.md` §4.3 for what the bugs actually were.
 
-**Graphics.** `LatteThread` is the single GPU command-processor thread; all renderer calls happen there. Latte (R700) shaders are decompiled to **MSL source text** and compiled at runtime. There is a persistent *pipeline* cache (`shaderCache/transferable/{titleid}_mtlpipeline.bin`, `MetalPipelineCache.cpp:267`), but it stores pipeline **state descriptors**, not compiled binaries — it replays them on the loading screen, so **every shader still recompiles from MSL on every launch**. The `MTLBinaryArchive` code that would fix this exists in `MetalPipelineCompiler.cpp` but is entirely commented out. The Metal backend keeps exactly one encoder alive at a time, so any mid-frame texture/buffer upload tears down the render pass.
+**Graphics.** `LatteThread` is the single GPU command-processor thread; all *command encoding and renderer state* happens there. Shader and pipeline compilation does **not** — `RendererShaderMtl.cpp:296` and `MetalPipelineCompiler.cpp:359` call into `MetalRenderer` and into Metal from the `mtlShaderComp` / `compilePl` pools, so do not add unsynchronised state to `MetalRenderer` assuming single-threaded access. Latte (R700) shaders are decompiled to **MSL source text** and compiled at runtime. There is a persistent *pipeline* cache (`shaderCache/transferable/{titleid}_mtlpipeline.bin`, `MetalPipelineCache.cpp:267`), but it stores pipeline **state descriptors**, not compiled binaries — it replays them on the loading screen, so **every shader still recompiles from MSL on every launch**. A commented-out `MTLBinaryArchive` block sits in `MetalPipelineCompiler.cpp:268-285`, but it is a note-to-self rather than dormant code: the header declares none of the members it references, so it would not compile. Whether an archive would even help is disputed — see `docs/porting/03-graphics-metal.md` Phase 2. The Metal backend keeps exactly one encoder alive at a time, so a mid-frame **texture** upload tears down the render pass (`MetalRenderer.cpp:864`). **Buffer**-cache uploads no longer do: `Auto` resolves to `DeviceShared` (`MetalMemoryManager.cpp:58`, the `Auto` branch at `:40-58`) and the upload is a memcpy into shared storage, which is what took passes/frame from 179 to 149. Only a game profile pinned to device-private reinstates the staging blit.
 
-**Threading.** ~45-47 threads on a 4P+4E machine. QoS **is** wired up now: `SetThreadName(name, ThreadRole)` (`util/helpers/helpers.cpp:121`) maps a role to a QoS class and applies it to the calling thread — guest cores and the GPU command thread `USER_INTERACTIVE`, input `USER_INITIATED`, compile/background `UTILITY` (deliberately not `BACKGROUND`, which macOS throttles hard). 16 call sites pass a role; anything still calling the one-argument form gets `UNSPECIFIED`. `g_CPUFeatures` exposes `performanceCores`/`efficiencyCores` for sizing worker pools, because `hardware_concurrency()` reports 8 and oversubscribes the shader compiler pools. `FSpinlock` is **no longer a spin** — it is `os_unfair_lock` (`util/helpers/fspinlock.h`), which donates priority; the old warning about QoS-before-`os_unfair_lock` producing a hang is discharged, both halves are done.
+**Threading.** ~45-47 threads on a 4P+4E machine. QoS **is** wired up now: `SetThreadName(name, ThreadRole)` (`util/helpers/helpers.cpp:142`) maps a role to a QoS class and applies it to the calling thread — guest cores and the GPU command thread `USER_INTERACTIVE`, input `USER_INITIATED`, compile/background `UTILITY` (deliberately not `BACKGROUND`, which macOS throttles hard). 16 call sites pass a role; anything still calling the one-argument form gets `UNSPECIFIED`. `g_CPUFeatures` exposes `performanceCores`/`efficiencyCores` for sizing worker pools, because `hardware_concurrency()` reports 8 and oversubscribes the shader compiler pools. `FSpinlock` is **no longer a spin** — it is `os_unfair_lock` (`util/helpers/fspinlock.h`), which donates priority; the old warning about QoS-before-`os_unfair_lock` producing a hang is discharged, both halves are done.
 
 ## Style
 
