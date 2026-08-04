@@ -1422,10 +1422,10 @@
     },
     {
       "id": "rm-housekeeping",
-      "title": "Housekeeping: 14 unincremented counters and 19 stale locales",
+      "title": "Housekeeping: 13 unincremented counters and 19 stale locales",
       "area": "tooling",
       "status": "open",
-      "verdict": "**Fourteen** counters are declared and never incremented: `gpu.pipelines_compiled`, and all twelve `mem.*` (the twelfth, `mem.bufcache.upload_bytes`, is mentioned only in a doc comment). `acc.render_self_dependency` was the fifteenth and is now wired. ~30 changed `_()` strings are untranslated across 19 locales.",
+      "verdict": "**Thirteen** counters are declared and never incremented: `gpu.pipelines_compiled` and all twelve `mem.*` (the twelfth, `mem.bufcache.upload_bytes`, is mentioned only in a doc comment). `acc.render_self_dependency` was the fourteenth and is now wired at `MetalRenderer.cpp:2434`. ~30 changed `_()` strings are untranslated across 19 locales.",
       "gate": "None. Small, unglamorous, and neither blocks anything — but the `mem.*` block is not merely cosmetic: it is the instrumentation for buffer-cache and texture-cache behaviour, and its silence already cost one investigation.",
       "ref": ".github/workflows/generate_pot.yml"
     },
