@@ -1064,13 +1064,14 @@
       "status": "landed",
       "commits": [
         "a2e441b",
-        "61aec71"
+        "61aec71",
+        "97ae3ad"
       ],
       "verdict": "A homebrew ROM that draws into a colour buffer while sampling that same surface, needing **no game image**. It reproduces: `acc.self_dep_fbfetch` reads **1.0/frame** while the other two read zero — exactly one of the covered/uncovered pair firing, which is the shape that says the detector works.",
       "note": "The first run read zero on all three, and the cause was placement rather than the test. `_initTextureBindingPointsMTL` (`LatteDecompilerAnalyzer.cpp:527`) skips assigning a binding point to any unit with `textureRenderTargetIndex != 255`, so a framebuffer-fetch unit is stripped from the resource mapping — `textureCount` was **0** — and both hooks sat inside a loop the covered case can never enter. `acc.self_dep_fbfetch` was unreachable code. It is now counted from `shader->textureRenderTargetIndex[]`, which survives into the shader object. **A counter reading zero can mean the hook is somewhere the case never reaches, which looks identical to the case not occurring.**",
       "measured": {
         "scene": "self-dependency-rpx",
-        "at_commit": "PENDING",
+        "at_commit": "97ae3ad",
         "date": "2026-08-04",
         "n": 1
       },
@@ -1452,7 +1453,7 @@
       "ref": "testing/graphics-tests/README.md",
       "measured": {
         "scene": "self-dependency-rpx",
-        "at_commit": "PENDING",
+        "at_commit": "97ae3ad",
         "date": "2026-08-04",
         "n": 1
       }
@@ -1467,7 +1468,7 @@
       "ref": "03-graphics-metal.md — 3.1",
       "measured": {
         "scene": "self-dependency-rpx",
-        "at_commit": "PENDING",
+        "at_commit": "97ae3ad",
         "date": "2026-08-04",
         "n": 1
       }
