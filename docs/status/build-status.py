@@ -298,6 +298,77 @@ def ref_section_found(path: Path, section: str) -> bool:
     return any(probe in h.lower() for h in headings) or probe in text.lower()
 
 
+# README only, deliberately. It is the public summary and should make no measured claim that is
+# not traceable to the record; that is where "107 counters" against a real 113 and "183%" against a
+# ledger that says 184 both sat, across several rewrites, in the most-read file in the repo.
+#
+# CLAUDE.md is NOT checked, and adding it was tried and reverted. It is the working notebook: it
+# carries per-counter tables and phase breakdowns the ledger deliberately does not, because a
+# verdict there is one line and a pointer. Requiring every figure in it to appear verbatim in the
+# ledger produced 35 warnings, every one of them working as intended -- and a check that is always
+# noisy is a check nobody reads.
+PROSE_DOCS = ("README.md",)
+
+# Deliberately narrow: only shapes that are almost always a measurement. Version numbers, years
+# and sizes in build instructions must not trip this, or the check gets ignored.
+MEASUREMENT_SHAPES = re.compile(
+    r"""(?<![\w.])(
+        \d+(?:\.\d+)?\s?%                                   |  # 184%, 42.1%
+        \d+(?:\.\d+)?\s?(?:fps|FPS)                         |  # 30.06 fps
+        \d+(?:\.\d+)?\s?(?:ms|ns|µs|us)\b                   |  # 35.25 ms, 454.5 ns
+        \d{1,3}(?:,\d{3})+                                     # 52,330
+    )""",
+    re.VERBOSE,
+)
+
+# Figures that are structural rather than measured, or that name a quantity the reader can verify
+# from the text around them. Keep this list short: every entry is a claim nobody will re-check.
+MEASUREMENT_ALLOWLIST = {
+    "100%",   # used rhetorically ("100% of the diff is ours")
+    "0%",
+}
+
+CODE_BLOCK = re.compile(r"```.*?```", re.DOTALL)
+CODE_SPAN = re.compile(r"`[^`]*`")
+
+
+def check_prose_measurements(ledger_text: str) -> list[tuple[str, str, str]]:
+    """Every measurement quoted in prose must appear verbatim in the ledger.
+
+    Not a numeric comparison -- correlating arbitrary prose to ledger entries is guesswork, and a
+    guessing linter is one people learn to ignore. This asks a question with an exact answer: is
+    this figure traceable to the record at all? "183%" was not, because the record says 184.
+
+    Reported as WARN, not ERROR: prose legitimately carries context the ledger does not, and a
+    check that fails the build on a legitimate sentence would be turned off within a week.
+    """
+    out: list[tuple[str, str, str]] = []
+    for name in PROSE_DOCS:
+        path = REPO / name
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        # Commands and identifiers are not claims.
+        text = CODE_BLOCK.sub(" ", text)
+        text = CODE_SPAN.sub(" ", text)
+
+        seen: set[str] = set()
+        for m in MEASUREMENT_SHAPES.finditer(text):
+            fig = m.group(1).strip()
+            if fig in seen or fig in MEASUREMENT_ALLOWLIST:
+                continue
+            seen.add(fig)
+            # Compare with the space normalised out: prose writes "35.25 ms", the ledger may
+            # write "35.25ms", and a whitespace difference is not a drift.
+            needle = fig.replace(" ", "")
+            haystack = ledger_text.replace(" ", "")
+            if needle not in haystack:
+                out.append((WARN, name, f"`{fig}` is not in the ledger — either source it, or "
+                                        f"drop it. This is how `183%` survived three rewrites "
+                                        f"against a ledger that says 184."))
+    return out
+
+
 def lint(ledger: dict, commits: list[dict]) -> list[tuple[str, str, str]]:
     """Return [(severity, entry-id, message)]. Pure; callers decide what to do with it."""
     out: list[tuple[str, str, str]] = []
@@ -366,6 +437,8 @@ def lint(ledger: dict, commits: list[dict]) -> list[tuple[str, str, str]]:
         if not claimed and stage.get("status") == "complete":
             out.append((WARN, sid, "stage is marked complete but no item claims it — its status "
                                    "is asserted rather than derived"))
+
+    out.extend(check_prose_measurements(json.dumps(ledger, ensure_ascii=False)))
     return out
 
 

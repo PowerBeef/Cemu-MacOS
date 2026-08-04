@@ -677,7 +677,7 @@
         "11136b5"
       ],
       "verdict": "Existing installs migrate rather than losing their saves and settings. Verified from the new path that nothing depended on the old one.",
-      "ref": "README.md — Coming from Cemu"
+      "ref": "README.md"
     },
     {
       "id": "ci",
@@ -717,7 +717,10 @@
         "200f18c",
         "7d8aac7",
         "584521b",
-        "85911b7"
+        "85911b7",
+        "3184853",
+        "241a5a5",
+        "9ce5213"
       ],
       "verdict": "Describes what this fork is rather than what upstream is not, and states the goal (the best way to run Wii U games on a Mac) separately from the readiness (early, two titles, one machine, no releases).",
       "note": "Successive corrections were of numbers invalidated by the immediately preceding commits, then of a two-column table that scored upstream rather than describing this fork, then of a tone that overcorrected into calling the project a research curiosity. Three hand-typed numbers had gone stale by `584521b` — 107 counters against 115, 155 anchors against 163 — one of them contradicting a passage two sections below it explaining why such counts are not typed. The title of this entry used to carry a correction count, which was the same mistake in miniature.",
@@ -964,7 +967,8 @@
         "61733d4",
         "32df35e",
         "9853197",
-        "4f9c804"
+        "4f9c804",
+        "cb1245d"
       ],
       "verdict": "One generated page for what changed versus upstream, what was tried and what it measured. Commit list, diffstat, baseline rows and counter totals are read from the repo — only verdicts are hand-maintained. CI reports any commit that lands without a ledger entry.",
       "note": "It caught its own first bug: the counter parser read **114** against the real 113, matching the `TLM_COUNTER(...)` example inside the `.def`'s own header comment. Two self-references bound the design — a ledger entry cannot name the hash of the commit containing it, and the page embeds the commit that carries it — so CI advises rather than blocks, and `--check` is local-only. The tracker's own upkeep (claiming commits, stamping measurements, correcting the ledger) is claimed by this entry rather than excused under `unattributed`, so the act of tracking is itself tracked.",

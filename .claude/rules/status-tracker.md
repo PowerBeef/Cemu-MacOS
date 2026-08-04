@@ -56,6 +56,33 @@ the README said "107 counters" when there were 113.
 If a fact lives in a file, cite the file. If you need a new derived fact on the page, teach
 `build-status.py` to read it; do not paste it into `ledger.json`.
 
+### The same rule now applies outward, to `README.md`
+
+This discipline protected the ledger and left the most-read file in the repo with nothing at all,
+which is exactly where the errors landed: **"107 counters" against a real 113, and "183%" against a
+ledger that says 184** — the latter surviving three rewrites, because each one copied the previous.
+
+`--verify` now requires every measurement in `README.md` to appear **verbatim in the ledger**. Not a
+numeric comparison: correlating arbitrary prose to entries is guesswork, and a guessing linter is one
+people learn to ignore. It asks a question with an exact answer — is this figure traceable to the
+record at all? `WARN`, because prose legitimately carries context the ledger does not, and a check
+that fails the build on a legitimate sentence gets switched off within a week.
+
+**Only README.** Adding `CLAUDE.md` was tried and reverted: it carries per-counter tables and phase
+breakdowns the ledger deliberately does not, since a verdict here is one line and a pointer. It
+produced 35 warnings, every one working as intended.
+
+The check has a **positive control**, because a linter that reports nothing is indistinguishable from
+one that does not run. Against the README as of `584521b` it flags 8 figures, `183%` among them.
+If you change the matcher, re-run that control.
+
+### And a class the check cannot catch
+
+A claim about *another project* rots when **they** change, and nothing here will ever notice. The
+README described Cemu as reaching Metal through MoltenVK for four rewrites, long after upstream
+merged the native Metal backend this fork is built on. So **name the version, date or commit you
+checked, or do not make the claim.**
+
 ## A verdict is one line and a pointer
 
 `docs/porting/00-master-plan.md` owns the reasoning. A ledger entry carries the *conclusion* plus a

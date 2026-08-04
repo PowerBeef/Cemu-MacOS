@@ -24,6 +24,24 @@ devkitPro's installer and package host are both unavailable.
 
 **Read `.claude/rules/status-tracker.md` before editing the ledger** — it is the full rule. The two things worth knowing up front: the generator derives the commit list, diffstat, baseline table and counter totals *from the repo*, so never type those into the ledger; and a verdict is one line plus a `ref`, because `docs/porting/00-master-plan.md` owns the reasoning and a second copy of an argument is a second thing to keep in sync.
 
+**A claim about another project carries a date, or it does not get made.** Everything else here rots
+when *this* repo changes, and something watches for that. A statement about upstream Cemu, Apple, or
+a dependency rots when *they* change, and nothing here will ever notice. The README said Cemu
+"reaches Metal on macOS through MoltenVK" through four rewrites — long after upstream merged a native
+Metal backend in PR #1287, the very renderer this fork inherited and is built on. Nothing in this
+repo changed; the sentence just quietly became false. So: name the version, the date or the commit
+you checked, or say nothing. This applies hardest in `README.md`, where such claims are most tempting
+and least checkable.
+
+**`--verify` also checks that every measurement in `README.md` appears verbatim in the ledger.**
+That is a traceability question with an exact answer, not a numeric comparison — correlating prose to
+entries is guesswork, and a guessing linter is one people learn to ignore. It is reported as `WARN`.
+Deliberately **README only**: adding CLAUDE.md was tried and reverted, because this file carries
+per-counter tables and phase breakdowns the ledger intentionally does not, and it produced 35
+warnings that were all working as intended. Verified with a positive control rather than by finding
+nothing — run against the README as of `584521b` it flags 8 figures, including the `183%` that stood
+against a ledger saying 184.
+
 CI runs `build-status.py --verify` on every push to `main` and on every pull request, and reports, in the job summary, any commit that landed without a ledger entry. It advises rather than blocks, because some lag is structural: a commit cannot name its own hash in the ledger it contains, so the tip is always unclaimed and is reported separately. `--verify` *does* exit nonzero on a malformed ledger or an unresolvable hash. `--check` is a local pre-commit convenience only — it cannot gate CI, because the page stamps itself with the commit that carries it and is therefore always one commit behind by construction.
 
 ## Build and run
