@@ -961,7 +961,10 @@
         "8a980f4",
         "516881f",
         "8ee1b17",
-        "61733d4"
+        "61733d4",
+        "32df35e",
+        "9853197",
+        "4f9c804"
       ],
       "verdict": "One generated page for what changed versus upstream, what was tried and what it measured. Commit list, diffstat, baseline rows and counter totals are read from the repo — only verdicts are hand-maintained. CI reports any commit that lands without a ledger entry.",
       "note": "It caught its own first bug: the counter parser read **114** against the real 113, matching the `TLM_COUNTER(...)` example inside the `.def`'s own header comment. Two self-references bound the design — a ledger entry cannot name the hash of the commit containing it, and the page embeds the commit that carries it — so CI advises rather than blocks, and `--check` is local-only. The tracker's own upkeep (claiming commits, stamping measurements, correcting the ledger) is claimed by this entry rather than excused under `unattributed`, so the act of tracking is itself tracked.",
@@ -1224,6 +1227,25 @@
       "measured": {
         "scene": "self_dependency.rpx, both FramebufferFetch arms",
         "at_commit": "a42b2dc",
+        "date": "2026-08-04",
+        "n": 1
+      },
+      "ref": "testing/graphics-tests/README.md"
+    },
+    {
+      "id": "selfdep-alias-physaddr",
+      "title": "Self-dependency was blind to a second texture over the same guest memory",
+      "area": "graphics",
+      "stage": "s6",
+      "status": "landed",
+      "commits": [
+        "3db0cfc"
+      ],
+      "verdict": "A draw sampling a different-format view of the surface it renders into was invisible to both halves of the mechanism — the analyzer compares format, the renderer compared `LatteTexture` pointers — while Cemu builds a second texture object for exactly that case (`LatteTexture.cpp:858` returns `VIEW_NOT_COMPATIBLE` on format alone). Matching `physAddress` as well catches it.",
+      "note": "A/B on one ROM with one variable: pointer identity gives `render_self_dependency` 1 and `pass_splits` 1; adding the address match gives **2 and 2**. Conservative by choice — exact base-address equality, not range overlap, since over-splitting is this item's named risk; partial overlaps at different base addresses stay invisible and `list_dataOverlap` is the raw material if that ever matters. **The first Case D passed while testing nothing:** its shader multiplied the sampled value by `0.0`, so the fetch was optimised away, no texture was bound and no alias existed — yet the draw-ran assertion passed and the counter read 1, which is indistinguishable from the miss it was built to show. The ROM now logs `caseD_samplerVars` so a vanished sampler cannot be mistaken for a missed alias.",
+      "measured": {
+        "scene": "self_dependency.rpx Case D, A/B",
+        "at_commit": "3db0cfc",
         "date": "2026-08-04",
         "n": 1
       },
@@ -1681,15 +1703,6 @@
       "verdict": "The MetalState::m_textures sizing bug (54 entries for indices reaching 81, so geometry-shader bindings wrote into m_uniformBufferOffsets) is still live at upstream's tip, as is the graphic-pack sampler override writing through into LatteGPUState.contextNew.SQ_TEX_SAMPLER. Both are small, portable and reviewable by reading. The three defects in gp-output-shader-path are upstream's too.",
       "gate": "Upstream's contribution policy asks that submitted code be written and understood by a human, and this fork's changes were written with AI assistance. Anything sent must be re-derived and written by a person. That is a real cost and the reason this is deferred rather than open — see the note in README.md.",
       "ref": "README.md"
-    },
-    {
-      "id": "rm-selfdep-alias-identity",
-      "title": "Self-dependency aliasing is pointer identity, so it misses two textures over the same memory",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "`AliasesActiveAttachment` compares `view->baseTexture == baseTexture`, and that is the renderer's only aliasing test — no address or range comparison exists in MetalRenderer.cpp. Cemu routinely creates a second LatteTexture at the same physAddr, because `LatteTexture_CanTextureBeRepresentedAsView` rejects a mapping on format alone (`LatteTexture.cpp:858`) even when address, pitch, width and height all match. So a draw rendering into a surface and sampling a different-format view of the same memory is a real hazard that neither the splitter nor the detector can see.",
-      "gate": "Needs a case where it matters. Cemu already tracks the co-residency in `list_compatibleRelations` (`LatteTexture.cpp:661-662`) and `list_dataOverlap` (`LatteTexture.h:263`), so the raw material exists and the work is consulting them rather than building new tracking. Not worth doing until something demonstrates the miss — the reproducer's own Case C was originally this shape and was fixed by other means.",
-      "ref": "docs/porting/03-graphics-metal.md"
     },
     {
       "id": "rm-selfdep-never-skip-override",
