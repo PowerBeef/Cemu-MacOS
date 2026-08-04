@@ -1216,6 +1216,7 @@
       "stage": "s6",
       "status": "landed",
       "commits": [
+        "4b31fba",
         "a42b2dc"
       ],
       "verdict": "`_initTextureBindingPointsMTL` stripped a covered unit's binding point unconditionally while the emitter's substitution was gated on the runtime option, so with `FramebufferFetch=false` every pixel-stage self-dependent draw emitted a sample against a unit with no binding, failed to compile and was refused. One predicate, `LatteMtl_IsUnitCoveredByFramebufferFetch`, now answers the question for all five sites.",
