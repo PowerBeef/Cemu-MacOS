@@ -590,14 +590,24 @@ namespace LatteDecompiler
 		// check if uniform vars block has at least one variable
 		_initHasUniformVarBlock(decompilerContext);
 
-		if (decompilerContext->shaderType == LatteConst::ShaderType::Pixel)
+		// Deliberately NOT gated on the pixel stage. texUnitUsesTexelCoordinates is set for any
+		// stage (an LD, or a SAMPLE with all four coordinates unnormalized -- see :327-335), the
+		// `float2 tex{}Scale` member is emitted into SupportBuffer for any stage, and the body
+		// emits `*supportBuffer.tex{}Scale` for any stage. Only the `constant SupportBuffer&`
+		// PARAMETER was gated, via uniformVarsBufferBindingPoint below. So a vertex or geometry
+		// shader doing texelFetch produced MSL that referenced a parameter it had not been given:
+		//
+		//     error: use of undeclared identifier 'supportBuffer'
+		//
+		// which yields a nil MTL::Function, and before 2bd3e06 that aborted the whole process.
+		// It went unnoticed because the shader is rescued whenever hasUniformVarBlock is already
+		// true for another reason -- streamout, point size, a disabled viewport scale, a remapped
+		// uniform mode -- so only a *minimal* non-pixel texelFetch shader trips it.
+		for (sint32 t = 0; t < LATTE_NUM_MAX_TEX_UNITS; t++)
 		{
-			for (sint32 t = 0; t < LATTE_NUM_MAX_TEX_UNITS; t++)
-			{
-				if (decompilerContext->analyzer.texUnitUsesTexelCoordinates.test(t) == false)
-					continue;
-				decompilerContext->hasUniformVarBlock = true; // uf_tex%dScale
-			}
+			if (decompilerContext->analyzer.texUnitUsesTexelCoordinates.test(t) == false)
+				continue;
+			decompilerContext->hasUniformVarBlock = true; // uf_tex%dScale
 		}
 		// assign binding point to uniform var block
 		if (decompilerContext->hasUniformVarBlock)

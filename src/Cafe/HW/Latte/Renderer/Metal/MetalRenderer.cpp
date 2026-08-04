@@ -2465,14 +2465,19 @@ void MetalRenderer::NoteSelfDependencyCovered(const LatteDecompilerShader* shade
 }
 
 
-const char* MetalRenderer::AliasesActiveAttachment(const LatteTexture* baseTexture) const
+static const char* AliasesFBO(const CachedFBOMtl* fbo, const LatteTexture* baseTexture)
 {
-	const auto* fbo = m_state.m_activeFBO.m_fbo;
-	if (!fbo || !baseTexture)
+	if (!fbo)
 		return nullptr;
-
 	// Compare base textures, not views: a game can sample through a different view (mip, slice,
 	// swizzle) of the same underlying surface it is rendering into, and that still aliases.
+	//
+	// KNOWN LIMIT: this is pointer identity, so it cannot see two distinct LatteTexture objects
+	// mapped over the same guest memory. LatteTexture_CanTextureBeRepresentedAsView rejects a
+	// mapping on format alone (LatteTexture.cpp:858), so sampling an RGBA8 render target through
+	// a different-format view creates a second object at the same physAddr that this test misses.
+	// Cemu tracks the co-residency in list_compatibleRelations and list_dataOverlap; neither is
+	// consulted here. Documented rather than fixed -- see the roadmap.
 	for (uint32 i = 0; i < LATTE_NUM_COLOR_TARGET; i++)
 	{
 		const LatteTextureView* view = fbo->colorBuffer[i].texture;
@@ -2482,6 +2487,30 @@ const char* MetalRenderer::AliasesActiveAttachment(const LatteTexture* baseTextu
 	const LatteTextureView* view = fbo->depthBuffer.texture;
 	if (view && view->baseTexture == baseTexture)
 		return "depth";
+	return nullptr;
+}
+
+const char* MetalRenderer::AliasesActiveAttachment(const LatteTexture* baseTexture) const
+{
+	if (!baseTexture)
+		return nullptr;
+
+	if (const char* hit = AliasesFBO(m_state.m_activeFBO.m_fbo, baseTexture))
+		return hit;
+
+	// The pass that is actually OPEN belongs to m_lastUsedFBO, not to m_activeFBO, and
+	// GetRenderCommandEncoder's reuse tests are one-sided: they require the *active* attachment
+	// to be non-null before comparing (:2105, :2115). So an attachment that was DROPPED --
+	// non-null in lastUsed, null in active -- does not force a new pass, and stays live in the
+	// encoder. Scanning only the active set makes a self-dependency against one of those extra
+	// attachments invisible, which is exactly the MRT case this item most needs to catch:
+	// pass opens {color0, color1}, a later draw targeting only {color0} merges in and samples
+	// color1, which earlier draws in the pass wrote.
+	if (m_commandEncoder && m_encoderType == MetalEncoderType::Render)
+	{
+		if (const char* hit = AliasesFBO(m_state.m_lastUsedFBO.m_fbo, baseTexture))
+			return hit;
+	}
 	return nullptr;
 }
 
@@ -2515,6 +2544,20 @@ bool MetalRenderer::ShaderHasUncoveredSelfDependency(LatteDecompilerShader* shad
 		const LatteTextureViewMtl* textureView = m_state.m_textures[hostTextureUnit];
 		if (!textureView)
 			continue;
+
+		// Mirror BindStageResources' dim-mismatch substitution (:2603-2612). A unit whose
+		// compile-time DIM disagrees with the bound view's gets a null texture, not the real
+		// one, so it cannot alias anything -- splitting for it costs a render pass and an
+		// over-counted acc.self_dep_pass_splits for a hazard that does not exist. Reachable on
+		// the vertex and geometry stages, where textureUnitDim is baked at decompile time and
+		// the aux hash does not include DIM (LatteShader.cpp:598-635 carries a todo saying so).
+		const auto textureDim = shader->textureUnitDim[relative_textureUnit];
+		if (textureDim == Latte::E_DIM::DIM_1D && textureView->dim != Latte::E_DIM::DIM_1D)
+			continue;
+		if (textureDim == Latte::E_DIM::DIM_2D &&
+		    textureView->dim != Latte::E_DIM::DIM_2D && textureView->dim != Latte::E_DIM::DIM_2D_MSAA)
+			continue;
+
 		if (AliasesActiveAttachment(textureView->baseTexture))
 			return true;
 	}
