@@ -1078,6 +1078,10 @@ namespace coreinit
 		PPCInterpreter_setXER(hCPU, thread->context.xer);
 
 		hCPU->fpscr = thread->context.fpscr.fpscr;
+		// Each guest thread carries its own FPSCR, so the host FPU mode has to follow the
+		// thread being switched in -- otherwise a thread that set a rounding mode leaks it
+		// into every other thread on the same host core.
+		PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
 
 		// store floating point and Gekko registers
 		for (uint32 i = 0; i < 32; i++)

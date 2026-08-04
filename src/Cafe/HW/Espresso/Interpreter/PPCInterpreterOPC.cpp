@@ -48,6 +48,7 @@ void PPCInterpreter_MTFSB1X(PPCInterpreter_t* hCPU, uint32 Opcode)
 	if (crbD != 1 && crbD != 2) 
 	{
 		hCPU->fpscr |= 1 << (31 - crbD);
+		PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
 	}
 	if (Opcode & PPC_OPC_RC) 
 	{

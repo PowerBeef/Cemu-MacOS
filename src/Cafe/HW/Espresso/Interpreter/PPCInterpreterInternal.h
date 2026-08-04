@@ -299,3 +299,15 @@ void PPCInterpreter_PS_MULS1(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_PS_CMPO0(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_PS_CMPU0(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_PS_CMPU1(PPCInterpreter_t* hCPU, uint32 Opcode);
+
+// PowerPC FPSCR[RN] -- the low two bits -- selects the rounding mode, and nothing in this emulator
+// read it: every conversion was a plain C++ cast or a host FP instruction, both of which use the
+// HOST rounding mode, so the guest always got round-to-nearest-even no matter what it asked for.
+// ppc750cl.s catches this as 68 `frsp` failures returning values like 4194304.5, which is not even
+// representable in single precision and therefore cannot be a legal frsp result.
+//
+// Applied by setting the host mode, which covers the recompiler as well as the interpreter: both
+// run guest FP on the host FPU, which is why both arms fail identically. fesetround is not free, so
+// it is applied only when the guest's mode actually changes -- games change it rarely, the
+// conformance suite changes it constantly, and that asymmetry is the whole design.
+void PPCInterpreter_setRoundingModeFromFPSCR(PPCInterpreter_t* hCPU);

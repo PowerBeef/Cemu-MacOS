@@ -1,3 +1,4 @@
+#include <cfenv>
 #include "../PPCState.h"
 #include "PPCInterpreterInternal.h"
 #include "PPCInterpreterHelper.h"
@@ -499,6 +500,21 @@ void PPCInterpreter_MFFS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
+
+void PPCInterpreter_setRoundingModeFromFPSCR(PPCInterpreter_t* hCPU)
+{
+	// Per host thread, not per guest thread: guest threads are fibers sharing a host thread, so the
+	// host FPU mode is shared between them. The context-load path re-syncs on every switch.
+	static thread_local uint32 s_appliedRN = 0xFFFFFFFFu;
+	const uint32 rn = hCPU->fpscr & 3;
+	if (rn == s_appliedRN) [[likely]]
+		return;
+	s_appliedRN = rn;
+	// PowerPC RN encoding, PEM 2.1.4: 00 nearest, 01 toward zero, 10 toward +inf, 11 toward -inf.
+	static constexpr int kHostMode[4] = { FE_TONEAREST, FE_TOWARDZERO, FE_UPWARD, FE_DOWNWARD };
+	fesetround(kHostMode[rn]);
+}
+
 void PPCInterpreter_MTFSF(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();
@@ -509,6 +525,7 @@ void PPCInterpreter_MTFSF(PPCInterpreter_t* hCPU, uint32 Opcode)
 	FM = ((fm&0x80)?0xf0000000:0)|((fm&0x40)?0x0f000000:0)|((fm&0x20)?0x00f00000:0)|((fm&0x10)?0x000f0000:0)|
 	     ((fm&0x08)?0x0000f000:0)|((fm&0x04)?0x00000f00:0)|((fm&0x02)?0x000000f0:0)|((fm&0x01)?0x0000000f:0);
 	hCPU->fpscr = (hCPU->fpr[frB].guint & FM) | (hCPU->fpscr & ~FM);
+	PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
 
 	PPC_ASSERT((Opcode & PPC_OPC_RC) != 0); // update CR1 flags
 
