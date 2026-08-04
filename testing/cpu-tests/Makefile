@@ -52,7 +52,7 @@ CXXFLAGS	:= $(CFLAGS)
 
 # The suite is assembled through the gcc driver, so assembler options must be
 # passed with -Wa,. -m750cl enables the Espresso/Gekko paired-single opcodes;
-# vendor/ holds the unmodified upstream ppc750cl.s, which source/ppc750cl_entry.S
+# vendor/ holds the unmodified upstream ppc750cl.s, which source/ppc750cl_entry.s
 # .includes (it is NOT a source file itself -- it defines no entry symbol).
 # The defsyms are justified in README.md.
 ASFLAGS	:=	-g $(ARCH) \

@@ -24,7 +24,7 @@
 #include <whb/log_cafe.h>
 #include <whb/proc.h>
 
-/* Defined by ppc750cl_entry.S. R3=0, R4=scratch, R5=failure buffer, F1=1.0. */
+/* Defined by ppc750cl_entry.s. R3=0, R4=scratch, R5=failure buffer, F1=1.0. */
 extern int ppc750cl_test(int zero, void *scratch, void *failures, double one);
 
 /* The suite's documented buffer requirements. */

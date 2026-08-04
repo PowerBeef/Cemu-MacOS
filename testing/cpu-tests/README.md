@@ -47,8 +47,8 @@ byte-identical to upstream and can be re-fetched and diffed.
 
 ## Building and running
 
-Needs a devkitPPC + wut toolchain. If devkitPro's installer is unavailable, `docs/testing/00-test-strategy.md`
-§4 documents building one from source without root.
+Needs a devkitPPC + wut toolchain — see [`testing/toolchain/`](../toolchain/README.md), which leads
+with devkitPro's installer and falls back to a from-source build needing no root.
 
 ```sh
 export DEVKITPRO=$HOME/.local/devkitpro

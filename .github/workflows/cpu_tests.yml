@@ -8,19 +8,19 @@
 # are easy to break silently. This catches that.
 #
 # See docs/testing/00-test-strategy.md for the suite and its results.
-name: CPU conformance ROM
+name: Test ROMs
 
 on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'testing/cpu-tests/**'
+      - 'testing/**'
       - '.github/workflows/cpu_tests.yml'
   push:
     branches: [main]
     paths:
-      - 'testing/cpu-tests/**'
+      - 'testing/**'
       - '.github/workflows/cpu_tests.yml'
 
 jobs:
@@ -87,6 +87,13 @@ jobs:
           ./report.py /tmp/synth.log > /tmp/out.txt || true
           cat /tmp/out.txt
           grep -q 'paired-single' /tmp/out.txt
+
+      # The graphics ROM depends on the same fragile cross-toolchain plus wut's GX2
+      # and WHB headers, so it can stop compiling with no signal otherwise. Build
+      # only -- running it needs a window server for the Metal backend.
+      - name: Build the graphics test ROM
+        working-directory: testing/graphics-tests
+        run: make
 
       - uses: actions/upload-artifact@v4
         with:

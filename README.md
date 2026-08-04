@@ -131,7 +131,9 @@ codebase structurally could not use.
 ## Measuring instead of guessing
 
 Most emulator optimisation is folklore. This fork ships a **telemetry harness compiled into the
-core**: 107 counters across CPU, GPU, memory and accuracy, `__thread`-local and cache-line striped,
+core**: every counter across CPU, GPU, memory and accuracy (the exact number is derived onto the
+status page rather than typed here, because a hand-typed count is precisely what has gone stale
+before), `__thread`-local and cache-line striped,
 gated behind a single branch on a global mask so that a disabled build measurably costs nothing.
 
 ```sh
@@ -234,6 +236,9 @@ be enforced on macOS 26, which downgraded a supposed blocker to an optional opti
 | `tools/probes/`          | standalone platform-behaviour probes                   |
 | `tools/icon/`            | renders the app icon from its SVG, reproducibly        |
 | `testing/`               | golden-scene capture, telemetry differ, baselines      |
+| `testing/cpu-tests/`     | PowerPC 750CL conformance suite — the first CPU accuracy signal |
+| `testing/graphics-tests/`| render-pass self-dependency reproducer                 |
+| `testing/toolchain/`     | builds devkitPPC + wut, including with no root         |
 
 `docs/status/index.html` is a generated, self-contained page tracking every item attempted on this
 fork and what it measured — including the ones that were refuted, cancelled or reverted. Open it

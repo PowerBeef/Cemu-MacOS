@@ -39,7 +39,9 @@ cmake --build build                                            # ~2 min clean on
 
 Useful launch flags (`src/config/LaunchSettings.cpp` has the full list): `--force-interpreter` to bypass the recompiler when isolating a JIT bug, `--ppcrec-lower-addr` / `--ppcrec-upper-addr` to bisect which recompiled function broke, and
 `--telemetry <file.jsonl>` / `--telemetry-label <name>` to record the per-frame counters that
-everything below is measured with.
+everything below is measured with, `--telemetry-areas <cpu,gpu,mem,accuracy>` to narrow them, and
+`--forward-console-logging` to route the guest's `OSReport` to stdout — which is how both test
+suites report their results.
 
 There is **no automated test suite for graphics**; verification there is still: it builds, it boots a
 title, the frame looks right, and nothing new appears in the log.
@@ -50,7 +52,9 @@ image, console, keys or SDK. First result: **1,030 failures, recompiler and inte
 identical (zero unique to either arm)**, of which 676 are FPSCR state bits this emulator does not
 maintain and **354 are wrong values — only 3 of them integer**. So the AArch64 backend is exactly
 as correct as the interpreter, and the real defects are in shared FP/paired-single semantics.
-See `docs/testing/00-test-strategy.md`.
+There is also `testing/graphics-tests/`, a render-pass self-dependency reproducer that builds and
+runs but whose counters currently read **zero** — an unresolved result, not a passing test. See
+`docs/testing/00-test-strategy.md` and `testing/graphics-tests/README.md`.
 
 ## Verifying a change
 

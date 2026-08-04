@@ -984,7 +984,9 @@
       "commits": [
         "59d8f21",
         "00ddd2e",
-        "1a2749f"
+        "1a2749f",
+        "b4d3d82",
+        "cbb89f6"
       ],
       "verdict": "`ppc750cl.s` — 23,502 lines of public-domain PowerPC assembly **validated by its author against real Espresso silicon** — now runs as Wii U homebrew. **1,030 failures, and the recompiler and interpreter arms are identical: zero unique to either.** 676 are FPSCR state bits the emulator does not maintain; **354 are wrong values**, of which only **3 are integer**.",
       "note": "The identical-arms result is the load-bearing one: whatever is wrong is in shared decode/semantics, not the AArch64 backend, which is the riskiest part of this fork and had never been conformance-tested. The FPSCR split was established by rebuilding with `IGNORE_FPSCR_STATE=1`, which the suite provides for implementations that skip that bookkeeping and which shifts no test address, so the two runs are directly comparable. Needs no game image, console, keys or SDK — which is why it was possible at all with `Roms/` empty. Failures are grouped by mnemonic in `report.py` (derived via objdump): **131 of the 354 are multiply-add/subtract forms**, which matches a documented Espresso deviation rather than a random distribution. CI gates the test infrastructure but deliberately does not run the ROM — see the strategy doc.",
@@ -995,6 +997,25 @@
         "n": 1
       },
       "ref": "docs/testing/00-test-strategy.md — First result"
+    },
+    {
+      "id": "self-dep-reproducer",
+      "title": "A self-dependency reproducer that runs, and reads zero",
+      "area": "graphics",
+      "status": "landed",
+      "commits": [
+        "a2e441b",
+        "61aec71"
+      ],
+      "verdict": "A homebrew ROM that draws into a colour buffer while sampling that same surface, needing **no game image**. It builds, boots and draws — and **all three `acc.self_dep_*` counters read zero**. Both sides of the covered/uncovered split reading zero means no alias was seen at all.",
+      "note": "Recorded as unresolved rather than filed as done: zero here is not a measurement. The two counters sit on opposite sides of one `continue`, so a draw aliasing its own render target should increment exactly one. Two candidates, unseparated — the test may not create the aliasing the emulator recognises (the detector compares `baseTexture` pointers), or the detector may not fire, having never produced a non-zero reading on any workload. Sampler binding is ruled out (`samplerVars=1`, `location=0`). It did establish the path the whole graphics category depends on: CafeGLSL's `glslcompiler.rpl` loads from `cafeLibs/` and compiles GLSL to Latte inside the emulator, which our decompiler then lowers to MSL.",
+      "measured": {
+        "scene": "self-dependency-rpx",
+        "at_commit": "a2e441b",
+        "date": "2026-08-03",
+        "n": 1
+      },
+      "ref": "testing/graphics-tests/README.md"
     }
   ],
   "refuted": [

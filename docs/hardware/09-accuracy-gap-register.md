@@ -86,8 +86,25 @@ known to hit this. The Vulkan design that solved it is preserved in
 [`../porting/ref-vulkan-self-dependency.md`](../porting/ref-vulkan-self-dependency.md) and has not
 been ported.
 
-**Detectable:** yes — the disabled check *is* the detector. Re-enable it in counting-only mode
-(count, do not flush) to measure how often it fires before paying for the fix.
+**Detectable:** ~~yes — the disabled check *is* the detector. Re-enable it in counting-only mode
+(count, do not flush) to measure how often it fires before paying for the fix.~~
+
+**Done, and the framing above needs two corrections (2026-08-03).**
+
+A counting-only detector was built: `acc.render_self_dependency` for the uncovered case,
+`acc.self_dep_fbfetch` for the case the decompiler *does* handle, and `acc.self_dep_nonpixel` for the
+vertex/geometry case it never can.
+
+1. **"Handling is commented out" is only half true.** `LatteDecompilerAnalyzer.cpp` detects
+   pixel-stage self-dependency at decompile time and `LatteDecompilerEmitMSL.cpp` rewrites the sample
+   into a framebuffer fetch — but **discards the texture coordinate**, so a blur or offset tap
+   silently returns the current fragment instead of the neighbour. The pixel case is covered
+   *incorrectly* rather than uncovered, which is a different defect with a different fix.
+2. **The counters currently read zero**, including against a purpose-built reproducer
+   (`testing/graphics-tests/`, no game image needed). Both sides of the split reading zero means no
+   alias was seen at all — unresolved, not reassuring. **Do not read a zero here as evidence.**
+
+See `docs/testing/00-test-strategy.md` and `testing/graphics-tests/README.md`.
 
 ### 1.3 `DCStoreRange` does not invalidate the GPU buffer cache
 

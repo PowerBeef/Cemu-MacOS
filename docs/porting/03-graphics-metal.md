@@ -246,12 +246,16 @@ Ordered by payoff/risk.
 > cases where it is actually valid is plausibly the larger correctness win, and it is a different
 > piece of work. Size both before building either.
 >
-> **Detector landed 2026-08-03, unmeasured.** `MetalRenderer::NoteSelfDependency` records the
+> **Detector landed 2026-08-03; run, and reads zero.** `MetalRenderer::NoteSelfDependency` records the
 > uncovered case as `acc.render_self_dependency`, the covered case as `acc.self_dep_fbfetch` at the
 > framebuffer-fetch `continue`, and the vertex/geometry subset as `acc.self_dep_nonpixel`. It lives
 > inside the existing `BindStageResources` loop rather than in a new `CachedFBOMtl` method — see the
-> correction to the design bullet below. **It has never been run**: no game image is currently
-> available. Until it is, every frequency claim about this item is a guess.
+> correction to the design bullet below. **Run 2026-08-03 against a purpose-built homebrew ROM**
+> (`testing/graphics-tests/`, which needs no game image): **all three counters read zero.** Both
+> sides of the covered/uncovered split reading zero means no alias was seen at all — either the test
+> does not create the aliasing the emulator recognises, or the detector does not fire. Not yet
+> separated; see `testing/graphics-tests/README.md`. **Until it is, a zero from these counters is not
+> evidence about this item**, and every frequency claim here remains a guess.
 
 Metal has no automatic hazard tracking *within* a render pass. Today the renderer merges render passes aggressively (`GetRenderCommandEncoder()`, `:1768-1836`) and never splits them for read-after-write on an attachment. Any game that samples a render target it is simultaneously drawing to reads stale or undefined data. This is a whole class of visual bugs (BotW lava/waterfall are the known cases, hence the special-case shader hashes in the dead code).
 

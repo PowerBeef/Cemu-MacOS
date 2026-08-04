@@ -6,6 +6,8 @@ were added to size.
 
 ## Status: builds and runs, but does not yet reproduce
 
+**Measured 2026-08-03** at commit `a2e441b`, n=1.
+
 **The ROM works. The counters read zero.** That is an unresolved result, not a passing test, and it
 is written down here rather than quietly filed as done.
 
@@ -65,14 +67,22 @@ change is needed. The ROM reports `RESULT=ERROR reason=glslcompiler.rpl-not-foun
 
 ## Building and running
 
+Toolchain setup — including with no root — is in [`testing/toolchain/`](../toolchain/README.md).
+
 ```sh
 export DEVKITPRO=$HOME/.local/devkitpro
 export DEVKITPPC=$DEVKITPRO/devkitPPC
 export PATH="$DEVKITPRO/tools/bin:$DEVKITPPC/bin:$PATH"
 
 make
-../../bin/TesseraEmu_relwithdebinfo --game self_dependency.rpx \
-    --forward-console-logging --telemetry out.jsonl --telemetry-areas accuracy,gpu
+./run.sh                 # bounded run; prints the acc.self_dep_* readings
+TIMEOUT=90 ./run.sh      # longer
 ```
 
-Read `acc.self_dep_*` from the telemetry, not the screen.
+**The ROM does not stop on its own** — it renders until killed, because the point is to accumulate
+counter samples. `run.sh` bounds and stops it. Killing is safe here: telemetry is written by a
+dedicated thread doing raw `write()`, so at most the in-flight queue is lost.
+
+Do **not** read these counters with `testing/telemetry-report.py` — it prints "non-zero only" and
+skips any counter whose total is zero, which is exactly the current result. `run.sh` reads the
+per-frame arrays directly so the zeros are visible.

@@ -233,8 +233,9 @@ reachable upstream mirrors makes the stock scripts run untouched apart from the 
    others. A stock build assembles `ppc750cl.s` correctly (verified), but do not assume equivalence
    for RPX linking.
 
-**A standalone stock binutils 2.45 also lives in `~/.local/ppc-binutils`.** It is what proved
-`ppc750cl.s` assembles, and it is sufficient for the CPU tests alone.
+A standalone stock binutils (`--target=powerpc-eabi --with-system-zlib`) is enough to *assemble*
+`ppc750cl.s` and was how that was first proved — but it **cannot link a `.rpx`**, which needs wut's
+rules, `elf2rpl` and `libwut.a`. Do not treat it as a shortcut for running the suite.
 
 ## 5. Provenance and licences
 
@@ -261,7 +262,7 @@ forum post and not in wut, WiiUBrew or decaf, assume leaked-SDK origin and do no
 ## 6. Running the tests
 
 ```sh
-export PATH="$HOME/.local/devkitpro/devkitPPC/bin:$PATH"   # or ~/.local/ppc-binutils/bin for CPU only
+export PATH="$HOME/.local/devkitpro/tools/bin:$HOME/.local/devkitpro/devkitPPC/bin:$PATH"
 
 cd testing/cpu-tests && make                               # build ppc750cl
 ./run.sh                     | ./report.py -               # recompiler arm
