@@ -22,9 +22,10 @@ What it gives up is portability. Cemu is cross-platform by design, supports thre
 and reaches Metal on a Mac through MoltenVK. This fork targets one platform and talks to Metal
 directly.
 
-That is a narrower goal, not a better one. Portability is a real feature and this fork abandons it
-completely. The bet is that dropping it buys enough room to fix things that are awkward to fix while
-staying portable, and to use platform APIs that have no cross-platform equivalent.
+Dropping portability is the strategy rather than the goal. A build that only has to be correct and
+fast on one target gets to make assumptions a portable one cannot: 16 KB pages, an asymmetric CPU,
+unified memory, a current Metal, and no fallback path that has to keep working. The aim is for this
+to be the best way to run Wii U games on a Mac.
 
 > [!IMPORTANT]
 > **Status: early.** It builds, boots and plays. It has been verified against two commercial titles,
@@ -43,14 +44,15 @@ staying portable, and to use platform APIs that have no cross-platform equivalen
 
 The status page carries the current diffstat, derived from the repository rather than typed here.
 
-### Which one should you use?
+### Which one should you use today?
 
-**Use upstream Cemu.** It runs on Windows, Linux and macOS, it has years of compatibility work and a
-large community behind it, and it is the project that will actually help you play a game today.
+**Today, use upstream Cemu.** It has years of compatibility work behind it and it will actually run
+your game. This fork has no releases, has been verified against two titles on one machine, and makes
+no compatibility claims yet.
 
-This fork is worth a look if you are on an Apple Silicon Mac and are specifically interested in what
-a single-platform build measures differently, or if you want to read the hardware reference and the
-measurement notes below. It is a research-flavoured fork, not a replacement.
+Changing that answer is the point of the project. The work below is what it takes to get there: fix
+the defects a portable build had no straightforward way to reach, use the platform properly, measure
+everything, and publish the numbers that are still bad. It is early, not unambitious.
 
 ---
 
