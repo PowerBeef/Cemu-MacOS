@@ -1058,7 +1058,7 @@
     },
     {
       "id": "self-dep-reproducer",
-      "title": "A self-dependency reproducer that runs, and reads zero",
+      "title": "The self-dependency reproducer, and why it first read zero",
       "area": "graphics",
       "stage": "s6",
       "status": "landed",
@@ -1066,12 +1066,12 @@
         "a2e441b",
         "61aec71"
       ],
-      "verdict": "A homebrew ROM that draws into a colour buffer while sampling that same surface, needing **no game image**. It builds, boots and draws — and **all three `acc.self_dep_*` counters read zero**. Both sides of the covered/uncovered split reading zero means no alias was seen at all.",
-      "note": "Recorded as unresolved rather than filed as done: zero here is not a measurement. The two counters sit on opposite sides of one `continue`, so a draw aliasing its own render target should increment exactly one. Two candidates, unseparated — the test may not create the aliasing the emulator recognises (the detector compares `baseTexture` pointers), or the detector may not fire, having never produced a non-zero reading on any workload. Sampler binding is ruled out (`samplerVars=1`, `location=0`). It did establish the path the whole graphics category depends on: CafeGLSL's `glslcompiler.rpl` loads from `cafeLibs/` and compiles GLSL to Latte inside the emulator, which our decompiler then lowers to MSL.",
+      "verdict": "A homebrew ROM that draws into a colour buffer while sampling that same surface, needing **no game image**. It reproduces: `acc.self_dep_fbfetch` reads **1.0/frame** while the other two read zero — exactly one of the covered/uncovered pair firing, which is the shape that says the detector works.",
+      "note": "The first run read zero on all three, and the cause was placement rather than the test. `_initTextureBindingPointsMTL` (`LatteDecompilerAnalyzer.cpp:527`) skips assigning a binding point to any unit with `textureRenderTargetIndex != 255`, so a framebuffer-fetch unit is stripped from the resource mapping — `textureCount` was **0** — and both hooks sat inside a loop the covered case can never enter. `acc.self_dep_fbfetch` was unreachable code. It is now counted from `shader->textureRenderTargetIndex[]`, which survives into the shader object. **A counter reading zero can mean the hook is somewhere the case never reaches, which looks identical to the case not occurring.**",
       "measured": {
         "scene": "self-dependency-rpx",
-        "at_commit": "a2e441b",
-        "date": "2026-08-03",
+        "at_commit": "PENDING",
+        "date": "2026-08-04",
         "n": 1
       },
       "ref": "testing/graphics-tests/README.md"
@@ -1444,21 +1444,33 @@
     },
     {
       "id": "rm-self-dep-measure",
-      "title": "Run the self-dependency detector and size item 3.1",
+      "title": "Size item 3.1 on real content",
       "area": "graphics",
       "status": "open",
-      "verdict": "The detector is landed and a reproducer now exists and runs — but **all three `acc.self_dep_*` counters read zero**, so there is still no number. Both sides of the covered/uncovered split reading zero means no alias was seen at all.",
-      "gate": "**No longer blocked on a title** — `testing/graphics-tests/` builds and boots without any game image. Blocked instead on separating two candidates: the test may not create the aliasing the emulator recognises (the detector compares `baseTexture` pointers, and one surface allocation may still resolve to two `LatteTexture` objects), or the detector may not fire when it should — it has never produced a non-zero reading on any workload. One instrumented run logging the FBO attachment and bound-texture pointers at draw time separates them. Sampler binding is already ruled out (`samplerVars=1`, `location=0`).",
-      "ref": "testing/graphics-tests/README.md"
+      "verdict": "**Answered for the synthetic case**: every pixel-stage self-dependency is rewritten to a framebuffer fetch (`acc.self_dep_fbfetch` 1.0/frame, uncovered 0). What is unmeasured is the rate on a real title, and whether any vertex/geometry-stage case exists at all.",
+      "gate": "Needs a bootable title. The synthetic ROM cannot answer how often this happens in practice, nor produce a non-pixel case — nothing in it creates one. Until then the covered/uncovered ratio is known only for a test designed to be covered.",
+      "ref": "testing/graphics-tests/README.md",
+      "measured": {
+        "scene": "self-dependency-rpx",
+        "at_commit": "PENDING",
+        "date": "2026-08-04",
+        "n": 1
+      }
     },
     {
       "id": "rm-fbfetch-coordinate",
       "title": "Restrict the framebuffer-fetch substitution to cases where it is valid",
       "area": "graphics",
       "status": "open",
-      "verdict": "The emitter replaces every sample of a bound render target with a coordinate-free read of the current fragment. Plausibly a larger correctness win than the splitter, and a **decompiler** fix that pass-splitting does not touch.",
-      "gate": "Wants `rm-self-dep-measure` first — the covered/uncovered split decides whether this or the splitter is the bigger defect. Note the existing `framebuffer_fetch = false` debug toggle is not a usable A/B lever until checked: the analyzer skips binding-point assignment without consulting the capability, so the emitter can emit an invalid binding.",
-      "ref": "03-graphics-metal.md — 3.1"
+      "verdict": "**Confirmed by measurement.** The emitter rewrites every pixel-stage self-dependency to a coordinate-free framebuffer fetch — including the offset-sampling case, where it silently returns the current fragment instead of the neighbour. The reproducer alternates same-texel and offset-texel draws and both report as covered.",
+      "gate": "None — the measurement exists. Restrict the substitution in `LatteDecompilerAnalyzer.cpp` to units sampled at their own fragment coordinate; everything else must keep its binding point and fall to the uncovered path. Expect `acc.render_self_dependency` to become non-zero when this lands, which is the check that it worked.",
+      "ref": "03-graphics-metal.md — 3.1",
+      "measured": {
+        "scene": "self-dependency-rpx",
+        "at_commit": "PENDING",
+        "date": "2026-08-04",
+        "n": 1
+      }
     },
     {
       "id": "rm-readback-policy",

@@ -2404,9 +2404,26 @@ bool MetalRenderer::CheckIfRenderPassNeedsFlush(LatteDecompilerShader* shader)
 }
 */
 
+void MetalRenderer::NoteSelfDependencyCovered(const LatteDecompilerShader* shader)
+{
+	// The COVERED half: units the decompiler rewrote into a framebuffer fetch. These are
+	// invisible to BindStageResources because _initTextureBindingPointsMTL strips them from
+	// the resource mapping, so they must be counted from the shader object directly.
+	//
+	// This is where the earlier "all three counters read zero" came from: both hooks were
+	// inside a loop that a covered unit can never enter.
+	for (uint32 i = 0; i < LATTE_NUM_MAX_TEX_UNITS; i++)
+	{
+		if (shader->textureRenderTargetIndex[i] != 255)
+			TLM_INC(Accuracy, AccSelfDepFbFetch);
+	}
+}
+
+
 void MetalRenderer::NoteSelfDependency(const LatteDecompilerShader* shader, const LatteTexture* baseTexture)
 {
 	const auto* fbo = m_state.m_activeFBO.m_fbo;
+
 	if (!fbo)
 		return;
 
@@ -2448,20 +2465,22 @@ void MetalRenderer::BindStageResources(MTL::RenderCommandEncoder* renderCommandE
     auto mtlShaderType = GetMtlShaderType(shader->shaderType, usesGeometryShader);
 
     sint32 textureCount = shader->resourceMapping.getTextureCount();
+	if (tlm::AreaEnabled(tlm::Area::Accuracy)) [[unlikely]]
+		NoteSelfDependencyCovered(shader);
 	for (int i = 0; i < textureCount; ++i)
 	{
 		const auto relative_textureUnit = shader->resourceMapping.getRelativeTextureUnitFromRelativeBindingPoint(i);
 		auto hostTextureUnit = relative_textureUnit;
 
-		// Don't bind textures that are accessed with a framebuffer fetch
+		// Don't bind textures that are accessed with a framebuffer fetch.
+		//
+		// NOTE: this is effectively unreachable, and the covered case is counted elsewhere.
+		// _initTextureBindingPointsMTL (LatteDecompilerAnalyzer.cpp) skips assigning a binding
+		// point to any unit whose textureRenderTargetIndex != 255, so a framebuffer-fetch unit
+		// is stripped from the resource mapping and never appears in this loop. Kept as a
+		// belt-and-braces guard, not as a measurement point.
 		if (m_supportsFramebufferFetch && shader->textureRenderTargetIndex[relative_textureUnit] != 255)
-		{
-			// The COVERED half of the self-dependency picture -- see the block comment above
-			// AccSelfDependency in TelemetryCounters.def. Counted here so the uncovered half,
-			// recorded further down, can be read as a fraction rather than an absolute.
-			TLM_INC(Accuracy, AccSelfDepFbFetch);
             continue;
-		}
 
 		auto textureDim = shader->textureUnitDim[relative_textureUnit];
 		auto texUnitRegIndex = hostTextureUnit * 7;

@@ -4,43 +4,44 @@ Draws into a colour buffer while sampling that same surface as a texture. This i
 `docs/porting/03-graphics-metal.md` item 3.1 is about, and the case the `acc.self_dep_*` counters
 were added to size.
 
-## Status: builds and runs, but does not yet reproduce
+## Status: reproduces — every self-dependency here is rewritten to a framebuffer fetch
 
-**Measured 2026-08-03** at commit `a2e441b`, n=1.
+**Measured 2026-08-04**, n=1, 1,426 frames.
 
-**The ROM works. The counters read zero.** That is an unresolved result, not a passing test, and it
-is written down here rather than quietly filed as done.
+| counter | per frame | total |
+|---|---|---|
+| `acc.self_dep_fbfetch` | **1.0** | 1,426 |
+| `acc.render_self_dependency` | 0 | 0 |
+| `acc.self_dep_nonpixel` | 0 | 0 |
 
-| | |
-|---|---|
-| ROM builds and boots | yes |
-| CafeGLSL compiles both shaders at runtime | yes — `samplerVars=1`, `location=0`, `name=selfTexture` |
-| draws issued | 1/frame over 2,049 frames |
-| `acc.self_dep_fbfetch` | **0** |
-| `acc.render_self_dependency` | **0** |
-| `acc.self_dep_nonpixel` | **0** |
+Exactly one of the first two is non-zero, which is the shape that says the detector is working: a
+draw aliasing its own render target is either covered by the framebuffer-fetch rewrite or it is not.
 
-Both counters being zero is the informative part. They are on opposite sides of one `continue`:
-`acc.self_dep_fbfetch` fires when the decompiler *did* rewrite the sample into a framebuffer fetch,
-`acc.render_self_dependency` when it did not and the texture was bound anyway. **A draw that aliased
-its own render target should increment exactly one of them.** Neither moving means the emulator did
-not see an alias at all.
+**Every draw in this test is covered — including Case B, where the rewrite is wrong.** The ROM
+alternates Case A (samples its own fragment) and Case B (samples 16 texels away) frame by frame, and
+both report exactly one covered unit. So the decompiler applies the substitution unconditionally,
+and for Case B that means discarding the texture coordinate and silently returning the current
+fragment instead of the neighbour. That is `rm-fbfetch-coordinate`, and this is its measurement.
 
-Two candidate explanations, not yet separated:
+`acc.render_self_dependency` reading zero is correct here rather than suspicious: this test is
+pixel-stage only, and the pixel stage is exactly what the rewrite covers. A vertex- or
+geometry-stage self-dependency would land in that counter, and nothing in this ROM creates one.
 
-1. **The test does not create the aliasing the emulator sees.** The colour buffer and the sampled
-   texture share one surface allocation here, but the emulator may resolve them to two distinct
-   `LatteTexture` objects (the detector compares `view->baseTexture` pointers). Or the active FBO at
-   draw time is not the one this code sets — the draw happens between `WHBGfxBeginRender()` and
-   `WHBGfxBeginRenderTV()`, and `gpu.render_passes` is 1/frame where the TV and DRC clears alone
-   should produce more, which is mildly suspicious.
-2. **The detector does not fire when it should.** It has never produced a non-zero reading on any
-   workload, so "it works" is an assumption. Its positive control (`gpu.depth_sampled_draws`, which
-   reads 392/frame in BotW) shares the loop but not the comparison.
+### Why the first attempt read zero
 
-Distinguishing them needs one instrumented run logging the FBO attachment and bound-texture
-`baseTexture` pointers at draw time. Until that is done, **do not treat a zero from these counters as
-evidence about item 3.1.**
+All three counters read zero at first, and the cause was placement, not the test. `BindStageResources`
+iterates `resourceMapping.getTextureCount()`, and `_initTextureBindingPointsMTL`
+(`LatteDecompilerAnalyzer.cpp:527`) **skips assigning a binding point to any unit whose
+`textureRenderTargetIndex != 255`**. A framebuffer-fetch unit is therefore stripped from the resource
+mapping entirely — `textureCount` was **0** — so both hooks sat inside a loop the covered case can
+never enter. `acc.self_dep_fbfetch` was unreachable code.
+
+The covered case is now counted from `shader->textureRenderTargetIndex[]`, which survives into the
+shader object. The uncovered check stays in the loop, where a unit that *does* get a binding point
+and still aliases is genuinely visible.
+
+Worth keeping in mind generally: a counter reading zero can mean the hook is in a place the case
+never reaches, which looks identical to the case not occurring.
 
 ## What it does
 

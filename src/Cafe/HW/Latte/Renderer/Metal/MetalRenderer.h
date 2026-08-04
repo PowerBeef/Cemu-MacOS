@@ -381,6 +381,7 @@ public:
     // Detection only -- records that a draw samples one of its own attachments, and changes
     // nothing about how the draw is issued. See TelemetryCounters.def above AccSelfDependency.
     void NoteSelfDependency(const LatteDecompilerShader* shader, const LatteTexture* baseTexture);
+    void NoteSelfDependencyCovered(const LatteDecompilerShader* shader);
 
     void ClearColorTextureInternal(MTL::Texture* mtlTexture, sint32 sliceIndex, sint32 mipIndex, float r, float g, float b, float a);
 
