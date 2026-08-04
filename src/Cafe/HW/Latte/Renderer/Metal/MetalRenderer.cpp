@@ -1300,6 +1300,31 @@ void MetalRenderer::draw_execute(uint32 baseVertex, uint32 baseInstance, uint32 
     	LatteBufferCache_Sync(indexMax + baseVertex, baseInstance, instanceCount, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, stageUniformModifiedMask);
 	}
 
+	// Item 3.1: render-pass self-dependency.
+	//
+	// Metal does no hazard tracking WITHIN a render pass, and this renderer merges passes
+	// aggressively, so a draw that samples a texture which is also an attachment of the pass it
+	// is joining reads whatever happens to be in tile memory. Ending the encoder first forces
+	// the prior writes to resolve and the sample to come from a finished surface.
+	//
+	// Deliberately BEFORE GetRenderCommandEncoder: once the encoder exists we are already
+	// recording into the pass we would have needed to split, and the detector inside
+	// BindStageResources is therefore too late to act on. It still runs, and still counts.
+	//
+	// Not a general fix for a draw that samples the surface it is writing in the SAME draw --
+	// that is undefined on the real hardware too. What it fixes is read-after-write across
+	// draws, which is the BotW lava/waterfall class and the reason this item exists.
+	if (GetConfig().vk_accurate_barriers) [[likely]]
+	{
+		if (ShaderHasUncoveredSelfDependency(vertexShader) ||
+		    ShaderHasUncoveredSelfDependency(geometryShader) ||
+		    ShaderHasUncoveredSelfDependency(pixelShader))
+		{
+			EndEncoding();
+			TLM_INC(Accuracy, AccSelfDepPassSplit);
+		}
+	}
+
 	// Render pass
 	auto renderCommandEncoder = GetRenderCommandEncoder();
 
@@ -2440,31 +2465,65 @@ void MetalRenderer::NoteSelfDependencyCovered(const LatteDecompilerShader* shade
 }
 
 
-void MetalRenderer::NoteSelfDependency(const LatteDecompilerShader* shader, const LatteTexture* baseTexture)
+const char* MetalRenderer::AliasesActiveAttachment(const LatteTexture* baseTexture) const
 {
 	const auto* fbo = m_state.m_activeFBO.m_fbo;
-
-	if (!fbo)
-		return;
+	if (!fbo || !baseTexture)
+		return nullptr;
 
 	// Compare base textures, not views: a game can sample through a different view (mip, slice,
 	// swizzle) of the same underlying surface it is rendering into, and that still aliases.
-	const char* attachment = nullptr;
 	for (uint32 i = 0; i < LATTE_NUM_COLOR_TARGET; i++)
 	{
 		const LatteTextureView* view = fbo->colorBuffer[i].texture;
 		if (view && view->baseTexture == baseTexture)
-		{
-			attachment = "color";
-			break;
-		}
+			return "color";
 	}
-	if (!attachment)
+	const LatteTextureView* view = fbo->depthBuffer.texture;
+	if (view && view->baseTexture == baseTexture)
+		return "depth";
+	return nullptr;
+}
+
+bool MetalRenderer::ShaderHasUncoveredSelfDependency(LatteDecompilerShader* shader)
+{
+	if (!shader || !m_state.m_activeFBO.m_fbo)
+		return false;
+
+	const sint32 textureCount = shader->resourceMapping.getTextureCount();
+	for (sint32 i = 0; i < textureCount; ++i)
 	{
-		const LatteTextureView* view = fbo->depthBuffer.texture;
-		if (view && view->baseTexture == baseTexture)
-			attachment = "depth";
+		const auto relative_textureUnit = shader->resourceMapping.getRelativeTextureUnitFromRelativeBindingPoint(i);
+
+		// Covered by the framebuffer-fetch rewrite, so it is never bound as a texture and cannot
+		// alias. Note this is the same test BindStageResources uses, and it is why the covered
+		// case needs no split: the aliasing is resolved in the shader, not by the encoder.
+		if (m_supportsFramebufferFetch && shader->textureRenderTargetIndex[relative_textureUnit] != 255)
+			continue;
+
+		uint32 hostTextureUnit = relative_textureUnit;
+		switch (shader->shaderType)
+		{
+		case LatteConst::ShaderType::Vertex:   hostTextureUnit += LATTE_CEMU_VS_TEX_UNIT_BASE; break;
+		case LatteConst::ShaderType::Pixel:    hostTextureUnit += LATTE_CEMU_PS_TEX_UNIT_BASE; break;
+		case LatteConst::ShaderType::Geometry: hostTextureUnit += LATTE_CEMU_GS_TEX_UNIT_BASE; break;
+		default: continue;
+		}
+		if (hostTextureUnit >= MetalState::kNumTextureSlots)
+			continue;
+
+		const LatteTextureViewMtl* textureView = m_state.m_textures[hostTextureUnit];
+		if (!textureView)
+			continue;
+		if (AliasesActiveAttachment(textureView->baseTexture))
+			return true;
 	}
+	return false;
+}
+
+void MetalRenderer::NoteSelfDependency(const LatteDecompilerShader* shader, const LatteTexture* baseTexture)
+{
+	const char* attachment = AliasesActiveAttachment(baseTexture);
 	if (!attachment)
 		return;
 

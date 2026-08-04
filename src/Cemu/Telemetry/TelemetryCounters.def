@@ -269,3 +269,12 @@ TLM_COUNTER(AccOutputShaderCustom,  "acc.output_shader_custom",  "count", Accura
 // path divides the threadgroup count by it. AArch64 udiv by zero does not trap, so the draw
 // dispatched nothing. Counted rather than divided.
 TLM_COUNTER(AccMeshDrawNoVertexCount,"acc.mesh_draw_no_vtx_count","count", Accuracy)
+// Render passes ended early because the next draw samples a texture that aliases an attachment of
+// the pass it would otherwise have joined (item 3.1). This is the cost side of the correctness fix:
+// every split is a pass that did not get merged, so watch it against gpu.render_passes. If it rises
+// steeply the pixel-only framebuffer-fetch fast path is not doing its job.
+TLM_COUNTER(AccSelfDepPassSplit,    "acc.self_dep_pass_splits",  "count", Accuracy)
+// A pipeline was refused because a shader stage had no Metal function. IsCompiled() and
+// WaitForCompiled() both report success in that state, and Metal aborts the process rather than
+// returning an error, so this counter is the only trace such a draw leaves.
+TLM_COUNTER(AccPipelineNoFunction,  "acc.pipeline_no_function",  "count", Accuracy)

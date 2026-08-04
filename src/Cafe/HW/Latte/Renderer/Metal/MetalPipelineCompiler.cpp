@@ -6,6 +6,8 @@
 #include "Cafe/HW/Latte/Renderer/Metal/RendererShaderMtl.h"
 #include "Cafe/HW/Latte/Renderer/Metal/LatteTextureViewMtl.h"
 
+#include "Cemu/Telemetry/Telemetry.h"
+
 #include "Cafe/HW/Latte/Core/FetchShader.h"
 #include "Cafe/HW/Latte/ISA/RegDefines.h"
 #include "Cafe/HW/Latte/Core/LatteConst.h"
@@ -336,6 +338,29 @@ bool MetalPipelineCompiler::Compile(bool forceCompile, bool isRenderThread, bool
 			return false;
 		if (m_pixelShaderMtl && !m_pixelShaderMtl->IsCompiled())
 			return false;
+	}
+
+	// IsCompiled() is not sufficient, and neither is WaitForCompiled(): both report success for a
+	// shader whose MSL failed to compile, so GetFunction() can still be nil here. Metal does not
+	// return an NS::Error for that -- it aborts the process inside newRenderPipelineState with
+	// "vertexFunction must not be nil", from the Latte thread, before the `if (error)` below can
+	// ever run. So check the pointer, which is the only signal that does not lie.
+	//
+	// Found by a guest vertex shader that samples a texture: one unsupported construct in the MSL
+	// emitter took the whole emulator down instead of dropping a draw.
+	{
+		const bool vertexOk = m_vertexShaderMtl && m_vertexShaderMtl->GetFunction();
+		const bool meshOk = !m_usesGeometryShader || (m_geometryShaderMtl && m_geometryShaderMtl->GetFunction());
+		const bool fragmentOk = !m_rasterizationEnabled || (m_pixelShaderMtl && m_pixelShaderMtl->GetFunction());
+		if (!vertexOk || !meshOk || !fragmentOk)
+		{
+			cemuLog_log(LogType::Force,
+				"render pipeline not created: a shader stage has no Metal function (vertex {}, mesh {}, fragment {}). "
+				"The draw is skipped; previously this aborted the process inside newRenderPipelineState.",
+				vertexOk, meshOk, fragmentOk);
+			TLM_INC(Accuracy, AccPipelineNoFunction);
+			return false;
+		}
 	}
 
 	// Compile

@@ -137,6 +137,8 @@ void main()
 #define ORACLE_A_X0     32              /* Case A control strip: [32,48) */
 #define ORACLE_PROBE_Y  128             /* any row; the pattern is column-only */
 #define ORACLE_A_BIAS   1000u
+#define ORACLE_C_X0     64              /* Case C strip: [64,80), vertex-stage read */
+#define ORACLE_C_SRC_X  200             /* the texel the vertex shader reads */
 
 /* Writes each texel's own X. uvec4 out, because the target is UINT_R32. */
 static const char *s_ps_seed = R"(
@@ -158,6 +160,42 @@ void main()
 {
    ivec2 c = ivec2(int(gl_FragCoord.x) + 16, int(gl_FragCoord.y));
    FragColor = uvec4(texelFetch(selfTexture, c, 0).r, 0u, 0u, 0u);
+}
+)";
+
+/* Case C: the VERTEX stage samples the render target.
+ *
+ * This is the case the framebuffer-fetch rewrite can never cover, and it is
+ * uncovered by construction rather than by luck: LatteDecompilerAnalyzer only
+ * fills textureRenderTargetIndex for `shaderType == Pixel`. So this is what
+ * exercises the pass splitter, and the only case in this ROM that does -- every
+ * pixel-stage alias here is swallowed by the rewrite before the renderer sees it.
+ *
+ * Reads one fixed texel the seed pass wrote, hands it to the fragment stage, and
+ * the fragment stage writes it out, so a pixel oracle can check a vertex-stage
+ * read. Without a pass split the vertex fetch races the seed's writes; with one
+ * it must see the finished surface. */
+static const char *s_vs_selfread = R"(
+#version 450
+#extension GL_ARB_shading_language_420pack: enable
+layout(location = 0) in vec2 aPos;
+layout(location = 1) in vec2 aTexCoord;
+layout(location = 0) flat out float SampledValue;
+layout(binding = 0) uniform usampler2D selfTexture;
+void main()
+{
+   SampledValue = float(texelFetch(selfTexture, ivec2(200, 128), 0).r);
+   gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);
+}
+)";
+
+static const char *s_ps_passthrough = R"(
+#version 450
+layout(location = 0) flat in float SampledValue;
+layout(location = 0) out uvec4 FragColor;
+void main()
+{
+   FragColor = uvec4(uint(SampledValue + 0.5), 0u, 0u, 0u);
 }
 )";
 
@@ -246,6 +284,11 @@ static GX2Surface s_olin;       /* LINEAR_SPECIAL destination for GX2CopySurface
 
 static int s_pass, s_fail;
 
+static void skip_test(const char *name, const char *why)
+{
+   WHBLogPrintf("TEST %s SKIP reason=%s", name, why);
+}
+
 static void verdict(const char *name, BOOL ok, const char *expected, const char *got)
 {
    if (ok) { s_pass++; WHBLogPrintf("TEST %s PASS", name); }
@@ -331,7 +374,8 @@ static uint32_t bug_offset(int x) { return (uint32_t)x; }
 static uint32_t exp_same(int x)   { return (uint32_t)x + ORACLE_A_BIAS; }
 static uint32_t bug_same(int x)   { return (uint32_t)x; }
 
-static void run_pixel_oracle(WHBGfxShaderGroup *group, GX2RBuffer *posBuf, GX2RBuffer *uvBuf,
+static void run_pixel_oracle(WHBGfxShaderGroup *group, WHBGfxShaderGroup *groupC,
+                             GX2RBuffer *posBuf, GX2RBuffer *uvBuf,
                              GX2PixelShader *psSeed, GX2PixelShader *psOff, GX2PixelShader *psSame,
                              GX2Sampler *sampler)
 {
@@ -386,6 +430,25 @@ static void run_pixel_oracle(WHBGfxShaderGroup *group, GX2RBuffer *posBuf, GX2RB
    }
    GX2DrawEx(GX2_PRIMITIVE_MODE_QUADS, 4, 0, 1);
    GX2DrawDone();
+
+   /* 3b. Case C, strip [64,80): the VERTEX stage reads the surface being drawn to.
+    * Uncovered by construction -- the analyzer only rewrites pixel-stage samples --
+    * so this is the draw the pass splitter has to notice. */
+   if (groupC) {
+      GX2SetScissor(ORACLE_C_X0, 0, ORACLE_STRIP_W, RT_SIZE);
+      GX2SetFetchShader(&groupC->fetchShader);
+      GX2SetVertexShader(groupC->vertexShader);
+      GX2SetPixelShader(groupC->pixelShader);
+      GX2RSetAttributeBuffer(posBuf, 0, posBuf->elemSize, 0);
+      GX2RSetAttributeBuffer(uvBuf, 1, uvBuf->elemSize, 0);
+      if (groupC->vertexShader->samplerVarCount > 0) {
+         uint32_t loc = groupC->vertexShader->samplerVars[0].location;
+         GX2SetVertexTexture(&s_ort, loc);
+         GX2SetVertexSampler(sampler, loc);
+      }
+      GX2DrawEx(GX2_PRIMITIVE_MODE_QUADS, 4, 0, 1);
+      GX2DrawDone();
+   }
 
    /* 4. Untile into a surface the CPU can index. */
    GX2CopySurface(&s_ort.surface, 0, 0, &s_olin, 0, 0);
@@ -448,6 +511,30 @@ static void run_pixel_oracle(WHBGfxShaderGroup *group, GX2RBuffer *posBuf, GX2RB
             nE, nB, nO, (unsigned)other);
    verdict("selfdep_caseB_offset_texel", nE == ORACLE_STRIP_W, expected, got);
 
+   if (groupC) {
+      int nC = 0;
+      for (int x = ORACLE_C_X0; x < ORACLE_C_X0 + ORACLE_STRIP_W; x++)
+         if (rd(px, pitch, x, ORACLE_PROBE_Y) == (uint32_t)ORACLE_C_SRC_X) nC++;
+      /* If the strip still holds its seeded value, the draw never executed -- which on this
+       * emulator means the pipeline was refused because the vertex shader has no Metal
+       * function (acc.pipeline_no_function). That is an unsupported-shader problem, not a
+       * self-dependency result, and reporting it as FAIL would blame the wrong subsystem. */
+      int nSeed = 0;
+      for (int x = ORACLE_C_X0; x < ORACLE_C_X0 + ORACLE_STRIP_W; x++)
+         if (rd(px, pitch, x, ORACLE_PROBE_Y) == (uint32_t)x) nSeed++;
+      snprintf(expected, sizeof(expected), "%d/%d texels == %d", ORACLE_STRIP_W, ORACLE_STRIP_W,
+               ORACLE_C_SRC_X);
+      snprintf(got, sizeof(got), "matched=%d first=%u", nC,
+               (unsigned)rd(px, pitch, ORACLE_C_X0, ORACLE_PROBE_Y));
+      if (nSeed == ORACLE_STRIP_W)
+         skip_test("selfdep_caseC_vertex_stage",
+                   "draw-did-not-execute-check-acc.pipeline_no_function");
+      else
+         verdict("selfdep_caseC_vertex_stage", nC == ORACLE_STRIP_W, expected, got);
+   } else {
+      WHBLogPrintf("TEST selfdep_caseC_vertex_stage SKIP reason=vertex-selfread-shader-unavailable");
+   }
+
    if (nB == ORACLE_STRIP_W) {
       WHBLogPrintf("TESSERA-GFXTEST oracle DIAGNOSIS: every texel in the strip returned its own "
                    "value, not the neighbour's. That is the coordinate-discarding framebuffer-fetch "
@@ -495,11 +582,15 @@ int main(int argc, char **argv)
    GX2PixelShader *psSeed       = CompilePS(s_ps_seed,           olog, sizeof(olog), 0);
    GX2PixelShader *psOracleOff  = CompilePS(s_ps_oracle_offset,  olog, sizeof(olog), 0);
    GX2PixelShader *psOracleSame = CompilePS(s_ps_oracle_same,    olog, sizeof(olog), 0);
+   GX2VertexShader *vsSelfRead  = CompileVS(s_vs_selfread,       olog, sizeof(olog), 0);
+   GX2PixelShader *psPassthru   = CompilePS(s_ps_passthrough,    olog, sizeof(olog), 0);
    BOOL oracleReady = (psSeed && psOracleOff && psOracleSame) ? oracle_surfaces_init() : FALSE;
    if (oracleReady) {
       GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, psSeed->program, psSeed->size);
       GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, psOracleOff->program, psOracleOff->size);
       GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, psOracleSame->program, psOracleSame->size);
+      if (vsSelfRead) GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, vsSelfRead->program, vsSelfRead->size);
+      if (psPassthru) GX2Invalidate(GX2_INVALIDATE_MODE_CPU_SHADER, psPassthru->program, psPassthru->size);
    } else if (!psSeed || !psOracleOff || !psOracleSame) {
       WHBLogPrintf("TEST selfdep_seed SKIP reason=oracle-shader-compile-failed");
       WHBLogPrintf("TEST selfdep_caseA_same_texel SKIP reason=oracle-shader-compile-failed");
@@ -548,8 +639,20 @@ int main(int argc, char **argv)
 
    /* Runs once, before the counter loop, and prints TEST lines in the same shape as
     * testing/rom-tests so one runner can consume both. */
+   WHBGfxShaderGroup groupC;
+   BOOL haveC = FALSE;
+   if (oracleReady && vsSelfRead && psPassthru) {
+      memset(&groupC, 0, sizeof(groupC));
+      groupC.vertexShader = vsSelfRead;
+      groupC.pixelShader = psPassthru;
+      WHBGfxInitShaderAttribute(&groupC, "aPos", 0, 0, GX2_ATTRIB_FORMAT_FLOAT_32_32);
+      WHBGfxInitShaderAttribute(&groupC, "aTexCoord", 1, 0, GX2_ATTRIB_FORMAT_FLOAT_32_32);
+      WHBGfxInitFetchShader(&groupC);
+      haveC = TRUE;
+   }
    if (oracleReady)
-      run_pixel_oracle(&group, &posBuf, &uvBuf, psSeed, psOracleOff, psOracleSame, &pointSampler);
+      run_pixel_oracle(&group, haveC ? &groupC : NULL, &posBuf, &uvBuf,
+                       psSeed, psOracleOff, psOracleSame, &pointSampler);
 
    uint32_t frame = 0;
    WHBLogPrintf("TESSERA-GFXTEST shader_info psSame.samplerVars=%u psOffset.samplerVars=%u",

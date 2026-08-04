@@ -383,6 +383,16 @@ public:
     void NoteSelfDependency(const LatteDecompilerShader* shader, const LatteTexture* baseTexture);
     void NoteSelfDependencyCovered(const LatteDecompilerShader* shader);
 
+    // "color", "depth", or nullptr. Compares BASE textures, because a game can sample through a
+    // different view (mip, slice, swizzle) of the surface it is rendering into and that still aliases.
+    const char* AliasesActiveAttachment(const LatteTexture* baseTexture) const;
+
+    // Will this shader bind a texture that aliases an attachment of the pass we are about to draw
+    // into? Must be answered BEFORE the encoder is acquired, because the answer decides whether the
+    // current render pass can continue -- which is why it cannot reuse the detector inside
+    // BindStageResources, where the encoder is already open and it is too late to split.
+    bool ShaderHasUncoveredSelfDependency(LatteDecompilerShader* shader);
+
     void ClearColorTextureInternal(MTL::Texture* mtlTexture, sint32 sliceIndex, sint32 mipIndex, float r, float g, float b, float a);
 
     void CopyBufferToBuffer(MTL::Buffer* src, uint32 srcOffset, MTL::Buffer* dst, uint32 dstOffset, uint32 size, MTL::RenderStages after, MTL::RenderStages before);
