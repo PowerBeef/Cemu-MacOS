@@ -1,0 +1,9 @@
+# Tests that are known-broken and deliberately not reported as regressions.
+#
+# Every entry needs a reason and, where one exists, a roadmap id from
+# docs/status/ledger.json. An entry with no reason is indistinguishable from someone
+# silencing a test they did not want to fix, which is how a suite stops meaning anything.
+#
+# Format: one test name per line. Blank lines and # comments ignored.
+#
+# (empty — nothing is currently silenced)

@@ -95,6 +95,12 @@ jobs:
         working-directory: testing/graphics-tests
         run: make
 
+      # Build only, same reasoning as the graphics ROM: running needs a window server.
+      # run_tests.sh is a local gate, per the plan's own condition on wiring it into CI.
+      - name: Build the ROM test suite
+        working-directory: testing/rom-tests
+        run: make
+
       - uses: actions/upload-artifact@v4
         with:
           name: ppc750cl-rom

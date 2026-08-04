@@ -1,0 +1,17 @@
+core_id_in_range PASS
+gx2_mip_base_ge_flat PASS
+gx2_mipmap_size_nonzero PASS
+gx2_surface_align_pow2 PASS
+gx2_surface_size_min PASS
+gx2_tilemode_resolved PASS
+mem_align_128 PASS
+mem_align_256 PASS
+mem_align_32 PASS
+mem_align_4 PASS
+mem_align_4096 PASS
+mem_align_64 PASS
+mem_writable PASS
+osblockmove PASS
+time_advances PASS
+time_monotonic PASS
+yield_returns PASS
