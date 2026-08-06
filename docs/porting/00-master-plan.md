@@ -1301,3 +1301,72 @@ all*. That is a policy question at `LatteTexture.cpp:1311`, not a scheduling one
 
 The open question is whether the guest ever reads those addresses, and it is answerable with
 instrumentation rather than argument. It is gated on a game image like everything else here.
+
+---
+
+### The baseline survives macOS 26.6 — re-measured across the OS boundary
+
+**macOS 26.5.2 → 26.6 was installed 2026-08-04 03:28 local**, twenty-nine minutes after `d9500c5`
+and after every measurement in this repository. Nothing here would ever have noticed: the ledger
+tracks drift against *this* repo, and `--verify` reports a measurement as stale when commits pass it,
+not when Apple ships a driver. The whole Korok table, the 6.9 ms readback drain, the ALU-limiter
+counter capture and `baseline.tsv` were all taken on 26.5.2.
+
+That does not make them false. It makes them **unverified**, and it means the next A/B would have
+compared a treatment arm on 26.6 against a control on 26.5.2 — a second variable, silently
+introduced, in exactly the place this fork has been most careful.
+
+So the control was re-run: **`d9500c5`, n=3, default configuration, Korok Forest, gameplay phase
+selected by `telemetry-report.py`'s splitter**, each run stopped at ~8,900 frames to match the
+references' 8,881 / 8,929 / 8,925.
+
+| | macOS 26.5.2, n=3 | macOS 26.6, n=3 | Δ median | |
+|---|---|---|---|---|
+| frame ms median | 49.90 | 49.90 | +0.0% | overlap |
+| fps median | 20.04 | 20.04 | +0.0% | overlap |
+| draws / frame | 3,520 – 3,528 | 3,520 – 3,523 | +0.0% | overlap |
+| render passes / frame | 202 – 203 | 203 – 204 | +1.0% | overlap |
+| `gpu.readback_forcefinish_ns` | 6.94 – 6.98 | 6.92 – 7.00 | −0.7% | overlap |
+| `gpu.sync_async_ns` | 6.96 – 7.01 | 6.94 – 7.03 | −0.6% | overlap |
+| `gpu.cp_fence_ns` | 15.40 – 15.42 | 15.24 – 15.57 | −0.1% | overlap |
+| `gpu.frame_critical_path_ns` | 35.25 – 35.27 | 35.23 – 35.24 | −0.1% | separated |
+| `gpu.pass_same_fbo_splits` | 73 – 74 | 72 | −1.4% | separated |
+| `gpu.busy_ns` | 17.13 – 17.18 | 16.84 – 17.03 | −0.8% | separated |
+| `gpu.cp_idle_ns` | 19.46 – 19.51 | 18.89 – 18.96 | −2.7% | separated |
+| **`gpu.queue_latency_ns`** | **15.66 – 15.77** | **14.41 – 14.54** | **−8.0%** | separated |
+
+**Every load-bearing claim holds.** Frame time, frame rate, draw count, the readback drain and the
+critical path are unchanged. The scene is still vsync-quantised to three 16.63 ms slots, still
+overruns the two-slot deadline by the same margin, and the drain still costs the same 6.9 ms.
+
+Three things are worth extracting from this beyond the verdict.
+
+**1. "Separated" is not "significant" when the harness is this repeatable.**
+`gpu.frame_critical_path_ns` has non-overlapping ranges — 35.25–35.27 against 35.23–35.24 — and the
+gap is **0.03 ms**. Reporting that as an effect would be absurd, and the only thing that makes it
+look like one is that both arms are tight enough to separate on noise-scale differences. The
+overlap test earns its keep by killing claims, not by blessing them; a separated range still has to
+clear a magnitude bar before it means anything. Same for `pass_same_fbo_splits` at 74 → 72.
+
+**2. The soak biases against the observed direction, which strengthens the result.** GPU-time
+counters climb with window length, and the 26.6 gameplay windows were all *longer* than the 26.5.2
+ones (5,336 / 4,746 / 4,677 frames against 4,652 / 4,674 / 4,666). Within the 26.6 arm the soak is
+visible run-by-run — the longest window has the highest `gpu.busy_ns` (17.03) and the shortest the
+lowest (16.84). So a longer arm should have *lost* on GPU time and instead won by 0.8%. The true
+effect is at worst neutral.
+
+**3. The one real move is `gpu.queue_latency_ns`, and it is a curiosity rather than a lead.** 15.7
+to 14.5 ms, tight in both arms, cleanly separated. It does not track frame rate: that was already
+refuted, when `queue_latency_ns` moved 14.29 → 14.69 ms between the 20 fps and 30 fps arms of the
+`GX2DrawdoneSync` experiment while the frame rate moved 50%. Nothing follows from it, and it is
+recorded so the next person who sees 14.5 where the docs say 15.7 does not go looking for a
+regression.
+
+> **No attribution is claimed, and none is available.** The two arms differ by the OS *and* by every
+> commit between `cebe17f` and `d9500c5` — the FP-conformance fixes and the self-dependency pass
+> splitter. The diff proves it: six accuracy counters (`acc.self_dep_fbfetch`,
+> `acc.self_dep_pass_splits`, `acc.pipeline_no_function`, `acc.output_shader_custom`,
+> `acc.mesh_draw_no_vtx_count`, `acc.self_dep_nonpixel`) are absent from the 26.5.2 arm entirely.
+> The deliverable here is **a control on the current driver**, which is what every subsequent A/B
+> needs. Explaining the 8% would need a same-commit pair across the OS boundary, and that binary no
+> longer exists.

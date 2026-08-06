@@ -150,6 +150,22 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
   to quote. The hash reaches every translation unit through `precompiled.h`, so refreshing it is a
   full rebuild.
 
+- **The host OS is a variable and nothing in this repo tracks it.** Every telemetry header records
+  the build, the config and the title, and none of them records the macOS version. `--verify` marks
+  a measurement stale when *commits* pass it; a driver update passes it invisibly. **macOS 26.5.2 →
+  26.6 landed 2026-08-04 03:28**, twenty-nine minutes after `d9500c5`, so every number recorded
+  before that date was taken on 26.5.2 or earlier. Check `sw_vers` and
+  `/Library/Receipts/InstallHistory.plist` before comparing against a stored control, and re-run the
+  control rather than assuming. In this case the baseline held — see the master plan — but that was
+  a result, not a given.
+
+- **"Separated" is not "significant" when the harness is this repeatable.** Non-overlapping n=3
+  ranges are the standard bar here, and they earn their keep by *killing* claims. They do not bless
+  one: across the 26.6 re-measurement `gpu.frame_critical_path_ns` separated cleanly, 35.25–35.27
+  against 35.23–35.24, on a gap of **0.03 ms**. Both arms are tight enough to separate on
+  noise-scale differences, so a separated range still has to clear a magnitude bar before it means
+  anything.
+
 - **A counter reading zero is not evidence until you check it has an increment site.** Sweeping every
   `TLM_COUNTER` declaration against `src/` found **13 that nothing ever writes**:
   `gpu.pipelines_compiled` and **all twelve `mem.*`**. (`acc.render_self_dependency` was on that list
@@ -239,6 +255,14 @@ within 1.5%, frame time and fps to the decimal. The GPU number is the one that m
 became 17.12–17.17. That is **not** a regression, it is the soak described below — GPU time in this
 scene rises ~5% over four minutes of continuous play at constant draw count, so the median depends
 on how long you recorded.
+
+**Re-verified across the macOS 26.5.2 → 26.6 boundary at `d9500c5`, n=3 (2026-08-06), and the column
+holds**: frame time, fps, draws, `readback_forcefinish` and the critical path all overlap the
+26.5.2 ranges. `gpu.busy_ns` reads 16.84–17.03 and `gpu.cp_idle_ns` 18.89–18.96, both marginally
+*below* the old ranges despite longer recording windows. The only substantive move is
+`gpu.queue_latency_ns`, 15.7 → 14.5 ms, which does not track frame rate and is a curiosity. See the
+master plan; no attribution is available, because the two arms differ by the OS and by the commits
+between `cebe17f` and `d9500c5`.
 
 **The forest is not GPU-bound and is not draw-bound** — it issues *fewer* draws than the shrine and
 leaves the GPU idle ~66% of the time. What it is, is **vsync-quantised**: 20.04 fps is exactly the
