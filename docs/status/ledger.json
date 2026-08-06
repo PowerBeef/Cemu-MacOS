@@ -1437,6 +1437,25 @@
       "verdict": "`3d4fca9` through `a2761e9` were each claimed by the entry describing the **next** commit, and `--verify` reported a clean ledger throughout — it finds a commit *nothing* claims and is blind to one claimed by the *wrong* entry, because from its side that looks claimed. Three of the five stamps were not merely stale but impossible: `fbfetch-coordinate-sized` was stamped at a commit predating both instruments its measurement needs. `--verify` now replays `ledger.json`'s own history to find each entry's birth commit and reports one that changed code the entry does not claim.",
       "note": "The cause is mechanical, which is what made it checkable: writing an entry for work still in the working tree and reaching for its hash with `git log -1` returns HEAD, which is the **previous** commit. Two design choices carry the check. **Prose is not the trigger** — a record commit here routinely updates CLAUDE.md or a testing README alongside the entry, and triggering on any file outside `docs/status/` fires on 60 of 71 correct entries including all 55 the genesis commit back-filled; `src/`, `testing/` and `tools/` are the signal. And it has a **structural blind spot that is not a bug**: an entry born in a docs-only work commit is byte-for-byte the same shape as a record commit, so two of the five are invisible to it and only reading the content catches those. New severity `SUSPECT`, kept apart from `WARN` because \"check this attribution\" and \"this number is old\" call for different actions. **Positive control:** five against the ledger at `c33153f`, none against the corrected one. The fifth was found by the check rather than by the audit that prompted it — `ab78ce7` created the reproducer's `run.sh` while filing that entry and claiming the commit elsewhere.",
       "ref": ".claude/rules/status-tracker.md — The check that catches a *wrong* claim, not just a missing one"
+    },
+    {
+      "id": "shader-preload-measured",
+      "title": "Shader preload measured for the first time, and MTLBinaryArchive cancelled on the number",
+      "area": "graphics",
+      "stage": "s5",
+      "status": "cancelled",
+      "commits": [
+        "14551d8"
+      ],
+      "verdict": "The graphics plan called binary caching \"the highest-value item after Phase 0\" and said MSL recompilation \"dominates cold-start time\", with no number — because the timer that would produce one was `#if BOOST_OS_WINDOWS` and had **never executed on this fork's only platform**. Un-gated and split: BotW preloads **1,139 shaders in 117–169 ms and 1,567 pipelines in 296–319 ms, 434–466 ms total**, RSS +173 MB. An `MTLBinaryArchive` is consulted only once an `MTLFunction` exists, so the frontend runs either way and **296–319 ms is the item's entire ceiling** — roughly 2 s extrapolated to MK8's 10,757 pipelines.",
+      "note": "Three things beyond the number. **The item's mental model was inverted**: with the cache removed the same line reads 0 shaders in 5 ms, so the cache does not make launch slow, it *is* the launch cost — remove it and the work moves into gameplay as first-encounter compilation. **Apple's header argues against the design**: `MTLBinaryArchive.h` states Metal already maintains a per-app compiled-code cache that accelerates pipeline creation after first use, that the archive exists to accelerate the **first** run, and that updating one at runtime is \"not recommended\" — which is exactly what Phase 2 proposed, for a first-run benefit an emulator generating shaders from guest bytecode cannot obtain. **And that system cache is why the frontend looks free**: `$(getconf DARWIN_USER_CACHE_DIR)com.apple.metal` is 111 MB here and its mtime tracks our runs, so 0.11 ms/shader is almost certainly Apple answering, not us compiling. Recorded in CLAUDE.md as a measurement trap. The corrected instrument also fixed a comment of my own that had the two stages backwards, which inverts the conclusion.",
+      "measured": {
+        "scene": "botw-shadercache-preload",
+        "at_commit": "14551d8",
+        "date": "2026-08-06",
+        "n": 3
+      },
+      "ref": "00-master-plan.md — Shader preload, measured at last"
     }
   ],
   "refuted": [
@@ -1671,15 +1690,6 @@
       "ref": "00-master-plan.md — Where GPU time actually goes"
     },
     {
-      "id": "rm-binary-archive",
-      "title": "`MTLBinaryArchive` — stop recompiling every shader on every launch",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "The persistent cache stores pipeline **state descriptors**, not compiled binaries, and replays them on the loading screen. The `MTLBinaryArchive` code that would fix this exists in `MetalPipelineCompiler.cpp` and is entirely commented out.",
-      "gate": "None. Highest-value item in the graphics plan after the correctness backlog; affects launch time rather than steady-state frame rate.",
-      "ref": "03-graphics-metal.md — Phase 2 — Shader binary caching"
-    },
-    {
       "id": "rm-inpass-copy",
       "title": "In-pass streamout copy (revive)",
       "area": "graphics",
@@ -1870,6 +1880,15 @@
       "verdict": "The MetalState::m_textures sizing bug (54 entries for indices reaching 81, so geometry-shader bindings wrote into m_uniformBufferOffsets) is still live at upstream's tip, as is the graphic-pack sampler override writing through into LatteGPUState.contextNew.SQ_TEX_SAMPLER. Both are small, portable and reviewable by reading. The three defects in gp-output-shader-path are upstream's too.",
       "gate": "Upstream's contribution policy asks that submitted code be written and understood by a human, and this fork's changes were written with AI assistance. Anything sent must be re-derived and written by a person. That is a real cost and the reason this is deferred rather than open — see the note in README.md.",
       "ref": "README.md"
+    },
+    {
+      "id": "rm-archive-as-air-library",
+      "title": "Reload a serialized binary archive as a plain metallib, to skip the MSL frontend",
+      "area": "graphics",
+      "status": "deferred",
+      "verdict": "The only version of shader caching here with a large number attached: a probe measured 1,396 ms of MSL compilation collapsing to 2.3 ms by reloading a harvested `.binary.metallib` through `newLibraryWithURL:`. Unlike the cancelled `binaryArchives` design, this skips the frontend rather than the backend.",
+      "gate": "**First establish whether the OS cache already makes the frontend free in steady state.** Our warm frontend is 0.11 ms/shader against a probe's 57.7 ms/shader cold, and `com.apple.metal` is 111 MB on this machine — if macOS is already serving it, this closes too. Three further obstacles, all real: the reload behaviour is **undocumented** (Apple documents `makeBinaryArchive` and the offline `metal-source`/`metal-tt` tools, not this); Apple's warning about runtime-updated archives still applies; and **every entry point this fork emits is named `main0`** (`LatteDecompilerEmitMSL.cpp:4161`, looked up at `RendererShaderMtl.cpp:391`), so a multi-shader archive collapses to Metal-assigned mangles with no documented mapping back — unique names would invalidate every existing cache entry.",
+      "ref": "00-master-plan.md — Shader preload, measured at last"
     }
   ],
   "unattributed": [],

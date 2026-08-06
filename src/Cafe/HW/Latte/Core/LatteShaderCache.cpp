@@ -28,6 +28,7 @@
 #include "Cafe/TitleList/GameInfo.h"
 
 #include "util/helpers/SystemException.h"
+#include "util/SystemInfo/SystemInfo.h"
 #include "Cafe/HW/Latte/Common/RegisterSerializer.h"
 #include "Cafe/HW/Latte/Common/ShaderSerializer.h"
 #include "util/helpers/Serializer.h"
@@ -360,12 +361,13 @@ void LatteShaderCache_Load()
 	uint64 cacheTitleId = CafeSystem::GetForegroundTitleId();
 
 	const auto timeLoadStart = now_cached();
-	// remember current amount of committed memory
-#if BOOST_OS_WINDOWS
-	PROCESS_MEMORY_COUNTERS pmc1;
-	GetProcessMemoryInfo(GetCurrentProcess(), &pmc1, sizeof(PROCESS_MEMORY_COUNTERS));
-	LONGLONG totalMem1 = pmc1.PagefileUsage;
-#endif
+	// Resident set before the cache load, so the log line below can report what it cost.
+	// Was `PROCESS_MEMORY_COUNTERS::PagefileUsage` behind `#if BOOST_OS_WINDOWS`, i.e. nothing
+	// at all on this fork's only platform. `QueryRamUsage()` is the portable equivalent already
+	// in the tree (`util/SystemInfo/SystemInfoMac.cpp` -> `task_info` -> `resident_size`).
+	// Note it is RSS, not commit: the two are not the same number and old Windows figures are
+	// not comparable to these.
+	const uint64 ramBeforeLoad = QueryRamUsage();
 	// init shader parallel compile queue
 	LatteShaderCache_initCompileQueue();
 	// create directories
@@ -488,22 +490,47 @@ void LatteShaderCache_Load()
 	LatteShaderCache_ShowProgress(LoadShadersUpdate, false);
 
 	LatteShaderCache_updateCompileQueue(0);
-	// write load time and RAM usage to log file (in dev build)
-#if BOOST_OS_WINDOWS
-	const auto timeLoadEnd = now_cached();
-	const auto timeLoad = std::chrono::duration_cast<std::chrono::milliseconds>(timeLoadEnd - timeLoadStart).count();
-	PROCESS_MEMORY_COUNTERS pmc2;
-	GetProcessMemoryInfo(GetCurrentProcess(), &pmc2, sizeof(PROCESS_MEMORY_COUNTERS));
-	LONGLONG totalMem2 = pmc2.PagefileUsage;
-	LONGLONG memCommited = totalMem2 - totalMem1;
-	cemuLog_log(LogType::Force, "Shader cache loaded with {} shaders. Commited mem {}MB. Took {}ms", numLoadedShaders, (sint32)(memCommited/1024/1024), timeLoad);
-#endif
+
+	// Cold-launch cost, split into its two halves.
+	//
+	// This block was `#if BOOST_OS_WINDOWS`, so on the only platform this fork targets it had
+	// never run once -- which is why "every shader recompiles from MSL on every launch" was a
+	// structural claim with no number attached to it. It also stopped *before*
+	// LatteShaderCache_LoadPipelineCache below, so even on Windows it excluded pipeline replay,
+	// and replay is where the Metal backend does its compiling.
+	//
+	// Reported as two numbers rather than one because they are different work with different
+	// fixes, and the boundary is sharper than it looks. `LatteShaderCache_updateCompileQueue(0)`
+	// just above drains through `LatteShader_FinishCompilation` (`LatteShader.cpp:379`), whose
+	// `:386` is `WaitForCompiled()` -- so the MSL frontend (bytecode -> MSL -> `MTLLibrary`)
+	// finishes inside the `shaders` bucket. By the time pipeline replay runs, the
+	// `RendererShaderMtl` objects are already compiled and the pipeline compiler only casts
+	// them, so `pipelines` is `MTLFunction` -> PSO, pure backend.
+	//
+	// That matters for `rm-binary-archive`: an `MTLBinaryArchive` attached via
+	// `binaryArchives` is consulted only once a function exists, so **`pipelines` is exactly
+	// and only that item's ceiling**.
+	const auto timeShadersEnd = now_cached();
+	const auto timeShaders = std::chrono::duration_cast<std::chrono::milliseconds>(timeShadersEnd - timeLoadStart).count();
+
 	LatteShaderCache_finish();
 	// if Vulkan or Metal then also load pipeline cache
 #if defined(ENABLE_VULKAN) || defined(ENABLE_METAL)
 	if (g_renderer->GetType() == RendererAPI::Vulkan || g_renderer->GetType() == RendererAPI::Metal)
         LatteShaderCache_LoadPipelineCache(cacheTitleId);
 #endif
+
+	const auto timeLoadEnd = now_cached();
+	const auto timePipelines = std::chrono::duration_cast<std::chrono::milliseconds>(timeLoadEnd - timeShadersEnd).count();
+	const auto timeTotal = std::chrono::duration_cast<std::chrono::milliseconds>(timeLoadEnd - timeLoadStart).count();
+	const sint64 ramDeltaMB = ((sint64)QueryRamUsage() - (sint64)ramBeforeLoad) / (1024 * 1024);
+	// The pipeline count is the denominator: without it a fast arm cannot be told apart from
+	// one that simply replayed fewer pipelines. Signed and printed without a forced '+' so a
+	// negative RSS delta does not read as "+-3MB".
+	cemuLog_log(LogType::Force,
+				"Shader cache loaded: {} shaders in {}ms, {} pipelines replayed in {}ms, total {}ms. RSS delta {}MB",
+				numLoadedShaders, timeShaders,
+				(uint32)g_shaderCacheLoaderState.loadedPipelines, timePipelines, timeTotal, ramDeltaMB);
 
 
 	g_renderer->BeginFrame(true);

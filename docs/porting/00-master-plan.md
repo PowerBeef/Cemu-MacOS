@@ -1414,3 +1414,73 @@ regression.
 > The deliverable here is **a control on the current driver**, which is what every subsequent A/B
 > needs. Explaining the 8% would need a same-commit pair across the OS boundary, and that binary no
 > longer exists.
+
+---
+
+### Shader preload, measured at last — and `MTLBinaryArchive` is cancelled
+
+Phase 2 of `03-graphics-metal.md` called shader binary caching "the highest-value item after Phase 0"
+and said MSL recompilation "dominates cold-start time." The claim had no number attached, because
+**the instrument that would have produced one had never executed on this platform**: the shader-cache
+load timer at `LatteShaderCache.cpp:492-500` was inside `#if BOOST_OS_WINDOWS`. It also stopped
+*before* `LatteShaderCache_LoadPipelineCache`, so it excluded pipeline replay even on Windows — and
+replay is where the Metal backend does its compiling.
+
+Un-gated, made portable (`QueryRamUsage()`, already in the tree, rather than
+`PROCESS_MEMORY_COUNTERS`), extended past replay, and split in two. BotW, `14551d8`, n=3:
+
+| stage | work | time | per item |
+|---|---|---|---|
+| `shaders` — Latte bytecode → MSL → `MTLLibrary` | 1,139 shaders | 117 – 169 ms | ~0.11 ms |
+| `pipelines` — `MTLFunction` → PSO | 1,567 pipelines | **296 – 319 ms** | ~0.20 ms |
+| total | | **434 – 466 ms** | RSS +173 MB |
+
+With our cache removed (n=2) the same line reads **0 shaders, 5 ms, RSS +16 MB**. That is the
+positive control for the instrument, and it also corrects the item's mental model: **the cache does
+not make launch slow, it *is* the launch cost.** Remove it and launch becomes instant, because the
+work moves into gameplay as first-encounter compilation. The 1,567 figure independently matches an
+offline parse of `_mtlpipeline.bin`'s file table.
+
+**The split is sharper than it looks, and it decides the item.** `LatteShaderCache_updateCompileQueue(0)`
+drains through `LatteShader_FinishCompilation` (`LatteShader.cpp:379`), whose `:386` is
+`WaitForCompiled()` — so the MSL frontend finishes inside the `shaders` bucket, and by the time
+replay runs the `RendererShaderMtl` objects are already compiled. `pipelines` is pure backend.
+
+An `MTLBinaryArchive` attached via `MTLRenderPipelineDescriptor.binaryArchives` is consulted only
+once an `MTLFunction` exists, and the only source of one here is
+`LibraryFromSource()` → `newLibrary(m_mslCode)` (`RendererShaderMtl.cpp:377,391`). **So the 2026-08-03
+dispute block was right and F4's payoff sentence was wrong: the frontend runs either way, and
+`pipelines` — 296–319 ms — is the item's entire ceiling.** At MK8's cache size (9,228 shaders,
+10,757 pipelines by the same offline parse, ~6.9× BotW) that extrapolates to roughly 2 s.
+
+**Apple's own header says not to do it.** `MTLBinaryArchive.h` states that Metal already maintains a
+per-app cache of compiled code that "will automatically accelerate pipeline state creation after a
+pipeline is created for the first time," that `MTLBinaryArchive` exists to accelerate **the first
+run**, and that updating one at runtime in a shipping app is **"not recommended"** — naming
+corruption resiliency and storage management as the reasons, and pointing at the system cache as
+handling them transparently. Phase 2's design is runtime harvest plus debounced `serializeToURL`
+plus crash-atomic rename: precisely the burden Apple names, in exchange for a first-run benefit an
+emulator that generates its shaders from guest bytecode cannot obtain.
+
+That system cache is real and on this machine: `$(getconf DARWIN_USER_CACHE_DIR)com.apple.metal`,
+**111 MB**, `functions*.data`/`.list`, mtime tracking our runs. It is the most likely explanation for
+a 0.11 ms/shader frontend, which is far too fast for real MSL compilation — and it means **every
+shader-compile measurement on this fork has been taken with Apple's cache warm.** Recorded in
+CLAUDE.md as a trap.
+
+**Verdict: Phase 2 as designed is cancelled.** 296–319 ms, targeting the one half macOS already
+caches for free, against Apple's explicit advice, for 2–3 days of work.
+
+**One spike survives, deferred.** A *serialized* archive is reportedly loadable as a plain metallib
+via `newLibraryWithURL:`, which would skip the frontend — a probe measured 1,396 ms of MSL
+compilation collapsing to 2.3 ms. That is the only version of this idea with a large number attached.
+It is deferred rather than open because three things stand in the way: the behaviour is undocumented;
+Apple's warning about runtime-updated archives still applies; and **every entry point this fork emits
+is named `main0`** (`LatteDecompilerEmitMSL.cpp:4161`, looked up at `RendererShaderMtl.cpp:391`), so a
+multi-shader archive collapses to Metal-assigned mangles with no documented mapping back. Unique
+names would invalidate every existing cache entry. Its gate is first to establish whether the OS
+cache already makes the frontend free in steady state — if it does, this closes too.
+
+> Two figures above come from a synthetic probe on one M2, not from this emulator: the 57.7 ms/shader
+> cold frontend and the 1,396 ms → 2.3 ms archive reload. They are indicative of the mechanism, not
+> measurements of our workload. The BotW table is ours.

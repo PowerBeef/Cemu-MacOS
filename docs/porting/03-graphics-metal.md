@@ -61,7 +61,16 @@ Verified against the upstream mirror: that tree has no `MTL4*.hpp`, no `MTLResid
 
 This is *why* `MetalSamplerCache.cpp:156` says `// TODO: set lod bias` — the API did not exist. Your minimum deployment target is exactly the version that adds it, and `2948dd1e` metal-cpp exposes `MTL::SamplerDescriptor::setLodBias`. A long-standing correctness gap (mip selection wrong in every game that uses LOD bias — very common for terrain/detail textures) becomes a 3-line fix.
 
-### F4. `MTLBinaryArchive` is not deprecated and is the right answer, and it carries the AIR slice too.
+### F4. ~~`MTLBinaryArchive` is not deprecated and is the right answer~~ — RESOLVED 2026-08-06: the payoff sentence was wrong, and Phase 2 is cancelled.
+
+> **The dispute below was settled, against this finding.** The MSL frontend runs either way, so the
+> archive's entire ceiling is the `MTLFunction` → PSO backend, measured at **296–319 ms** on BotW
+> (1,567 pipelines). `MTLBinaryArchive.h` also states that Metal already maintains a per-app cache
+> that accelerates pipeline creation after first use, that the archive exists to accelerate the
+> **first** run, and that updating one at runtime is **"not recommended"** — which is exactly the
+> design Phase 2 proposed. See `00-master-plan.md` — *Shader preload, measured at last*. Phase 2 is
+> `cancelled`; one deferred spike (`rm-archive-as-air-library`) survives. The rest of this finding
+> is left intact because its API facts are still correct and the *reasoning* is the useful part.
 
 Verified: `MTLBinaryArchive.h` carries no `API_DEPRECATED`; macOS 26 continues to extend it (`addMeshRenderPipelineFunctions` macOS 15.0). Apple's *Using the Metal 4 compilation API* article states harvested sets serialize to binary archives and "**both Metal 3 and 4 can load binary archives**". Critically, *Creating binary archives from device-built pipeline state objects* states:
 
@@ -144,9 +153,20 @@ These are the pieces where the Vulkan backend is genuinely ahead. **Extract them
 
 ---
 
-## Phase 2 — Shader binary caching (highest-value item after Phase 0)
+## Phase 2 — Shader binary caching — **CANCELLED 2026-08-06, measured**
 
-**Today, every MSL shader is recompiled from source on every launch.** A large game has thousands of shaders (`_mtlshaders.bin` holds Latte bytecode only); Vulkan caches SPIR-V (`_spirv.bin`); Metal caches nothing. This dominates cold-start time and is the main source of in-game shader stutter.
+> **Do not implement the design below.** It was written before anyone had measured shader preload on
+> this fork, because the instrument was `#if BOOST_OS_WINDOWS` and had never run here. Measured: BotW
+> preloads **1,139 shaders in 117–169 ms and 1,567 pipelines in 296–319 ms**, 434–466 ms total. The
+> archive can only touch the second number — the MSL frontend completes before replay begins — and
+> Apple's own header advises against runtime-harvested archives, because macOS already keeps a
+> per-app compiled-code cache that does this automatically after first use. Full reasoning and the
+> one surviving spike are in `00-master-plan.md` — *Shader preload, measured at last*.
+>
+> The design is kept because it is a correct description of how one *would* build a runtime archive,
+> and because the reason it is wrong is more useful than its deletion.
+
+**Today, every MSL shader is recompiled from source on every launch.** A large game has thousands of shaders (`_mtlshaders.bin` holds Latte bytecode only); Vulkan caches SPIR-V (`_spirv.bin`); Metal caches nothing. ~~This dominates cold-start time and is the main source of in-game shader stutter.~~ (The first clause is false — see above. The second is untested and is a different mechanism: shaders met for the first time mid-gameplay are in no cache, so neither the pipeline cache nor an archive helps them.)
 
 ### The evaluation
 

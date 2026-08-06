@@ -166,6 +166,28 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
   noise-scale differences, so a separated range still has to clear a magnitude bar before it means
   anything.
 
+- **macOS keeps its own Metal shader cache, and it makes every compile measurement here suspect.**
+  `$(getconf DARWIN_USER_CACHE_DIR)com.apple.metal` holds `functions*.data`/`.list` — **111 MB on
+  this machine**, shared across processes, and its mtime tracks our runs. `MTLBinaryArchive.h` says
+  so in as many words: Metal "maintains a separate cache of pipeline states on behalf of each app
+  that contains all compiled code," which "will automatically accelerate pipeline state creation
+  after a pipeline is created for the first time." So the *second* time a shader is compiled it is
+  nearly free, in a different process, after a relaunch. Our warm preload measures a frontend at
+  **0.11 ms/shader**, which is far too fast to be real MSL compilation. Anything that looks like
+  "shader compilation is cheap here" is probably Apple's cache answering. To measure a genuinely
+  cold compile you must `mv` that directory aside and restore it — never `rm` it, it is shared with
+  every Metal client on the machine — and note that it is purgeable, so the OS may empty it under
+  disk pressure and turn a warm arm cold mid-experiment.
+
+- **Shader preload is two stages and the boundary is not where it looks.**
+  `LatteShaderCache_updateCompileQueue(0)` drains through `LatteShader_FinishCompilation`
+  (`LatteShader.cpp:379`), whose `:386` is `WaitForCompiled()` — so **the MSL frontend finishes
+  before pipeline replay begins**. The `shaders` half of the log line is bytecode → MSL →
+  `MTLLibrary`; the `pipelines` half is `MTLFunction` → PSO and nothing else. Getting this backwards
+  inverts the conclusion about shader caching, because an `MTLBinaryArchive` can only ever touch the
+  second. BotW at `14551d8`, n=3: **1,139 shaders in 117–169 ms, 1,567 pipelines in 296–319 ms,
+  434–466 ms total, RSS +173 MB**; with the cache removed, 0 shaders in 5 ms.
+
 - **A counter reading zero is not evidence until you check it has an increment site.** Sweeping every
   `TLM_COUNTER` declaration against `src/` found **14 that nothing ever writes**:
   `gpu.pipelines_compiled`, **all twelve `mem.*`**, and `acc.readback_queued`. (`acc.render_self_dependency` was on that list
