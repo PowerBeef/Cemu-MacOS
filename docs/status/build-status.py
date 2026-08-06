@@ -232,6 +232,109 @@ def check_coverage(ledger: dict, commits: list[dict]) -> list[dict]:
     return [c for c in commits if c["full"] not in claimed_full]
 
 
+LEDGER_REL = "docs/status/ledger.json"
+
+# What counts as "this commit did the work", as opposed to "this commit wrote it down".
+#
+# Prose is not the signal. A record commit in this repo routinely updates CLAUDE.md, a porting
+# doc or a testing README in the same breath as the ledger entry -- that IS the recording. Using
+# any-file-outside-docs/status/ as the trigger fires on 60 of 71 correct entries, including all
+# 55 back-filled by the tracker's own genesis commit, and a check that noisy gets switched off.
+#
+# Code and test artefacts are the signal: if the birth commit changed these, it did the work.
+WORK_PREFIXES = ("src/", "testing/", "tools/")
+
+
+def _is_work_file(path: str) -> bool:
+    return path.startswith(WORK_PREFIXES) and not path.endswith(".md")
+
+
+def entry_origins() -> dict[str, dict]:
+    """id -> {commit, files} for the commit that first carried each entry.
+
+    Derived by replaying `ledger.json`'s own history, so it costs one `git show` per commit
+    that ever touched the file (33 as of writing, and it only grows with ledger edits).
+    """
+    origins: dict[str, dict] = {}
+    seen: set[str] = set()
+    for rev in git("log", "--format=%H", "--reverse", "--", LEDGER_REL).split():
+        try:
+            data = json.loads(git("show", f"{rev}:{LEDGER_REL}"))
+        except (Abort, json.JSONDecodeError):
+            continue  # a shape this version of the script cannot read is not an authoring error
+        ids = [
+            e["id"]
+            for bucket in ("items", "refuted", "roadmap")
+            for e in data.get(bucket, [])
+            if isinstance(e, dict) and e.get("id")
+        ]
+        fresh = [i for i in ids if i not in seen]
+        seen.update(ids)
+        if not fresh:
+            continue
+        files = [f for f in git("show", "--name-only", "--format=", rev).splitlines() if f.strip()]
+        for eid in fresh:
+            origins.setdefault(eid, {"commit": rev, "files": files})
+    return origins
+
+
+def check_self_claim(ledger: dict) -> list[tuple[str, str, str]]:
+    """Catch an entry that describes the commit it was born in but names that commit's parent.
+
+    This is the hole the other checks cannot see. `check_coverage` finds a commit *nothing*
+    claims; nothing finds a commit claimed by the *wrong* entry, because from its side it looks
+    claimed. Five consecutive entries drifted that way before this existed, each naming the
+    commit before the one it described, and `--verify` reported a clean ledger throughout.
+
+    The mechanism is mechanical, which is what makes it checkable: writing an entry for work
+    still sitting in the working tree and reaching for its hash with `git log -1` returns HEAD,
+    which is the *previous* commit. The signature is an entry whose own birth commit did
+    substantive work that the entry does not claim.
+
+    Deliberately SUSPECT, not ERROR. A commit may legitimately do code work for item A while
+    filing the entry for item B, and failing the build on that would get the check switched off. Roadmap entries
+    are exempt: they are plans, they carry no `commits`, and the work in their birth commit
+    belongs to some other entry.
+
+    KNOWN BLIND SPOT, and it is structural rather than an oversight. An entry born in a commit
+    that changed no code is invisible here, because a docs-only work commit -- a measurement
+    write-up, say -- is byte-for-byte the same shape as a record commit. Two of the five drifted
+    entries were of that kind and this check does not see them; only reading the content does.
+    It catches the subset that names the wrong *code*, which is the subset that misleads someone
+    reading the entry to find the change.
+
+    Positive control, because a linter that reports nothing is indistinguishable from one that
+    does not run: against the ledger as of `c33153f` it flags five -- `fbfetch-coordinate-sized`,
+    `fpscr-rounding-mode`, `ps-madd-double-rounding`, `fp-regression-coverage` and
+    `self-dep-reproducer` -- and against the corrected ledger, none. Re-run that pair if you
+    change the matcher.
+
+    The fifth was found by the check itself rather than by the audit that prompted it: `ab78ce7`
+    created `testing/graphics-tests/run.sh`, the reproducer's runner, while filing that entry and
+    claiming the commit for `doc-coverage-audit` instead.
+    """
+    out: list[tuple[str, str, str]] = []
+    origins = entry_origins()
+    for bucket in ("items", "refuted"):
+        for e in ledger.get(bucket, []):
+            eid = e.get("id")
+            origin = origins.get(eid)
+            if not origin:
+                continue  # new in the working tree; it has no birth commit yet
+            work = [f for f in origin["files"] if _is_work_file(f)]
+            if not work:
+                continue  # the healthy shape: work landed, a record commit writes it down
+            full = origin["commit"]
+            if any(full.startswith(c) for c in e.get("commits", [])):
+                continue
+            shown = ", ".join(f"`{f}`" for f in sorted(work)[:3])
+            more = f" +{len(work) - 3} more" if len(work) > 3 else ""
+            out.append((SUSPECT, eid, f"born in `{full[:7]}`, which also changed {shown}{more} — but "
+                                   f"the entry does not claim it. Check it is not naming "
+                                   f"`{full[:7]}`'s parent by mistake"))
+    return out
+
+
 # ---------------------------------------------------------------------------- render
 
 esc = html.escape
@@ -247,15 +350,19 @@ esc = html.escape
 #
 # Severity is tiered on one question: is this ALWAYS a mistake, or is some lag legitimate?
 #
-#   FATAL  the file is structurally broken. Never correct. Aborts.
-#   ERROR  always an authoring mistake, and silently rots if unchecked. Fails CI.
-#   WARN   lag that can be legitimate -- an ageing measurement, an unclaimed tip. Reported.
+#   FATAL    the file is structurally broken. Never correct. Aborts.
+#   ERROR    always an authoring mistake, and silently rots if unchecked. Fails CI.
+#   SUSPECT  probably wrong, but has a legitimate shape. Needs a human to look, not a build
+#            failure. Kept apart from WARN because "check this attribution" and "this number
+#            is old" call for different actions, and filing the first under "legitimate lag,
+#            not wrong, re-check when convenient" is how it gets skipped.
+#   WARN     lag that can be legitimate -- an ageing measurement, an unclaimed tip. Reported.
 #
 # Nothing here re-derives a fact the repo already owns; these check that what IS typed
 # stays true.
 # --------------------------------------------------------------------------------------
 
-FATAL, ERROR, WARN = "FATAL", "ERROR", "WARN"
+FATAL, ERROR, SUSPECT, WARN = "FATAL", "ERROR", "SUSPECT", "WARN"
 
 # Statuses are not interchangeable between buckets. `deferred` in items[] once hid a
 # roadmap entry among landed work for weeks.
@@ -439,6 +546,7 @@ def lint(ledger: dict, commits: list[dict]) -> list[tuple[str, str, str]]:
                                    "is asserted rather than derived"))
 
     out.extend(check_prose_measurements(json.dumps(ledger, ensure_ascii=False)))
+    out.extend(check_self_claim(ledger))
     return out
 
 
@@ -1205,6 +1313,11 @@ def verify_report(ledger: dict, data: dict) -> str:
          "These are never correct. Fix before anything else."),
         (ERROR, "❌ Drift — an entry no longer matches the repo",
          "Always an authoring mistake, and it rots silently if unchecked. Fails CI."),
+        (SUSPECT, "🔎 Suspect attribution — an entry may name the wrong commit",
+         "Each of these was born in a commit that changed code it does not claim. That is the "
+         "signature of reaching for a hash with `git log -1` while the work was still "
+         "uncommitted, which returns the *previous* commit. Sometimes legitimate: one commit can "
+         "do work for one item while filing another's entry. Check each."),
         (WARN, "⚠️ Ageing — legitimate lag, worth a look",
          "Not wrong, just unverified. Re-run or re-check when convenient."),
     ):

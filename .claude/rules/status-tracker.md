@@ -121,7 +121,36 @@ than being reported:
 
 **Exit 0 — reported, tolerated.** Unclaimed commits (the tip is always unclaimed; that is
 self-reference, not sloppiness) and measurements more than 40 commits behind HEAD. A number does not
-become false because commits happened — it becomes *unverified*.
+become false because commits happened — it becomes *unverified*. Also **an entry that names its own
+birth commit's parent**, described next.
+
+### The check that catches a *wrong* claim, not just a missing one
+
+Everything above finds a ledger that is broken or behind. Nothing found a ledger that was **wrong in
+its attribution**, because from the coverage check's side a mis-claimed commit looks claimed. Five
+entries drifted that way before this existed — `3d4fca9` through `a2761e9`, each naming the commit
+*before* the one it described — and `--verify` reported a clean ledger the whole time.
+
+The mechanism is mechanical, which is what makes it checkable. **Writing an entry for work that is
+still sitting in your working tree and reaching for its hash with `git log -1` gives you HEAD, which
+is the previous commit.** So `--verify` now replays `ledger.json`'s own history to find the commit
+each entry was born in, and warns when that commit changed code the entry does not claim.
+
+Two things about it are deliberate:
+
+- **Prose is not the trigger; `src/`, `testing/` and `tools/` are.** A record commit here routinely
+  updates CLAUDE.md, a porting doc or a testing README alongside the entry — that *is* the recording.
+  Triggering on any file outside `docs/status/` fires on 60 of 71 correct entries, including all 55
+  the tracker's own genesis commit back-filled, and a check that noisy gets switched off in a week.
+- **It has a structural blind spot, and that is not a bug to fix later.** An entry born in a commit
+  that changed no code is invisible to it, because a docs-only *work* commit — a measurement
+  write-up — is byte-for-byte the same shape as a record commit. Two of the five were of that kind.
+  Only reading the content catches those. The check covers the subset that points a reader at the
+  wrong *code*, which is the subset that actually misleads.
+
+**Positive control:** against the ledger as of `c33153f` it flags five; against the corrected ledger,
+none. Re-run that pair if you touch the matcher. The fifth was found by the check rather than by the
+audit that prompted it.
 
 ## Goals are derived, not asserted
 
