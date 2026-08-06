@@ -968,7 +968,8 @@
         "32df35e",
         "9853197",
         "4f9c804",
-        "cb1245d"
+        "cb1245d",
+        "d9500c5"
       ],
       "verdict": "One generated page for what changed versus upstream, what was tried and what it measured. Commit list, diffstat, baseline rows and counter totals are read from the repo — only verdicts are hand-maintained. CI reports any commit that lands without a ledger entry.",
       "note": "It caught its own first bug: the counter parser read **114** against the real 113, matching the `TLM_COUNTER(...)` example inside the `.def`'s own header comment. Two self-references bound the design — a ledger entry cannot name the hash of the commit containing it, and the page embeds the commit that carries it — so CI advises rather than blocks, and `--check` is local-only. The tracker's own upkeep (claiming commits, stamping measurements, correcting the ledger) is claimed by this entry rather than excused under `unattributed`, so the act of tracking is itself tracked.",
@@ -1262,7 +1263,7 @@
       "stage": "s6",
       "status": "landed",
       "commits": [
-        "3d4fca9"
+        "9890a99"
       ],
       "verdict": "BotW Korok Forest runs **498 pixel-stage self-dependencies per frame**, of which all but one or two are covered by the decompiler's framebuffer-fetch rewrite. Six distinct shaders account for the uncovered remainder, every one of them pixel stage against a colour attachment.",
       "note": "This is the number every frequency claim about item 3.1 was previously guessing at. It also makes `rm-fbfetch-coordinate` far more consequential than it looked: the rewrite that discards the texture coordinate is applied **498 times a frame** in ordinary open-world play, and the reproducer proved it returns the wrong pixel for any offset tap. How many of the 498 are offset taps is the next question and is not answered here. Measured with the splitter enabled; the uncovered count is the same either way, since splitting changes what happens after detection, not what is detected.",
@@ -1280,13 +1281,14 @@
       "area": "graphics",
       "status": "cancelled",
       "commits": [
-        "3d4fca9"
+        "9890a99",
+        "8bf3e79"
       ],
       "verdict": "Its entire premise is that users turn accurate barriers off for performance, so known-problematic shaders must force them back on. Measured on Korok Forest, accurate barriers cost **nothing**: 49.90 ms and 20.04 fps with the splitter doing 15 splits/frame, identical to the arm with it disabled. If the setting is free there is no reason to disable it, and therefore nothing for an override to rescue.",
       "note": "**Correction to the first reading.** The lava base hash `6f6f6e7b9aae57af` IS present in Korok Forest. The earlier \"appears zero times\" was an artefact of instrumentation: that run carried no shader detail on the *covered* counter, so the hash had nothing to appear in. With the detail added it shows up immediately — in the **covered** set, handled by framebuffer fetch, not on the uncovered path an override would force a split for. The waterfall-foam hash `4c0bd596e3aef4a6` is still absent, and Korok has no waterfalls, so that one remains untested rather than refuted. None of this changes the cancellation, which rests on the cost being zero: if accurate barriers are free, nobody disables them, and an override has nothing to rescue.",
       "measured": {
         "scene": "BotW Korok Forest, vkAccurateBarriers A/B",
-        "at_commit": "3d4fca9",
+        "at_commit": "8bf3e79",
         "date": "2026-08-04",
         "n": 1
       },
@@ -1301,7 +1303,8 @@
       "commits": [
         "2bd3e06",
         "bad31b2",
-        "3db0cfc"
+        "3db0cfc",
+        "55362e8"
       ],
       "verdict": "The pass splitter, the alias detection behind it and the `accurate_barriers` gate are all in. The remaining half of 3.1 — restricting the framebuffer-fetch substitution to cases where it is valid — is tracked separately as `rm-fbfetch-coordinate`, because it is a decompiler change rather than a scheduling one.",
       "note": "This entry stood open for months carrying the warning \"expect it to **cost** frame rate — splitting passes raises pass count, the very thing the bandwidth work was trying to reduce.\" Measured on Korok Forest with equal-length arms: 15 splits/frame against 0, 204 passes/frame against 203, and 49.90 ms / 20.04 fps in **both**. The cost is not small, it is absent. It also predicted BotW lava and waterfalls as \"the known cases\"; the six shaders actually observed on the uncovered path are neither, though the scene contains neither hazard so that is untested rather than refuted. See `selfdep-pass-split`, `selfdep-alias-physaddr` and `self-dep-sized-on-botw`.",
@@ -1320,13 +1323,13 @@
       "stage": "s6",
       "status": "landed",
       "commits": [
-        "55362e8"
+        "8bf3e79"
       ],
       "verdict": "The 498 covered self-dependencies per frame resolve to **11 distinct shaders, 22 (shader, unit) pairs**, and every one samples at `varying.xy / varying.w` — a perspective divide of an interpolated clip-space position, i.e. the fragment's own screen position. **Not one adds an offset.** So the coordinate-discarding framebuffer-fetch substitution is valid for 100% of the self-dependencies in this scene, and `rm-fbfetch-coordinate` is a guard against future shaders rather than a fix for current wrong pixels.",
       "note": "Read from the emitted MSL, dumped with `FramebufferFetch=false` — with the substitution enabled the coordinate is already replaced by `col{N}` and the evidence is gone. The last write to the coordinate register before every sample is the multiply by the reciprocal, so \"no offset\" is a property of the code rather than of where I stopped looking. **Single scene.** Korok Forest has no waterfalls, no heat haze and no refraction, which are exactly the effects that would produce an offset tap; the waterfall-foam shader the design doc names never appears. This bounds the item for open-world play and says nothing about the rest of the game.",
       "measured": {
         "scene": "BotW Korok Forest, MSL dump with FramebufferFetch=false",
-        "at_commit": "55362e8",
+        "at_commit": "8bf3e79",
         "date": "2026-08-04",
         "n": 1
       },
@@ -1339,13 +1342,14 @@
       "stage": "s6",
       "status": "landed",
       "commits": [
-        "8bf3e79"
+        "bc3682a",
+        "dfd5534"
       ],
       "verdict": "Nothing read the guest's rounding mode, so a guest asking for round-toward-negative-infinity got round-to-nearest. Wiring it fixed **zero** on its own — because `mtfsfi`, the standard way a guest selects a rounding mode, **was not implemented at all** and never reached the FPSCR. Implementing it took the wrong-value count **350 → 325**.",
       "note": "The rounding sync looked like a failure and was a prerequisite: without it, implementing `mtfsfi` would have set FPSCR bits no arithmetic consulted. The gap was found by a test written *after* the sync landed — `fp_rounding_mode_honoured` in `testing/rom-tests`, which uses `mtfsfi 7,2` and failed immediately. The opcode-63 dispatcher had no `case 134`, so it fell through to `cemu_assert_unimplemented` and did nothing. **Two process errors on the way:** I read a `LogType::Force` probe on stdout and saw nothing, concluding the hook was dead, when it needs `--verbose` and was in log.txt; and I ranked targets off `report.py`'s default table, which spans the 676 FPSCR-state failures the gate says not to conflate with the 354 values.",
       "measured": {
         "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1, and rom-tests",
-        "at_commit": "a2761e9",
+        "at_commit": "dfd5534",
         "date": "2026-08-04",
         "n": 1
       },
@@ -1358,13 +1362,13 @@
       "stage": "s6",
       "status": "landed",
       "commits": [
-        "bc3682a"
+        "a2761e9"
       ],
       "verdict": "`PPCInterpreter_PS_MADD` wrapped the product in its own `(float)` cast before adding, so the intermediate was rounded to single twice. PowerPC multiply-add is fused: the product must not be rounded. Removing the inner cast takes the wrong-value count from **354 to 350** and `ps_madd` specifically from **16 to 12**.",
       "note": "Found by comparing against its own siblings: `PS_NMADD`, `PS_MSUB`, `PS_NMSUB` and `FMADDS` all cast only the whole expression, and `ps_madd` was the single member of the family that did not. The suite's own changelog names this case in as many words — *'fmadds/ps_madd is not rounded twice'*. **The full-suite count is unchanged at 1030**, because those four tests still fail their FPSCR-*state* check, which is the deliberate omission; only the values-only build shows the fix. That is also why the values-only build is the one to measure against.",
       "measured": {
         "scene": "ppc750cl.s, IGNORE_FPSCR_STATE=1",
-        "at_commit": "bc3682a",
+        "at_commit": "a2761e9",
         "date": "2026-08-04",
         "n": 1
       },
@@ -1377,17 +1381,48 @@
       "stage": "s6",
       "status": "landed",
       "commits": [
-        "a2761e9"
+        "dfd5534"
       ],
       "verdict": "Three assertions added to `testing/rom-tests`: `fp_fmadds_is_fused`, `fp_ps_madd_is_fused`, `fp_rounding_mode_honoured`. All three now pass on both arms, and one of them found a real gap within minutes of being written.",
       "note": "Nine existing assertions, **zero** touching float, while two FP semantic changes landed the same day. The only regression signal was the conformance suite, which measures FP correctness rather than whether a title still runs. These are exact comparisons with no epsilon: the fused test picks `a = 1+2^-13, b = 1-2^-13` so that a rounded product gives exactly `0.0` and a fused one does not, which makes the property observable rather than a last-bit difference. `fp_rounding_mode_honoured` failed on first run and exposed that `mtfsfi` was unimplemented. Separately, BotW Korok after all three changes: frame time 49.90 ms and 20.04 fps identical to the committed baseline, 204 passes/frame in range, draws **3525**, inside the committed 3517–3528 range. That last figure is a correction: I first read the telemetry while the run was still writing, got 3472 from 936 gameplay frames, and reported it as the result. The complete file has 5112 gameplay frames and the median moves into range — an 18% sample of a phase-split run is exactly the trap CLAUDE.md documents, and I walked into it while answering a question about how we verify things.",
       "measured": {
         "scene": "rom-tests both arms, and BotW Korok",
-        "at_commit": "a2761e9",
+        "at_commit": "dfd5534",
         "date": "2026-08-04",
         "n": 1
       },
       "ref": "testing/rom-tests/README.md"
+    },
+    {
+      "id": "macos-266-rebaseline",
+      "title": "Every measurement predates macOS 26.6 — the control re-run on it, and the baseline holds",
+      "area": "tooling",
+      "stage": "s5",
+      "status": "landed",
+      "commits": [
+        "c33153f"
+      ],
+      "verdict": "macOS 26.5.2 → 26.6 landed 2026-08-04, twenty-nine minutes after `d9500c5` and after every measurement on file. Re-run at n=3: **frame time, fps, draws, the readback drain and the critical path all overlap the 26.5.2 ranges**. `gpu.busy_ns` 16.84–17.03 and `gpu.cp_idle_ns` 18.89–18.96 sit marginally *below* the old ranges despite longer windows, so the soak biases against the observed direction. The one substantive move is `gpu.queue_latency_ns`, 15.7 → 14.5 ms, which does not track frame rate.",
+      "note": "**The host OS is a variable nothing in this repo tracks.** `--verify` marks a measurement stale when commits pass it; a driver update passes it invisibly, and no telemetry header records the OS version. Also the cleanest counter-example on file to reading a separated range as a result: `gpu.frame_critical_path_ns` separated cleanly on a **0.03 ms** gap, because both arms are tight enough to separate on noise. No attribution is claimed — the arms differ by the OS *and* by every commit from `cebe17f` to `d9500c5`, which six accuracy counters absent from the older arm prove outright.",
+      "measured": {
+        "scene": "botw-korok",
+        "at_commit": "d9500c5",
+        "date": "2026-08-06",
+        "n": 3
+      },
+      "ref": "00-master-plan.md — The baseline survives macOS 26.6"
+    },
+    {
+      "id": "readme-measurement-check",
+      "title": "Every measurement in the README must appear verbatim in the ledger",
+      "area": "tooling",
+      "status": "landed",
+      "commits": [
+        "3d4fca9"
+      ],
+      "verdict": "`--verify` now extracts measurement-shaped figures from `README.md` and requires each to appear verbatim in the ledger. Reported as `WARN`, because prose legitimately carries context the ledger does not. Deliberately README-only: adding `CLAUDE.md` was tried and reverted after producing 35 warnings that were all working as intended.",
+      "note": "The derive-don't-type discipline protected the ledger and left the most-read file in the repo unchecked, which is exactly where the errors landed: **107 counters against a real 113, and 183% against a ledger saying 184**, the latter surviving three rewrites because each copied the previous. Traceability is a question with an exact answer; a numeric comparison would be guesswork, and a guessing linter is one people learn to ignore. It carries a **positive control** — against the README as of `584521b` it flags 8 figures, `183%` among them — because a linter that reports nothing is indistinguishable from one that does not run. The same commit added the rule that a claim about another project carries a date or does not get made. Extends the linter added in `b95bde3`, which is claimed by [`status-tracker`]; kept separate because the reverted `CLAUDE.md` experiment and its positive control are the finding, not the plumbing.",
+      "ref": ".claude/rules/status-tracker.md — The same rule now applies outward, to `README.md`"
     }
   ],
   "refuted": [
