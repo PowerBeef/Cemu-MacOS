@@ -1085,7 +1085,8 @@
       "commits": [
         "a2e441b",
         "61aec71",
-        "97ae3ad"
+        "97ae3ad",
+        "ab78ce7"
       ],
       "verdict": "A homebrew ROM that draws into a colour buffer while sampling that same surface, needing **no game image**. It reproduces: `acc.self_dep_fbfetch` reads **1.0/frame** while the other two read zero — exactly one of the covered/uncovered pair firing, which is the shape that says the detector works.",
       "note": "The first run read zero on all three, and the cause was placement rather than the test. `_initTextureBindingPointsMTL` (`LatteDecompilerAnalyzer.cpp:527`) skips assigning a binding point to any unit with `textureRenderTargetIndex != 255`, so a framebuffer-fetch unit is stripped from the resource mapping — `textureCount` was **0** — and both hooks sat inside a loop the covered case can never enter. `acc.self_dep_fbfetch` was unreachable code. It is now counted from `shader->textureRenderTargetIndex[]`, which survives into the shader object. **A counter reading zero can mean the hook is somewhere the case never reaches, which looks identical to the case not occurring.**",
@@ -1423,6 +1424,19 @@
       "verdict": "`--verify` now extracts measurement-shaped figures from `README.md` and requires each to appear verbatim in the ledger. Reported as `WARN`, because prose legitimately carries context the ledger does not. Deliberately README-only: adding `CLAUDE.md` was tried and reverted after producing 35 warnings that were all working as intended.",
       "note": "The derive-don't-type discipline protected the ledger and left the most-read file in the repo unchecked, which is exactly where the errors landed: **107 counters against a real 113, and 183% against a ledger saying 184**, the latter surviving three rewrites because each copied the previous. Traceability is a question with an exact answer; a numeric comparison would be guesswork, and a guessing linter is one people learn to ignore. It carries a **positive control** — against the README as of `584521b` it flags 8 figures, `183%` among them — because a linter that reports nothing is indistinguishable from one that does not run. The same commit added the rule that a claim about another project carries a date or does not get made. Extends the linter added in `b95bde3`, which is claimed by [`status-tracker`]; kept separate because the reverted `CLAUDE.md` experiment and its positive control are the finding, not the plumbing.",
       "ref": ".claude/rules/status-tracker.md — The same rule now applies outward, to `README.md`"
+    },
+    {
+      "id": "ledger-self-claim-check",
+      "title": "Five entries named the commit before the one they describe, and the check that now catches it",
+      "area": "tooling",
+      "status": "landed",
+      "commits": [
+        "67ea113",
+        "aff8390"
+      ],
+      "verdict": "`3d4fca9` through `a2761e9` were each claimed by the entry describing the **next** commit, and `--verify` reported a clean ledger throughout — it finds a commit *nothing* claims and is blind to one claimed by the *wrong* entry, because from its side that looks claimed. Three of the five stamps were not merely stale but impossible: `fbfetch-coordinate-sized` was stamped at a commit predating both instruments its measurement needs. `--verify` now replays `ledger.json`'s own history to find each entry's birth commit and reports one that changed code the entry does not claim.",
+      "note": "The cause is mechanical, which is what made it checkable: writing an entry for work still in the working tree and reaching for its hash with `git log -1` returns HEAD, which is the **previous** commit. Two design choices carry the check. **Prose is not the trigger** — a record commit here routinely updates CLAUDE.md or a testing README alongside the entry, and triggering on any file outside `docs/status/` fires on 60 of 71 correct entries including all 55 the genesis commit back-filled; `src/`, `testing/` and `tools/` are the signal. And it has a **structural blind spot that is not a bug**: an entry born in a docs-only work commit is byte-for-byte the same shape as a record commit, so two of the five are invisible to it and only reading the content catches those. New severity `SUSPECT`, kept apart from `WARN` because \"check this attribution\" and \"this number is old\" call for different actions. **Positive control:** five against the ledger at `c33153f`, none against the corrected one. The fifth was found by the check rather than by the audit that prompted it — `ab78ce7` created the reproducer's `run.sh` while filing that entry and claiming the commit elsewhere.",
+      "ref": ".claude/rules/status-tracker.md — The check that catches a *wrong* claim, not just a missing one"
     }
   ],
   "refuted": [
@@ -1559,6 +1573,25 @@
       ],
       "verdict": "A hypothetical 500 cycles/call sums to **25,103,500 against 15,384,240 actually retired — 163%.** It would more than double emulated guest time. Any charge must be tiered per function.",
       "ref": "00-master-plan.md — The 33 ms frame decomposed"
+    },
+    {
+      "id": "r-readback-policy",
+      "title": "The six surfaces carrying 96% of the drain do not need mirroring",
+      "area": "graphics",
+      "stage": "s5",
+      "status": "refuted",
+      "commits": [
+        "1ba16d9"
+      ],
+      "verdict": "Refuted three ways without a run. **The size was a 14× units error** — 1,536 is the *texel* count; at `R32_G32_B32_A32_FLOAT` and `R16_G16_B16_A16_FLOAT` the six are **21,504 B**, which is the 21 KB `readback-targets` already recorded. **That entry had already answered the question**: the arrays are a GPU-computed data table the guest consumes, so the readback is not spurious. And **the cost is not divisible per surface** — every readback commits its own command buffer and every buffer waits on its predecessor, so `waitUntilCompleted()` transitively waits for all of them and skipping five of six recovers zero.",
+      "note": "Filed as open on a paragraph that reopened a landed verdict without citing it. The paragraph disclaimed reopening `r-surgical-readback`, the *scheduling* refutation, and silently reopened the *policy* one beside it — while restating an established 21 KB as 1.5 KB, so the contradiction read as a new and more alarming finding rather than as an error. **Two live findings survive the closure.** `LatteTextureReadback_Initate` has a second caller at `LatteSurfaceCopy.cpp:136` gated on `!sourceIsLinear && destinationIsLinear`, which never consults `enableReadback`, so nothing on file attributes any of the six surfaces to `LatteTexture.cpp:1311` — the line the item named. And `LatteTextureReadback_ReadbackToLinearBlocking` calls `ForceFinish()` inline at `LatteTextureReadback.cpp:201`, which increments the same counter and timer, so **`gpu.readback_forcefinish_ns` is an upper bound on the `GX2DrawDone` drain, not a measurement of it**.",
+      "measured": {
+        "scene": "botw-korok",
+        "at_commit": "cebe17f",
+        "date": "2026-08-06",
+        "n": 3
+      },
+      "ref": "00-master-plan.md — The readback drain is 96% six tiny surfaces"
     }
   ],
   "traps": [
@@ -1750,7 +1783,7 @@
       "title": "Housekeeping: 13 unincremented counters and 19 stale locales",
       "area": "tooling",
       "status": "open",
-      "verdict": "**Thirteen** counters are declared and never incremented: `gpu.pipelines_compiled` and all twelve `mem.*` (the twelfth, `mem.bufcache.upload_bytes`, is mentioned only in a doc comment). `acc.render_self_dependency` was the fourteenth and is now wired at `MetalRenderer.cpp:2434`. ~30 changed `_()` strings are untranslated across 19 locales.",
+      "verdict": "**Fourteen** counters are declared and never incremented: `gpu.pipelines_compiled`, all twelve `mem.*`, and `acc.readback_queued` (declared at `TelemetryCounters.def:259`, but the only thing that touches it is `NoteAccuracyDetail` at `LatteTextureReadback.cpp:109` — its frame-vector sum is exactly 0 across all 8,881 frames of `korok-head-r1`) (the twelfth, `mem.bufcache.upload_bytes`, is mentioned only in a doc comment). `acc.render_self_dependency` was the fourteenth and is now wired at `MetalRenderer.cpp:2434`. ~30 changed `_()` strings are untranslated across 19 locales.",
       "gate": "None. Small, unglamorous, and neither blocks anything — but the `mem.*` block is not merely cosmetic: it is the instrumentation for buffer-cache and texture-cache behaviour, and its silence already cost one investigation.",
       "ref": ".github/workflows/generate_pot.yml"
     },
@@ -1768,21 +1801,6 @@
         "date": "2026-08-04",
         "n": 1
       }
-    },
-    {
-      "id": "rm-readback-policy",
-      "title": "The readback drain is 96% six tiny surfaces — ask whether they need mirroring",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "44 surfaces are mirrored per run; the **top 6 carry 96.2%** (96.1/96.2 in the other two runs). All are `TM_LINEAR_ALIGNED`, non-depth, ≤512 texels. The 6.9 ms/frame drain that costs this scene 30 fps is paid to mirror ~1.5 KB, 1.45×/frame.",
-      "gate": "Does **not** reopen `r-surgical-readback`: that refuted *reordering* the drain, and stays refuted. This is a policy question at `LatteTexture.cpp:1311`, where `enableReadback` is set for any linear-aligned surface on the theory the CPU might read it. The open question — does the guest ever read those six addresses — needs instrumentation and therefore a bootable title.",
-      "measured": {
-        "scene": "botw-korok",
-        "at_commit": "cebe17f",
-        "date": "2026-08-02",
-        "n": 3
-      },
-      "ref": "00-master-plan.md — An audit with no game image"
     },
     {
       "id": "rm-fp-conformance",

@@ -167,11 +167,16 @@ xcprof compare testing/traces/before.trace testing/traces/after.trace
   anything.
 
 - **A counter reading zero is not evidence until you check it has an increment site.** Sweeping every
-  `TLM_COUNTER` declaration against `src/` found **13 that nothing ever writes**:
-  `gpu.pipelines_compiled` and **all twelve `mem.*`**. (`acc.render_self_dependency` was on that list
+  `TLM_COUNTER` declaration against `src/` found **14 that nothing ever writes**:
+  `gpu.pipelines_compiled`, **all twelve `mem.*`**, and `acc.readback_queued`. (`acc.render_self_dependency` was on that list
   and is now wired at `MetalRenderer.cpp:2434`, so *its* zero is a real unresolved measurement, not a
   missing hook — see `testing/graphics-tests/README.md`. Do not restate the counter total here; the
-  status page derives it.) The `mem.*`
+  status page derives it.) **`acc.readback_queued` is the one to learn from**: it is declared at
+  `TelemetryCounters.def:259` and the only thing that touches it is `NoteAccuracyDetail`
+  (`LatteTextureReadback.cpp:109`), which fills the `{"t":"acc"}` detail stream and never the frame
+  vector — so its frame-vector sum is **exactly 0 across all 8,881 frames** of a Korok run while the
+  histogram beside it carries 12,881 events. A counter can be half-wired, and the half that is
+  missing is the half `telemetry-report.py` prints. The `mem.*`
   block covers buffer-cache uploads, texture-cache reloads and shader-cache hit/miss — exactly the
   subsystem behind the largest graphics finding on file, which had to be established by backtrace
   attribution *because these counters do not work*. A zero from an unwired counter is
@@ -325,10 +330,26 @@ the Latte thread: **6.78 ms/frame, of which 6.75 ms is texture-readback force-fi
 (Re-measured at `cebe17f`, n=3: 6.96–7.00 ms and 6.93–6.98 ms. Same structure, and the difference is
 the soak — this counter drifts 6.5 → 7.5 ms *within* a run.)
 
+**`gpu.readback_forcefinish_ns` is an upper bound on that drain, not a measurement of it.**
+`LatteTextureReadback_ReadbackToLinearBlocking` (`LatteTextureReadback.cpp:195-217`) calls
+`StartTransfer()` then `ForceFinish()` inline at `:201-202`, bypassing both queues — and `ForceFinish`
+unconditionally increments `GpuReadbackForceFinishes` and opens `GpuReadbackForceFinishNs`
+(`LatteTextureReadbackMtl.cpp:67-68`). Every figure above therefore includes that path, and nothing
+separates them today.
+
 **Don't just flip the default** — it is a documented accuracy tradeoff, and the drain force-finishes
 *every* in-flight readback whether or not the guest wants one. A surgical version *looked* like it
 would keep the accuracy and recover most of the 6.75 ms; **it was tried three ways and does not
 exist** — see "The readback drain is not surgically improvable" below before proposing one.
+
+**And narrowing *which* surfaces are mirrored is refuted too, so don't propose that either.** Every
+readback commits its own command buffer (`LatteTextureReadbackMtl.cpp:48-51`) and every buffer
+`encodeWait`s on its predecessor (`MetalRenderer.cpp:1894-1896`), so completion is monotone in
+submission order and `waitUntilCompleted()` on any entry transitively waits for all of them:
+**skipping five of the six surfaces that carry 96% of the queue events recovers exactly zero.**
+`readback-targets` had already established the guest consumes the 21 KB. The reopened version of this
+question also restated that 21 KB as "1.5 KB" — the *texel* count — which is how a units error became
+a more alarming finding than the fact it contradicted.
 
 **Two Metal-side hypotheses are refuted, so don't re-raise them.** `queue_latency_ns`
 (14.29 → 14.69 ms) and `command_buffers` (7 → 7) do not move between the 20 fps and 30 fps arms, so

@@ -1276,7 +1276,7 @@ so the three runs exist only on one machine, and `git ls-files testing` returns 
 them a `.jsonl`. A finding whose evidence cannot be regenerated (no game image) and is not committed
 is one `rm` from being a claim with nothing behind it.
 
-#### The readback drain is 96% six tiny surfaces
+#### The readback drain is 96% six tiny surfaces — and the item that opened is closed
 
 Not acted on, recorded because it reframes a question previously closed. `acc.readback_queued` writes
 into the `{"t":"acc"}` detail stream rather than the frame vector, which is why summing the counter
@@ -1290,17 +1290,61 @@ column showed zero. Parsed properly, across all three runs:
 
 The six are stable across runs, all `TM_LINEAR_ALIGNED`, non-depth, and ≤512 texels — 64×8, 64×3,
 64×1. `enableReadback` is set defensively at `LatteTexture.cpp:1311` for *any* linear-aligned surface,
-on the theory that the CPU might read it. So the 6.9 ms/frame drain that costs this scene 30 fps is
-paid to mirror roughly 1.5 KB, 1.45 times per frame.
+on the theory that the CPU might read it.
 
-**This does not overturn "the readback drain is not surgically improvable."** That verdict was about
-*reordering* the drain — starting it earlier, unchaining its command buffer, moving it off the fence
-path — and all three of those measured negative and stay refuted. What it opens is a question the
-earlier work never asked: not *when* to drain, but *whether these six surfaces need mirroring at
-all*. That is a policy question at `LatteTexture.cpp:1311`, not a scheduling one.
+> **The paragraph that stood here was wrong three ways, and the item it opened is now closed.** It
+> read: *"the 6.9 ms/frame drain that costs this scene 30 fps is paid to mirror roughly 1.5 KB, 1.45
+> times per frame,"* and it opened `rm-readback-policy` on the question of whether the guest ever
+> reads those addresses. It is left quoted rather than deleted because the way it failed is the
+> reusable part. See the closure below.
 
-The open question is whether the guest ever reads those addresses, and it is answerable with
-instrumentation rather than argument. It is gated on a game image like everything else here.
+**1. The size is 21 KB, not 1.5 KB, and the correct figure was already on this page.** 1,536 is the
+*texel* count. `fmt 0x823` is `R32_G32_B32_A32_FLOAT` at 16 B/texel and `fmt 0x820` is
+`R16_G16_B16_A16_FLOAT` at 8 B/texel (`LatteReg.h:264,286` — `HWFMT_*` `| FMT_BIT_FLOAT` `0x800`), so
+2×(64×8×16) + 2×(64×3×8) + 2×(64×1×16) = **21,504 B**. That is the same 21 KB the section *What BotW
+actually reads back* states, from the same six addresses. A units error turned an established figure
+into a new and much more alarming one, and nothing flagged the contradiction because both sentences
+were true-looking prose in the same document.
+
+**2. It reopened a landed verdict without citing it.** *What BotW actually reads back* already
+answered this question: 64-wide arrays of RGBA floats are a GPU-computed data table the guest
+consumes, so **the readback is not spurious and cannot simply be removed**. The reopening paragraph
+was careful to disclaim reopening `r-surgical-readback` — the *scheduling* refutation — and silently
+reopened the *policy* one next to it.
+
+**3. The cost is not divisible per surface, so narrowing recovers nothing.**
+`LatteTextureReadbackInfoMtl::StartTransfer` retains the current command buffer and calls
+`CommitCommandBuffer()` immediately (`LatteTextureReadbackMtl.cpp:48-51`), so every readback gets its
+own buffer; and every buffer `encodeWait`s on its predecessor (`MetalRenderer.cpp:1894-1896`) and
+signals a monotonically incremented value on commit (`:2259-2261`). Completion is therefore monotone
+in submission order, and the bare `waitUntilCompleted()` in `ForceFinish` (`LatteTextureReadbackMtl.cpp:69`)
+transitively waits for everything ahead of it. **Skipping five of six surfaces recovers exactly
+zero.** The decision variable was never *which* surfaces to mirror; it is whether the queue is empty
+at every drain, and finding 1 says it cannot be.
+
+**And the line the item named may not even be the producer.** `LatteTextureReadback_Initate` has two
+live callers: `LatteRenderTarget.cpp:675`, gated on `enableReadback`, and `LatteSurfaceCopy.cpp:136`,
+gated on `!sourceIsLinear && destinationIsLinear` (`:127`) — which also selects `TM_LINEAR_ALIGNED`
+destinations and never consults the flag. The `AccReadbackQueued` detail is emitted inside `Initate`,
+past the fork, and carries no caller tag. **Nothing on file attributes a single one of the six
+surfaces to `LatteTexture.cpp:1311`.** Whoever reopens this must split the producer first.
+
+Two things worth keeping out of the wreckage.
+
+**`gpu.readback_forcefinish_ns` is an upper bound on the drain, not a measurement of it.**
+`LatteTextureReadback_ReadbackToLinearBlocking` (`LatteTextureReadback.cpp:195-217`) calls
+`StartTransfer()` then `ForceFinish()` inline at `:201-202`, bypassing both queues — and `ForceFinish`
+unconditionally increments `GpuReadbackForceFinishes` and opens `GpuReadbackForceFinishNs`
+(`LatteTextureReadbackMtl.cpp:67-68`). So every quotation of "6.9–7.0 ms is the `GX2DrawDone` drain"
+silently includes that path. Nothing separates them today.
+
+**`acc.readback_queued` is a fourteenth unwired counter.** The paragraph above noticed that summing
+its frame-vector column gives zero and attributed it to the detail stream, which is the mechanism —
+but stopped there. It is declared in `TelemetryCounters.def:259` and the only thing that ever touches
+it is `NoteAccuracyDetail` (`LatteTextureReadback.cpp:109`); there is no `TLM_INC` anywhere. Verified:
+the frame-vector sum is **exactly 0 across all 8,881 frames** of `korok-head-r1`. It belongs on the
+dead-counter list with the other thirteen, and the queue rate is not phase-segmentable until it is
+wired.
 
 ---
 
