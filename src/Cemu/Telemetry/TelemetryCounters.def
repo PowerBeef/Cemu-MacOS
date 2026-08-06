@@ -139,6 +139,15 @@ TLM_COUNTER(GpuQueueLatencyRejected,"gpu.queue_latency_rejected","count", Gpu)
 // First GetCommandBuffer() of a frame -> that frame's presenting buffer leaving the GPU.
 // Tests the "CPU work + GPU work overruns the two-vsync-slot deadline" model directly
 // instead of inferring it from two numbers that are measured separately.
+// INVALID AS A DEADLINE INSTRUMENT -- do not use it to decide vsync slot count, and do not derive
+// a "misses the deadline by X" figure from it. It reads 34.92 ms on frames that COMPLETED in
+// 33.27 ms, which is impossible for a span contained in the frame. Its origin is re-zeroed inside
+// the retirement poll (MetalRenderer.cpp:2351-2356), not at present, so when retirement observation
+// lags a frame the span straddles a boundary. It separates 2-slot from 3-slot frames by 0.31 ms and
+// sits on the wrong side of the deadline in both. Use `frame_ns - gpu.cp_fence_ns` instead, which
+// separates them by 1.1-1.4 ms and lands correctly on both sides. Kept because it still tracks
+// something real about submission-to-retirement latency, and because deleting it would silently
+// rewrite the history that quotes it. See 00-master-plan.md, "not a deadline instrument".
 TLM_COUNTER(GpuFrameCriticalPathNs, "gpu.frame_critical_path_ns","ns",    Gpu)
 // GX2DrawDone's IT_HLE_SYNC_ASYNC_OPERATIONS: a full pipeline drain that blocks BOTH the
 // guest (GX2WaitTimeStamp -> OSWaitEvent) and the Latte thread (two waitUntilCompleted

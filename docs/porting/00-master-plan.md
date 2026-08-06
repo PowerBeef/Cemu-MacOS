@@ -1484,3 +1484,75 @@ cache already makes the frontend free in steady state — if it does, this close
 > Two figures above come from a synthetic probe on one M2, not from this emulator: the 57.7 ms/shader
 > cold frontend and the 1,396 ms → 2.3 ms archive reload. They are indicative of the mechanism, not
 > measurements of our workload. The BotW table is ours.
+
+---
+
+### `gpu.frame_critical_path_ns` is not a deadline instrument, and the 1.90 ms it produced is wrong
+
+Scoping `rm-shader-cost` began by re-deriving the number the whole item exists to close. It does not
+survive.
+
+**The counter reads 34.92 ms on frames that completed in 33.27 ms.** A critical path cannot exceed
+the frame that contains it. Recomputed independently from `korok-266-r{1,2,3}.jsonl` (n=3, `d9500c5`,
+gameplay phase, split by frame length):
+
+| | 2-slot frames (33.27 ms) | 3-slot frames (49.90 ms) |
+|---|---|---|
+| n (r1/r2/r3) | 51 / 90 / 175 | 5,286 / 4,657 / 4,503 |
+| **`gpu.frame_critical_path_ns`** | **34.918 / 34.928 / 34.927** | 35.238 / 35.234 / 35.242 |
+| `frame_ns − gpu.cp_fence_ns` ("fence entry") | **33.202 / 33.211 / 33.189** | 34.650 / 34.500 / 34.303 |
+| `gpu.busy_ns` | 15.485 / 15.556 / 15.550 | 17.039 / 17.016 / 16.867 |
+
+The counter separates the two populations by **0.31 ms** and lands on the wrong side of
+2V = 33.2668 ms in *both*. Fence entry separates them by 1.1–1.4 ms and lands correctly on both
+sides. Fence entry is the instrument; this one is not.
+
+**Mechanism, read from the code rather than inferred.** The window opens at
+`MetalRenderer.cpp:1891-1892` when `m_frameFirstCommandBufferNs == 0`, and is closed *and re-zeroed*
+at `MetalRenderer.cpp:2351-2356` **inside the retirement poll**. So the origin is "the first buffer
+minted after the previous frame-end buffer was observed *retired*" — not "after the last present",
+which is what the comment at `:1890` claims. When retirement observation lags a frame, the origin
+belongs to an earlier frame and the span straddles a boundary. A clock-base mismatch is excluded:
+`gpu.queue_latency_rejected` totals 1, 0 and 0 across the three runs, so `GPUEndTime` and
+`HighResolutionTimer` agree.
+
+**So the target was never 1.90 ms.** On the instrument that classifies slots correctly, the median
+3-slot frame misses the deadline by **1.04 – 1.38 ms**. The 0.35 ms spread across three identical
+runs is the size of the control noise floor, so it cannot be quoted more precisely than "1.0 – 1.4 ms".
+
+**And 30.06 fps is not available from GPU work at any price.** 10.2% of gameplay frames are a
+strictly periodic heavy population — verified: **exactly every 10th frame**, 528 of 541 index gaps,
+carrying **+5.9 ms `gpu.busy_ns` and +131 render passes on slightly *fewer* draws** (334 vs 203
+passes, 3,510 vs 3,563 draws). They need ~7 ms to cross and no shader saving reaches that. Re-quantising
+every frame's fence entry to the 16.6334 ms grid gives a continuous curve that **saturates at ~28.5 fps
+from about 2.5 ms of saving onward** (agent-computed, not re-derived here).
+
+The honest restatement: **~2 ms buys 20.1 → ~28 fps, a 38–40% gain. No amount of shader work reaches
+30.06 fps** — that remains `GX2DrawdoneSync` territory, which removes 16.6 ms.
+
+> Every "1.90 ms" and "critical path 35.2x ms" elsewhere in this document is a record of what was
+> believed at the time and is left standing as such. **Do not derive anything new from them.** The
+> live figures are the ones above.
+
+#### Two findings that land regardless of whether the item proceeds
+
+**`setFastMathEnabled` is inert, and one user-facing checkbox does nothing.** Apple's own header:
+`fastMathEnabled defaults to YES` (`MTLLibrary.h:306`), and the property is
+`API_DEPRECATED("Use mathMode instead", macos(10.11, 15.0))` at `:308`. `RendererShaderMtl.cpp:316-317`
+calls the setter **only when the profile says true**, so a profile setting `shaderFastMath = false`
+sets nothing and gets fast math anyway. Nine of the twelve shipped profiles that mention the key set
+it false. The fix is `setMathMode(MTLMathModeSafe)`, and it is a real behaviour change for those nine
+titles, so it is filed as its own item rather than slipped in here.
+
+**The fork asserts two contradictory things about NaN and Inf at once.** `shader_fast_math` is on by
+default and licenses the compiler to violate IEEE 754, while `accurateShaderMul` — also on — pays
+**52,072 `mul_nonIEEE` call sites across 1,139 shaders** to emulate `0 × Inf → 0`. Whichever is
+right, one of them is being paid for and not delivered. Filed as a correctness question independent
+of any performance outcome.
+
+> Correcting my own scoping brief: the `mul_nonIEEE` body I cited at `:3898` (the `mix` form) is
+> **dead code** — `:3897` gates it on `GLVENDOR_NVIDIA` and `LatteThread.cpp:152-153` sets
+> `GLVENDOR_APPLE`. The shipped form is the two-compare branch at `:3900`. Four agents found this
+> independently. I also asserted that BotW's profile "explicitly asks for" strict mul; it does not —
+> `True` is the global default (`GameProfile.h:59`), and restating a default is not a recorded
+> decision.

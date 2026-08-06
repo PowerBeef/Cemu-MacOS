@@ -41,8 +41,8 @@
     },
     {
       "value": "6",
-      "label": "refuted attempts at the same 1.90 ms",
-      "note": "ordering- and bandwidth-shaped work is now closed by measurement"
+      "label": "refuted attempts at the same ~1 ms",
+      "note": "ordering- and bandwidth-shaped work is now closed by measurement; the 1.90 ms they were aimed at came from an invalid counter"
     }
   ],
   "divergence": [
@@ -130,7 +130,7 @@
     {
       "id": "t-frame",
       "title": "The 49.90 ms Korok frame, fully decomposed",
-      "note": "Nothing is saturated. Guest cores ~18% busy, GPU ~33% busy, command processor ~71% waiting. The frame is three whole vsync slots because `gpu.frame_critical_path_ns` is 35.25 ms against a two-slot deadline of 33.27 ms — it misses by **1.90 ms** and drops to the next division rather than degrading smoothly.",
+      "note": "Nothing is saturated. Guest cores ~18% busy, GPU ~33% busy, command processor ~71% waiting. The frame is three whole vsync slots because it overruns the two-slot deadline of 33.27 ms and drops to the next division rather than degrading smoothly. **The 1.90 ms once quoted here came from `gpu.frame_critical_path_ns` and is wrong** — that counter reads 34.92 ms on frames that completed in 33.27 ms. On `frame_ns − gpu.cp_fence_ns` the real miss is **1.04–1.38 ms**.",
       "columns": [
         "",
         "ms / frame",
@@ -1456,6 +1456,37 @@
         "n": 3
       },
       "ref": "00-master-plan.md — Shader preload, measured at last"
+    },
+    {
+      "id": "critical-path-counter-invalid",
+      "title": "`gpu.frame_critical_path_ns` reads longer than the frame that contains it",
+      "area": "tooling",
+      "stage": "s5",
+      "status": "refuted",
+      "commits": [
+        "b23dc3a"
+      ],
+      "verdict": "**34.92 ms on frames that completed in 33.27 ms**, in all three runs — impossible for a span inside the frame. Its origin is re-zeroed inside the retirement poll (`MetalRenderer.cpp:2351-2356`) rather than at present, so it straddles a boundary whenever retirement observation lags. It separates 2-slot from 3-slot frames by **0.31 ms** and sits on the wrong side of the deadline in both; `frame_ns − gpu.cp_fence_ns` separates them by **1.1–1.4 ms** and lands correctly on both sides.",
+      "note": "**This is the counter that produced the 1.90 ms figure six refuted attempts were aimed at.** The real miss is 1.04–1.38 ms. Found while scoping `rm-shader-cost` by re-deriving the number the item exists to close, which is the only reason it surfaced — it is stable to 0.03 ms across runs and looks impeccable until compared against the frame containing it. A clock-base mismatch is excluded: `gpu.queue_latency_rejected` totals 1/0/0. Kept rather than deleted, with the invalidation recorded at its declaration in `TelemetryCounters.def`, because it still tracks submission-to-retirement latency and deleting it would silently rewrite the history that quotes it.",
+      "measured": {
+        "scene": "botw-korok",
+        "at_commit": "d9500c5",
+        "date": "2026-08-06",
+        "n": 3
+      },
+      "ref": "00-master-plan.md — `gpu.frame_critical_path_ns` is not a deadline instrument"
+    },
+    {
+      "id": "fastmath-checkbox-inert",
+      "title": "`shader_fast_math = false` does nothing; the shader gets fast math anyway",
+      "area": "graphics",
+      "status": "landed",
+      "commits": [
+        "b23dc3a"
+      ],
+      "verdict": "Apple's header states `fastMathEnabled defaults to YES` (`MTLLibrary.h:306`) and deprecates the property (`API_DEPRECATED(\"Use mathMode instead\", macos(10.11, 15.0))`, `:308`). `RendererShaderMtl.cpp:316-317` calls the setter **only when the profile says true**, so setting it false sets nothing. **Nine of the twelve shipped game profiles that mention the key set it false**, and all nine silently get fast math.",
+      "note": "Found while scoping `rm-shader-cost`. It also puts the fork in contradiction with itself: fast math licenses the compiler to violate IEEE 754 on every shader, while `accurateShaderMul` — also on by default — pays **52,072 `mul_nonIEEE` call sites** to emulate `0 × Inf → 0`. Whichever is right, one is being paid for and not delivered. Fix is `setMathMode`, filed as `rm-mathmode-fix` because making the checkbox work is a real behaviour change for those nine titles.",
+      "ref": "00-master-plan.md — `gpu.frame_critical_path_ns` is not a deadline instrument"
     }
   ],
   "refuted": [
@@ -1685,9 +1716,9 @@
       "title": "Shader cost — the ALU and texture work in the MSL the Latte decompiler emits",
       "area": "graphics",
       "status": "open",
-      "verdict": "Where the counters now point, and the only remaining frame-rate lever in this scene. Ordering- and bandwidth-shaped work is closed by measurement.",
-      "gate": "None — the measurement that closes every other avenue is what opens this one. But it is a materially different project from anything attempted so far and should be scoped rather than started from momentum.",
-      "ref": "00-master-plan.md — Where GPU time actually goes"
+      "verdict": "Where the counters point: ALU is the top limiter in 45.6% of active GPU samples and texture sampling in 22.8%, against 12.8% for the whole memory path. Scoped 2026-08-06. **The prize is smaller and the ceiling lower than the item was written against**: the real deadline miss is 1.04–1.38 ms (not 1.90), and ~2 ms of saving buys 20.1 → **~28 fps**, saturating there because 10.2% of frames are a periodic heavy population needing ~7 ms. 30.06 fps is not reachable from shader work.",
+      "gate": "**Experiment 1 is a config flip, no code.** Write `~/Library/Application Support/TesseraEmu/gameProfiles/00050000101c9400.ini` with `accurateShaderMul = false` — the largest emitter-side ALU construct, **52,072 `mul_nonIEEE` call sites across 1,139 shaders**, ~29% of emitted AIR. It is an *instrument, never a deliverable*: shipping it would be a second instance of declining to do what the guest asked. Mandatory positive control — dump MSL in both arms and assert the call-site count goes 52,072 → 0, since nothing reports `strictMul` reaching the emitter. Mandatory confound check — draws, passes and attachment bytes within 1%. Decision rule fixed before the run: Δ`gpu.busy_ns` < 0.4 ms refutes the item, 0.4–1.0 ms cancels it, ≥1.0 ms **and** Δfence-entry ≥ 0.8 × Δbusy proceeds. **Do not use `gpu.frame_critical_path_ns` as an endpoint.**",
+      "ref": "00-master-plan.md — `gpu.frame_critical_path_ns` is not a deadline instrument"
     },
     {
       "id": "rm-inpass-copy",
@@ -1889,6 +1920,15 @@
       "verdict": "The only version of shader caching here with a large number attached: a probe measured 1,396 ms of MSL compilation collapsing to 2.3 ms by reloading a harvested `.binary.metallib` through `newLibraryWithURL:`. Unlike the cancelled `binaryArchives` design, this skips the frontend rather than the backend.",
       "gate": "**First establish whether the OS cache already makes the frontend free in steady state.** Our warm frontend is 0.11 ms/shader against a probe's 57.7 ms/shader cold, and `com.apple.metal` is 111 MB on this machine — if macOS is already serving it, this closes too. Three further obstacles, all real: the reload behaviour is **undocumented** (Apple documents `makeBinaryArchive` and the offline `metal-source`/`metal-tt` tools, not this); Apple's warning about runtime-updated archives still applies; and **every entry point this fork emits is named `main0`** (`LatteDecompilerEmitMSL.cpp:4161`, looked up at `RendererShaderMtl.cpp:391`), so a multi-shader archive collapses to Metal-assigned mangles with no documented mapping back — unique names would invalidate every existing cache entry.",
       "ref": "00-master-plan.md — Shader preload, measured at last"
+    },
+    {
+      "id": "rm-mathmode-fix",
+      "title": "Replace the deprecated `setFastMathEnabled` with `setMathMode` so the checkbox works",
+      "area": "graphics",
+      "status": "open",
+      "verdict": "`fastMathEnabled` is deprecated since macOS 15.0 and defaults to YES, and this fork only ever calls the setter for `true` — so `shader_fast_math = false` is inert. `setMathMode(MTLMathModeSafe)` would honour it.",
+      "gate": "**Measure before shipping.** Making the checkbox work is a behaviour change for the nine shipped profiles that set it false: their shaders would begin compiling with safe math, slower and more correct. Needs a before/after on at least one of those titles, and none is in `Roms/`. Decide the `accurateShaderMul` contradiction first — paying 52,072 call sites to emulate `0 × Inf → 0` while telling the compiler infinities do not exist is incoherent whichever way it resolves, and fixing math mode changes which half is load-bearing.",
+      "ref": "00-master-plan.md — `gpu.frame_critical_path_ns` is not a deadline instrument"
     }
   ],
   "unattributed": [],

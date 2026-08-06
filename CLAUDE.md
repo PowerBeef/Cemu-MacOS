@@ -339,11 +339,26 @@ early both changed nothing: the guest was never waiting for the GPU. One flip pe
 `swapInterval = 1`, so the grid is **16.63 ms** (`LatteTiming.cpp:16-31` computes 1000/(1002x60) s = 60.12 Hz) and a 49.90 ms frame is the title taking three slots.
 
 **Korok Forest is 20 fps instead of 30 because of one config default, and it is not a renderer
-problem.** `gpu.frame_critical_path_ns` (first `GetCommandBuffer()` of a frame → that frame's
-presenting buffer leaving the GPU) is **35.25 ms**, which overruns the two-vsync-slot deadline of
-33.27 ms and therefore takes three slots. Turning off **`GX2DrawdoneSync`** — a user-facing
-checkbox, default on — drops the critical path to **18.64 ms**, the frame to **33.27 ms** and the
-frame rate to **30.06 fps**, deterministic across n=3 control and n=2 treatment runs.
+problem.** The frame overruns the two-vsync-slot deadline of 33.27 ms and therefore takes three
+slots. Turning off **`GX2DrawdoneSync`** — a user-facing checkbox, default on — drops the frame to
+**33.27 ms** and the frame rate to **30.06 fps**, deterministic across n=3 control and n=2 treatment
+runs.
+
+> **`gpu.frame_critical_path_ns` is NOT the instrument for this and the "misses by 1.90 ms" figure
+> derived from it is wrong.** It reads **34.92 ms on frames that completed in 33.27 ms** — impossible
+> for a span inside the frame — because its origin is re-zeroed in the retirement poll
+> (`MetalRenderer.cpp:2351-2356`) rather than at present, so it straddles frames when retirement
+> observation lags. It separates 2-slot from 3-slot frames by 0.31 ms and sits on the wrong side of
+> the deadline in both. **Use `frame_ns − gpu.cp_fence_ns`**, which separates them by 1.1–1.4 ms and
+> lands correctly on both sides. On that instrument the real miss is **1.04–1.38 ms**, not 1.90.
+> Older figures in this file and in the master plan are records of what was believed; do not derive
+> anything new from them.
+
+**And 30 fps is not reachable from GPU work at any price.** 10.2% of gameplay frames are a strictly
+periodic heavy population — **exactly every 10th frame**, carrying **+5.9 ms `gpu.busy_ns` and +131
+render passes on slightly fewer draws** — which need ~7 ms to cross. Saving ~2 ms buys
+20.1 → ~28 fps and then saturates. 30.06 fps remains `GX2DrawdoneSync` territory, which removes
+16.6 ms.
 
 The cost is `GX2DrawDone`'s `IT_HLE_SYNC_ASYNC_OPERATIONS` packet, which BotW emits **twice per
 frame** and whose handler force-finishes readbacks and queries with bare `waitUntilCompleted()` on
