@@ -923,40 +923,100 @@ ATTR_MS_ABI double fres_espresso(double input)
 	return *(double*)&dr;
 }
 
-void fcmpu_espresso(PPCInterpreter_t* hCPU, int crfD, double a, double b)
+// Compare → CR field + FPSCR[FPCC]. ordered=true → fcmpo / ps_cmpo* (VXVC on NaN).
+// FPCC lives in the same host bits as FPRF (suite: EQ=0x2000, GT=0x4000, LT=0x8000, UN=0x1000).
+// Must clear the full 5-bit field (not just 4 bits) so a stale C bit does not stick.
+void ppc_fcmp_common(PPCInterpreter_t* hCPU, int crBitBase, double a, double b, bool ordered)
 {
 	uint32 c;
+	const uint64 ua = *(const uint64*)&a;
+	const uint64 ub = *(const uint64*)&b;
+	const bool nanA = IS_NAN(ua);
+	const bool nanB = IS_NAN(ub);
+	const bool snanA = IS_SNAN(ua);
+	const bool snanB = IS_SNAN(ub);
 
-	ppc_setCRBit(hCPU, crfD + 0, 0);
-	ppc_setCRBit(hCPU, crfD + 1, 0);
-	ppc_setCRBit(hCPU, crfD + 2, 0);
-	ppc_setCRBit(hCPU, crfD + 3, 0);
+	ppc_setCRBit(hCPU, crBitBase + 0, 0);
+	ppc_setCRBit(hCPU, crBitBase + 1, 0);
+	ppc_setCRBit(hCPU, crBitBase + 2, 0);
+	ppc_setCRBit(hCPU, crBitBase + 3, 0);
 
-	if (IS_NAN(*(uint64*)&a) || IS_NAN(*(uint64*)&b))
+	if (nanA || nanB)
 	{
-		c = 1;
-		ppc_setCRBit(hCPU, crfD + CR_BIT_SO, 1);
+		c = 1; // unordered
+		ppc_setCRBit(hCPU, crBitBase + CR_BIT_SO, 1);
 	}
 	else if (a < b)
 	{
 		c = 8;
-		ppc_setCRBit(hCPU, crfD + CR_BIT_LT, 1);
+		ppc_setCRBit(hCPU, crBitBase + CR_BIT_LT, 1);
 	}
 	else if (a > b)
 	{
 		c = 4;
-		ppc_setCRBit(hCPU, crfD + CR_BIT_GT, 1);
+		ppc_setCRBit(hCPU, crBitBase + CR_BIT_GT, 1);
 	}
 	else
 	{
 		c = 2;
-		ppc_setCRBit(hCPU, crfD + CR_BIT_EQ, 1);
+		ppc_setCRBit(hCPU, crBitBase + CR_BIT_EQ, 1);
 	}
 
-	if (IS_SNAN(*(uint64*)&a) || IS_SNAN(*(uint64*)&b))
-		hCPU->fpscr |= FPSCR_VXSNAN;
+	hCPU->fpscr = (hCPU->fpscr & ~FPSCR_FPRF_MASK) | (c << 12);
 
-	hCPU->fpscr = (hCPU->fpscr & 0xffff0fff) | (c << 12);
+	// SNaN → VXSNAN. Ordered NaN: VXVC when VE=0, or for QNaN even if VE=1.
+	// Suite fcmpo SNaN VE=0 expects 0xA1081000 (VXSNAN|VXVC); VE=1 omits VXVC.
+	const bool snan = snanA || snanB;
+	if (snan)
+		ppc_fpscr_or_sticky(hCPU->fpscr, FPSCR_VXSNAN);
+	if (ordered && (nanA || nanB) && (!snan || !(hCPU->fpscr & FPSCR_VE)))
+		ppc_fpscr_or_sticky(hCPU->fpscr, FPSCR_VXVC);
+	ppc_fpscr_recompute(hCPU->fpscr);
+}
+
+void fcmpu_espresso(PPCInterpreter_t* hCPU, int crfD, double a, double b)
+{
+	ppc_fcmp_common(hCPU, crfD, a, b, false);
+}
+
+// FPSCR-only for the recompiler (CR already set by IML compares).
+static void ppc_fcmp_fpscr_only(double a, double b, bool ordered)
+{
+	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+	if (!hCPU)
+		return;
+	// Use CR field 0 as a scratch — only FPSCR is required; avoid clobbering CR0
+	// by writing FPCC/stickies without CR. Duplicate the FPSCR half of common:
+	const uint64 ua = *(const uint64*)&a;
+	const uint64 ub = *(const uint64*)&b;
+	const bool nanA = IS_NAN(ua);
+	const bool nanB = IS_NAN(ub);
+	const bool snan = IS_SNAN(ua) || IS_SNAN(ub);
+	uint32 c;
+	if (nanA || nanB)
+		c = 1;
+	else if (a < b)
+		c = 8;
+	else if (a > b)
+		c = 4;
+	else
+		c = 2;
+	hCPU->fpscr = (hCPU->fpscr & ~FPSCR_FPRF_MASK) | (c << 12);
+	if (snan)
+		ppc_fpscr_or_sticky(hCPU->fpscr, FPSCR_VXSNAN);
+	if (ordered && (nanA || nanB) && (!snan || !(hCPU->fpscr & FPSCR_VE)))
+		ppc_fpscr_or_sticky(hCPU->fpscr, FPSCR_VXVC);
+	ppc_fpscr_recompute(hCPU->fpscr);
+}
+
+ATTR_MS_ABI void ppc_fcmpu_fpscr(double a, double b)
+{
+	ppc_fcmp_fpscr_only(a, b, false);
+}
+
+ATTR_MS_ABI void ppc_fcmpo_fpscr(double a, double b)
+{
+	ppc_fcmp_fpscr_only(a, b, true);
 }
 
 void PPCInterpreter_FMR(PPCInterpreter_t* hCPU, uint32 Opcode)
@@ -2242,39 +2302,7 @@ void PPCInterpreter_FCMPO(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int crfD, frA, frB;
 	PPC_OPC_TEMPL_X(Opcode, crfD, frA, frB);
 	crfD >>= 2;
-	hCPU->cr[crfD*4+0] = 0;
-	hCPU->cr[crfD*4+1] = 0;
-	hCPU->cr[crfD*4+2] = 0;
-	hCPU->cr[crfD*4+3] = 0;
-
-	uint32 c;
-	if(IS_NAN(hCPU->fpr[frA].guint) || IS_NAN(hCPU->fpr[frB].guint))
-	{
-		c = 1;
-		hCPU->cr[crfD*4+CR_BIT_SO] = 1;
-	}
-    else if(hCPU->fpr[frA].fpr < hCPU->fpr[frB].fpr)
-	{
-		c = 8;
-		hCPU->cr[crfD*4+CR_BIT_LT] = 1;
-	}
-	else if(hCPU->fpr[frA].fpr > hCPU->fpr[frB].fpr)
-	{
-		c = 4;
-		hCPU->cr[crfD*4+CR_BIT_GT] = 1;
-	}
-	else
-	{
-		c = 2;
-		hCPU->cr[crfD*4+CR_BIT_EQ] = 1;
-	}
-
-    hCPU->fpscr = (hCPU->fpscr & 0xffff0fff) | (c << 12);
-
-	if (IS_SNAN (hCPU->fpr[frA].guint) || IS_SNAN (hCPU->fpr[frB].guint))
-		hCPU->fpscr |= FPSCR_VXSNAN;
-	else if (!(hCPU->fpscr & FPSCR_VE) || IS_QNAN (hCPU->fpr[frA].guint) || IS_QNAN (hCPU->fpr[frB].guint))
-		hCPU->fpscr |= FPSCR_VXVC;
+	ppc_fcmp_common(hCPU, crfD * 4, hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0, true);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }

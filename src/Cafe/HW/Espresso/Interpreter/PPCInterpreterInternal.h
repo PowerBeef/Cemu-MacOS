@@ -363,6 +363,10 @@ ATTR_MS_ABI double ppc_fdiv(double a, double b);
 ATTR_MS_ABI double ppc_fadd(double a, double b);
 ATTR_MS_ABI double ppc_fsubs(double a, double b);
 ATTR_MS_ABI double ppc_fadds(double a, double b);
+// Compare: CR + FPSCR[FPCC]/stickies]. crBitBase = field*4. ordered → fcmpo/ps_cmpo*.
+void ppc_fcmp_common(PPCInterpreter_t* hCPU, int crBitBase, double a, double b, bool ordered);
+ATTR_MS_ABI void ppc_fcmpu_fpscr(double a, double b);
+ATTR_MS_ABI void ppc_fcmpo_fpscr(double a, double b);
 ATTR_MS_ABI double ppc_fsub(double a, double b);
 // Estimates with SNaN quiet + VE/ZE suppress (bind_dest before call).
 ATTR_MS_ABI double ppc_fres(double b);

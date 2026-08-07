@@ -1982,6 +1982,11 @@ bool PPCRecompiler_decodePPCInstruction(ppcImlGenContext_t* ppcImlGenContext)
 					unsupportedInstructionFound = true;
 				ppcImlGenContext->hasFPUInstruction = true;
 				break;
+			case 3:
+				if( !PPCRecompilerImlGen_PS_CMPO1(ppcImlGenContext, opcode) )
+					unsupportedInstructionFound = true;
+				ppcImlGenContext->hasFPUInstruction = true;
+				break;
 			default:
 				unsupportedInstructionFound = true;
 				break;

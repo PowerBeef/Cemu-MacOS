@@ -521,10 +521,29 @@ bool PPCRecompilerImlGen_FNMADDS(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	return true;
 }
 
+ATTR_MS_ABI void ppc_fcmpu_fpscr(double a, double b);
+ATTR_MS_ABI void ppc_fcmpo_fpscr(double a, double b);
+
 bool PPCRecompilerImlGen_FCMPO(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
 {
-	// Not implemented
-	return false;
+	sint32 crfD, frA, frB;
+	PPC_OPC_TEMPL_X(opcode, crfD, frA, frB);
+	crfD >>= 2;
+	DefinePS0(fprA, frA);
+	DefinePS0(fprB, frB);
+
+	IMLReg crBitRegLT = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_LT);
+	IMLReg crBitRegGT = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_GT);
+	IMLReg crBitRegEQ = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_EQ);
+	IMLReg crBitRegSO = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_SO);
+
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegLT, IMLCondition::UNORDERED_LT);
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegGT, IMLCondition::UNORDERED_GT);
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegEQ, IMLCondition::UNORDERED_EQ);
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegSO, IMLCondition::UNORDERED_U);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fcmpo_fpscr, fprA, fprB, IMLREG_INVALID, IMLREG_INVALID);
+
+	return true;
 }
 
 bool PPCRecompilerImlGen_FCMPU(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
@@ -544,8 +563,7 @@ bool PPCRecompilerImlGen_FCMPU(ppcImlGenContext_t* ppcImlGenContext, uint32 opco
 	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegGT, IMLCondition::UNORDERED_GT);
 	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegEQ, IMLCondition::UNORDERED_EQ);
 	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegSO, IMLCondition::UNORDERED_U);
-
-	// todo: set fpscr
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fcmpu_fpscr, fprA, fprB, IMLREG_INVALID, IMLREG_INVALID);
 
 	return true;
 }
@@ -1586,8 +1604,25 @@ bool PPCRecompilerImlGen_PS_MERGE11(ppcImlGenContext_t* ppcImlGenContext, uint32
 
 bool PPCRecompilerImlGen_PS_CMPO0(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
 {
-	// Not implemented
-	return false;
+	sint32 crfD, frA, frB;
+	frB = (opcode >> 11) & 0x1F;
+	frA = (opcode >> 16) & 0x1F;
+	crfD = (opcode >> 23) & 0x7;
+
+	DefinePS0(fprA, frA);
+	DefinePS0(fprB, frB);
+
+	IMLReg crBitRegLT = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_LT);
+	IMLReg crBitRegGT = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_GT);
+	IMLReg crBitRegEQ = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_EQ);
+	IMLReg crBitRegSO = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_SO);
+
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegLT, IMLCondition::UNORDERED_LT);
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegGT, IMLCondition::UNORDERED_GT);
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegEQ, IMLCondition::UNORDERED_EQ);
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegSO, IMLCondition::UNORDERED_U);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fcmpo_fpscr, fprA, fprB, IMLREG_INVALID, IMLREG_INVALID);
+	return true;
 }
 
 bool PPCRecompilerImlGen_PS_CMPU0(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
@@ -1609,8 +1644,7 @@ bool PPCRecompilerImlGen_PS_CMPU0(ppcImlGenContext_t* ppcImlGenContext, uint32 o
 	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegGT, IMLCondition::UNORDERED_GT);
 	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegEQ, IMLCondition::UNORDERED_EQ);
 	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegSO, IMLCondition::UNORDERED_U);
-
-	// todo: set fpscr
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fcmpu_fpscr, fprA, fprB, IMLREG_INVALID, IMLREG_INVALID);
 	return true;
 }
 
@@ -1633,5 +1667,29 @@ bool PPCRecompilerImlGen_PS_CMPU1(ppcImlGenContext_t* ppcImlGenContext, uint32 o
 	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegGT, IMLCondition::UNORDERED_GT);
 	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegEQ, IMLCondition::UNORDERED_EQ);
 	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegSO, IMLCondition::UNORDERED_U);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fcmpu_fpscr, fprA, fprB, IMLREG_INVALID, IMLREG_INVALID);
+	return true;
+}
+
+bool PPCRecompilerImlGen_PS_CMPO1(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
+{
+	sint32 crfD, frA, frB;
+	frB = (opcode >> 11) & 0x1F;
+	frA = (opcode >> 16) & 0x1F;
+	crfD = (opcode >> 23) & 0x7;
+
+	DefinePS1(fprA, frA);
+	DefinePS1(fprB, frB);
+
+	IMLReg crBitRegLT = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_LT);
+	IMLReg crBitRegGT = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_GT);
+	IMLReg crBitRegEQ = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_EQ);
+	IMLReg crBitRegSO = _GetRegCR(ppcImlGenContext, crfD, Espresso::CR_BIT::CR_BIT_INDEX_SO);
+
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegLT, IMLCondition::UNORDERED_LT);
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegGT, IMLCondition::UNORDERED_GT);
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegEQ, IMLCondition::UNORDERED_EQ);
+	ppcImlGenContext->emitInst().make_fpr_compare(fprA, fprB, crBitRegSO, IMLCondition::UNORDERED_U);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fcmpo_fpscr, fprA, fprB, IMLREG_INVALID, IMLREG_INVALID);
 	return true;
 }
