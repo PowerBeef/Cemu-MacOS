@@ -1959,7 +1959,13 @@
       "status": "open",
       "verdict": "Values-only suite (`IGNORE_FPSCR_STATE=1`) is **305** failures (was 354 at first measurement, 325\u2192319 after FMA/fctiw, **305** after ps_cmpo1 + recompiler 25-bit frC). Arms still identical. `ps_cmpo1` was completely missing from the primary-4 compare dispatch (case 3 fell into unimplemented) \u2014 that alone cleared 14 failures. Recompiler now rounds frC to 25-bit mantissa on all single-precision mul/FMA/ps_* paths (interpreter already did). FNMADD/FNMADDS added to the recompiler. Remaining mass: psq_*, mad residual (NaN/inf edges), fres/rsqrte tables, frsp/fctiw edge cases.",
       "gate": "Continue against values-only ranking. Next clusters: (1) psq load/store quantisation (19), (2) remaining mad-form NaN/inf (still ~116), (3) fres/rsqrte tables, (4) frsp/fctiw edges.",
-      "ref": "docs/testing/00-test-strategy.md \u2014 First result"
+      "ref": "docs/testing/00-test-strategy.md \u2014 First result",
+      "measured": {
+        "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
+        "at_commit": "09bfedd",
+        "date": "2026-08-07",
+        "n": 1
+      }
     },
     {
       "id": "rm-homebrew-exit-crash",
