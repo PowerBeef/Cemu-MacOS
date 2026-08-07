@@ -991,6 +991,7 @@ void PPCInterpreter_FSEL(PPCInterpreter_t* hCPU, uint32 Opcode)
 // fctiw[z]: convert to 32-bit signed int, pack as 0xFFF8000x_xxxxxxxx (750CL high word).
 // NaN → 0x80000000 (VXCVI; +VXSNAN for SNaN). Out-of-range / Inf → clamp + VXCVI.
 // VE suppresses the write (suite check_fpu_noresult_nofprf).
+// check_fctiw* clears FPRF before compare — only stickies + FI/XX matter.
 static inline double ppc_fctiw_pack(uint32 v, bool negZero)
 {
 	uint64 r = 0xFFF8000000000000ULL | (uint64)v;
@@ -1009,6 +1010,7 @@ static inline double ppc_fctiw_common(double b, bool roundTowardZero)
 
 	uint32 v;
 	bool invalid = false;
+	bool set_fi = false;
 
 	if (isNan)
 	{
@@ -1032,19 +1034,59 @@ static inline double ppc_fctiw_common(double b, bool roundTowardZero)
 		else
 			v = (uint32)(sint32)std::lrint(b); // FPSCR[RN] via host mode
 		// Exact 2^31 is already handled by the > 0x7FFFFFFF test; in-range only here.
+		// Inexact if the float was not an integer (suite check_fctiw_inex).
+		if (roundTowardZero)
+			set_fi = (b != std::trunc(b));
+		else
+			set_fi = (b != std::nearbyint(b));
 	}
+
+	if (isSNan)
+		ppc_fpscr_note_sticky(FPSCR_VXSNAN | FPSCR_VXCVI);
+	else if (invalid)
+		ppc_fpscr_note_sticky(FPSCR_VXCVI);
+	if (set_fi)
+		ppc_fpscr_note_sticky(FPSCR_XX);
+
+	auto commit_fctiw_fpscr = [&]() {
+		// Suite check_fctiw* clears FPRF before compare — only stickies + FI/XX.
+		PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+		if (!hCPU)
+			return;
+		uint32 sticky = s_fpscr_pending_sticky;
+		s_fpscr_pending_sticky = 0;
+		if (s_fma_suppressed)
+		{
+			if (sticky != 0)
+			{
+				ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
+				ppc_fpscr_recompute(hCPU->fpscr);
+			}
+			return;
+		}
+		hCPU->fpscr &= ~(FPSCR_FI | FPSCR_FR);
+		if (set_fi)
+			hCPU->fpscr |= FPSCR_FI;
+		if (sticky != 0)
+			ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
+		ppc_fpscr_recompute(hCPU->fpscr);
+	};
 
 	// kind 2 = invalid for VE suppress (SNaN or VXCVI).
 	if (invalid || isSNan)
 	{
 		const double packed = ppc_fctiw_pack(v, false);
-		return ppc_fma_finish_special(2, packed);
+		const double r = ppc_fma_finish_special(2, packed);
+		commit_fctiw_fpscr();
+		return r;
 	}
 
 	s_fma_suppressed = false;
 	// −0 → integer 0 with high-word low bit set (suite fctiw high-word tests).
 	const bool negZero = (v == 0) && sign;
-	return ppc_fctiw_pack(v, negZero);
+	const double packed = ppc_fctiw_pack(v, negZero);
+	commit_fctiw_fpscr();
+	return packed;
 }
 
 ATTR_MS_ABI double ppc_fctiw(double b)
@@ -1065,7 +1107,11 @@ void PPCInterpreter_FCTIWZ(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_ASSERT(frA==0);
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
-	hCPU->fpr[frD].fpr = ppc_fctiwz(hCPU->fpr[frB].fpr);
+	const double r = ppc_fctiwz(hCPU->fpr[frB].fpr);
+	if (!s_fma_suppressed)
+		hCPU->fpr[frD].fpr = r;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1079,7 +1125,11 @@ void PPCInterpreter_FCTIW(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_ASSERT(frA==0);
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
-	hCPU->fpr[frD].fpr = ppc_fctiw(hCPU->fpr[frB].fpr);
+	const double r = ppc_fctiw(hCPU->fpr[frB].fpr);
+	if (!s_fma_suppressed)
+		hCPU->fpr[frD].fpr = r;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1232,6 +1282,22 @@ void PPCInterpreter_FRSP(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
+// Estimates: suite check_fpu_estimate_* ignores XX/FI (clears them before compare).
+// Need FPRF + exception stickies only (VXSNAN, ZX, VXSQRT).
+static void ppc_estimate_commit_fpscr(double result, bool single_domain)
+{
+	// Do not set XX/FI from host — estimates leave them undefined.
+	s_fpscr_pending_sticky &= ~(FPSCR_XX);
+	ppc_arith_commit_fpscr(result, single_domain);
+	// Clear FI if commit set it from XX residue.
+	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+	if (hCPU && !s_fma_suppressed)
+	{
+		hCPU->fpscr &= ~FPSCR_FI;
+		ppc_fpscr_recompute(hCPU->fpscr);
+	}
+}
+
 // Unary estimate with VE (SNaN) / ZE (±0 for fres) suppress.
 ATTR_MS_ABI double ppc_fres(double b)
 {
@@ -1239,16 +1305,25 @@ ATTR_MS_ABI double ppc_fres(double b)
 	if (ppc_bits_is_snan(ub))
 	{
 		double q = fres_espresso(b); // quiets
-		return ppc_fma_finish_special(2, q);
+		ppc_fpscr_note_sticky(FPSCR_VXSNAN);
+		const double r = ppc_fma_finish_special(2, q);
+		ppc_estimate_commit_fpscr(r, true);
+		return r;
 	}
 	if (ppc_bits_is_zero(ub))
 	{
 		// ±0 → ±Inf; ZE suppresses write.
-		double r = fres_espresso(b);
-		return ppc_fp_finish_ze(r);
+		double out = fres_espresso(b);
+		ppc_fpscr_note_sticky(FPSCR_ZX);
+		const double r = ppc_fp_finish_ze(out);
+		ppc_estimate_commit_fpscr(r, true);
+		return r;
 	}
 	s_fma_suppressed = false;
-	return fres_espresso(b);
+	const double r = fres_espresso(b);
+	// fres result is single-domain re-expanded double.
+	ppc_estimate_commit_fpscr(r, true);
+	return r;
 }
 
 ATTR_MS_ABI double ppc_frsqrte(double b)
@@ -1261,17 +1336,28 @@ ATTR_MS_ABI double ppc_frsqrte(double b)
 		// Negative zero is allowed (→ −Inf).
 		if (ppc_bits_is_snan(ub) || ((ub >> 63) && !ppc_bits_is_zero(ub)))
 		{
-			double r = frsqrte_espresso(b);
-			return ppc_fma_finish_special(2, r);
+			double out = frsqrte_espresso(b);
+			if (ppc_bits_is_snan(ub))
+				ppc_fpscr_note_sticky(FPSCR_VXSNAN);
+			else
+				ppc_fpscr_note_sticky(FPSCR_VXSQRT);
+			const double r = ppc_fma_finish_special(2, out);
+			ppc_estimate_commit_fpscr(r, false);
+			return r;
 		}
 	}
 	if (ppc_bits_is_zero(ub))
 	{
-		double r = frsqrte_espresso(b); // ±0 → ±Inf
-		return ppc_fp_finish_ze(r);
+		double out = frsqrte_espresso(b); // ±0 → ±Inf
+		ppc_fpscr_note_sticky(FPSCR_ZX);
+		const double r = ppc_fp_finish_ze(out);
+		ppc_estimate_commit_fpscr(r, false);
+		return r;
 	}
 	s_fma_suppressed = false;
-	return frsqrte_espresso(b);
+	const double r = frsqrte_espresso(b);
+	ppc_estimate_commit_fpscr(r, false);
+	return r;
 }
 
 // Double-precision mul: NaN A→C, 0·∞ → default QNaN, VE suppress.
@@ -1383,8 +1469,11 @@ void PPCInterpreter_FRSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_ASSERT(frA==0 && frC==0);
 	
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
-	hCPU->fpr[frD].fpr = ppc_frsqrte(hCPU->fpr[frB].fpr);
-	ppc_fpscr_set_fprf_from_double(hCPU->fpscr, hCPU->fpr[frD].fpr);
+	const double r = ppc_frsqrte(hCPU->fpr[frB].fpr);
+	if (!s_fma_suppressed)
+		hCPU->fpr[frD].fpr = r;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1398,10 +1487,15 @@ void PPCInterpreter_FRES(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_ASSERT(frA==0 && frC==0);
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
-	hCPU->fpr[frD].fpr = ppc_fres(hCPU->fpr[frB].fpr);
-	
-	if(PPC_PSE) 
-		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	const double r = ppc_fres(hCPU->fpr[frB].fpr);
+	if (!s_fma_suppressed)
+	{
+		hCPU->fpr[frD].fpr = r;
+		if (PPC_PSE)
+			hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	}
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1908,7 +2002,68 @@ void PPCInterpreter_MTFSF(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
-// single precision
+// single precision — shared helpers so recompiler and interpreter match FPSCR.
+
+// Single-domain add/sub: double add with Espresso specials, then pack to single.
+ATTR_MS_ABI double ppc_fadds(double a, double b)
+{
+	double special;
+	const int kind = ppc_faddsub_try_special(a, b, false, &special);
+	if (kind != 0)
+	{
+		const double r = ppc_fma_finish_special(kind, special);
+		// Special NaN may need single-domain FPRF; pack if finite was expected.
+		ppc_arith_commit_fpscr(r, true);
+		return r;
+	}
+	s_fma_suppressed = false;
+	__arm_wsr("fpsr", 0);
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	volatile double va = a, vb = b;
+	volatile float s = (float)(va + vb);
+	volatile double r = (double)s;
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
+	ppc_fpscr_note_host_fpsr();
+	// Underflow tininess from single view
+	uint32 sb;
+	std::memcpy(&sb, (const void*)&s, sizeof(sb));
+	if ((s_fpscr_pending_sticky & FPSCR_XX) && (sb & 0x7FFFFFFFu) < 0x00800000u)
+		s_fpscr_pending_sticky |= FPSCR_UX;
+	ppc_arith_commit_fpscr(r, true);
+	return r;
+}
+
+ATTR_MS_ABI double ppc_fsubs(double a, double b)
+{
+	double special;
+	const int kind = ppc_faddsub_try_special(a, b, true, &special);
+	if (kind != 0)
+	{
+		const double r = ppc_fma_finish_special(kind, special);
+		ppc_arith_commit_fpscr(r, true);
+		return r;
+	}
+	s_fma_suppressed = false;
+	__arm_wsr("fpsr", 0);
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	volatile double va = a, vb = b;
+	volatile float s = (float)(va - vb);
+	volatile double r = (double)s;
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
+	ppc_fpscr_note_host_fpsr();
+	uint32 sb;
+	std::memcpy(&sb, (const void*)&s, sizeof(sb));
+	if ((s_fpscr_pending_sticky & FPSCR_XX) && (sb & 0x7FFFFFFFu) < 0x00800000u)
+		s_fpscr_pending_sticky |= FPSCR_UX;
+	ppc_arith_commit_fpscr(r, true);
+	return r;
+}
 
 void PPCInterpreter_FADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
@@ -1916,13 +2071,18 @@ void PPCInterpreter_FADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
-	PPC_ASSERT(frB == 0);
-	
-	// todo: check for RC
+	PPC_ASSERT(frC == 0);
 
-	hCPU->fpr[frD].fpr = (float)(hCPU->fpr[frA].fpr + hCPU->fpr[frB].fpr);
-	if (PPC_PSE)
-		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	const double r = ppc_fadds(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
+	if (!s_fma_suppressed)
+	{
+		hCPU->fpr[frD].fpr = r;
+		if (PPC_PSE)
+			hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	}
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1933,11 +2093,18 @@ void PPCInterpreter_FSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
-	PPC_ASSERT(frB == 0);
+	PPC_ASSERT(frC == 0);
 
-	hCPU->fpr[frD].fpr = (float)(hCPU->fpr[frA].fpr - hCPU->fpr[frB].fpr);
-	if (PPC_PSE)
-		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	const double r = ppc_fsubs(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
+	if (!s_fma_suppressed)
+	{
+		hCPU->fpr[frD].fpr = r;
+		if (PPC_PSE)
+			hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	}
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }

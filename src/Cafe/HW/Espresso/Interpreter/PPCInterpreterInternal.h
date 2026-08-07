@@ -361,6 +361,8 @@ ATTR_MS_ABI double ppc_fmuls(double a, double c);
 ATTR_MS_ABI double ppc_fmul(double a, double c);
 ATTR_MS_ABI double ppc_fdiv(double a, double b);
 ATTR_MS_ABI double ppc_fadd(double a, double b);
+ATTR_MS_ABI double ppc_fsubs(double a, double b);
+ATTR_MS_ABI double ppc_fadds(double a, double b);
 ATTR_MS_ABI double ppc_fsub(double a, double b);
 // Estimates with SNaN quiet + VE/ZE suppress (bind_dest before call).
 ATTR_MS_ABI double ppc_fres(double b);

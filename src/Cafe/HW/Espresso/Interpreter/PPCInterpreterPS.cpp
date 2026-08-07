@@ -513,6 +513,7 @@ void PPCInterpreter_PS_RSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double b0 = hCPU->fpr[frB].fp0;
 	const double b1 = hCPU->fpr[frB].fp1;
 	ppc_ps_fma_reset_suppress();
+	ppc_fpscr_defer_begin();
 	ppc_fma_bind_dest(prev0);
 	const double r0 = ppc_ps_fold_estimate(b0, ppc_frsqrte(b0));
 	ppc_ps_fma_note_suppress();
@@ -524,7 +525,7 @@ void PPCInterpreter_PS_RSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
 	// FPRF from ps0 (suite excess-range rsqrte checks FPRF +normal = 0x4000).
-	ppc_fpscr_set_fprf_from_double(hCPU->fpscr, hCPU->fpr[frD].fp0);
+	ppc_fpscr_defer_end_double(hCPU->fpr[frD].fp0);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -617,6 +618,7 @@ void PPCInterpreter_PS_RES(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double prev0 = hCPU->fpr[frD].fp0;
 	const double prev1 = hCPU->fpr[frD].fp1;
 	ppc_ps_fma_reset_suppress();
+	ppc_fpscr_defer_begin();
 	ppc_fma_bind_dest(prev0);
 	const double r0 = ppc_fres(hCPU->fpr[frB].fp0);
 	ppc_ps_fma_note_suppress();
@@ -625,6 +627,7 @@ void PPCInterpreter_PS_RES(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_note_suppress();
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
+	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
