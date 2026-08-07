@@ -1544,7 +1544,9 @@
       "area": "tooling",
       "status": "landed",
       "commits": [
-        "bc8c475"
+        "bc8c475",
+        "3faf7d8",
+        "9a32772"
       ],
       "verdict": "Extracted keyboard GamePad profile and button map under `testing/profiles/`, added `testing/playtest/` (hold/press/raise/install_profile/scenario runner) and `testing/scenarios/botw-load-save.json`. Refactored `drive-botw.sh` to use the shared profile. Foundation for autonomous playtesting MCP (Phase 1) and ScriptedController (Phase 2).",
       "ref": "testing/playtest/README.md"
