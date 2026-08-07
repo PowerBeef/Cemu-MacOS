@@ -73,19 +73,23 @@ rather than guessing.
 | Status | `python3 docs/status/build-status.py` | After ledger edits; `--verify` before push |
 | Scene capture | `testing/capture-scene.sh` | Raise window first; needs keys + ROM |
 
-## Playtest / character control (Phase 0)
+## Playtest / character control
 
 | Path | Role |
 |------|------|
 | `testing/profiles/gamepad-keyboard.xml` | Keyboard → GamePad profile for automation |
 | `testing/profiles/BUTTON_MAP.md` | VPAD ButtonId ↔ keycode ↔ character |
-| `testing/playtest/` | Python: `press`/`hold`/`raise_window`/`install_keyboard_profile` |
+| `testing/playtest/` | Python helpers used by MCP and scripts |
 | `testing/scenarios/` | JSON step lists (e.g. `botw-load-save.json`) |
 | `testing/drive-botw.sh` | One-shot BotW boot to most recent save |
+| **MCP `tessera-playtest`** | Phase 1: launch / raise / hold / screenshot / scenarios |
+
+Setup: `./tools/tessera-playtest/setup.sh`. Flow: `playtest_launch` → `playtest_raise` →
+`playtest_run_botw_load_save` or `playtest_hold` → `playtest_screenshot` → `playtest_stop`.
 
 **Rules:** Accessibility on for Terminal/Grok; window **frontmost** before keys; holds ≥ **150 ms**.
-Do not invent keycodes — use the button map. Phase 1 will add a `tessera-playtest` MCP; Phase 2
-in-emulator ScriptedController for focus-independent analog sticks.
+Do not invent keycodes — use the button map / `playtest_list_buttons`. Phase 2: in-emulator
+ScriptedController for focus-independent analog sticks.
 
 ## Anti-patterns
 

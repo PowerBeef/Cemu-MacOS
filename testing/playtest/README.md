@@ -39,7 +39,16 @@ PY
 Still the supported one-shot BotW boot. It installs the shared profile and uses the
 same hold rules. Prefer extending scenarios here rather than more one-off shell.
 
-## Next (Phase 1)
+## Phase 1 MCP
 
-MCP `tessera-playtest` wrapping these helpers + launch/screenshot/scenario tools.
+Project MCP **`tessera-playtest`** (`tools/tessera-playtest/`) wraps this package:
+
+```sh
+./tools/tessera-playtest/setup.sh
+# Grok: .grok/config.toml → tessera-playtest
+```
+
+Tools: `playtest_launch`, `playtest_raise`, `playtest_hold`/`press`, `playtest_screenshot`,
+`playtest_run_scenario`, `playtest_run_botw_load_save`, `playtest_stop`, …
+
 Phase 2: in-emulator ScriptedController for focus-independent analog sticks.

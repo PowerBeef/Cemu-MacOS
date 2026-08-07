@@ -72,3 +72,6 @@ bin/graphicPacks/*
 
 # cemu-re-mcp local venv (bootstrap with tools/cemu-re-mcp/setup.sh)
 tools/cemu-re-mcp/.venv/
+
+# tessera-playtest MCP venv
+tools/tessera-playtest/.venv/

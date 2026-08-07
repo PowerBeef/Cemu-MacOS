@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tessera-playtest"
+version = "0.1.0"
+description = "MCP server for autonomous TesseraEmu playtesting (launch, input, screenshot, scenarios)"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.2,<1.7",
+]
+
+[project.scripts]
+tessera-playtest = "tessera_playtest.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
