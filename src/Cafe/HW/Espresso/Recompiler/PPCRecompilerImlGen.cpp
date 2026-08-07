@@ -1506,6 +1506,10 @@ bool PPCRecompilerImlGen_STSWI(ppcImlGenContext_t* ppcImlGenContext, uint32 opco
 
 bool PPCRecompilerImlGen_LWARX(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
 {
+	// Paired with STWCX interpreter path (hasMemReservation).
+	(void)ppcImlGenContext;
+	(void)opcode;
+	return false;
 	sint32 rA, rD, rB;
 	PPC_OPC_TEMPL_X(opcode, rD, rA, rB);
 
@@ -1527,6 +1531,11 @@ bool PPCRecompilerImlGen_LWARX(ppcImlGenContext_t* ppcImlGenContext, uint32 opco
 
 bool PPCRecompilerImlGen_STWCX(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
 {
+	// Espresso allows stwcx. EA ≠ lwarx EA (ppc750cl). Interpreter handles
+	// hasMemReservation + store-to-stwcx-EA; keep this path in the interpreter.
+	(void)ppcImlGenContext;
+	(void)opcode;
+	return false;
 	sint32 rA, rS, rB;
 	PPC_OPC_TEMPL_X(opcode, rS, rA, rB);
 	IMLReg regA = rA != 0 ? PPCRecompilerImlGen_loadRegister(ppcImlGenContext, PPCREC_NAME_R0 + rA) : IMLREG_INVALID;

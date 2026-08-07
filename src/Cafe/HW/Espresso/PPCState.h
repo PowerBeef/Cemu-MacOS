@@ -51,6 +51,7 @@ struct PPCInterpreter_t
 	uint8 xer_ca;  // carry from xer
 	uint8 xer_so;
 	uint8 xer_ov;
+	uint8 hasMemReservation; // 1 after lwarx until stwcx. clears it
 	// thread remaining cycles
 	sint32 remainingCycles; // if this value goes below zero, the next thread is scheduled
 	sint32 skippedCycles; // number of skipped cycles

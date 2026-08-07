@@ -51,52 +51,64 @@ static void PPCInterpreter_STWX(PPCInterpreter_t* hCPU, uint32 Opcode)
 static void PPCInterpreter_STWCX(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	// http://www.ibm.com/developerworks/library/pa-atom/
+	// Espresso (ppc750cl.s): stwcx. may target a *different* EA than lwarx and
+	// still succeed if the reserved location's value is unchanged; the store
+	// goes to the stwcx EA (suite writes r4 while reserved was r4+4).
 	sint32 rA, rS, rB;
 	PPC_OPC_TEMPL_X(Opcode, rS, rA, rB);
-	uint32 ea = (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB];
-	// check if we hold a reservation for the memory location
+	const uint32 ea = (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB];
 
-	// todo - this isnt accurate. STWCX can succeed even with a different EA if the reserved value remained untouched
-	if (hCPU->reservedMemAddr == ea)
+	if (hCPU->hasMemReservation)
 	{
-		uint32be reservedValue = hCPU->reservedMemValue; // this is the value we expect in memory (if it does not match, STWCX fails)
-		std::atomic<uint32be>* wordPtr;		
-		if constexpr(ppcItpCtrl::allowSupervisorMode)
+		const uint32 resAddr = hCPU->reservedMemAddr;
+		const uint32be expected = hCPU->reservedMemValue;
+		std::atomic<uint32be>* reservedPtr;
+		if constexpr (ppcItpCtrl::allowSupervisorMode)
 		{
-			wordPtr = _rawPtrToAtomic((uint32be*)(memory_base + ppcItpCtrl::ppcMem_translateVirtualDataToPhysicalAddr(hCPU, ea)));
+			reservedPtr = _rawPtrToAtomic((uint32be*)(memory_base + ppcItpCtrl::ppcMem_translateVirtualDataToPhysicalAddr(hCPU, resAddr)));
 			DSI_EXIT();
 		}
 		else
 		{
-			wordPtr = _rawPtrToAtomic((uint32be*)memory_getPointerFromVirtualOffset(ea));
+			reservedPtr = _rawPtrToAtomic((uint32be*)memory_getPointerFromVirtualOffset(resAddr));
 		}
-		uint32be newValue = hCPU->gpr[rS];
-		if (!wordPtr->compare_exchange_strong(reservedValue, newValue))
+		if (reservedPtr->load() == expected)
 		{
-			// failed
-			ppc_setCRBit(hCPU, CR_BIT_LT, 0);
-			ppc_setCRBit(hCPU, CR_BIT_GT, 0);
-			ppc_setCRBit(hCPU, CR_BIT_EQ, 0);
-		}
-		else
-		{
-			// success, new value has been written
+			// Store to the stwcx. EA (may differ from resAddr).
+			std::atomic<uint32be>* storePtr;
+			if constexpr (ppcItpCtrl::allowSupervisorMode)
+			{
+				storePtr = _rawPtrToAtomic((uint32be*)(memory_base + ppcItpCtrl::ppcMem_translateVirtualDataToPhysicalAddr(hCPU, ea)));
+				DSI_EXIT();
+			}
+			else
+			{
+				storePtr = _rawPtrToAtomic((uint32be*)memory_getPointerFromVirtualOffset(ea));
+			}
+			storePtr->store((uint32be)hCPU->gpr[rS]);
 			ppc_setCRBit(hCPU, CR_BIT_LT, 0);
 			ppc_setCRBit(hCPU, CR_BIT_GT, 0);
 			ppc_setCRBit(hCPU, CR_BIT_EQ, 1);
 		}
+		else
+		{
+			ppc_setCRBit(hCPU, CR_BIT_LT, 0);
+			ppc_setCRBit(hCPU, CR_BIT_GT, 0);
+			ppc_setCRBit(hCPU, CR_BIT_EQ, 0);
+		}
 		cemu_assert_debug(hCPU->xer_so <= 1);
 		ppc_setCRBit(hCPU, CR_BIT_SO, hCPU->xer_so);
-		// remove reservation
+		hCPU->hasMemReservation = 0;
 		hCPU->reservedMemAddr = 0;
 		hCPU->reservedMemValue = 0;
 	}
 	else
 	{
-		// failed
 		ppc_setCRBit(hCPU, CR_BIT_LT, 0);
 		ppc_setCRBit(hCPU, CR_BIT_GT, 0);
 		ppc_setCRBit(hCPU, CR_BIT_EQ, 0);
+		cemu_assert_debug(hCPU->xer_so <= 1);
+		ppc_setCRBit(hCPU, CR_BIT_SO, hCPU->xer_so);
 	}
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -350,6 +362,7 @@ static void PPCInterpreter_LWARX(PPCInterpreter_t* hCPU, uint32 Opcode)
 	// set reservation	
 	hCPU->reservedMemAddr = ea;
 	hCPU->reservedMemValue = hCPU->gpr[rD];
+	hCPU->hasMemReservation = 1;
 	PPCInterpreter_nextInstruction(hCPU);
 }
 

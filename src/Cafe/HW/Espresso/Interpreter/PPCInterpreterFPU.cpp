@@ -8,6 +8,7 @@
 #include <cmath>
 #include <math.h>
 #include <cstring>
+#include <atomic>
 
 // floating point utility
 
@@ -1054,11 +1055,17 @@ ATTR_MS_ABI double ppc_fdiv(double a, double b)
 		return ppc_fp_finish_ze(out);
 	}
 
+	// FZ clear so tininess (UX underflows that round up to min normal) is not
+	// flushed to zero by host FPCR.FZ (suite: (2·min_normal−ulp)/2).
+	// volatile + barriers: clang otherwise restores FPCR before the fdiv.
 	s_fma_suppressed = false;
 	const uint64 fpcr = __arm_rsr64("fpcr");
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
-	const double r = a / b;
+	std::atomic_signal_fence(std::memory_order_seq_cst);
+	volatile double va = a, vb = b;
+	volatile double r = va / vb;
+	std::atomic_signal_fence(std::memory_order_seq_cst);
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
 	return r;
@@ -1443,7 +1450,20 @@ void PPCInterpreter_FDIVS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	{
 		const uint64 b = *(const uint64*)&r;
 		if ((b & 0x7FF0000000000000ULL) != 0x7FF0000000000000ULL)
-			r = (double)(float)r;
+		{
+			// Pack to single with FZ clear (same tininess case as fdiv).
+			const uint64 fpcr = __arm_rsr64("fpcr");
+			if (fpcr & (1ull << 24))
+				__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+			std::atomic_signal_fence(std::memory_order_seq_cst);
+			volatile double vr = r;
+			volatile float sf = (float)vr;
+			volatile double out = (double)sf;
+			std::atomic_signal_fence(std::memory_order_seq_cst);
+			if (fpcr & (1ull << 24))
+				__arm_wsr64("fpcr", fpcr);
+			r = out;
+		}
 	}
 	hCPU->fpr[frD].fpr = r;
 	if( PPC_PSE )

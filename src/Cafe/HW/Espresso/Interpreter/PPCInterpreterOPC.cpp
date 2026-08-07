@@ -166,21 +166,19 @@ void PPCInterpreter_MCRXR(PPCInterpreter_t* hCPU, uint32 Opcode)
 {	
 	// used in Dont Starve: Giant Edition
 	// also used frequently by Web Browser (webkit?)
-	uint32 cr;
-	cr = (Opcode >> (31 - 8)) & 7;
-	cr >>= 2;
+	// BF is instruction bits 6–8 (already 0..7) — do not >>2 again.
+	const uint32 cr = (Opcode >> 23) & 7;
 
-	uint32 xer = PPCInterpreter_getXER(hCPU);
-	uint32 xerBits = (xer >> 28) & 0xF;
+	const uint32 xer = PPCInterpreter_getXER(hCPU);
+	// XER[0:3] = SO OV CA (res); map to CR LT GT EQ SO.
+	const uint32 xerBits = (xer >> 28) & 0xF;
+	ppc_setCRBit(hCPU, cr * 4 + 0, (xerBits >> 3) & 1); // LT ← SO
+	ppc_setCRBit(hCPU, cr * 4 + 1, (xerBits >> 2) & 1); // GT ← OV
+	ppc_setCRBit(hCPU, cr * 4 + 2, (xerBits >> 1) & 1); // EQ ← CA
+	ppc_setCRBit(hCPU, cr * 4 + 3, (xerBits >> 0) & 1);
 
-	// todo - is the order correct?
-	ppc_setCRBit(hCPU, cr * 4 + 0, (xerBits >> 0) & 1);
-	ppc_setCRBit(hCPU, cr * 4 + 1, (xerBits >> 1) & 1);
-	ppc_setCRBit(hCPU, cr * 4 + 2, (xerBits >> 2) & 1);
-	ppc_setCRBit(hCPU, cr * 4 + 3, (xerBits >> 3) & 1);
-
-	// reset copied bits
-	PPCInterpreter_setXER(hCPU, xer&~0xF0000000);
+	// Clear the copied high nibble; leave byte-count etc.
+	PPCInterpreter_setXER(hCPU, xer & ~0xF0000000u);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
