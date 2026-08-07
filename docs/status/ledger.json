@@ -1519,10 +1519,20 @@
       "status": "landed",
       "commits": [
         "8fd54d1",
-        "6cfc4ec"
+        "6cfc4ec",
+        "ef5b49b"
       ],
       "verdict": "Added  MCP  pointing at a vendored, macOS-safe packaging of Matt-Wood-23/cemu-re-mcp (GDB path only; pymem skipped). Complements cpu-tests when inspecting guest state under .",
       "ref": "tools/cemu-re-mcp/README.md"
+    },
+    {
+      "id": "agents-context-split",
+      "title": "Split agent context into AGENTS.md + measurement/tooling rules",
+      "area": "tooling",
+      "status": "landed",
+      "commits": [],
+      "verdict": "Slimmed `AGENTS.md` to constraints/build/architecture; moved measurement traps to `.grok/rules/measurement.md` and the tool matrix to `.grok/rules/tooling.md`. Added project skill `tessera-measure`. `CLAUDE.md` stays deleted.",
+      "ref": ".grok/rules/tooling.md"
     }
   ],
   "refuted": [
