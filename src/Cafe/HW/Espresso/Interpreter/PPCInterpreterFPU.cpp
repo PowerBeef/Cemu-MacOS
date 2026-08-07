@@ -1172,6 +1172,38 @@ ATTR_MS_ABI double ppc_fsub(double a, double b)
 	return a - b;
 }
 
+// PS lane quantize for merge/mr/neg/abs and finite add/sub results.
+ATTR_MS_ABI double ppc_ps_quantize(double d)
+{
+	const uint64 b = *(const uint64*)&d;
+	const uint64 abs = b & 0x7FFFFFFFFFFFFFFFULL;
+	if (abs >= 0x7FF0000000000000ULL)
+	{
+		// Inf/NaN: single-bit fold without quieting SNaN.
+		const uint32 s = ConvertToSingleNoFTZ(b);
+		const uint64 e = ConvertToDoubleNoFTZ(s);
+		return *(double*)&e;
+	}
+	// Finite: host RN, FZ clear for denorm results and re-expand.
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	volatile double vd = d;
+	volatile float sf = (float)vd;
+	volatile double r = (double)sf;
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
+	return r;
+}
+
+ATTR_MS_ABI double ppc_ps_pack_arith(double r)
+{
+	const uint64 b = *(const uint64*)&r;
+	if ((b & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL)
+		return r;
+	return ppc_ps_quantize(r);
+}
+
 void PPCInterpreter_FADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();

@@ -1,4 +1,5 @@
 #include "PPCInterpreterInternal.h"
+#include "PPCInterpreterHelper.h"
 #include <cmath>
 
 // Gekko paired single math
@@ -12,8 +13,18 @@ void PPCInterpreter_PS_ADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	hCPU->fpr[frD].fp0 = (float)(hCPU->fpr[frA].fp0 + hCPU->fpr[frB].fp0);
-	hCPU->fpr[frD].fp1 = (float)(hCPU->fpr[frA].fp1 + hCPU->fpr[frB].fp1);
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_ps_fma_reset_suppress();
+	ppc_fma_bind_dest(prev0);
+	const double r0 = ppc_ps_pack_arith(ppc_fadd(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0));
+	ppc_ps_fma_note_suppress();
+	ppc_fma_bind_dest(prev1);
+	const double r1 = ppc_ps_pack_arith(ppc_fadd(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1));
+	ppc_ps_fma_note_suppress();
+	// Pack before commit so VE leave-prev is not re-quantized.
+	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
+	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -27,8 +38,17 @@ void PPCInterpreter_PS_SUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	hCPU->fpr[frD].fp0 = (float)(hCPU->fpr[frA].fp0 - hCPU->fpr[frB].fp0);
-	hCPU->fpr[frD].fp1 = (float)(hCPU->fpr[frA].fp1 - hCPU->fpr[frB].fp1);
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_ps_fma_reset_suppress();
+	ppc_fma_bind_dest(prev0);
+	const double r0 = ppc_ps_pack_arith(ppc_fsub(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0));
+	ppc_ps_fma_note_suppress();
+	ppc_fma_bind_dest(prev1);
+	const double r1 = ppc_ps_pack_arith(ppc_fsub(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1));
+	ppc_ps_fma_note_suppress();
+	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
+	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -295,11 +315,21 @@ void PPCInterpreter_PS_SUM0(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	float s0 = (float)(hCPU->fpr[frA].fp0 + hCPU->fpr[frB].fp1);
-	float s1 = (float)hCPU->fpr[frC].fp1;
-
-	hCPU->fpr[frD].fp0 = s0;
-	hCPU->fpr[frD].fp1 = s1;
+	// ps0 = A.ps0 + B.ps1; ps1 = C.ps1 (copy). VE on sum → leave whole frD.
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_fma_bind_dest(prev0);
+	const double sum = ppc_ps_pack_arith(ppc_fadd(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp1));
+	if (ppc_fma_was_suppressed())
+	{
+		hCPU->fpr[frD].fp0 = prev0;
+		hCPU->fpr[frD].fp1 = prev1;
+	}
+	else
+	{
+		hCPU->fpr[frD].fp0 = sum;
+		hCPU->fpr[frD].fp1 = ppc_ps_quantize(hCPU->fpr[frC].fp1);
+	}
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -314,11 +344,21 @@ void PPCInterpreter_PS_SUM1(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	float s0 = (float)hCPU->fpr[frC].fp0;
-	float s1 = (float)(hCPU->fpr[frA].fp0 + hCPU->fpr[frB].fp1);
-
-	hCPU->fpr[frD].fp0 = s0;
-	hCPU->fpr[frD].fp1 = s1;
+	// ps0 = C.ps0 (copy); ps1 = A.ps0 + B.ps1. VE on sum → leave whole frD.
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_fma_bind_dest(prev1);
+	const double sum = ppc_ps_pack_arith(ppc_fadd(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp1));
+	if (ppc_fma_was_suppressed())
+	{
+		hCPU->fpr[frD].fp0 = prev0;
+		hCPU->fpr[frD].fp1 = prev1;
+	}
+	else
+	{
+		hCPU->fpr[frD].fp0 = ppc_ps_quantize(hCPU->fpr[frC].fp0);
+		hCPU->fpr[frD].fp1 = sum;
+	}
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -381,8 +421,9 @@ void PPCInterpreter_PS_MR(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frB = (Opcode>>11)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 	
-	hCPU->fpr[frD].fp0 = hCPU->fpr[frB].fp0;
-	hCPU->fpr[frD].fp1 = hCPU->fpr[frB].fp1;
+	// Quantize: excess-range doubles → single; SNaN not quieted.
+	hCPU->fpr[frD].fp0 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
+	hCPU->fpr[frD].fp1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -395,8 +436,11 @@ void PPCInterpreter_PS_NEG(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frB = (Opcode>>11)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	hCPU->fpr[frD].fp0 = -hCPU->fpr[frB].fp0;
-	hCPU->fpr[frD].fp1 = -hCPU->fpr[frB].fp1;
+	// Bit sign flip after quantize — arithmetic `-` would quiet SNaN.
+	const double q0 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
+	const double q1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
+	hCPU->fpr[frD].fp0int = (*(const uint64*)&q0) ^ (1ULL << 63);
+	hCPU->fpr[frD].fp1int = (*(const uint64*)&q1) ^ (1ULL << 63);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -409,8 +453,10 @@ void PPCInterpreter_PS_ABS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frB = (Opcode>>11)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	hCPU->fpr[frD].fp0int = hCPU->fpr[frB].fp0int & ~(1ULL << 63);
-	hCPU->fpr[frD].fp1int = hCPU->fpr[frB].fp1int & ~(1ULL << 63);
+	const double q0 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
+	const double q1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
+	hCPU->fpr[frD].fp0int = (*(const uint64*)&q0) & ~(1ULL << 63);
+	hCPU->fpr[frD].fp1int = (*(const uint64*)&q1) & ~(1ULL << 63);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -423,8 +469,10 @@ void PPCInterpreter_PS_NABS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frB = (Opcode>>11)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	hCPU->fpr[frD].fp0int = hCPU->fpr[frB].fp0int | (1ULL << 63);
-	hCPU->fpr[frD].fp1int = hCPU->fpr[frB].fp1int | (1ULL << 63);
+	const double q0 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
+	const double q1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
+	hCPU->fpr[frD].fp0int = (*(const uint64*)&q0) | (1ULL << 63);
+	hCPU->fpr[frD].fp1int = (*(const uint64*)&q1) | (1ULL << 63);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -461,9 +509,9 @@ void PPCInterpreter_PS_MERGE00(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frB = (Opcode>>11)&0x1F;
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
-	double s0 = hCPU->fpr[frA].fp0;
-	double s1 = hCPU->fpr[frB].fp0;
-	
+	// Read both before write (frD may alias frA/frB).
+	const double s0 = ppc_ps_quantize(hCPU->fpr[frA].fp0);
+	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
 
@@ -479,9 +527,8 @@ void PPCInterpreter_PS_MERGE01(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	double s0 = hCPU->fpr[frA].fp0;
-	double s1 = hCPU->fpr[frB].fp1;
-
+	const double s0 = ppc_ps_quantize(hCPU->fpr[frA].fp0);
+	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
 
@@ -497,9 +544,8 @@ void PPCInterpreter_PS_MERGE10(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	double s0 = hCPU->fpr[frA].fp1;
-	double s1 = hCPU->fpr[frB].fp0;
-
+	const double s0 = ppc_ps_quantize(hCPU->fpr[frA].fp1);
+	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
 
@@ -515,9 +561,8 @@ void PPCInterpreter_PS_MERGE11(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	double s0 = hCPU->fpr[frA].fp1;
-	double s1 = hCPU->fpr[frB].fp1;
-
+	const double s0 = ppc_ps_quantize(hCPU->fpr[frA].fp1);
+	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
 

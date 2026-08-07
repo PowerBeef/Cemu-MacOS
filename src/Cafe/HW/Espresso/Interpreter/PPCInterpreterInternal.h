@@ -223,6 +223,11 @@ ATTR_MS_ABI double ppc_fsub(double a, double b);
 // Estimates with SNaN quiet + VE/ZE suppress (bind_dest before call).
 ATTR_MS_ABI double ppc_fres(double b);
 ATTR_MS_ABI double ppc_frsqrte(double b);
+// PS move/merge quantize: round finite to single (FZ-safe); Inf/NaN via bit
+// convert so SNaNs are not quieted (suite: moves do not raise on NaN).
+ATTR_MS_ABI double ppc_ps_quantize(double d);
+// After arithmetic: keep Inf/NaN double-form (check_ps_nan); quantize finites.
+ATTR_MS_ABI double ppc_ps_pack_arith(double r);
 
 ATTR_MS_ABI double fres_espresso(double input);
 ATTR_MS_ABI double frsqrte_espresso(double input);
