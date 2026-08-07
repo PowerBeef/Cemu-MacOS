@@ -25,9 +25,9 @@ tile still resolving, which is roughly the honest state of any emulator: a pictu
 verified piece at a time.
 
 > [!IMPORTANT]
-> **This is early.** No releases yet, two games verified on one machine, no compatibility claims.
-> If you want to play something today, [Cemu](https://github.com/cemu-project/Cemu) is the mature,
-> well-supported project and you should use it. Come back here when this one has earned it.
+> **This is early.** No releases yet, a handful of titles exercised on one machine, no compatibility
+> list. If you want to play something today, [Cemu](https://github.com/cemu-project/Cemu) is the
+> mature, well-supported project and you should use it. Come back here when this one has earned it.
 
 ## Building it
 
@@ -62,6 +62,16 @@ See [BUILD.md](/BUILD.md) for app bundles, code signing and the full flag list.
 
 ## What is done so far
 
+**CPU conformance**
+
+- Runs [Andrew Church's `ppc750cl.s`](https://achurch.org/cpu-tests/ppc750cl.s) — silicon-validated
+  against real Espresso — as Wii U homebrew. No game image, console, keys or SDK required.
+- **Values-only suite (`IGNORE_FPSCR_STATE=1`): 0 failures**, recompiler and interpreter identical.
+  Every wrong *result* the suite can see under that build is fixed (FP, paired-single, integer).
+- **Full suite with FPSCR state: 928 failures**, also arms identical — residual is FPSCR
+  bookkeeping (FPRF, FI/FR, exception stickies), not wrong answers. First landing was 1,030
+  (354 values + 676 FPSCR state); values are closed. See [`testing/cpu-tests/`](/testing/cpu-tests/).
+
 **Performance**
 
 - Removed three idle spins in the scheduler and command processor. Mario Kart 8 went from 184% to
@@ -90,6 +100,8 @@ See [BUILD.md](/BUILD.md) for app bundles, code signing and the full flag list.
 - Draws that sample the surface they are rendering into now split the render pass, including when
   the two are separate texture objects over the same memory.
 - A shader stage that fails to compile now drops its draw instead of aborting the emulator.
+- Guest FP and paired-single semantics brought into line with Espresso on the values-only suite
+  (quantize, VE/ZE, FMA rounding, frsp/fctiw, merge excess-range, frsqrte denorms, lfd/PS hazards).
 
 **Platform**
 
@@ -99,6 +111,8 @@ See [BUILD.md](/BUILD.md) for app bundles, code signing and the full flag list.
 - Crash reports with real symbolicated arm64 backtraces, and a signal handler that survives stack
   overflow.
 - Code signing and entitlements handled by the build rather than by hand.
+- arm64-only, Metal-only, macOS 26.0 minimum — portability deliberately removed so the binary links
+  no GL/Vulkan/MoltenVK and no x86 path.
 
 Details and measurements for all of it are in [`docs/status/`](/docs/status/). There is also a
 [hardware reference](/docs/hardware/) and a set of [test ROMs](/testing/) that need no game image.
@@ -115,7 +129,7 @@ This project is **not affiliated with or endorsed by the Cemu project**, and car
 because MPL-2.0 grants no trademark rights. Licensed under [MPL-2.0](/LICENSE.txt).
 
 > [!NOTE]
-> **Changes here were written with AI assistance (Claude).** Cemu asks that contributed code be
-> written and understood by a human, for good reasons. **Do not submit these changes upstream as-is.**
+> **This project is AI-assisted development.** Cemu asks that contributed code be written and
+> understood by a human, for good reasons. **Do not submit these changes upstream as-is.**
 
 Wii and Wii U are trademarks of Nintendo. TesseraEmu is not affiliated with Nintendo.
