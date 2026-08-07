@@ -1505,7 +1505,9 @@
       "title": "Convert agent project rules to Grok-native naming",
       "area": "tooling",
       "status": "landed",
-      "commits": [],
+      "commits": [
+        "430ebdc"
+      ],
       "verdict": "Root brief is `AGENTS.md` (was `CLAUDE.md`); status-tracker rule lives at `.grok/rules/status-tracker.md` (was `.claude/rules/`). Present-tense docs and ledger `ref`s retargeted; historical ledger prose that names the old path is left as a record of the past.",
       "ref": ".grok/rules/status-tracker.md — The obligation"
     }
