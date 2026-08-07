@@ -64,87 +64,10 @@ const static float ST_SCALE[] = {
 0.003906f, 0.007813f, 0.015625f, 0.031250f,
 0.062500f, 0.125000f, 0.250000f, 0.500000f };
 
-static float dequantize(uint32 data, sint32 type, uint8 scale)
-{
-	float f;
-	switch (type)
-	{
-	case 4: // u8
-		f = (float)(uint8)data; 
-		f *= LD_SCALE[scale];
-		break;
-	case 5: // u16
-		f = (float)(uint16)data; 
-		f *= LD_SCALE[scale];
-		break;
-	case 6: // s8
-		f = (float)(sint8)data;
-		f *= LD_SCALE[scale];
-		break;
-	case 7: // s16
-		f = (float)(sint16)data;
-		f *= LD_SCALE[scale];
-		break;
-	case 0:
-	default:
-		f = *((float *)&data);
-		// scale does not apply when loading floats
-		break;
-	}
-	return f;
-}
-
-static uint32 quantize(float data, sint32 type, uint8 scale)
-{
-	// Espresso psq_st truncates toward zero after scaling (suite: "rounding (truncation)").
-	// Never cast a possibly-negative float through uint32 — that zeros negatives on arm64.
-	uint32 val;
-
-	switch (type)
-	{
-	case 4: // u8
-	{
-		data *= ST_SCALE[scale];
-		if (data < 0.0f) data = 0.0f;
-		if (data > 255.0f) data = 255.0f;
-		val = (uint32)(sint32)data;
-		break;
-	}
-	case 5: // u16
-	{
-		data *= ST_SCALE[scale];
-		if (data < 0.0f) data = 0.0f;
-		if (data > 65535.0f) data = 65535.0f;
-		val = (uint32)(sint32)data;
-		break;
-	}
-	case 6: // s8
-	{
-		data *= ST_SCALE[scale];
-		if (data < -128.0f) data = -128.0f;
-		if (data > 127.0f) data = 127.0f;
-		val = (uint32)(sint32)data;
-		break;
-	}
-	case 7: // s16
-	{
-		data *= ST_SCALE[scale];
-		if (data < -32768.0f) data = -32768.0f;
-		if (data > 32767.0f) data = 32767.0f;
-		val = (uint32)(sint32)data;
-		break;
-	}
-	case 0: // float
-	default:
-		// scale does not apply when storing floats
-		*((float*)&val) = data;
-		break;
-	}
-	return val;
-}
-
 #define _uint32_fastSignExtend(__v, __bits) (uint32)(((sint32)(__v)<<(31-(__bits)))>>(31-(__bits)));
 
+// Bit-exact float↔double conversion used by lfs/stfs and type-0 psq_*.
+// Must not quiet SNaNs or round (suite: psq float NaN load/store, double truncate).
 static inline uint64 ConvertToDoubleNoFTZ(uint32 value)
 {
 	// http://www.freescale.com/files/product/doc/MPCFPE32B.pdf
@@ -196,4 +119,126 @@ static inline uint32 ConvertToSingleNoFTZ(uint64 x)
 	{
 		return ((x >> 32) & 0xc0000000) | ((x >> 29) & 0x3fffffff);
 	}
+}
+
+// Type-0 (float) load: expand 32-bit pattern to double without quieting SNaNs or
+// flushing denormals (suite: "should not … silence SNaNs"; denorms load unchanged).
+static inline double dequantize_float_to_double(uint32 data)
+{
+	uint64 bits = ConvertToDoubleNoFTZ(data);
+	return *(double*)&bits;
+}
+
+// Type-0 (float) store: truncate double→single without host rounding, then flush
+// denormal singles to signed zero (suite: denorms "flushed to zero on store";
+// doubles "truncate rather than round").
+static inline uint32 quantize_double_to_float_bits(double d)
+{
+	uint32 bits = ConvertToSingleNoFTZ(*(uint64*)&d);
+	// Flush denormal (exp==0, frac!=0) to signed zero.
+	if ((bits & 0x7F800000u) == 0 && (bits & 0x007FFFFFu) != 0)
+		bits &= 0x80000000u;
+	return bits;
+}
+
+// Integer dequantize returns a float. Type-0 must use dequantize_to_double instead
+// so SNaN/QNaN bit patterns survive the expand to FPR doubles.
+static float dequantize(uint32 data, sint32 type, uint8 scale)
+{
+	float f;
+	switch (type)
+	{
+	case 4: // u8
+		f = (float)(uint8)data;
+		f *= LD_SCALE[scale];
+		break;
+	case 5: // u16
+		f = (float)(uint16)data;
+		f *= LD_SCALE[scale];
+		break;
+	case 6: // s8
+		f = (float)(sint8)data;
+		f *= LD_SCALE[scale];
+		break;
+	case 7: // s16
+		f = (float)(sint16)data;
+		f *= LD_SCALE[scale];
+		break;
+	case 0:
+	default:
+		// Fallback only — psq load sites call dequantize_to_double for type 0.
+		f = *((float*)&data);
+		break;
+	}
+	return f;
+}
+
+// psq load path: type 0 expands bit-exact; integer types dequantize then widen.
+static inline double dequantize_to_double(uint32 data, sint32 type, uint8 scale)
+{
+	if (type == 0)
+		return dequantize_float_to_double(data);
+	return (double)dequantize(data, type, scale);
+}
+
+// Espresso integer psq_st: NaN clamps by sign bit the same way ±inf does
+// (suite: "8/16-bit unsigned/signed, NaN" → max if sign=0, min if sign=1).
+// IEEE comparisons with NaN are always false, so a plain clamp leaves NaN and
+// the (sint32) cast is undefined — handle NaN before the range checks.
+static inline void clamp_psq_integer(float& f, float lo, float hi)
+{
+	const uint32 bits = *(uint32*)&f;
+	const bool isNaN = ((bits & 0x7F800000u) == 0x7F800000u) && ((bits & 0x007FFFFFu) != 0);
+	if (isNaN)
+		f = (bits & 0x80000000u) ? lo : hi;
+	else
+	{
+		if (f < lo) f = lo;
+		if (f > hi) f = hi;
+	}
+}
+
+static uint32 quantize(double data, sint32 type, uint8 scale)
+{
+	// Espresso psq_st truncates toward zero after scaling (suite: "rounding (truncation)").
+	// Never cast a possibly-negative float through uint32 — that zeros negatives on arm64.
+	uint32 val;
+	float f = (float)data;
+
+	switch (type)
+	{
+	case 4: // u8
+	{
+		f *= ST_SCALE[scale];
+		clamp_psq_integer(f, 0.0f, 255.0f);
+		val = (uint32)(sint32)f;
+		break;
+	}
+	case 5: // u16
+	{
+		f *= ST_SCALE[scale];
+		clamp_psq_integer(f, 0.0f, 65535.0f);
+		val = (uint32)(sint32)f;
+		break;
+	}
+	case 6: // s8
+	{
+		f *= ST_SCALE[scale];
+		clamp_psq_integer(f, -128.0f, 127.0f);
+		val = (uint32)(sint32)f;
+		break;
+	}
+	case 7: // s16
+	{
+		f *= ST_SCALE[scale];
+		clamp_psq_integer(f, -32768.0f, 32767.0f);
+		val = (uint32)(sint32)f;
+		break;
+	}
+	case 0: // float
+	default:
+		val = quantize_double_to_float_bits(data);
+		break;
+	}
+	return val;
 }

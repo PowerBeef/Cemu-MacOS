@@ -877,22 +877,23 @@ static inline sint32 psq_d_form_disp(uint32 opcode)
 
 static void psq_store_pair(PPCInterpreter_t* hCPU, uint32 ea, sint32 frD, sint32 type, uint8 scale, bool oneSlot)
 {
+	// Pass doubles so type-0 store can ConvertToSingleNoFTZ (truncate, preserve NaN).
 	if ((type == 4) || (type == 6))
-		ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
+		ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea, quantize(hCPU->fpr[frD].fp0, type, scale));
 	else if ((type == 5) || (type == 7))
-		ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
+		ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea, quantize(hCPU->fpr[frD].fp0, type, scale));
 	else
-		ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
+		ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea, quantize(hCPU->fpr[frD].fp0, type, scale));
 
 	if (oneSlot)
 		return;
 
 	if ((type == 4) || (type == 6))
-		ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea + 1, quantize((float)hCPU->fpr[frD].fp1, type, scale));
+		ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea + 1, quantize(hCPU->fpr[frD].fp1, type, scale));
 	else if ((type == 5) || (type == 7))
-		ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea + 2, quantize((float)hCPU->fpr[frD].fp1, type, scale));
+		ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea + 2, quantize(hCPU->fpr[frD].fp1, type, scale));
 	else
-		ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea + 4, quantize((float)hCPU->fpr[frD].fp1, type, scale));
+		ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea + 4, quantize(hCPU->fpr[frD].fp1, type, scale));
 }
 
 static void PPCInterpreter_PSQ_ST(PPCInterpreter_t* hCPU, unsigned int opcode)
@@ -971,7 +972,7 @@ static void PPCInterpreter_PSQ_L(PPCInterpreter_t* hCPU, unsigned int opcode)
 		if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
 		if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
-		hCPU->fpr[frD].fp0 = (double)dequantize(data0, type, scale);
+		hCPU->fpr[frD].fp0 = dequantize_to_double(data0, type, scale);
 		hCPU->fpr[frD].fp1 = 1.0f;
 	}
 	else
@@ -1002,8 +1003,8 @@ static void PPCInterpreter_PSQ_L(PPCInterpreter_t* hCPU, unsigned int opcode)
 			if (data1 & 0x8000) data1 |= 0xffff0000;
 		}
 
-		hCPU->fpr[frD].fp0 = (double)dequantize(data0, type, scale);
-		hCPU->fpr[frD].fp1 = (double)dequantize(data1, type, scale);
+		hCPU->fpr[frD].fp0 = dequantize_to_double(data0, type, scale);
+		hCPU->fpr[frD].fp1 = dequantize_to_double(data1, type, scale);
 	}
 }
 
@@ -1034,7 +1035,7 @@ static void PPCInterpreter_PSQ_LU(PPCInterpreter_t* hCPU, unsigned int opcode)
 		if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
 		if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
-		hCPU->fpr[frD].fp0 = (double)dequantize(data0, type, scale);
+		hCPU->fpr[frD].fp0 = dequantize_to_double(data0, type, scale);
 		hCPU->fpr[frD].fp1 = 1.0f;
 	}
 	else
@@ -1051,8 +1052,8 @@ static void PPCInterpreter_PSQ_LU(PPCInterpreter_t* hCPU, unsigned int opcode)
 		if (type == 6) if (data1 & 0x80) data1 |= 0xffffff00;
 		if (type == 7) if (data1 & 0x8000) data1 |= 0xffff0000;
 
-		hCPU->fpr[frD].fp0 = (double)dequantize(data0, type, scale);
-		hCPU->fpr[frD].fp1 = (double)dequantize(data1, type, scale);
+		hCPU->fpr[frD].fp0 = dequantize_to_double(data0, type, scale);
+		hCPU->fpr[frD].fp1 = dequantize_to_double(data1, type, scale);
 	}
 }
 
@@ -1082,7 +1083,7 @@ static void PPCInterpreter_PSQ_LX(PPCInterpreter_t* hCPU, unsigned int opcode)
 		if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
 		if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
-		hCPU->fpr[frD].fp0 = (double)dequantize(data0, type, scale);
+		hCPU->fpr[frD].fp0 = dequantize_to_double(data0, type, scale);
 		hCPU->fpr[frD].fp1 = 1.0f;
 	}
 	else
@@ -1099,8 +1100,8 @@ static void PPCInterpreter_PSQ_LX(PPCInterpreter_t* hCPU, unsigned int opcode)
 		if (type == 6) if (data1 & 0x80) data1 |= 0xffffff00;
 		if (type == 7) if (data1 & 0x8000) data1 |= 0xffff0000;
 
-		hCPU->fpr[frD].fp0 = (double)dequantize(data0, type, scale);
-		hCPU->fpr[frD].fp1 = (double)dequantize(data1, type, scale);
+		hCPU->fpr[frD].fp0 = dequantize_to_double(data0, type, scale);
+		hCPU->fpr[frD].fp1 = dequantize_to_double(data1, type, scale);
 	}
 
 	PPCInterpreter_nextInstruction(hCPU);

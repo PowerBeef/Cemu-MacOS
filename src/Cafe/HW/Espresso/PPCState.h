@@ -224,6 +224,9 @@ uint32 PPCInterpreter_makeCallableExportDepr(void (*ppcCallableExport)(PPCInterp
 static inline float flushDenormalToZero(float f)
 {
 	uint32 v = *(uint32*)&f;
+	// Flush denormal (exp==0, frac!=0) to signed zero.
+	if ((v & 0x7F800000u) == 0 && (v & 0x007FFFFFu) != 0)
+		v &= 0x80000000u;
 	return *(float*)&v;
 }
 
