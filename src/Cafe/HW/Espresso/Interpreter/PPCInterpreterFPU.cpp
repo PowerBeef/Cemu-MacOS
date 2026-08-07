@@ -120,22 +120,31 @@ ATTR_MS_ABI double roundTo25BitAccuracy(double d)
 {
 	// Truncate the IEEE-754 double mantissa to 25 bits, with round-to-nearest via the
 	// sticky next bit (Espresso single-precision multiply product factor for frC).
+	// Round-up of DBL_MAX overflows to Inf — that is intentional: `1 * HUGE + -HUGE`
+	// becomes +Inf with OX, while `HUGE * 1 + -HUGE` stays 0 (25-bit is frC only).
+	// `0 * HUGE + 1` is handled separately: Inf-from-25-bit is not a true Inf operand.
 	uint64 v = *(uint64*)&d;
-	// Leave NaN / Inf unchanged (and do not try to "round" them into a different payload).
 	if ((v & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL)
 		return d;
 
 	const uint64 rounded = (v & 0xFFFFFFFFF8000000ULL) + (v & 0x8000000ULL);
-	// Round-up of DBL_MAX (and nearby max-exponent values) overflows the exponent to Inf.
-	// Espresso frC must stay finite here: suite cases like `0 * HUGE_VAL + 1` expect the
-	// product to be a real zero, not a 0·∞ invalid (ppc750cl.s fmadds excess-precision block).
-	if ((rounded & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL)
-	{
-		// Chop without the round-up bit so the value remains the largest finite 25-bit form.
-		const uint64 chopped = v & 0xFFFFFFFFF8000000ULL;
-		return *(double*)&chopped;
-	}
 	return *(double*)&rounded;
+}
+
+// Like roundTo25BitAccuracy, but reports whether a finite input overflowed to Inf.
+static inline double roundTo25BitAccuracyEx(double d, bool* outOverflowToInf)
+{
+	if (outOverflowToInf)
+		*outOverflowToInf = false;
+	const uint64 vIn = *(const uint64*)&d;
+	const bool wasFinite = ((vIn & 0x7FF0000000000000ULL) != 0x7FF0000000000000ULL);
+	const double r = roundTo25BitAccuracy(d);
+	if (outOverflowToInf && wasFinite)
+	{
+		const uint64 vOut = *(const uint64*)&r;
+		*outOverflowToInf = ((vOut & 0x7FFFFFFFFFFFFFFFULL) == 0x7FF0000000000000ULL);
+	}
+	return r;
 }
 
 // --- PowerPC fused multiply-add specials (ppc750cl.s, Espresso silicon) ---
@@ -176,7 +185,10 @@ static inline bool ppc_bits_is_snan(uint64 x)
 //  0 = not special — use std::fma
 //  1 = write *out (QNaN-only selection; no invalid exception → VE does not suppress)
 //  2 = invalid (SNaN operand and/or 0·∞ / ∞−∞) — VE suppresses frD write
-static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, double* out)
+// cOverflowToInf: frC became Inf only via 25-bit round of a finite HUGE (not a
+// true Inf operand). 0·that must not raise VXIMZ (suite: 0 * HUGE_VAL + 1).
+static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, double* out,
+	bool cOverflowToInf = false)
 {
 	const uint64 ua = *(uint64*)&a;
 	const uint64 ub = *(uint64*)&b;
@@ -206,12 +218,21 @@ static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, doub
 		return anySNaN ? 2 : 1;
 	}
 
-	// 0 · ∞ or ∞ · 0 → VXIMZ default QNaN
-	if ((ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc)) || (ppc_bits_is_inf(ua) && ppc_bits_is_zero(uc)))
+	// 0 · ∞ or ∞ · 0 → VXIMZ default QNaN.
+	// Inf that only exists because 25-bit rounded a finite HUGE is not a true Inf
+	// operand: skip the invalid here (caller rewrites 0·overflowInf as 0·1).
+	if (ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc) && !cOverflowToInf)
 	{
 		*out = *(double*)&kPpcDefaultQNaN;
 		return 2;
 	}
+	if (ppc_bits_is_inf(ua) && ppc_bits_is_zero(uc))
+	{
+		*out = *(double*)&kPpcDefaultQNaN;
+		return 2;
+	}
+	if (ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc) && cOverflowToInf)
+		return 0; // numeric path will rewrite c
 
 	// ∞ · finite ± ∞ of opposite sign → VXISI default QNaN
 	if ((ppc_bits_is_inf(ua) || ppc_bits_is_inf(uc)) && ppc_bits_is_inf(ub))
@@ -331,14 +352,42 @@ ATTR_MS_ABI double ppc_fnmsub(double a, double c, double b)
 	return -ppc_fma_double_nofz(a, c, -b);
 }
 
-// Single-precision multiply-add domain. Prefer fmaf on the f32 bit patterns so a
-// denormal addend can stick into the rounding of a huge product (suite expects
-// 0x7F000001). Fall back to double fma when converting an operand to f32 would
-// overflow (HUGE_VAL cases).
-static inline double ppc_fma_single_domain(double a, double c, double b, bool isMsub, bool negate)
+// Pack a double FMA intermediate into the single-precision FPR layout.
+// In-range: ConvertToSingleNoFTZ (suite denorm sticky: min_denorm*1.5 − min_denorm_d
+// → 0x1, not IEEE RN 0x2). Out-of-range finite: ±Inf (suite: 1*0.5−HUGE → −Inf);
+// plain ConvertToSingleNoFTZ would leave HUGE_VALF.
+static inline double ppc_fma_result_to_single(double r)
 {
+	if (std::isfinite(r))
+	{
+		// max finite single as double (HUGE_VALF).
+		constexpr double kMaxSingle = 0x1.fffffep+127;
+		if (r > kMaxSingle)
+			r = std::numeric_limits<double>::infinity();
+		else if (r < -kMaxSingle)
+			r = -std::numeric_limits<double>::infinity();
+		else
+		{
+			const uint32 sr = ConvertToSingleNoFTZ(*(const uint64*)&r);
+			const uint64 dr = ConvertToDoubleNoFTZ(sr);
+			return *(double*)&dr;
+		}
+	}
+	const uint32 sr = ConvertToSingleNoFTZ(*(const uint64*)&r);
+	const uint64 dr = ConvertToDoubleNoFTZ(sr);
+	return *(double*)&dr;
+}
+
+// Single-precision multiply-add domain.
+// cIn is the raw frC; 25-bit rounding is applied here so we can tell true Inf
+// from Inf-from-HUGE (needed for 0·HUGE vs 1·HUGE + −HUGE vs 0.5·HUGE + −HUGE).
+static inline double ppc_fma_single_domain(double a, double cIn, double b, bool isMsub, bool negate)
+{
+	bool cOverflowToInf = false;
+	double c = roundTo25BitAccuracyEx(cIn, &cOverflowToInf);
+
 	double special;
-	const int kind = ppc_fmadd_try_special(a, b, c, isMsub, &special);
+	const int kind = ppc_fmadd_try_special(a, b, c, isMsub, &special, cOverflowToInf);
 	if (kind != 0)
 		return ppc_fma_finish_special(kind, special);
 	s_fma_suppressed = false;
@@ -346,53 +395,65 @@ static inline double ppc_fma_single_domain(double a, double c, double b, bool is
 	if (isMsub)
 		b = -b;
 
-	const uint64 ua = *(const uint64*)&a;
-	const uint64 uc = *(const uint64*)&c;
-	const uint64 ub = *(const uint64*)&b;
-	const uint32 sa = ConvertToSingleNoFTZ(ua);
-	const uint32 sc = ConvertToSingleNoFTZ(uc);
-	const uint32 sb = ConvertToSingleNoFTZ(ub);
-	const float fa = ppc_bits_to_f32(sa);
-	const float fc = ppc_bits_to_f32(sc);
-	const float fb = ppc_bits_to_f32(sb);
-
-	// Finite double that becomes Inf as f32 → double fma (0·HUGE+1 etc.).
-	const bool overflowed =
-		(std::isfinite(a) && !std::isfinite(fa)) ||
-		(std::isfinite(c) && !std::isfinite(fc)) ||
-		(std::isfinite(b) && !std::isfinite(fb));
-	// Excess precision (double payload ≠ single expand): double fma then round —
-	// fmaf would chop inputs first and fail the suite's "excess precision on input".
-	const bool excessPrecision =
-		ConvertToDoubleNoFTZ(sa) != ua ||
-		ConvertToDoubleNoFTZ(sc) != uc ||
-		ConvertToDoubleNoFTZ(sb) != ub;
-
 	double r;
-	if (overflowed || excessPrecision)
+	if (cOverflowToInf)
 	{
-		r = ppc_fma_double_nofz(a, c, b);
-		const uint32 sr = ConvertToSingleNoFTZ(*(const uint64*)&r);
-		const uint64 dr = ConvertToDoubleNoFTZ(sr);
-		r = *(double*)&dr;
+		// 25-bit round of DBL_MAX is 2^1024, which IEEE-packs as Inf. Multiplying
+		// as Inf first is wrong: 0.5·Inf is Inf, but 0.5·2^1024 = 2^1023 is finite.
+		// Suite: 1·HUGE+−HUGE → +Inf, 0.5·HUGE+−HUGE → −Inf, 0·HUGE+1 → 1.
+		// ldexp(|a|, 1024) keeps that distinction (0 → 0, 0.5 → 2^1023, 1 → Inf).
+		const double mag = std::ldexp(std::fabs(a), 1024);
+		const double prod = (std::signbit(a) != std::signbit(c)) ? -mag : mag;
+		r = prod + b;
+		r = ppc_fma_result_to_single(r);
 	}
 	else
 	{
-		// Exact f32 operands: fmaf keeps denormal sticky (suite 0x7F000001).
-		const uint64 fpcr = __arm_rsr64("fpcr");
-		if (fpcr & (1ull << 24))
-			__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
-		const uint32 sr = ppc_f32_to_bits(std::fmaf(fa, fc, fb));
-		if (fpcr & (1ull << 24))
-			__arm_wsr64("fpcr", fpcr);
-		const uint64 dr = ConvertToDoubleNoFTZ(sr);
-		r = *(double*)&dr;
+		const uint64 ua = *(const uint64*)&a;
+		const uint64 uc = *(const uint64*)&c;
+		const uint64 ub = *(const uint64*)&b;
+		const uint32 sa = ConvertToSingleNoFTZ(ua);
+		const uint32 sc = ConvertToSingleNoFTZ(uc);
+		const uint32 sb = ConvertToSingleNoFTZ(ub);
+		const float fa = ppc_bits_to_f32(sa);
+		const float fc = ppc_bits_to_f32(sc);
+		const float fb = ppc_bits_to_f32(sb);
+
+		// Finite double that becomes Inf as f32, or excess precision → double fma
+		// then IEEE-round to single (not ConvertToSingleNoFTZ truncate).
+		const bool overflowed =
+			(std::isfinite(a) && !std::isfinite(fa)) ||
+			(std::isfinite(c) && !std::isfinite(fc)) ||
+			(std::isfinite(b) && !std::isfinite(fb));
+		const bool excessPrecision =
+			ConvertToDoubleNoFTZ(sa) != ua ||
+			ConvertToDoubleNoFTZ(sc) != uc ||
+			ConvertToDoubleNoFTZ(sb) != ub;
+
+		if (overflowed || excessPrecision)
+		{
+			r = ppc_fma_double_nofz(a, c, b);
+			r = ppc_fma_result_to_single(r);
+		}
+		else
+		{
+			// Exact f32 operands: fmaf keeps denormal sticky (suite 0x7F000001).
+			const uint64 fpcr = __arm_rsr64("fpcr");
+			if (fpcr & (1ull << 24))
+				__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+			const uint32 sr = ppc_f32_to_bits(std::fmaf(fa, fc, fb));
+			if (fpcr & (1ull << 24))
+				__arm_wsr64("fpcr", fpcr);
+			const uint64 dr = ConvertToDoubleNoFTZ(sr);
+			r = *(double*)&dr;
+		}
 	}
 	return negate ? -r : r;
 }
 
 ATTR_MS_ABI double ppc_fmadds(double a, double c, double b)
 {
+	// c is raw frC — 25-bit applied inside.
 	return ppc_fma_single_domain(a, c, b, false, false);
 }
 ATTR_MS_ABI double ppc_fmsubs(double a, double c, double b)
@@ -938,7 +999,8 @@ void PPCInterpreter_FMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
-	hCPU->fpr[frD].fpr = ppc_fmadds(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
+	// 25-bit frC is applied inside ppc_fmadds* (tracks Inf-from-HUGE).
+	hCPU->fpr[frD].fpr = ppc_fmadds(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -953,7 +1015,7 @@ void PPCInterpreter_FNMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
-	hCPU->fpr[frD].fpr = ppc_fnmadds(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = ppc_fnmadds(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -968,7 +1030,7 @@ void PPCInterpreter_FMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp0 = ppc_fmsubs(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	hCPU->fpr[frD].fp0 = ppc_fmsubs(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -983,7 +1045,7 @@ void PPCInterpreter_FNMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp0 = ppc_fnmsubs(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	hCPU->fpr[frD].fp0 = ppc_fnmsubs(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 

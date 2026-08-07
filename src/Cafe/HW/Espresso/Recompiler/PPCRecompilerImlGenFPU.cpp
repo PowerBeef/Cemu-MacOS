@@ -448,10 +448,8 @@ bool PPCRecompilerImlGen_FMADDS(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	DefinePS0(fprB, frB);
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
-	DefineTempFPR(fprC25, 0);
-	// Single-domain helper (fmaf / HUGE fallback); result already single-shaped.
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprD, fprA, fprC25, fprB);
+	// Single-domain helper applies 25-bit frC internally (Inf-from-HUGE tracking).
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprD, fprA, fprC, fprB);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -464,9 +462,7 @@ bool PPCRecompilerImlGen_FMSUBS(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	DefinePS0(fprB, frB);
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
-	DefineTempFPR(fprC25, 0);
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmsubs, fprD, fprA, fprC25, fprB);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmsubs, fprD, fprA, fprC, fprB);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -479,9 +475,7 @@ bool PPCRecompilerImlGen_FNMSUBS(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprB, frB);
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
-	DefineTempFPR(fprC25, 0);
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmsubs, fprD, fprA, fprC25, fprB);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmsubs, fprD, fprA, fprC, fprB);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -494,9 +488,7 @@ bool PPCRecompilerImlGen_FNMADDS(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprB, frB);
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
-	DefineTempFPR(fprC25, 0);
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprD, fprA, fprC25, fprB);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprD, fprA, fprC, fprB);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -978,12 +970,9 @@ bool PPCRecompilerImlGen_PS_MADDSX(ppcImlGenContext_t* ppcImlGenContext, uint32 
 	DefinePS0(fprDps0, frD);
 	DefinePS1(fprDps1, frD);
 
-	DefineTempFPR(fprC25, 0);
-
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	// Fused A*C25+B per lane (single domain).
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps0, fprAps0, fprC25, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps1, fprAps1, fprC25, fprBps1);
+	// Raw frC lane; 25-bit + Inf-from-HUGE tracking lives in ppc_fmadds.
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps0, fprAps0, fprC, fprBps0);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps1, fprAps1, fprC, fprBps1);
 	return true;
 }
 
@@ -1134,12 +1123,9 @@ bool PPCRecompilerImlGen_PS_MADD(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprCps0, frC);
 	DefinePS1(fprCps1, frC);
 
-	DefineTempFPR(fprC25_0, 0);
-	DefineTempFPR(fprC25_1, 1);
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_0, fprCps0);
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_1, fprCps1);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps0, fprAps0, fprC25_0, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps1, fprAps1, fprC25_1, fprBps1);
+	// Raw frC; 25-bit + Inf-from-HUGE tracking lives in ppc_fmadds*.
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps0, fprAps0, fprCps0, fprBps0);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps1, fprAps1, fprCps1, fprBps1);
 	return true;
 }
 
@@ -1161,12 +1147,8 @@ bool PPCRecompilerImlGen_PS_NMADD(ppcImlGenContext_t* ppcImlGenContext, uint32 o
 	DefinePS1(fprCps1, frC);
 
 	// Splatoon wants denormal flush for this family; leave that as a separate accuracy item.
-	DefineTempFPR(fprC25_0, 0);
-	DefineTempFPR(fprC25_1, 1);
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_0, fprCps0);
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_1, fprCps1);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprDps0, fprAps0, fprC25_0, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprDps1, fprAps1, fprC25_1, fprBps1);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprDps0, fprAps0, fprCps0, fprBps0);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprDps1, fprAps1, fprCps1, fprBps1);
 	return true;
 }
 
@@ -1188,13 +1170,9 @@ bool PPCRecompilerImlGen_PS_MSUB(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprCps0, frC);
 	DefinePS1(fprCps1, frC);
 
-	DefineTempFPR(fprC25_0, 0);
-	DefineTempFPR(fprC25_1, 1);
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_0, fprCps0);
-	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_1, fprCps1);
 	const uintptr_t fn = withNegative ? (uintptr_t)ppc_fnmsubs : (uintptr_t)ppc_fmsubs;
-	emit_ppc_fma_call(ppcImlGenContext, fn, fprDps0, fprAps0, fprC25_0, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, fn, fprDps1, fprAps1, fprC25_1, fprBps1);
+	emit_ppc_fma_call(ppcImlGenContext, fn, fprDps0, fprAps0, fprCps0, fprBps0);
+	emit_ppc_fma_call(ppcImlGenContext, fn, fprDps1, fprAps1, fprCps1, fprBps1);
 	return true;
 }
 

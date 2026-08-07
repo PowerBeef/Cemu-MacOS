@@ -87,16 +87,15 @@ void PPCInterpreter_PS_MADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	// Fused A·C25+B in single domain (fmaf); ppc750cl.s: not rounded twice.
-	auto slot = [&](double a, double c, double b, double prev, bool flush) -> double {
+	// Fused A·C+B in single domain; 25-bit frC inside ppc_fmadds*.
+	// Do not FTZ here — suite denorm sticky (min_denorm*1.5 − min_denorm_d) and
+	// VE suppress both need the helper result as-is. Splatoon FTZ is a separate item.
+	auto slot = [&](double a, double c, double b, double prev) -> double {
 		ppc_fma_bind_dest(prev);
-		double r = ppc_fmadds(a, c, b);
-		if (!ppc_fma_was_suppressed() && flush)
-			r = ppc_ps_round_slot(r, true);
-		return r;
+		return ppc_fmadds(a, c, b);
 	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0, true);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1, true);
+	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
+	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -115,8 +114,8 @@ void PPCInterpreter_PS_NMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 		ppc_fma_bind_dest(prev);
 		return ppc_fnmadds(a, c, b);
 	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
+	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
+	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -135,8 +134,8 @@ void PPCInterpreter_PS_MSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 		ppc_fma_bind_dest(prev);
 		return ppc_fmsubs(a, c, b);
 	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
+	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
+	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -155,8 +154,8 @@ void PPCInterpreter_PS_NMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 		ppc_fma_bind_dest(prev);
 		return ppc_fnmsubs(a, c, b);
 	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
+	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
+	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -171,7 +170,8 @@ void PPCInterpreter_PS_MADDS0(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	const double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp0);
+	// Both lanes use frC.ps0 (raw; 25-bit inside helper).
+	const double c = hCPU->fpr[frC].fp0;
 	auto slot = [&](double a, double b, double prev) -> double {
 		ppc_fma_bind_dest(prev);
 		return ppc_fmadds(a, c, b);
@@ -192,7 +192,7 @@ void PPCInterpreter_PS_MADDS1(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	const double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp1);
+	const double c = hCPU->fpr[frC].fp1;
 	auto slot = [&](double a, double b, double prev) -> double {
 		ppc_fma_bind_dest(prev);
 		return ppc_fmadds(a, c, b);
