@@ -202,6 +202,12 @@ ATTR_MS_ABI double ppc_fmadd(double a, double c, double b);
 ATTR_MS_ABI double ppc_fmsub(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmadd(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmsub(double a, double c, double b);
+// Single-precision FMA domain (*S / ps_*): fmaf when operands convert cleanly
+// to f32; double fma+round when frC/etc. carry excess range (HUGE_VAL).
+ATTR_MS_ABI double ppc_fmadds(double a, double c, double b);
+ATTR_MS_ABI double ppc_fmsubs(double a, double c, double b);
+ATTR_MS_ABI double ppc_fnmadds(double a, double c, double b);
+ATTR_MS_ABI double ppc_fnmsubs(double a, double c, double b);
 
 ATTR_MS_ABI double fres_espresso(double input);
 ATTR_MS_ABI double frsqrte_espresso(double input);

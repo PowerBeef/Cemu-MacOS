@@ -87,12 +87,12 @@ void PPCInterpreter_PS_MADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	// Fused A·C25+B; ppc750cl.s: 'fmadds/ps_madd is not rounded twice'.
+	// Fused A·C25+B in single domain (fmaf); ppc750cl.s: not rounded twice.
 	auto slot = [&](double a, double c, double b, double prev, bool flush) -> double {
 		ppc_fma_bind_dest(prev);
-		double r = ppc_fmadd(a, c, b);
-		if (!ppc_fma_was_suppressed())
-			r = ppc_ps_round_slot(r, flush);
+		double r = ppc_fmadds(a, c, b);
+		if (!ppc_fma_was_suppressed() && flush)
+			r = ppc_ps_round_slot(r, true);
 		return r;
 	};
 	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0, true);
@@ -113,10 +113,7 @@ void PPCInterpreter_PS_NMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	auto slot = [&](double a, double c, double b, double prev) -> double {
 		ppc_fma_bind_dest(prev);
-		double r = ppc_fnmadd(a, c, b);
-		if (!ppc_fma_was_suppressed())
-			r = ppc_ps_round_slot(r, false);
-		return r;
+		return ppc_fnmadds(a, c, b);
 	};
 	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
 	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
@@ -136,10 +133,7 @@ void PPCInterpreter_PS_MSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	auto slot = [&](double a, double c, double b, double prev) -> double {
 		ppc_fma_bind_dest(prev);
-		double r = ppc_fmsub(a, c, b);
-		if (!ppc_fma_was_suppressed())
-			r = ppc_ps_round_slot(r, false);
-		return r;
+		return ppc_fmsubs(a, c, b);
 	};
 	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
 	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
@@ -159,10 +153,7 @@ void PPCInterpreter_PS_NMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	auto slot = [&](double a, double c, double b, double prev) -> double {
 		ppc_fma_bind_dest(prev);
-		double r = ppc_fnmsub(a, c, b);
-		if (!ppc_fma_was_suppressed())
-			r = ppc_ps_round_slot(r, false);
-		return r;
+		return ppc_fnmsubs(a, c, b);
 	};
 	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
 	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
@@ -183,10 +174,7 @@ void PPCInterpreter_PS_MADDS0(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp0);
 	auto slot = [&](double a, double b, double prev) -> double {
 		ppc_fma_bind_dest(prev);
-		double r = ppc_fmadd(a, c, b);
-		if (!ppc_fma_was_suppressed())
-			r = ppc_ps_round_slot(r, false);
-		return r;
+		return ppc_fmadds(a, c, b);
 	};
 	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
 	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
@@ -207,10 +195,7 @@ void PPCInterpreter_PS_MADDS1(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp1);
 	auto slot = [&](double a, double b, double prev) -> double {
 		ppc_fma_bind_dest(prev);
-		double r = ppc_fmadd(a, c, b);
-		if (!ppc_fma_was_suppressed())
-			r = ppc_ps_round_slot(r, false);
-		return r;
+		return ppc_fmadds(a, c, b);
 	};
 	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
 	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);

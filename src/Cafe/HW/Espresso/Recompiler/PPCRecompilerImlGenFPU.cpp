@@ -13,6 +13,10 @@ ATTR_MS_ABI double ppc_fmadd(double a, double c, double b);
 ATTR_MS_ABI double ppc_fmsub(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmadd(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmsub(double a, double c, double b);
+ATTR_MS_ABI double ppc_fmadds(double a, double c, double b);
+ATTR_MS_ABI double ppc_fmsubs(double a, double c, double b);
+ATTR_MS_ABI double ppc_fnmadds(double a, double c, double b);
+ATTR_MS_ABI double ppc_fnmsubs(double a, double c, double b);
 
 // Bind current frD (for FPSCR[VE] suppress) then call a 3-arg FMA helper.
 static void emit_ppc_fma_call(ppcImlGenContext_t* ctx, uintptr_t fn, IMLReg fprD, IMLReg fprA, IMLReg fprC, IMLReg fprB)
@@ -445,12 +449,9 @@ bool PPCRecompilerImlGen_FMADDS(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
 	DefineTempFPR(fprC25, 0);
-	// Fused A*C25+B via helper (NaN-correct + VE), then round to single.
-	// Note: round-to-single of a VE-suppressed prev value is a no-op for the
-	// suite's noresult cases (prev is the non-NaN f24 sentinel).
+	// Single-domain helper (fmaf / HUGE fallback); result already single-shaped.
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadd, fprD, fprA, fprC25, fprB);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprD, fprA, fprC25, fprB);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -465,8 +466,7 @@ bool PPCRecompilerImlGen_FMSUBS(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	DefinePS0(fprD, frD);
 	DefineTempFPR(fprC25, 0);
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmsub, fprD, fprA, fprC25, fprB);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmsubs, fprD, fprA, fprC25, fprB);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -481,8 +481,7 @@ bool PPCRecompilerImlGen_FNMSUBS(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprD, frD);
 	DefineTempFPR(fprC25, 0);
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmsub, fprD, fprA, fprC25, fprB);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmsubs, fprD, fprA, fprC25, fprB);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -497,8 +496,7 @@ bool PPCRecompilerImlGen_FNMADDS(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprD, frD);
 	DefineTempFPR(fprC25, 0);
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadd, fprD, fprA, fprC25, fprB);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprD, fprA, fprC25, fprB);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -983,12 +981,9 @@ bool PPCRecompilerImlGen_PS_MADDSX(ppcImlGenContext_t* ppcImlGenContext, uint32 
 	DefineTempFPR(fprC25, 0);
 
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
-	// Fused A*C25+B per lane (same rounded C lane for both).
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadd, fprDps0, fprAps0, fprC25, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadd, fprDps1, fprAps1, fprC25, fprBps1);
-
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
+	// Fused A*C25+B per lane (single domain).
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps0, fprAps0, fprC25, fprBps0);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps1, fprAps1, fprC25, fprBps1);
 	return true;
 }
 
@@ -1143,10 +1138,8 @@ bool PPCRecompilerImlGen_PS_MADD(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefineTempFPR(fprC25_1, 1);
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_0, fprCps0);
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_1, fprCps1);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadd, fprDps0, fprAps0, fprC25_0, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadd, fprDps1, fprAps1, fprC25_1, fprBps1);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps0, fprAps0, fprC25_0, fprBps0);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps1, fprAps1, fprC25_1, fprBps1);
 	return true;
 }
 
@@ -1172,8 +1165,8 @@ bool PPCRecompilerImlGen_PS_NMADD(ppcImlGenContext_t* ppcImlGenContext, uint32 o
 	DefineTempFPR(fprC25_1, 1);
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_0, fprCps0);
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_1, fprCps1);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadd, fprDps0, fprAps0, fprC25_0, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadd, fprDps1, fprAps1, fprC25_1, fprBps1);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprDps0, fprAps0, fprC25_0, fprBps0);
+	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprDps1, fprAps1, fprC25_1, fprBps1);
 	return true;
 }
 
@@ -1199,11 +1192,9 @@ bool PPCRecompilerImlGen_PS_MSUB(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefineTempFPR(fprC25_1, 1);
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_0, fprCps0);
 	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_1, fprCps1);
-	const uintptr_t fn = withNegative ? (uintptr_t)ppc_fnmsub : (uintptr_t)ppc_fmsub;
+	const uintptr_t fn = withNegative ? (uintptr_t)ppc_fnmsubs : (uintptr_t)ppc_fmsubs;
 	emit_ppc_fma_call(ppcImlGenContext, fn, fprDps0, fprAps0, fprC25_0, fprBps0);
 	emit_ppc_fma_call(ppcImlGenContext, fn, fprDps1, fprAps1, fprC25_1, fprBps1);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
 	return true;
 }
 
