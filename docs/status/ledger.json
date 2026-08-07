@@ -1569,7 +1569,8 @@
       "area": "tooling",
       "status": "landed",
       "commits": [
-        "0577757"
+        "0577757",
+        "cca7c3b"
       ],
       "verdict": "All twelve `mem.*`, `gpu.pipelines_compiled`, and `acc.readback_queued` now increment on the real choke points (buffer-cache scan/upload, shader-state hit/aux/miss, tex check/reload/bytes, index upload bytes, Metal PSO create, readback queue). Zeros from these counters were previously indistinguishable from \"not wired\".",
       "note": "Locale pot drift (19 stale locales) is still open and deliberately not in this change. Positive-control verification is a BotW run with `--telemetry` showing non-zero mem.bufcache.* and mem.shadercache.hit in gameplay.",
@@ -1581,7 +1582,8 @@
       "area": "cpu",
       "status": "landed",
       "commits": [
-        "0577757"
+        "0577757",
+        "cca7c3b"
       ],
       "verdict": "IML ops `FPR_FMADD/FMSUB/FNMADD/FNMSUB` emit AArch64 fused instructions with the documented fmsub\u2194fnmsub crossover; interpreter uses `std::fma`. Scalar + paired-single + *S variants. Values-only suite: 325 \u2192 319 (and both arms still match).",
       "note": "Does not alone clear the 116 mad-form residual \u2014 Espresso 25-bit frC product rounding is still missing on the recompiler path. That is a separate accuracy item under rm-fp-conformance.",
@@ -1599,7 +1601,8 @@
       "area": "graphics",
       "status": "landed",
       "commits": [
-        "0577757"
+        "0577757",
+        "cca7c3b"
       ],
       "verdict": "`RendererShaderMtl::LibraryFromSource` now calls `setMathMode(MathModeFast|Safe)` for both profile values. Previously only the true arm called the deprecated setter, so false was a silent no-op (fast math stayed on).",
       "note": "Behaviour change for the nine shipped profiles that set shaderFastMath false \u2014 they will now compile with safe math. accurateShaderMul Experiment 1 already showed strict mul is not a free Korok win; this is the other half of that contradiction.",
@@ -1965,7 +1968,11 @@
         "at_commit": "09bfedd",
         "date": "2026-08-07",
         "n": 1
-      }
+      },
+      "commits": [
+        "09bfedd",
+        "59706a9"
+      ]
     },
     {
       "id": "rm-homebrew-exit-crash",
@@ -2031,9 +2038,7 @@
       "ref": "00-master-plan.md \u2014 Shader preload, measured at last"
     }
   ],
-  "unattributed": [
-    "a497562"
-  ],
+  "unattributed": [],
   "stages": [
     {
       "id": "s1",
