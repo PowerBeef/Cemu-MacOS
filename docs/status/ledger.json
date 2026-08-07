@@ -1960,8 +1960,8 @@
       "title": "Fix the 354 real floating-point and paired-single conformance failures",
       "area": "cpu",
       "status": "open",
-      "verdict": "Values-only suite is **2** failures (was 354 → … → 6 → 2). Arms identical. Closed excess-range merge slot0 RN / slot1 truncate, frsqrte denorm normalize + result mant fold, FPRF on estimates. Remaining: lfd→ps1 leak without isync; denorm merge stfd=0 vs stfs=min-normal clamp.",
-      "gate": "Continue values-only. Next: lfd/PSE slot1 hazard; denorm-merge stfs clamp-to-min-normal.",
+      "verdict": "Values-only suite is **0** failures (was 354 → … → 2 → 0). Arms identical. Closed lfd→ps1 hazard after zero-shadow PS writes, and denorm-merge dual store via sticky min-normal encoding (stfd→0, stfs→min normal).",
+      "gate": "Values-only green. Optional next: full suite (FPSCR state), or land residual integer/timing items outside IGNORE_FPSCR_STATE.",
       "ref": "docs/testing/00-test-strategy.md — First result",
       "commits": [
         "09bfedd",
@@ -1979,11 +1979,12 @@
         "b141717",
         "ffdc0d6",
         "8640495",
-        "5783c3e"
+        "5783c3e",
+        "1643e0e"
       ],
       "measured": {
         "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
-        "at_commit": "5783c3e",
+        "at_commit": "1643e0e",
         "date": "2026-08-07",
         "n": 1
       }
