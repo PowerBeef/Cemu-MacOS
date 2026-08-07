@@ -1636,7 +1636,7 @@
         "date": "2026-08-07",
         "n": 1
       },
-      "ref": "docs/testing/fpscr-suite-green.md \u2014 How the full suite went green"
+      "ref": "docs/testing/fpscr-suite-green.md \u2014 How the full `ppc750cl` suite went green"
     },
     {
       "id": "docs-fpscr-green-and-readme",
@@ -1647,7 +1647,7 @@
         "3241281"
       ],
       "verdict": "Wrote `docs/testing/fpscr-suite-green.md` (path 1,030\u21920, host IXC/LLVM traps, FMA residual + TwoSum fadd). Updated strategy + cpu-tests READMEs to PASS failures=0. README reworked: hard-fork framing, suite table, performance headline from the ledger, without inventing unrecorded numbers.",
-      "ref": "docs/testing/fpscr-suite-green.md \u2014 How the full suite went green"
+      "ref": "docs/testing/fpscr-suite-green.md \u2014 How the full `ppc750cl` suite went green"
     }
   ],
   "refuted": [
