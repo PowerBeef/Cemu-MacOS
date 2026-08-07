@@ -77,6 +77,40 @@ static inline double ppc_ps_round_slot(double r, bool flushDenorm)
 	return (double)f;
 }
 
+// PS single-domain FMA: compute both lanes, then commit with whole-register VE
+// suppress (invalid on either lane leaves both prev values).
+enum class PsFmaSOp { Madd, Msub, Nmadd, Nmsub };
+
+static inline double ppc_ps_fma_s_call(PsFmaSOp op, double a, double c, double b)
+{
+	switch (op)
+	{
+	case PsFmaSOp::Madd:  return ppc_fmadds(a, c, b);
+	case PsFmaSOp::Msub:  return ppc_fmsubs(a, c, b);
+	case PsFmaSOp::Nmadd: return ppc_fnmadds(a, c, b);
+	case PsFmaSOp::Nmsub: return ppc_fnmsubs(a, c, b);
+	}
+	return 0.0;
+}
+
+static inline void ppc_ps_fma_both(double& d0, double& d1,
+	double a0, double c0, double b0,
+	double a1, double c1, double b1,
+	PsFmaSOp op)
+{
+	const double prev0 = d0;
+	const double prev1 = d1;
+	ppc_ps_fma_reset_suppress();
+	ppc_fma_bind_dest(prev0);
+	const double r0 = ppc_ps_fma_s_call(op, a0, c0, b0);
+	ppc_ps_fma_note_suppress();
+	ppc_fma_bind_dest(prev1);
+	const double r1 = ppc_ps_fma_s_call(op, a1, c1, b1);
+	ppc_ps_fma_note_suppress();
+	d0 = ppc_ps_fma_commit_lane(prev0, r0);
+	d1 = ppc_ps_fma_commit_lane(prev1, r1);
+}
+
 void PPCInterpreter_PS_MADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();
@@ -87,15 +121,11 @@ void PPCInterpreter_PS_MADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	// Fused A·C+B in single domain; 25-bit frC inside ppc_fmadds*.
-	// Do not FTZ here — suite denorm sticky (min_denorm*1.5 − min_denorm_d) and
-	// VE suppress both need the helper result as-is. Splatoon FTZ is a separate item.
-	auto slot = [&](double a, double c, double b, double prev) -> double {
-		ppc_fma_bind_dest(prev);
-		return ppc_fmadds(a, c, b);
-	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
+	// Fused A·C+B; 25-bit frC inside ppc_fmadds*. No FTZ (suite denorm sticky).
+	ppc_ps_fma_both(hCPU->fpr[frD].fp0, hCPU->fpr[frD].fp1,
+		hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0,
+		hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1,
+		PsFmaSOp::Madd);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -110,12 +140,10 @@ void PPCInterpreter_PS_NMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	auto slot = [&](double a, double c, double b, double prev) -> double {
-		ppc_fma_bind_dest(prev);
-		return ppc_fnmadds(a, c, b);
-	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
+	ppc_ps_fma_both(hCPU->fpr[frD].fp0, hCPU->fpr[frD].fp1,
+		hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0,
+		hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1,
+		PsFmaSOp::Nmadd);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -130,12 +158,10 @@ void PPCInterpreter_PS_MSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode >> 16) & 0x1F;
 	frD = (Opcode >> 21) & 0x1F;
 
-	auto slot = [&](double a, double c, double b, double prev) -> double {
-		ppc_fma_bind_dest(prev);
-		return ppc_fmsubs(a, c, b);
-	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
+	ppc_ps_fma_both(hCPU->fpr[frD].fp0, hCPU->fpr[frD].fp1,
+		hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0,
+		hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1,
+		PsFmaSOp::Msub);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -150,12 +176,10 @@ void PPCInterpreter_PS_NMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode >> 16) & 0x1F;
 	frD = (Opcode >> 21) & 0x1F;
 
-	auto slot = [&](double a, double c, double b, double prev) -> double {
-		ppc_fma_bind_dest(prev);
-		return ppc_fnmsubs(a, c, b);
-	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
+	ppc_ps_fma_both(hCPU->fpr[frD].fp0, hCPU->fpr[frD].fp1,
+		hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0,
+		hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1, hCPU->fpr[frB].fp1,
+		PsFmaSOp::Nmsub);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -172,12 +196,10 @@ void PPCInterpreter_PS_MADDS0(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	// Both lanes use frC.ps0 (raw; 25-bit inside helper).
 	const double c = hCPU->fpr[frC].fp0;
-	auto slot = [&](double a, double b, double prev) -> double {
-		ppc_fma_bind_dest(prev);
-		return ppc_fmadds(a, c, b);
-	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
+	ppc_ps_fma_both(hCPU->fpr[frD].fp0, hCPU->fpr[frD].fp1,
+		hCPU->fpr[frA].fp0, c, hCPU->fpr[frB].fp0,
+		hCPU->fpr[frA].fp1, c, hCPU->fpr[frB].fp1,
+		PsFmaSOp::Madd);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -193,12 +215,10 @@ void PPCInterpreter_PS_MADDS1(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frD = (Opcode>>21)&0x1F;
 
 	const double c = hCPU->fpr[frC].fp1;
-	auto slot = [&](double a, double b, double prev) -> double {
-		ppc_fma_bind_dest(prev);
-		return ppc_fmadds(a, c, b);
-	};
-	hCPU->fpr[frD].fp0 = slot(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0, hCPU->fpr[frD].fp0);
-	hCPU->fpr[frD].fp1 = slot(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1, hCPU->fpr[frD].fp1);
+	ppc_ps_fma_both(hCPU->fpr[frD].fp0, hCPU->fpr[frD].fp1,
+		hCPU->fpr[frA].fp0, c, hCPU->fpr[frB].fp0,
+		hCPU->fpr[frA].fp1, c, hCPU->fpr[frB].fp1,
+		PsFmaSOp::Madd);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }

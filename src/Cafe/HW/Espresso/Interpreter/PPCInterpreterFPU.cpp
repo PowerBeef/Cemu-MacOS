@@ -270,6 +270,36 @@ ATTR_MS_ABI bool ppc_fma_was_suppressed()
 	return s_fma_suppressed;
 }
 
+// PS FMA whole-register VE suppress: if either lane hits invalid with VE, neither
+// lane is written (suite: mixed SNaN + overflow → check_ps_noresult).
+static thread_local bool s_ps_fma_suppress0 = false;
+static thread_local bool s_ps_fma_suppress1 = false;
+static thread_local int s_ps_fma_note_i = 0;
+
+ATTR_MS_ABI void ppc_ps_fma_reset_suppress()
+{
+	s_ps_fma_suppress0 = false;
+	s_ps_fma_suppress1 = false;
+	s_ps_fma_note_i = 0;
+}
+
+ATTR_MS_ABI void ppc_ps_fma_note_suppress()
+{
+	const bool s = s_fma_suppressed;
+	if (s_ps_fma_note_i == 0)
+		s_ps_fma_suppress0 = s;
+	else
+		s_ps_fma_suppress1 = s;
+	s_ps_fma_note_i++;
+}
+
+ATTR_MS_ABI double ppc_ps_fma_commit_lane(double prev, double computed)
+{
+	if (s_ps_fma_suppress0 || s_ps_fma_suppress1)
+		return prev;
+	return computed;
+}
+
 static inline double ppc_fma_finish_special(int kind, double specialResult)
 {
 	// kind 2 + VE → leave destination unchanged (suite check_fpu_noresult).

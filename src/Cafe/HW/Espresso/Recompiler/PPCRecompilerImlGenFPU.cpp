@@ -9,6 +9,9 @@ ATTR_MS_ABI double frsqrte_espresso(double input);
 ATTR_MS_ABI double fres_espresso(double input);
 ATTR_MS_ABI double roundTo25BitAccuracy(double d);
 ATTR_MS_ABI void ppc_fma_bind_dest(double prevFrD);
+ATTR_MS_ABI void ppc_ps_fma_reset_suppress();
+ATTR_MS_ABI void ppc_ps_fma_note_suppress();
+ATTR_MS_ABI double ppc_ps_fma_commit_lane(double prev, double computed);
 ATTR_MS_ABI double ppc_fmadd(double a, double c, double b);
 ATTR_MS_ABI double ppc_fmsub(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmadd(double a, double c, double b);
@@ -57,6 +60,33 @@ IMLReg _GetFPRTemp(ppcImlGenContext_t* ppcImlGenContext, uint32 index)
 {
 	cemu_assert_debug(index < 4);
 	return PPCRecompilerImlGen_LookupReg(ppcImlGenContext, PPCREC_NAME_TEMPORARY_FPR0 + index, IMLRegFormat::F64);
+}
+
+// PS FMA: compute both lanes into temps, then commit with whole-register VE
+// suppress (invalid on either lane restores both prev values).
+static void emit_ppc_ps_fma_pair(ppcImlGenContext_t* ppcImlGenContext, uintptr_t fn,
+	IMLReg fprD0, IMLReg fprD1,
+	IMLReg fprA0, IMLReg fprC0, IMLReg fprB0,
+	IMLReg fprA1, IMLReg fprC1, IMLReg fprB1)
+{
+	DefineTempFPR(fprT0, 0);
+	DefineTempFPR(fprT1, 1);
+	DefineTempFPR(fprPrev0, 2);
+	DefineTempFPR(fprPrev1, 3);
+	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprPrev0, fprD0);
+	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprPrev1, fprD1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_reset_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	// Lane 0 → temp
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev0, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm(fn, fprA0, fprC0, fprB0, fprT0);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	// Lane 1 → temp
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev1, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm(fn, fprA1, fprC1, fprB1, fprT1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	// Commit (may restore prev on either-lane VE suppress)
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprD0);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprD1);
 }
 
 IMLReg _GetFPRReg(ppcImlGenContext_t* ppcImlGenContext, uint32 regIndex, bool selectPS1)
@@ -970,9 +1000,11 @@ bool PPCRecompilerImlGen_PS_MADDSX(ppcImlGenContext_t* ppcImlGenContext, uint32 
 	DefinePS0(fprDps0, frD);
 	DefinePS1(fprDps1, frD);
 
-	// Raw frC lane; 25-bit + Inf-from-HUGE tracking lives in ppc_fmadds.
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps0, fprAps0, fprC, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps1, fprAps1, fprC, fprBps1);
+	// Shared frC lane; whole-register VE suppress via pair helper.
+	emit_ppc_ps_fma_pair(ppcImlGenContext, (uintptr_t)ppc_fmadds,
+		fprDps0, fprDps1,
+		fprAps0, fprC, fprBps0,
+		fprAps1, fprC, fprBps1);
 	return true;
 }
 
@@ -1123,9 +1155,10 @@ bool PPCRecompilerImlGen_PS_MADD(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprCps0, frC);
 	DefinePS1(fprCps1, frC);
 
-	// Raw frC; 25-bit + Inf-from-HUGE tracking lives in ppc_fmadds*.
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps0, fprAps0, fprCps0, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fmadds, fprDps1, fprAps1, fprCps1, fprBps1);
+	emit_ppc_ps_fma_pair(ppcImlGenContext, (uintptr_t)ppc_fmadds,
+		fprDps0, fprDps1,
+		fprAps0, fprCps0, fprBps0,
+		fprAps1, fprCps1, fprBps1);
 	return true;
 }
 
@@ -1146,9 +1179,11 @@ bool PPCRecompilerImlGen_PS_NMADD(ppcImlGenContext_t* ppcImlGenContext, uint32 o
 	DefinePS0(fprCps0, frC);
 	DefinePS1(fprCps1, frC);
 
-	// Splatoon wants denormal flush for this family; leave that as a separate accuracy item.
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprDps0, fprAps0, fprCps0, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, (uintptr_t)ppc_fnmadds, fprDps1, fprAps1, fprCps1, fprBps1);
+	// Splatoon denormal flush for this family is a separate accuracy item.
+	emit_ppc_ps_fma_pair(ppcImlGenContext, (uintptr_t)ppc_fnmadds,
+		fprDps0, fprDps1,
+		fprAps0, fprCps0, fprBps0,
+		fprAps1, fprCps1, fprBps1);
 	return true;
 }
 
@@ -1171,8 +1206,10 @@ bool PPCRecompilerImlGen_PS_MSUB(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS1(fprCps1, frC);
 
 	const uintptr_t fn = withNegative ? (uintptr_t)ppc_fnmsubs : (uintptr_t)ppc_fmsubs;
-	emit_ppc_fma_call(ppcImlGenContext, fn, fprDps0, fprAps0, fprCps0, fprBps0);
-	emit_ppc_fma_call(ppcImlGenContext, fn, fprDps1, fprAps1, fprCps1, fprBps1);
+	emit_ppc_ps_fma_pair(ppcImlGenContext, fn,
+		fprDps0, fprDps1,
+		fprAps0, fprCps0, fprBps0,
+		fprAps1, fprCps1, fprBps1);
 	return true;
 }
 
