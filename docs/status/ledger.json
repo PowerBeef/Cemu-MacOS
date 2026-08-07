@@ -1493,7 +1493,9 @@
       "title": "Remove the from-source devkitPPC fallback",
       "area": "tooling",
       "status": "landed",
-      "commits": [],
+      "commits": [
+        "ec4cb33"
+      ],
       "verdict": "Official `dkp-pacman -S wiiu-dev` into `/opt/devkitpro` is the only supported path (same as CI). Deleted `testing/toolchain/build-devkitppc.sh` and rewrote present-tense setup docs so nothing points at `~/.local/devkitpro` or a no-root rebuild.",
       "ref": "docs/testing/00-test-strategy.md — 4. The toolchain"
     }
