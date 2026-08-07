@@ -54,9 +54,59 @@
 #define XER_BIT_SO		(31)	// summary overflow, counterpart to CR SO
 #define XER_BIT_OV		(30)
 
-// FPSCR
-#define FPSCR_VXSNAN	(1<<24)
-#define FPSCR_VXVC		(1<<19)
+// FPSCR (host bit = 1 << (31 - ppc_bit), matching PEM / Dolphin)
+#define FPSCR_FX		(1u << 31)
+#define FPSCR_FEX		(1u << 30)
+#define FPSCR_VX		(1u << 29)
+#define FPSCR_OX		(1u << 28)
+#define FPSCR_UX		(1u << 27)
+#define FPSCR_ZX		(1u << 26)
+#define FPSCR_XX		(1u << 25)
+#define FPSCR_VXSNAN	(1u << 24)
+#define FPSCR_VXISI		(1u << 23)
+#define FPSCR_VXIDI		(1u << 22)
+#define FPSCR_VXZDZ		(1u << 21)
+#define FPSCR_VXIMZ		(1u << 20)
+#define FPSCR_VXVC		(1u << 19)
+#define FPSCR_VXSOFT	(1u << 10)
+#define FPSCR_VXSQRT	(1u << 9)
+#define FPSCR_VXCVI		(1u << 8)
+#define FPSCR_VE		(1u << 7)	// also used by FMA VE suppress
+#define FPSCR_OE		(1u << 6)
+#define FPSCR_UE		(1u << 5)
+#define FPSCR_ZE		(1u << 4)	// also used by FMA ZE suppress
+#define FPSCR_XE		(1u << 3)
+#define FPSCR_VX_ANY	(FPSCR_VXSNAN | FPSCR_VXISI | FPSCR_VXIDI | FPSCR_VXZDZ | FPSCR_VXIMZ | \
+			 FPSCR_VXVC | FPSCR_VXSOFT | FPSCR_VXSQRT | FPSCR_VXCVI)
+#define FPSCR_ANY_X	(FPSCR_OX | FPSCR_UX | FPSCR_ZX | FPSCR_XX | FPSCR_VX_ANY)
+#define FPSCR_ANY_E	(FPSCR_VE | FPSCR_OE | FPSCR_UE | FPSCR_ZE | FPSCR_XE)
+// Bit 20 (PPC) / host bit 11 is reserved; hardware ignores writes to it.
+#define FPSCR_RESERVED_MASK	(0xFFFFF7FFu)
+
+// After any FPSCR write: drop reserved bit, recompute VX/FEX (Dolphin-compatible).
+static inline void ppc_fpscr_recompute(uint32& fpscr)
+{
+	fpscr &= FPSCR_RESERVED_MASK;
+	if (fpscr & FPSCR_VX_ANY)
+		fpscr |= FPSCR_VX;
+	else
+		fpscr &= ~FPSCR_VX;
+	// Exception stickies shifted by 22 line up with enable bits; VX lines up with VE.
+	if (((fpscr >> 22) & (fpscr & FPSCR_ANY_E)) != 0)
+		fpscr |= FPSCR_FEX;
+	else
+		fpscr &= ~FPSCR_FEX;
+}
+
+// CR1 ← FPSCR field 0 (FX, FEX, VX, OX) for Rc forms of FP ops.
+static inline void ppc_fpscr_update_cr1(PPCInterpreter_t* hCPU)
+{
+	const uint32 f = hCPU->fpscr;
+	hCPU->cr[4] = (f & FPSCR_FX) ? 1 : 0;
+	hCPU->cr[5] = (f & FPSCR_FEX) ? 1 : 0;
+	hCPU->cr[6] = (f & FPSCR_VX) ? 1 : 0;
+	hCPU->cr[7] = (f & FPSCR_OX) ? 1 : 0;
+}
 
 #define MSR_SF			(1<<31)
 #define MSR_UNKNOWN		(1<<30)
@@ -182,9 +232,6 @@ static inline uint32 ppc_getCR(PPCInterpreter_t* hCPU)
 #define IS_QNAN(X)				((((X) & 0x000fffffffffffffULL) != 0) && (((X) & 0x7ff8000000000000ULL) == 0x7ff8000000000000ULL))
 #define IS_SNAN(X)				((((X) & 0x000fffffffffffffULL) != 0) && (((X) & 0x7ff8000000000000ULL) == 0x7ff0000000000000ULL))
 
-#define FPSCR_VE				(1 <<  7)	// FPSCR bit 24 — invalid enable
-#define FPSCR_ZE				(1 <<  4)	// FPSCR bit 27 — zero-divide enable
-
 // Espresso single-precision multiply factor: 25-bit mantissa for frC.
 // Non-inline so the recompiler can call it via make_call_imm (same ABI as fres_espresso).
 ATTR_MS_ABI double roundTo25BitAccuracy(double d);
@@ -242,6 +289,7 @@ void PPCInterpreter_MTMSR(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MFTB(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MTFSB1X(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MTFSB0X(PPCInterpreter_t* hCPU, uint32 Opcode);
+void PPCInterpreter_MCRFS(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MFCR(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MCRF(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MTCRF(PPCInterpreter_t* hCPU, uint32 Opcode);

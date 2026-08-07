@@ -762,6 +762,8 @@ void PPCInterpreter_FMR(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_X(Opcode, frD, rA, frB);
 	PPC_ASSERT(rA==0);
 	hCPU->fpr[frD].fpr = hCPU->fpr[frB].fpr;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -886,8 +888,8 @@ void PPCInterpreter_FNEG(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_ASSERT(frA==0);
 	
 	hCPU->fpr[frD].guint = hCPU->fpr[frB].guint ^ (1ULL << 63);
-
-	PPC_ASSERT((Opcode & PPC_OPC_RC) != 0); // update CR1 flags
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1103,7 +1105,9 @@ void PPCInterpreter_FABS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_X(Opcode, frD, frA, frB);
 	PPC_ASSERT(frA==0);
 
-	hCPU->fpr[frD].guint = hCPU->fpr[frB].guint & ~0x8000000000000000;
+	hCPU->fpr[frD].guint = hCPU->fpr[frB].guint & ~0x8000000000000000ULL;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1116,7 +1120,9 @@ void PPCInterpreter_FNABS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_X(Opcode, frD, frA, frB);
 	PPC_ASSERT(frA==0);
 	
-	hCPU->fpr[frD].guint = hCPU->fpr[frB].guint | 0x8000000000000000;
+	hCPU->fpr[frD].guint = hCPU->fpr[frB].guint | 0x8000000000000000ULL;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1321,7 +1327,10 @@ void PPCInterpreter_MFFS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, rA, rB;
 	PPC_OPC_TEMPL_X(Opcode, frD, rA, rB);
 	PPC_ASSERT(rA==0 && rB==0);
-	hCPU->fpr[frD].guint = (uint64)hCPU->fpscr;
+	// 750CL high word matches fctiw packing (suite mffs only checks the low word).
+	hCPU->fpr[frD].guint = 0xFFF8000000000000ULL | (uint64)hCPU->fpscr;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1358,7 +1367,10 @@ void PPCInterpreter_MTFSFI(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const uint32 imm = (Opcode >> 12) & 0xF;
 	const uint32 shift = 28u - 4u * crfD;
 	hCPU->fpscr = (hCPU->fpscr & ~(0xFu << shift)) | (imm << shift);
+	ppc_fpscr_recompute(hCPU->fpscr);
 	PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1372,17 +1384,14 @@ void PPCInterpreter_MTFSF(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_XFL(Opcode, frB, fm);
 	FM = ((fm&0x80)?0xf0000000:0)|((fm&0x40)?0x0f000000:0)|((fm&0x20)?0x00f00000:0)|((fm&0x10)?0x000f0000:0)|
 	     ((fm&0x08)?0x0000f000:0)|((fm&0x04)?0x00000f00:0)|((fm&0x02)?0x000000f0:0)|((fm&0x01)?0x0000000f:0);
-	hCPU->fpscr = (hCPU->fpr[frB].guint & FM) | (hCPU->fpscr & ~FM);
+	// Source is the low 32 bits of frB (suite builds FPSCR via stw/lfd).
+	const uint32 src = (uint32)hCPU->fpr[frB].guint;
+	hCPU->fpscr = (src & FM) | (hCPU->fpscr & ~FM);
+	ppc_fpscr_recompute(hCPU->fpscr);
 	PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
-	PPC_ASSERT((Opcode & PPC_OPC_RC) != 0); // update CR1 flags
-
-	static bool logFPSCRWriteOnce = false;
-	if( logFPSCRWriteOnce == false )
-	{
-		cemuLog_log(LogType::Force, "Unsupported write to FPSCR");
-		logFPSCRWriteOnce = true;
-	}
 	PPCInterpreter_nextInstruction(hCPU);
 }
 

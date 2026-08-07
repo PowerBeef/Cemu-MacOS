@@ -42,27 +42,31 @@ void PPCInterpreter_MTMSR(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 void PPCInterpreter_MTFSB1X(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
-	cemuLog_logDebug(LogType::Force, "Rare instruction: MTFSB1X");
 	int crbD, n1, n2;
 	PPC_OPC_TEMPL_X(Opcode, crbD, n1, n2);
-	// Bits 1 and 2 (FEX, VX) are computed and not writable.
-	if (crbD != 1 && crbD != 2) 
+	// Bits 1 and 2 (FEX, VX) are computed — writes to them are ignored.
+	if (crbD != 1 && crbD != 2)
 	{
-		hCPU->fpscr |= 1u << (31 - crbD);
+		const uint32 bit = 1u << (31 - crbD);
+		// Setting an exception sticky also sets FX if it was clear (SetFPException).
+		if ((bit & FPSCR_ANY_X) != 0)
+		{
+			if ((hCPU->fpscr & bit) != bit)
+				hCPU->fpscr |= FPSCR_FX;
+			hCPU->fpscr |= bit;
+		}
+		else
+			hCPU->fpscr |= bit;
+		ppc_fpscr_recompute(hCPU->fpscr);
 		PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
 	}
-	if (Opcode & PPC_OPC_RC) 
-	{
-		// update cr1 flags
-		PPC_ASSERT(true);
-	}
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
-// mtfsb0 crbD — clear one FPSCR bit. Was unimplemented, so VE (and other enables)
-// stuck on after the suite's first `mtfsb1 24` / `mtfsb0 24` pair and every later
-// invalid FMA looked like a VE-suppressed noresult.
+// mtfsb0 crbD — clear one FPSCR bit.
 void PPCInterpreter_MTFSB0X(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	int crbD, n1, n2;
@@ -70,12 +74,35 @@ void PPCInterpreter_MTFSB0X(PPCInterpreter_t* hCPU, uint32 Opcode)
 	if (crbD != 1 && crbD != 2)
 	{
 		hCPU->fpscr &= ~(1u << (31 - crbD));
+		ppc_fpscr_recompute(hCPU->fpscr);
 		PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
 	}
 	if (Opcode & PPC_OPC_RC)
-	{
-		PPC_ASSERT(true);
-	}
+		ppc_fpscr_update_cr1(hCPU);
+
+	PPCInterpreter_nextInstruction(hCPU);
+}
+
+// mcrfs crfD, crfS — copy FPSCR field to CR, clear exception stickies in that field.
+void PPCInterpreter_MCRFS(PPCInterpreter_t* hCPU, uint32 Opcode)
+{
+	FPUCheckAvailable();
+	int crfD, crfS, b;
+	PPC_OPC_TEMPL_X(Opcode, crfD, crfS, b);
+	// X-form encodes crfD/crfS in the top 3 bits of each 5-bit field.
+	crfD >>= 2;
+	crfS >>= 2;
+	const uint32 shift = 4u * (7u - (uint32)crfS);
+	const uint32 field = (hCPU->fpscr >> shift) & 0xF;
+	// Clear FX / sticky exception bits that fall in this field.
+	hCPU->fpscr &= ~((0xFu << shift) & (FPSCR_FX | FPSCR_ANY_X));
+	ppc_fpscr_recompute(hCPU->fpscr);
+	// Write CR field (crfD*4 .. +3): LT GT EQ SO ← field bits 3..0 (MSB of nibble = LT).
+	const uint32 base = (uint32)crfD * 4u;
+	hCPU->cr[base + 0] = (field >> 3) & 1;
+	hCPU->cr[base + 1] = (field >> 2) & 1;
+	hCPU->cr[base + 2] = (field >> 1) & 1;
+	hCPU->cr[base + 3] = field & 1;
 
 	PPCInterpreter_nextInstruction(hCPU);
 }

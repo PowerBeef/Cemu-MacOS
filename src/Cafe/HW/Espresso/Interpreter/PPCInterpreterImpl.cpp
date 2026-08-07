@@ -1165,8 +1165,24 @@ public:
 			switch (PPC_getBits(opcode, 30, 5))
 			{
 			case 0:
-				PPCInterpreter_FCMPU(hCPU, opcode);
+			{
+				// Low 5 bits of XO are 0 for fcmpu (0), fcmpo (32) and mcrfs (64).
+				// Must use the full 10-bit XO — a bare case 0 made mcrfs run as fcmpu.
+				const uint32 xo10 = PPC_getBits(opcode, 30, 10);
+				if (xo10 == 0)
+					PPCInterpreter_FCMPU(hCPU, opcode);
+				else if (xo10 == 32)
+					PPCInterpreter_FCMPO(hCPU, opcode);
+				else if (xo10 == 64)
+					PPCInterpreter_MCRFS(hCPU, opcode);
+				else
+				{
+					cemuLog_logDebug(LogType::Force, "Unknown execute {:04x} as [63/0] at {:08x}\n", xo10, hCPU->instructionPointer);
+					cemu_assert_unimplemented();
+					PPCInterpreter_nextInstruction(hCPU);
+				}
 				break;
+			}
 			case 12:
 				PPCInterpreter_FRSP(hCPU, opcode);
 				break;
@@ -1214,6 +1230,9 @@ public:
 					break;
 				case 38:
 					PPCInterpreter_MTFSB1X(hCPU, opcode);
+					break;
+				case 64: // mcrfs
+					PPCInterpreter_MCRFS(hCPU, opcode);
 					break;
 				case 70: // mtfsb0
 					PPCInterpreter_MTFSB0X(hCPU, opcode);

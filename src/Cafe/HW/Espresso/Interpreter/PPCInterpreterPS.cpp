@@ -424,6 +424,8 @@ void PPCInterpreter_PS_MR(PPCInterpreter_t* hCPU, uint32 Opcode)
 	// Quantize: excess-range doubles → single; SNaN not quieted.
 	hCPU->fpr[frD].fp0 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
 	hCPU->fpr[frD].fp1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -441,6 +443,8 @@ void PPCInterpreter_PS_NEG(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double q1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
 	hCPU->fpr[frD].fp0int = (*(const uint64*)&q0) ^ (1ULL << 63);
 	hCPU->fpr[frD].fp1int = (*(const uint64*)&q1) ^ (1ULL << 63);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -457,6 +461,8 @@ void PPCInterpreter_PS_ABS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double q1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
 	hCPU->fpr[frD].fp0int = (*(const uint64*)&q0) & ~(1ULL << 63);
 	hCPU->fpr[frD].fp1int = (*(const uint64*)&q1) & ~(1ULL << 63);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -473,6 +479,8 @@ void PPCInterpreter_PS_NABS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double q1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
 	hCPU->fpr[frD].fp0int = (*(const uint64*)&q0) | (1ULL << 63);
 	hCPU->fpr[frD].fp1int = (*(const uint64*)&q1) | (1ULL << 63);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -514,6 +522,8 @@ void PPCInterpreter_PS_MERGE00(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -531,6 +541,8 @@ void PPCInterpreter_PS_MERGE01(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -548,6 +560,8 @@ void PPCInterpreter_PS_MERGE10(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -565,6 +579,8 @@ void PPCInterpreter_PS_MERGE11(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
