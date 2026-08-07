@@ -1960,8 +1960,8 @@
       "title": "Fix the 354 real floating-point and paired-single conformance failures",
       "area": "cpu",
       "status": "open",
-      "verdict": "Values-only suite is **0** failures (was 354 → … → 2 → 0). Arms identical. Closed lfd→ps1 hazard after zero-shadow PS writes, and denorm-merge dual store via sticky min-normal encoding (stfd→0, stfs→min normal).",
-      "gate": "Values-only green. Optional next: full suite (FPSCR state), or land residual integer/timing items outside IGNORE_FPSCR_STATE.",
+      "verdict": "Values-only (`IGNORE_FPSCR_STATE=1`) is **0** failures (was 354), arms identical. Full suite with FPSCR state is **928** failures (was 1030 at first landing), arms identical — zero unique to either. Residual is FPSCR bookkeeping (FPRF/FI/FR/exception stickies and enables), dominated by frsp (68), the mad family (~402), fctiw (32), and PS arithmetic. No value defects remain under IGNORE.",
+      "gate": "FPSCR residual. Highest volume: wire FPRF + FI/FR on frsp and the mad family; re-measure full suite (not values-only).",
       "ref": "docs/testing/00-test-strategy.md — First result",
       "commits": [
         "09bfedd",
@@ -1983,11 +1983,12 @@
         "1643e0e"
       ],
       "measured": {
-        "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
+        "scene": "ppc750cl.s full FPSCR (IGNORE off) and IGNORE_FPSCR_STATE=1",
         "at_commit": "1643e0e",
         "date": "2026-08-07",
         "n": 1
-      }
+      },
+      "note": "Full-suite n=1 per arm at 1643e0e: both report 928 identical records. Values-only reconfirmed PASS after the full-suite rebuild. Original 1030 (676 FPSCR / 354 values) is not a clean partition against today's 928 — dual-check records and intervening FPSCR work mean the residual is FPSCR-shaped, not a second value pile."
     },
     {
       "id": "rm-homebrew-exit-crash",
