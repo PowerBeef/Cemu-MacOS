@@ -17,6 +17,7 @@ void PPCInterpreter_PS_ADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double prev0 = hCPU->fpr[frD].fp0;
 	const double prev1 = hCPU->fpr[frD].fp1;
 	ppc_ps_fma_reset_suppress();
+	ppc_fpscr_defer_begin();
 	ppc_fma_bind_dest(prev0);
 	const double r0 = ppc_ps_pack_arith(ppc_fadd(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0));
 	ppc_ps_fma_note_suppress();
@@ -26,6 +27,7 @@ void PPCInterpreter_PS_ADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	// Pack before commit so VE leave-prev is not re-quantized.
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
+	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -42,6 +44,7 @@ void PPCInterpreter_PS_SUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double prev0 = hCPU->fpr[frD].fp0;
 	const double prev1 = hCPU->fpr[frD].fp1;
 	ppc_ps_fma_reset_suppress();
+	ppc_fpscr_defer_begin();
 	ppc_fma_bind_dest(prev0);
 	const double r0 = ppc_ps_pack_arith(ppc_fsub(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0));
 	ppc_ps_fma_note_suppress();
@@ -50,6 +53,7 @@ void PPCInterpreter_PS_SUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_note_suppress();
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
+	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -68,6 +72,7 @@ void PPCInterpreter_PS_MUL(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double prev0 = hCPU->fpr[frD].fp0;
 	const double prev1 = hCPU->fpr[frD].fp1;
 	ppc_ps_fma_reset_suppress();
+	ppc_fpscr_defer_begin();
 	ppc_fma_bind_dest(prev0);
 	const double r0 = ppc_fmuls(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0);
 	ppc_ps_fma_note_suppress();
@@ -76,6 +81,7 @@ void PPCInterpreter_PS_MUL(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_note_suppress();
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
+	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -160,6 +166,7 @@ static inline void ppc_ps_fma_both(double& d0, double& d1,
 	const double prev0 = d0;
 	const double prev1 = d1;
 	ppc_ps_fma_reset_suppress();
+	ppc_fpscr_defer_begin();
 	ppc_fma_bind_dest(prev0);
 	const double r0 = ppc_ps_fma_s_call(op, a0, c0, b0);
 	ppc_ps_fma_note_suppress();
@@ -168,6 +175,8 @@ static inline void ppc_ps_fma_both(double& d0, double& d1,
 	ppc_ps_fma_note_suppress();
 	d0 = ppc_ps_fma_commit_lane(prev0, r0);
 	d1 = ppc_ps_fma_commit_lane(prev1, r1);
+	// FPRF from ps0; stickies/FI from both lanes (suite).
+	ppc_fpscr_defer_end_single(d0);
 }
 
 void PPCInterpreter_PS_MADD(PPCInterpreter_t* hCPU, uint32 Opcode)

@@ -337,6 +337,10 @@ ATTR_MS_ABI double roundTo25BitAccuracy(double d);
 ATTR_MS_ABI void ppc_fma_bind_dest(double prevFrD);
 // True after a helper returned prevFrD because VE blocked an invalid op.
 ATTR_MS_ABI bool ppc_fma_was_suppressed();
+// PS two-lane ops: accumulate FPSCR stickies/FI, commit once with FPRF from ps0.
+ATTR_MS_ABI void ppc_fpscr_defer_begin();
+ATTR_MS_ABI void ppc_fpscr_defer_end_single(double ps0_result);
+ATTR_MS_ABI void ppc_fpscr_defer_end_double(double ps0_result);
 // PS FMA: VE+invalid on either lane suppresses the whole frD write.
 ATTR_MS_ABI void ppc_ps_fma_reset_suppress();
 ATTR_MS_ABI void ppc_ps_fma_note_suppress();

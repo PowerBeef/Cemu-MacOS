@@ -245,6 +245,130 @@ static inline bool ppc_bits_is_snan(uint64 x)
 	return ppc_bits_is_nan(x) && ((x & 0x0008000000000000ULL) == 0);
 }
 
+// Prior frD + VE/ZE (must appear before FPSCR commit helpers that read them).
+static thread_local double s_fma_prev = 0.0;
+static thread_local bool s_fma_ve = false;
+static thread_local bool s_fma_ze = false;
+static thread_local bool s_fma_suppressed = false;
+
+// Pending FPSCR stickies from the current helper (cleared in bind_dest).
+// PS ops run two lanes: defer mode accumulates FI/stickies and commits once
+// with FPRF from ps0 (suite: FPRF is the high slot).
+static thread_local uint32 s_fpscr_pending_sticky = 0;
+static thread_local bool s_fpscr_defer = false;
+static thread_local uint32 s_fpscr_acc_sticky = 0;
+static thread_local bool s_fpscr_acc_fi = false;
+static thread_local bool s_fpscr_acc_suppressed = false;
+
+static inline void ppc_fpscr_note_sticky(uint32 bits)
+{
+	s_fpscr_pending_sticky |= bits;
+}
+
+// Host FPSR after an arithmetic op (FZ-cleared path). AArch64: IOC/DZC/OFC/UFC/IXC.
+static inline void ppc_fpscr_note_host_fpsr()
+{
+	const uint32 fpsr = __arm_rsr("fpsr");
+	if (fpsr & (1u << 4)) // IXC
+		s_fpscr_pending_sticky |= FPSCR_XX;
+	if (fpsr & (1u << 2)) // OFC
+		s_fpscr_pending_sticky |= FPSCR_OX;
+	if (fpsr & (1u << 3)) // UFC
+		s_fpscr_pending_sticky |= FPSCR_UX;
+	if (fpsr & (1u << 1)) // DZC
+		s_fpscr_pending_sticky |= FPSCR_ZX;
+	// IOC is classified in software specials (VX* subtypes); ignore here.
+}
+
+// Write FPSCR for a result-producing op. single_domain → FPRF from float view.
+// FZ-safe: classify single via integer bit pattern of (float) with FZ cleared
+// only when needed — callers that have denorm singles should pass via
+// ppc_fpscr_set_fprf_from_single with a FZ-cleared intermediate when available.
+static void ppc_arith_commit_fpscr(double result, bool single_domain)
+{
+	uint32 sticky = s_fpscr_pending_sticky;
+	s_fpscr_pending_sticky = 0;
+	const bool set_fi = (sticky & FPSCR_XX) != 0;
+	// fres sets FI without XX — allow pending FI bit alone later if needed.
+
+	if (s_fpscr_defer)
+	{
+		s_fpscr_acc_sticky |= sticky;
+		s_fpscr_acc_fi |= set_fi;
+		if (s_fma_suppressed)
+			s_fpscr_acc_suppressed = true;
+		return;
+	}
+
+	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+	if (!hCPU)
+		return;
+
+	if (s_fma_suppressed)
+	{
+		// VE/ZE abort: stickies only (suite check_fpu_noresult).
+		if (sticky != 0)
+		{
+			ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
+			ppc_fpscr_recompute(hCPU->fpscr);
+		}
+		return;
+	}
+
+	// Single-domain FPRF: avoid host FZ flush of denorms on (float) cast.
+	if (single_domain)
+	{
+		const uint64 fpcr = __arm_rsr64("fpcr");
+		if (fpcr & (1ull << 24))
+			__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+		const float s = (float)result;
+		if (fpcr & (1ull << 24))
+			__arm_wsr64("fpcr", fpcr);
+		hCPU->fpscr &= ~(FPSCR_FI | FPSCR_FR);
+		ppc_fpscr_set_fprf_from_single(hCPU->fpscr, s);
+		if (set_fi)
+			hCPU->fpscr |= FPSCR_FI;
+		if (sticky != 0)
+			ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
+		ppc_fpscr_recompute(hCPU->fpscr);
+	}
+	else
+		ppc_fpscr_commit_result(hCPU->fpscr, result, sticky, set_fi, true, false);
+}
+
+// PS: begin before lane 0 bind; end after both lanes with ps0 result.
+ATTR_MS_ABI void ppc_fpscr_defer_begin()
+{
+	s_fpscr_defer = true;
+	s_fpscr_acc_sticky = 0;
+	s_fpscr_acc_fi = false;
+	s_fpscr_acc_suppressed = false;
+	s_fpscr_pending_sticky = 0;
+}
+
+static void ppc_fpscr_defer_end(double ps0_result, bool single_domain)
+{
+	s_fpscr_defer = false;
+	s_fpscr_pending_sticky = s_fpscr_acc_sticky;
+	if (s_fpscr_acc_fi)
+		s_fpscr_pending_sticky |= FPSCR_XX; // FI accompanies XX for ordinary arith
+	// If whole-register VE suppressed both lanes, stickies only.
+	const bool was_suppressed = s_fma_suppressed;
+	s_fma_suppressed = s_fpscr_acc_suppressed;
+	ppc_arith_commit_fpscr(ps0_result, single_domain);
+	s_fma_suppressed = was_suppressed;
+}
+
+ATTR_MS_ABI void ppc_fpscr_defer_end_single(double ps0_result)
+{
+	ppc_fpscr_defer_end(ps0_result, true);
+}
+
+ATTR_MS_ABI void ppc_fpscr_defer_end_double(double ps0_result)
+{
+	ppc_fpscr_defer_end(ps0_result, false);
+}
+
 // Special-case result class for VE handling:
 //  0 = not special — use std::fma
 //  1 = write *out (QNaN-only selection; no invalid exception → VE does not suppress)
@@ -279,6 +403,8 @@ static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, doub
 		const uint64 r = ppc_quiet_nan(selected);
 		*out = *(double*)&r;
 		// SNaN anywhere signals invalid even if a QNaN was selected first.
+		if (anySNaN)
+			ppc_fpscr_note_sticky(FPSCR_VXSNAN);
 		return anySNaN ? 2 : 1;
 	}
 
@@ -288,11 +414,13 @@ static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, doub
 	if (ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc) && !cOverflowToInf)
 	{
 		*out = *(double*)&kPpcDefaultQNaN;
+		ppc_fpscr_note_sticky(FPSCR_VXIMZ);
 		return 2;
 	}
 	if (ppc_bits_is_inf(ua) && ppc_bits_is_zero(uc))
 	{
 		*out = *(double*)&kPpcDefaultQNaN;
+		ppc_fpscr_note_sticky(FPSCR_VXIMZ);
 		return 2;
 	}
 	if (ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc) && cOverflowToInf)
@@ -308,6 +436,7 @@ static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, doub
 		if (prodSign != addSign)
 		{
 			*out = *(double*)&kPpcDefaultQNaN;
+			ppc_fpscr_note_sticky(FPSCR_VXISI);
 			return 2;
 		}
 	}
@@ -315,17 +444,12 @@ static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, doub
 	return 0;
 }
 
-// Prior frD + VE/ZE, set by ppc_fma_bind_dest before each helper call so both
-// the interpreter and the recompiler can honour FPSCR result suppression.
-static thread_local double s_fma_prev = 0.0;
-static thread_local bool s_fma_ve = false;
-static thread_local bool s_fma_ze = false;
-static thread_local bool s_fma_suppressed = false;
-
+// ppc_fma_bind_dest: set prior frD + VE/ZE so helpers can suppress writes.
 ATTR_MS_ABI void ppc_fma_bind_dest(double prevFrD)
 {
 	s_fma_prev = prevFrD;
 	s_fma_suppressed = false;
+	s_fpscr_pending_sticky = 0;
 	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
 	s_fma_ve = hCPU && (hCPU->fpscr & FPSCR_VE);
 	s_fma_ze = hCPU && (hCPU->fpscr & FPSCR_ZE);
@@ -419,14 +543,29 @@ static inline uint32 ppc_f32_to_bits(float f)
 	return bits;
 }
 
+static inline double ppc_fma_double_commit(double a, double c, double b, bool negate)
+{
+	__arm_wsr("fpsr", 0);
+	double r = ppc_fma_double_nofz(a, c, b);
+	if (negate)
+		r = -r;
+	ppc_fpscr_note_host_fpsr();
+	ppc_arith_commit_fpscr(r, false);
+	return r;
+}
+
 ATTR_MS_ABI double ppc_fmadd(double a, double c, double b)
 {
 	double r;
 	const int kind = ppc_fmadd_try_special(a, b, c, false, &r);
 	if (kind != 0)
-		return ppc_fma_finish_special(kind, r);
+	{
+		r = ppc_fma_finish_special(kind, r);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
+	}
 	s_fma_suppressed = false;
-	return ppc_fma_double_nofz(a, c, b);
+	return ppc_fma_double_commit(a, c, b, false);
 }
 
 ATTR_MS_ABI double ppc_fmsub(double a, double c, double b)
@@ -434,9 +573,13 @@ ATTR_MS_ABI double ppc_fmsub(double a, double c, double b)
 	double r;
 	const int kind = ppc_fmadd_try_special(a, b, c, true, &r);
 	if (kind != 0)
-		return ppc_fma_finish_special(kind, r);
+	{
+		r = ppc_fma_finish_special(kind, r);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
+	}
 	s_fma_suppressed = false;
-	return ppc_fma_double_nofz(a, c, -b);
+	return ppc_fma_double_commit(a, c, -b, false);
 }
 
 ATTR_MS_ABI double ppc_fnmadd(double a, double c, double b)
@@ -445,9 +588,13 @@ ATTR_MS_ABI double ppc_fnmadd(double a, double c, double b)
 	// Selected/generated NaN is not sign-flipped (suite fnmadd NaN cases use f10/f12 as-is).
 	const int kind = ppc_fmadd_try_special(a, b, c, false, &r);
 	if (kind != 0)
-		return ppc_fma_finish_special(kind, r);
+	{
+		r = ppc_fma_finish_special(kind, r);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
+	}
 	s_fma_suppressed = false;
-	return -ppc_fma_double_nofz(a, c, b);
+	return ppc_fma_double_commit(a, c, b, true);
 }
 
 ATTR_MS_ABI double ppc_fnmsub(double a, double c, double b)
@@ -455,9 +602,13 @@ ATTR_MS_ABI double ppc_fnmsub(double a, double c, double b)
 	double r;
 	const int kind = ppc_fmadd_try_special(a, b, c, true, &r);
 	if (kind != 0)
-		return ppc_fma_finish_special(kind, r);
+	{
+		r = ppc_fma_finish_special(kind, r);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
+	}
 	s_fma_suppressed = false;
-	return -ppc_fma_double_nofz(a, c, -b);
+	return ppc_fma_double_commit(a, c, -b, true);
 }
 
 // Pack a double FMA intermediate into the single-precision FPR layout.
@@ -505,13 +656,16 @@ static inline double ppc_fma_single_domain(double a, double cIn, double b, bool 
 	{
 		if (fpcr & (1ull << 24))
 			__arm_wsr64("fpcr", fpcr);
-		return ppc_fma_finish_special(kind, special);
+		const double r = ppc_fma_finish_special(kind, special);
+		ppc_arith_commit_fpscr(r, true);
+		return r;
 	}
 	s_fma_suppressed = false;
 
 	if (isMsub)
 		b = -b;
 
+	__arm_wsr("fpsr", 0);
 	double r;
 	if (cOverflowToInf)
 	{
@@ -561,9 +715,13 @@ static inline double ppc_fma_single_domain(double a, double cIn, double b, bool 
 			r = *(double*)&dr;
 		}
 	}
+	ppc_fpscr_note_host_fpsr();
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
-	return negate ? -r : r;
+	if (negate)
+		r = -r;
+	ppc_arith_commit_fpscr(r, true);
+	return r;
 }
 
 ATTR_MS_ABI double ppc_fmadds(double a, double c, double b)
@@ -625,17 +783,21 @@ static int ppc_fmul_try_special(double a, double c, double* out, bool cOverflowT
 		}
 		else
 			*out = *(double*)&selected;
+		if (anySNaN)
+			ppc_fpscr_note_sticky(FPSCR_VXSNAN);
 		return anySNaN ? 2 : 1;
 	}
 
 	if (ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc) && !cOverflowToInf)
 	{
 		*out = *(double*)&kPpcDefaultQNaN;
+		ppc_fpscr_note_sticky(FPSCR_VXIMZ);
 		return 2;
 	}
 	if (ppc_bits_is_inf(ua) && ppc_bits_is_zero(uc))
 	{
 		*out = *(double*)&kPpcDefaultQNaN;
+		ppc_fpscr_note_sticky(FPSCR_VXIMZ);
 		return 2;
 	}
 	return 0;
@@ -659,10 +821,13 @@ ATTR_MS_ABI double ppc_fmuls(double a, double cIn)
 	{
 		if (fpcr & (1ull << 24))
 			__arm_wsr64("fpcr", fpcr);
-		return ppc_fma_finish_special(kind, special);
+		const double r = ppc_fma_finish_special(kind, special);
+		ppc_arith_commit_fpscr(r, true);
+		return r;
 	}
 	s_fma_suppressed = false;
 
+	__arm_wsr("fpsr", 0);
 	double prod;
 	if (cOverflowToInf)
 	{
@@ -673,8 +838,10 @@ ATTR_MS_ABI double ppc_fmuls(double a, double cIn)
 		prod = a * c;
 
 	const double result = ppc_mul_result_to_single(prod);
+	ppc_fpscr_note_host_fpsr();
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
+	ppc_arith_commit_fpscr(result, true);
 	return result;
 }
 
@@ -1113,14 +1280,21 @@ ATTR_MS_ABI double ppc_fmul(double a, double c)
 	double special;
 	const int kind = ppc_fmul_try_special(a, c, &special, false, false);
 	if (kind != 0)
-		return ppc_fma_finish_special(kind, special);
+	{
+		const double r = ppc_fma_finish_special(kind, special);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
+	}
 	s_fma_suppressed = false;
 	const uint64 fpcr = __arm_rsr64("fpcr");
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	__arm_wsr("fpsr", 0);
 	const double r = a * c;
+	ppc_fpscr_note_host_fpsr();
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
+	ppc_arith_commit_fpscr(r, false);
 	return r;
 }
 
@@ -1139,7 +1313,11 @@ ATTR_MS_ABI double ppc_fdiv(double a, double b)
 		const uint64 selected = nanA ? ua : ub;
 		const uint64 q = ppc_quiet_nan(selected);
 		double out = *(double*)&q;
-		return ppc_fma_finish_special((snanA || snanB) ? 2 : 1, out);
+		if (snanA || snanB)
+			ppc_fpscr_note_sticky(FPSCR_VXSNAN);
+		const double r = ppc_fma_finish_special((snanA || snanB) ? 2 : 1, out);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
 	}
 
 	const bool zA = ppc_bits_is_zero(ua);
@@ -1151,13 +1329,19 @@ ATTR_MS_ABI double ppc_fdiv(double a, double b)
 	{
 		// 0/0 → VXZDZ default QNaN
 		double out = *(double*)&kPpcDefaultQNaN;
-		return ppc_fma_finish_special(2, out);
+		ppc_fpscr_note_sticky(FPSCR_VXZDZ);
+		const double r = ppc_fma_finish_special(2, out);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
 	}
 	if (iA && iB)
 	{
 		// ∞/∞ → VXIDI default QNaN
 		double out = *(double*)&kPpcDefaultQNaN;
-		return ppc_fma_finish_special(2, out);
+		ppc_fpscr_note_sticky(FPSCR_VXIDI);
+		const double r = ppc_fma_finish_special(2, out);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
 	}
 	if (zB && !zA)
 	{
@@ -1165,7 +1349,10 @@ ATTR_MS_ABI double ppc_fdiv(double a, double b)
 		const uint64 sign = (ua ^ ub) & 0x8000000000000000ULL;
 		const uint64 inf = sign | 0x7FF0000000000000ULL;
 		double out = *(double*)&inf;
-		return ppc_fp_finish_ze(out);
+		ppc_fpscr_note_sticky(FPSCR_ZX);
+		const double r = ppc_fp_finish_ze(out);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
 	}
 
 	// FZ clear so tininess (UX underflows that round up to min normal) is not
@@ -1176,11 +1363,14 @@ ATTR_MS_ABI double ppc_fdiv(double a, double b)
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
 	std::atomic_signal_fence(std::memory_order_seq_cst);
+	__arm_wsr("fpsr", 0);
 	volatile double va = a, vb = b;
 	volatile double r = va / vb;
 	std::atomic_signal_fence(std::memory_order_seq_cst);
+	ppc_fpscr_note_host_fpsr();
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
+	ppc_arith_commit_fpscr(r, false);
 	return r;
 }
 
@@ -1261,6 +1451,8 @@ static int ppc_faddsub_try_special(double a, double b, bool isSub, double* out)
 	{
 		const uint64 q = ppc_quiet_nan(nanA ? ua : ub);
 		*out = *(double*)&q;
+		if (snanA || snanB)
+			ppc_fpscr_note_sticky(FPSCR_VXSNAN);
 		return (snanA || snanB) ? 2 : 1;
 	}
 	if (ppc_bits_is_inf(ua) && ppc_bits_is_inf(ub))
@@ -1273,6 +1465,7 @@ static int ppc_faddsub_try_special(double a, double b, bool isSub, double* out)
 		{
 			// opposite-signed infinities cancel → VXISI
 			*out = *(double*)&kPpcDefaultQNaN;
+			ppc_fpscr_note_sticky(FPSCR_VXISI);
 			return 2;
 		}
 	}
@@ -1284,9 +1477,17 @@ ATTR_MS_ABI double ppc_fadd(double a, double b)
 	double special;
 	const int kind = ppc_faddsub_try_special(a, b, false, &special);
 	if (kind != 0)
-		return ppc_fma_finish_special(kind, special);
+	{
+		const double r = ppc_fma_finish_special(kind, special);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
+	}
 	s_fma_suppressed = false;
-	return a + b;
+	__arm_wsr("fpsr", 0);
+	const double r = a + b;
+	ppc_fpscr_note_host_fpsr();
+	ppc_arith_commit_fpscr(r, false);
+	return r;
 }
 
 ATTR_MS_ABI double ppc_fsub(double a, double b)
@@ -1294,9 +1495,17 @@ ATTR_MS_ABI double ppc_fsub(double a, double b)
 	double special;
 	const int kind = ppc_faddsub_try_special(a, b, true, &special);
 	if (kind != 0)
-		return ppc_fma_finish_special(kind, special);
+	{
+		const double r = ppc_fma_finish_special(kind, special);
+		ppc_arith_commit_fpscr(r, false);
+		return r;
+	}
 	s_fma_suppressed = false;
-	return a - b;
+	__arm_wsr("fpsr", 0);
+	const double r = a - b;
+	ppc_fpscr_note_host_fpsr();
+	ppc_arith_commit_fpscr(r, false);
+	return r;
 }
 
 // Fold double bits through single without IEEE float cast (preserves the
