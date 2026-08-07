@@ -280,6 +280,30 @@ static inline void ppc_fpscr_note_host_fpsr()
 	// IOC is classified in software specials (VX* subtypes); ignore here.
 }
 
+// Software overflow: finite operands → Inf result (host OFC is not always set on
+// AArch64 for Espresso-style paths, e.g. after FZ toggle). Sets OX + XX (inexact).
+static inline void ppc_fpscr_note_overflow_to_inf(double a, double b, double r)
+{
+	const uint64 ua = *(const uint64*)&a;
+	const uint64 ub = *(const uint64*)&b;
+	const uint64 ur = *(const uint64*)&r;
+	if (ppc_bits_is_nan(ua) || ppc_bits_is_nan(ub) || ppc_bits_is_inf(ua) || ppc_bits_is_inf(ub))
+		return;
+	if (ppc_bits_is_inf(ur))
+		s_fpscr_pending_sticky |= FPSCR_OX | FPSCR_XX;
+}
+
+static inline void ppc_fpscr_note_overflow_to_inf1(double a, double r)
+{
+	// unary: fres of tiny → huge/inf
+	const uint64 ua = *(const uint64*)&a;
+	const uint64 ur = *(const uint64*)&r;
+	if (ppc_bits_is_nan(ua) || ppc_bits_is_inf(ua))
+		return;
+	if (ppc_bits_is_inf(ur))
+		s_fpscr_pending_sticky |= FPSCR_OX | FPSCR_XX;
+}
+
 // Write FPSCR for a result-producing op. single_domain → FPRF from float view.
 // FZ-safe: classify single via integer bit pattern of (float) with FZ cleared
 // only when needed — callers that have denorm singles should pass via
@@ -550,6 +574,13 @@ static inline double ppc_fma_double_commit(double a, double c, double b, bool ne
 	if (negate)
 		r = -r;
 	ppc_fpscr_note_host_fpsr();
+	// Overflow of a*c+b: finite inputs → Inf.
+	const uint64 ua = *(const uint64*)&a, uc = *(const uint64*)&c, ub = *(const uint64*)&b;
+	const uint64 ur = *(const uint64*)&r;
+	if (!ppc_bits_is_nan(ua) && !ppc_bits_is_nan(uc) && !ppc_bits_is_nan(ub) &&
+		!ppc_bits_is_inf(ua) && !ppc_bits_is_inf(uc) && !ppc_bits_is_inf(ub) &&
+		ppc_bits_is_inf(ur))
+		s_fpscr_pending_sticky |= FPSCR_OX | FPSCR_XX;
 	ppc_arith_commit_fpscr(r, false);
 	return r;
 }
@@ -720,6 +751,15 @@ static inline double ppc_fma_single_domain(double a, double cIn, double b, bool 
 		__arm_wsr64("fpcr", fpcr);
 	if (negate)
 		r = -r;
+	// Finite domain → Inf after single pack.
+	{
+		const uint64 ua = *(const uint64*)&a, uc = *(const uint64*)&cIn, ub = *(const uint64*)&b;
+		const uint64 ur = *(const uint64*)&r;
+		if (!ppc_bits_is_nan(ua) && !ppc_bits_is_nan(uc) && !ppc_bits_is_nan(ub) &&
+			!ppc_bits_is_inf(ua) && !ppc_bits_is_inf(uc) && !ppc_bits_is_inf(ub) &&
+			ppc_bits_is_inf(ur))
+			s_fpscr_pending_sticky |= FPSCR_OX | FPSCR_XX;
+	}
 	ppc_arith_commit_fpscr(r, true);
 	return r;
 }
@@ -1381,6 +1421,8 @@ ATTR_MS_ABI double ppc_fres(double b)
 	}
 	s_fma_suppressed = false;
 	const double r = fres_espresso(b);
+	// Overflow of estimate to Inf from finite (suite OX on huge results).
+	ppc_fpscr_note_overflow_to_inf1(b, r);
 	// fres result is single-domain re-expanded double.
 	ppc_estimate_commit_fpscr(r, true);
 	return r;
@@ -1514,6 +1556,7 @@ ATTR_MS_ABI double ppc_fdiv(double a, double b)
 	volatile double r = va / vb;
 	std::atomic_signal_fence(std::memory_order_seq_cst);
 	ppc_fpscr_note_host_fpsr();
+	ppc_fpscr_note_overflow_to_inf(a, b, r);
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
 	ppc_arith_commit_fpscr(r, false);
