@@ -387,15 +387,12 @@ static void ppc_arith_commit_fpscr(double result, bool single_domain)
 		return;
 	}
 
-	// Single-domain FPRF: avoid host FZ flush of denorms on (float) cast.
+	// Single-domain FPRF from integer single bits (FZ-safe denorm class).
 	if (single_domain)
 	{
-		const uint64 fpcr = __arm_rsr64("fpcr");
-		if (fpcr & (1ull << 24))
-			__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
-		const float s = (float)result;
-		if (fpcr & (1ull << 24))
-			__arm_wsr64("fpcr", fpcr);
+		const uint32 sb = ConvertToSingleNoFTZ(*(const uint64*)&result);
+		float s;
+		std::memcpy(&s, &sb, sizeof(s));
 		hCPU->fpscr &= ~(FPSCR_FI | FPSCR_FR);
 		ppc_fpscr_set_fprf_from_single(hCPU->fpscr, s);
 		if (set_fi)
@@ -685,6 +682,9 @@ static inline double ppc_fma_double_commit(double a, double c, double b, bool ne
 	if (negate)
 		r = -r;
 	ppc_fpscr_note_host_fpsr();
+	// Software FI when b is ±0 (suite 1.333…·1.5+0 → 2−ulp with FI; host IXC misses).
+	if ((b == 0.0 || b == -0.0) && std::isfinite(a) && std::isfinite(c) && std::isfinite(r))
+		ppc_fpscr_note_mul_inexact(a, c, r);
 	// Overflow of a*c+b: finite inputs → Inf.
 	const uint64 ua = *(const uint64*)&a, uc = *(const uint64*)&c, ub = *(const uint64*)&b;
 	const uint64 ur = *(const uint64*)&r;
@@ -755,13 +755,11 @@ ATTR_MS_ABI double ppc_fnmsub(double a, double c, double b)
 
 // Pack a double FMA intermediate into the single-precision FPR layout.
 // In-range: ConvertToSingleNoFTZ (suite denorm sticky: min_denorm*1.5 − min_denorm_d
-// → 0x1, not IEEE RN 0x2). Out-of-range finite: ±Inf (suite: 1*0.5−HUGE → −Inf);
-// plain ConvertToSingleNoFTZ would leave HUGE_VALF.
+// → 0x1, not IEEE RN 0x2). Out-of-range finite: ±Inf (suite: 1*0.5−HUGE → −Inf).
 static inline double ppc_fma_result_to_single(double r)
 {
 	if (std::isfinite(r))
 	{
-		// max finite single as double (HUGE_VALF).
 		constexpr double kMaxSingle = 0x1.fffffep+127;
 		if (r > kMaxSingle)
 			r = std::numeric_limits<double>::infinity();

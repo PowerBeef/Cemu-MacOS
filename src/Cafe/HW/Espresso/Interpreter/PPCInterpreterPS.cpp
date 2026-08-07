@@ -109,18 +109,16 @@ void PPCInterpreter_PS_DIV(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double prev1 = hCPU->fpr[frD].fp1;
 	ppc_ps_fma_reset_suppress();
 	ppc_fpscr_defer_begin();
+	// Pack immediately after each lane so OX/FPRF see the single-domain result
+	// while defer_lane is still the active lane index.
 	ppc_fma_bind_dest(prev0);
-	double r0 = ppc_fdiv(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0);
+	double r0 = ppc_ps_pack_arith(ppc_fdiv(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0));
 	const bool s0 = ppc_fma_was_suppressed();
 	ppc_ps_fma_note_suppress();
 	ppc_fma_bind_dest(prev1);
-	double r1 = ppc_fdiv(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1);
+	double r1 = ppc_ps_pack_arith(ppc_fdiv(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1));
 	const bool s1 = ppc_fma_was_suppressed();
 	ppc_ps_fma_note_suppress();
-	// Always single-pack for OX/FPRF (even when VE/ZE suppress the write —
-	// suite mixed SNaN+overflow still wants OX|XX from the overflow lane).
-	r0 = ppc_ps_pack_arith(r0);
-	r1 = ppc_ps_pack_arith(r1);
 	if (s0 || s1)
 	{
 		hCPU->fpr[frD].fp0 = prev0;
