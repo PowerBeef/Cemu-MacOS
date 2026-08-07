@@ -40,7 +40,9 @@ espresso_frsqrte_entry_t frsqrteLookupTable[32] =
 
 ATTR_MS_ABI double frsqrte_espresso(double input)
 {
-	unsigned long long x = *(unsigned long long*)&input;
+	// Bit-copy: host FZ must not flush denorm inputs before we see them.
+	unsigned long long x;
+	std::memcpy(&x, &input, sizeof(x));
 
 	// 0.0 and -0.0
 	if ((x << 1) == 0)
@@ -48,7 +50,9 @@ ATTR_MS_ABI double frsqrte_espresso(double input)
 		// result is inf or -inf (same sign)
 		x &= ~0x7FFFFFFFFFFFFFFFULL;
 		x |= 0x7FF0000000000000ULL;
-		return *(double*)&x;
+		double out;
+		std::memcpy(&out, &x, sizeof(out));
+		return out;
 	}
 	// get exponent
 	uint32 e = (x >> ieee_double_m_bits) & ((1ull << ieee_double_e_bits) - 1ull);
@@ -61,38 +65,71 @@ ATTR_MS_ABI double frsqrte_espresso(double input)
 			if ((sint64)x < 0)
 			{
 				x = 0x7FF8000000000000ULL;
-				return *(double*)&x;
+				double out;
+				std::memcpy(&out, &x, sizeof(out));
+				return out;
 			}
 			// positive INF returns +0.0
 			return 0.0;
 		}
 		// Quiet SNaN; keep QNaN payload (suite: frsqrte SNaN → quieted).
-		return *(double*)&(x = x | 0x0008000000000000ULL);
+		x = x | 0x0008000000000000ULL;
+		double out;
+		std::memcpy(&out, &x, sizeof(out));
+		return out;
 	}
 	// negative number (other than -0.0)
 	if ((sint64)x < 0)
 	{
 		// result is positive NaN
 		x = 0x7FF8000000000000ULL;
-		return *(double*)&x;
+		double out;
+		std::memcpy(&out, &x, sizeof(out));
+		return out;
 	}
-	// todo: handle denormals
 
-	// get index (lsb of exponent, remaining bits of mantissa)
-	uint32 idx = (x >> (ieee_double_m_bits - espresso_frsqrte_i_bits + 1ull))&((1 << espresso_frsqrte_i_bits) - 1);
-	// get step multiplier
-	uint32 stepMul = (x >> (ieee_double_m_bits - espresso_frsqrte_i_bits + 1 - 11))&((1 << 11) - 1);
+	// Denormals: normalize mantissa and adjust exponent (Espresso / Dolphin).
+	// Suite: 1/sqrt(min double denorm) → 0x617FFE80_00000000.
+	uint64 mant = x & ((1ull << ieee_double_m_bits) - 1ull);
+	sint32 e_signed = (sint32)e;
+	if (e == 0)
+	{
+		// value = 2^(1-1023) * (mant/2^52); shift until hidden bit appears
+		e_signed = 1;
+		if (mant == 0)
+		{
+			// +0 handled above; should not reach here
+			x = 0x7FF0000000000000ULL;
+			double out;
+			std::memcpy(&out, &x, sizeof(out));
+			return out;
+		}
+		while ((mant & (1ull << ieee_double_m_bits)) == 0)
+		{
+			mant <<= 1;
+			e_signed--;
+		}
+		mant &= (1ull << ieee_double_m_bits) - 1ull;
+	}
+
+	// Rebuild bits for table index (exp field may be out of 11-bit range for denorms).
+	const uint64 x_for_idx =
+		((uint64)((uint32)e_signed & 0x7FFu) << ieee_double_m_bits) | mant;
+	uint32 idx = (x_for_idx >> (ieee_double_m_bits - espresso_frsqrte_i_bits + 1ull)) &
+		((1u << espresso_frsqrte_i_bits) - 1);
+	uint32 stepMul = (x_for_idx >> (ieee_double_m_bits - espresso_frsqrte_i_bits + 1 - 11)) &
+		((1u << 11) - 1);
 
 	sint32 sum = frsqrteLookupTable[idx].offset - frsqrteLookupTable[idx].step * stepMul;
 
-	e = 1023 - ((e - 1021) >> 1);
-	x &= ~(((1ull << ieee_double_e_bits) - 1ull) << ieee_double_m_bits);
-	x |= ((unsigned long long)e << ieee_double_m_bits);
+	// Signed exponent math so denorm e_signed < 0 still works.
+	const sint32 e_out = 1023 - ((e_signed - 1021) >> 1);
+	x = ((uint64)((uint32)e_out & 0x7FFu) << ieee_double_m_bits) |
+		(((uint64)(uint32)sum) << 26ull);
 
-	x &= ~((1ull << ieee_double_m_bits) - 1ull);
-	x += ((unsigned long long)sum << 26ull);
-
-	return *(double*)&x;
+	double out;
+	std::memcpy(&out, &x, sizeof(out));
+	return out;
 }
 
 const int espresso_fres_i_bits = 5; // index bits
@@ -1081,6 +1118,7 @@ void PPCInterpreter_FRSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 	
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_frsqrte(hCPU->fpr[frB].fpr);
+	ppc_fpscr_set_fprf_from_double(hCPU->fpscr, hCPU->fpr[frD].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1185,19 +1223,29 @@ ATTR_MS_ABI double ppc_fsub(double a, double b)
 	return a - b;
 }
 
-// PS lane quantize for merge/mr/neg/abs and finite add/sub results.
+// Fold double bits through single without IEEE float cast (preserves the
+// freescale denorm/tiny encoding used by stfs and by merge of rsqrte results).
+static inline double ppc_ps_bit_fold_single(uint64 b)
+{
+	const uint32 s = ConvertToSingleNoFTZ(b);
+	const uint64 e = ConvertToDoubleNoFTZ(s);
+	return *(const double*)&e;
+}
+
+// PS lane quantize (RN) for merge slot0, mr/neg/abs, and finite add/sub results.
+// Suite: "Slot 0 is rounded". Host float RN for values in the single-normal
+// window and above; freescale bit fold for tinies (exp < 896) so merge11 of a
+// double-range rsqrte result (e.g. 0x1FF00008…) yields 0x3F800041, not zero.
 ATTR_MS_ABI double ppc_ps_quantize(double d)
 {
 	const uint64 b = *(const uint64*)&d;
 	const uint64 abs = b & 0x7FFFFFFFFFFFFFFFULL;
 	if (abs >= 0x7FF0000000000000ULL)
-	{
-		// Inf/NaN: single-bit fold without quieting SNaN.
-		const uint32 s = ConvertToSingleNoFTZ(b);
-		const uint64 e = ConvertToDoubleNoFTZ(s);
-		return *(double*)&e;
-	}
-	// Finite: host RN, FZ clear for denorm results and re-expand.
+		return ppc_ps_bit_fold_single(b);
+	const uint32 exp = (uint32)((b >> 52) & 0x7FFu);
+	if (exp < 896)
+		return ppc_ps_bit_fold_single(b);
+	// Finite in single-normal/overflow range: host RN, FZ clear.
 	const uint64 fpcr = __arm_rsr64("fpcr");
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
@@ -1207,6 +1255,51 @@ ATTR_MS_ABI double ppc_ps_quantize(double d)
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
 	return r;
+}
+
+// PS merge slot1: truncate to single via freescale bit path (no RN).
+// Suite: "slot 1 is truncated"; HUGE → max normal single re-expanded.
+ATTR_MS_ABI double ppc_ps_quantize_tz(double d)
+{
+	return ppc_ps_bit_fold_single(*(const uint64*)&d);
+}
+
+// After PS estimate (suite excess-range ps_rsqrte):
+// - Double-format input (low 29 fraction bits set): keep full result exponent,
+//   but truncate the mantissa to 23 bits ("mantissa of ps0 is rounded to single
+//   precision, but the exponent keeps its full double-precision range") →
+//   rsqrte(HUGE) 0x1FF00008_2C000000 becomes 0x1FF00008_20000000.
+// - Single-format input: fold into the single domain; when freescale single exp
+//   is tiny (< 96), force unbiased 0 ("ps1's exponent gets reset to 0").
+ATTR_MS_ABI double ppc_ps_fold_estimate(double input, double result)
+{
+	uint64 in, res;
+	std::memcpy(&in, &input, sizeof(in));
+	std::memcpy(&res, &result, sizeof(res));
+	const uint64 absIn = in & 0x7FFFFFFFFFFFFFFFULL;
+	const uint64 absRes = res & 0x7FFFFFFFFFFFFFFFULL;
+	if (absIn == 0 || absIn >= 0x7FF0000000000000ULL)
+		return result;
+	if (absRes == 0 || absRes >= 0x7FF0000000000000ULL)
+		return result;
+
+	if ((in & ((1ull << 29) - 1ull)) != 0)
+	{
+		// Double-format: truncate result mantissa, keep exp.
+		const uint64 t = res & ~((1ull << 29) - 1ull);
+		double out;
+		std::memcpy(&out, &t, sizeof(out));
+		return out;
+	}
+
+	uint32 s = ConvertToSingleNoFTZ(res);
+	const uint32 sexp = (s >> 23) & 0xFFu;
+	if (sexp != 0 && sexp < 96)
+		s = (s & 0x807FFFFFu) | (0x7Fu << 23);
+	const uint64 e = ConvertToDoubleNoFTZ(s);
+	double out;
+	std::memcpy(&out, &e, sizeof(out));
+	return out;
 }
 
 ATTR_MS_ABI double ppc_ps_pack_arith(double r)

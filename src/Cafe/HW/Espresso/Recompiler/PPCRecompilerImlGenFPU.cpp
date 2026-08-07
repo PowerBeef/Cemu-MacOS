@@ -31,6 +31,8 @@ ATTR_MS_ABI double ppc_frsp(double b);
 ATTR_MS_ABI double ppc_fctiw(double b);
 ATTR_MS_ABI double ppc_fctiwz(double b);
 ATTR_MS_ABI double ppc_ps_quantize(double d);
+ATTR_MS_ABI double ppc_ps_quantize_tz(double d);
+ATTR_MS_ABI double ppc_ps_fold_estimate(double input, double result);
 ATTR_MS_ABI double ppc_ps_pack_arith(double r);
 
 // Bind current frD (for FPSCR[VE] suppress) then call a 3-arg FMA helper.
@@ -1392,9 +1394,11 @@ bool PPCRecompilerImlGen_PS_RSQRTE(ppcImlGenContext_t* ppcImlGenContext, uint32 
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_reset_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev0, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_frsqrte, fprBps0, IMLREG_INVALID, IMLREG_INVALID, fprT0);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fold_estimate, fprBps0, fprT0, IMLREG_INVALID, fprT0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev1, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_frsqrte, fprBps1, IMLREG_INVALID, IMLREG_INVALID, fprT1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fold_estimate, fprBps1, fprT1, IMLREG_INVALID, fprT1);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
@@ -1448,8 +1452,8 @@ bool PPCRecompilerImlGen_PS_MERGE00(ppcImlGenContext_t* ppcImlGenContext, uint32
 	DefinePS0(frpBps0, frB);
 	DefinePS0(frpDps0, frD);
 	DefinePS1(frpDps1, frD);
-	// Quantize each selected lane (excess range / SNaN-preserving).
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpBps0, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
+	// Dest slot0 RN, slot1 truncate (suite excess-range merge).
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize_tz, frpBps0, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpAps0, IMLREG_INVALID, IMLREG_INVALID, frpDps0);
 	return true;
 }
@@ -1466,7 +1470,7 @@ bool PPCRecompilerImlGen_PS_MERGE01(ppcImlGenContext_t* ppcImlGenContext, uint32
 	DefinePS1(frpDps1, frD);
 
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpAps0, IMLREG_INVALID, IMLREG_INVALID, frpDps0);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpBps1, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize_tz, frpBps1, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
 	return true;
 }
 
@@ -1485,12 +1489,12 @@ bool PPCRecompilerImlGen_PS_MERGE10(ppcImlGenContext_t* ppcImlGenContext, uint32
 	if (frD != frB)
 	{
 		ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpAps1, IMLREG_INVALID, IMLREG_INVALID, frpDps0);
-		ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpBps0, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
+		ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize_tz, frpBps0, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
 	}
 	else
 	{
 		DefineTempFPR(frpTemp, 0);
-		ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpBps0, IMLREG_INVALID, IMLREG_INVALID, frpTemp);
+		ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize_tz, frpBps0, IMLREG_INVALID, IMLREG_INVALID, frpTemp);
 		ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpAps1, IMLREG_INVALID, IMLREG_INVALID, frpDps0);
 		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, frpDps1, frpTemp);
 	}
@@ -1510,7 +1514,7 @@ bool PPCRecompilerImlGen_PS_MERGE11(ppcImlGenContext_t* ppcImlGenContext, uint32
 	DefinePS1(frpDps1, frD);
 
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpAps1, IMLREG_INVALID, IMLREG_INVALID, frpDps0);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpBps1, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize_tz, frpBps1, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
 	return true;
 }
 

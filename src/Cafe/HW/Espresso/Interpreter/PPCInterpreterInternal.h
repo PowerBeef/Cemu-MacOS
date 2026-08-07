@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cafe/HW/Espresso/PPCState.h"
+#include <cstring>
 
 // SPR constants
 #define SPR_XER		1	
@@ -76,12 +77,39 @@
 #define FPSCR_UE		(1u << 5)
 #define FPSCR_ZE		(1u << 4)	// also used by FMA ZE suppress
 #define FPSCR_XE		(1u << 3)
+// FPRF field (PPC bits 15–19) lives at host bits 12–16.
+#define FPSCR_FPRF_MASK	(0x1Fu << 12)
+#define FPSCR_FPRF_PN	(0x4u << 12)	// +normal  (suite 0x4000)
+#define FPSCR_FPRF_NN	(0x8u << 12)	// −normal
+#define FPSCR_FPRF_PZ	(0x2u << 12)	// +zero
+#define FPSCR_FPRF_NZ	(0x12u << 12)	// −zero
+#define FPSCR_FPRF_PINF	(0x5u << 12)	// +inf
+#define FPSCR_FPRF_NINF	(0x9u << 12)	// −inf
+#define FPSCR_FPRF_QNAN	(0x11u << 12)	// QNaN
 #define FPSCR_VX_ANY	(FPSCR_VXSNAN | FPSCR_VXISI | FPSCR_VXIDI | FPSCR_VXZDZ | FPSCR_VXIMZ | \
 			 FPSCR_VXVC | FPSCR_VXSOFT | FPSCR_VXSQRT | FPSCR_VXCVI)
 #define FPSCR_ANY_X	(FPSCR_OX | FPSCR_UX | FPSCR_ZX | FPSCR_XX | FPSCR_VX_ANY)
 #define FPSCR_ANY_E	(FPSCR_VE | FPSCR_OE | FPSCR_UE | FPSCR_ZE | FPSCR_XE)
 // Bit 20 (PPC) / host bit 11 is reserved; hardware ignores writes to it.
 #define FPSCR_RESERVED_MASK	(0xFFFFF7FFu)
+
+// Set FPRF from a result value (minimal class set for estimates / suite).
+static inline void ppc_fpscr_set_fprf_from_double(uint32& fpscr, double v)
+{
+	uint64 bits;
+	std::memcpy(&bits, &v, sizeof(bits));
+	const uint64 abs = bits & 0x7FFFFFFFFFFFFFFFULL;
+	uint32 cls;
+	if (abs > 0x7FF0000000000000ULL)
+		cls = FPSCR_FPRF_QNAN;
+	else if (abs == 0x7FF0000000000000ULL)
+		cls = (bits >> 63) ? FPSCR_FPRF_NINF : FPSCR_FPRF_PINF;
+	else if (abs == 0)
+		cls = (bits >> 63) ? FPSCR_FPRF_NZ : FPSCR_FPRF_PZ;
+	else
+		cls = (bits >> 63) ? FPSCR_FPRF_NN : FPSCR_FPRF_PN;
+	fpscr = (fpscr & ~FPSCR_FPRF_MASK) | cls;
+}
 
 // After any FPSCR write: drop reserved bit, recompute VX/FEX (Dolphin-compatible).
 static inline void ppc_fpscr_recompute(uint32& fpscr)
@@ -273,6 +301,10 @@ ATTR_MS_ABI double ppc_frsqrte(double b);
 // PS move/merge quantize: round finite to single (FZ-safe); Inf/NaN via bit
 // convert so SNaNs are not quieted (suite: moves do not raise on NaN).
 ATTR_MS_ABI double ppc_ps_quantize(double d);
+// Merge destination slot1: freescale truncate (no RN).
+ATTR_MS_ABI double ppc_ps_quantize_tz(double d);
+// Fold PS estimate result when input was single-format (low 29 bits clear).
+ATTR_MS_ABI double ppc_ps_fold_estimate(double input, double result);
 // After arithmetic: keep Inf/NaN double-form (check_ps_nan); quantize finites.
 ATTR_MS_ABI double ppc_ps_pack_arith(double r);
 

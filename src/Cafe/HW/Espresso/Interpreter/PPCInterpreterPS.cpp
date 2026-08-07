@@ -1,5 +1,6 @@
 #include "PPCInterpreterInternal.h"
 #include "PPCInterpreterHelper.h"
+#include <arm_acle.h>
 #include <cmath>
 
 // Gekko paired single math
@@ -496,15 +497,25 @@ void PPCInterpreter_PS_RSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 	// Whole-register VE suppress for mixed SNaN / negative lanes.
 	const double prev0 = hCPU->fpr[frD].fp0;
 	const double prev1 = hCPU->fpr[frD].fp1;
+	// Clear host FZ so denorm lane bits survive the double call ABI.
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	const double b0 = hCPU->fpr[frB].fp0;
+	const double b1 = hCPU->fpr[frB].fp1;
 	ppc_ps_fma_reset_suppress();
 	ppc_fma_bind_dest(prev0);
-	const double r0 = ppc_frsqrte(hCPU->fpr[frB].fp0);
+	const double r0 = ppc_ps_fold_estimate(b0, ppc_frsqrte(b0));
 	ppc_ps_fma_note_suppress();
 	ppc_fma_bind_dest(prev1);
-	const double r1 = ppc_frsqrte(hCPU->fpr[frB].fp1);
+	const double r1 = ppc_ps_fold_estimate(b1, ppc_frsqrte(b1));
 	ppc_ps_fma_note_suppress();
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
+	// FPRF from ps0 (suite excess-range rsqrte checks FPRF +normal = 0x4000).
+	ppc_fpscr_set_fprf_from_double(hCPU->fpscr, hCPU->fpr[frD].fp0);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -518,8 +529,9 @@ void PPCInterpreter_PS_MERGE00(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 	// Read both before write (frD may alias frA/frB).
+	// Dest slot0 RN, slot1 truncate (suite excess-range merge).
 	const double s0 = ppc_ps_quantize(hCPU->fpr[frA].fp0);
-	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
+	const double s1 = ppc_ps_quantize_tz(hCPU->fpr[frB].fp0);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
 	if (Opcode & PPC_OPC_RC)
@@ -538,7 +550,7 @@ void PPCInterpreter_PS_MERGE01(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frD = (Opcode>>21)&0x1F;
 
 	const double s0 = ppc_ps_quantize(hCPU->fpr[frA].fp0);
-	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
+	const double s1 = ppc_ps_quantize_tz(hCPU->fpr[frB].fp1);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
 	if (Opcode & PPC_OPC_RC)
@@ -557,7 +569,7 @@ void PPCInterpreter_PS_MERGE10(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frD = (Opcode>>21)&0x1F;
 
 	const double s0 = ppc_ps_quantize(hCPU->fpr[frA].fp1);
-	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp0);
+	const double s1 = ppc_ps_quantize_tz(hCPU->fpr[frB].fp0);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
 	if (Opcode & PPC_OPC_RC)
@@ -576,7 +588,7 @@ void PPCInterpreter_PS_MERGE11(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frD = (Opcode>>21)&0x1F;
 
 	const double s0 = ppc_ps_quantize(hCPU->fpr[frA].fp1);
-	const double s1 = ppc_ps_quantize(hCPU->fpr[frB].fp1);
+	const double s1 = ppc_ps_quantize_tz(hCPU->fpr[frB].fp1);
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
 	if (Opcode & PPC_OPC_RC)
