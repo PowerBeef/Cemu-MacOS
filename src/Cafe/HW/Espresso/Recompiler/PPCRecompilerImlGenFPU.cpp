@@ -1071,12 +1071,11 @@ bool PPCRecompilerImlGen_PS_ADD(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_reset_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fpscr_defer_begin, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev0, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fadd, fprAps0, fprBps0, IMLREG_INVALID, fprT0);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_pack_arith, fprT0, IMLREG_INVALID, IMLREG_INVALID, fprT0);
+	// Single-domain: HUGE+HUGE → Inf + OX (double fadd stays finite).
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fadds, fprAps0, fprBps0, IMLREG_INVALID, fprT0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev1, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fadd, fprAps1, fprBps1, IMLREG_INVALID, fprT1);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_pack_arith, fprT1, IMLREG_INVALID, IMLREG_INVALID, fprT1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fadds, fprAps1, fprBps1, IMLREG_INVALID, fprT1);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
@@ -1109,12 +1108,10 @@ bool PPCRecompilerImlGen_PS_SUB(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_reset_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fpscr_defer_begin, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev0, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fsub, fprAps0, fprBps0, IMLREG_INVALID, fprT0);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_pack_arith, fprT0, IMLREG_INVALID, IMLREG_INVALID, fprT0);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fsubs, fprAps0, fprBps0, IMLREG_INVALID, fprT0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev1, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fsub, fprAps1, fprBps1, IMLREG_INVALID, fprT1);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_pack_arith, fprT1, IMLREG_INVALID, IMLREG_INVALID, fprT1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fsubs, fprAps1, fprBps1, IMLREG_INVALID, fprT1);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
@@ -1308,8 +1305,7 @@ bool PPCRecompilerImlGen_PS_SUM0(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprPrev1, fprDps1);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_reset_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev0, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fadd, fprAps0, fprBps1, IMLREG_INVALID, fprT0);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_pack_arith, fprT0, IMLREG_INVALID, IMLREG_INVALID, fprT0);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fadds, fprAps0, fprBps1, IMLREG_INVALID, fprT0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	// Fake lane1 note with suppress already set if sum invalid — re-note copies flag.
 	// Force note_i=1 with a second note that re-reads s_fma_suppressed (still set if VE).
@@ -1347,8 +1343,7 @@ bool PPCRecompilerImlGen_PS_SUM1(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev0, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev1, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fadd, fprAps0, fprBps1, IMLREG_INVALID, fprT1);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_pack_arith, fprT1, IMLREG_INVALID, IMLREG_INVALID, fprT1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fadds, fprAps0, fprBps1, IMLREG_INVALID, fprT1);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, fprCps0, IMLREG_INVALID, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprDps0, IMLREG_INVALID, fprDps0);

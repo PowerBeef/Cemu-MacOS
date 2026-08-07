@@ -19,10 +19,11 @@ void PPCInterpreter_PS_ADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_reset_suppress();
 	ppc_fpscr_defer_begin();
 	ppc_fma_bind_dest(prev0);
-	const double r0 = ppc_ps_pack_arith(ppc_fadd(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0));
+	// Single-domain: HUGE+HUGE → Inf + OX (double fadd stays finite).
+	const double r0 = ppc_fadds(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0);
 	ppc_ps_fma_note_suppress();
 	ppc_fma_bind_dest(prev1);
-	const double r1 = ppc_ps_pack_arith(ppc_fadd(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1));
+	const double r1 = ppc_fadds(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1);
 	ppc_ps_fma_note_suppress();
 	// Pack before commit so VE leave-prev is not re-quantized.
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
@@ -48,10 +49,10 @@ void PPCInterpreter_PS_SUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_reset_suppress();
 	ppc_fpscr_defer_begin();
 	ppc_fma_bind_dest(prev0);
-	const double r0 = ppc_ps_pack_arith(ppc_fsub(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0));
+	const double r0 = ppc_fsubs(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0);
 	ppc_ps_fma_note_suppress();
 	ppc_fma_bind_dest(prev1);
-	const double r1 = ppc_ps_pack_arith(ppc_fsub(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1));
+	const double r1 = ppc_fsubs(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1);
 	ppc_ps_fma_note_suppress();
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
@@ -122,15 +123,9 @@ void PPCInterpreter_PS_DIV(PPCInterpreter_t* hCPU, uint32 Opcode)
 	}
 	else
 	{
-		// Pack finite results to single; keep NaN/Inf double form from helper.
-		auto pack = [](double r) -> double {
-			const uint64 b = *(const uint64*)&r;
-			if (((b & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL))
-				return r;
-			return (double)(float)r;
-		};
-		hCPU->fpr[frD].fp0 = pack(r0);
-		hCPU->fpr[frD].fp1 = pack(r1);
+		// Single-domain pack with OX on overflow (suite HUGE/tiny → Inf).
+		hCPU->fpr[frD].fp0 = ppc_ps_pack_arith(r0);
+		hCPU->fpr[frD].fp1 = ppc_ps_pack_arith(r1);
 	}
 	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
 	if (Opcode & PPC_OPC_RC)
@@ -356,7 +351,7 @@ void PPCInterpreter_PS_SUM0(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double prev0 = hCPU->fpr[frD].fp0;
 	const double prev1 = hCPU->fpr[frD].fp1;
 	ppc_fma_bind_dest(prev0);
-	const double sum = ppc_ps_pack_arith(ppc_fadd(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp1));
+	const double sum = ppc_fadds(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp1);
 	if (ppc_fma_was_suppressed())
 	{
 		hCPU->fpr[frD].fp0 = prev0;
@@ -387,7 +382,7 @@ void PPCInterpreter_PS_SUM1(PPCInterpreter_t* hCPU, uint32 Opcode)
 	const double prev0 = hCPU->fpr[frD].fp0;
 	const double prev1 = hCPU->fpr[frD].fp1;
 	ppc_fma_bind_dest(prev1);
-	const double sum = ppc_ps_pack_arith(ppc_fadd(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp1));
+	const double sum = ppc_fadds(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp1);
 	if (ppc_fma_was_suppressed())
 	{
 		hCPU->fpr[frD].fp0 = prev0;

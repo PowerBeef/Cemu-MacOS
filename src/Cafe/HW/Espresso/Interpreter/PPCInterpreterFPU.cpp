@@ -306,7 +306,8 @@ static inline void ppc_fpscr_note_tininess_ux(double exact, bool single_domain)
 		return;
 	if (exact == 0.0 || !std::isfinite(exact))
 		return;
-	const double minN = single_domain ? 0x1.0p-126 : 0x1.0p-1022;
+	// std::ldexp avoids hexfloat portability; min single = 2^-126, min double = 2^-1022.
+	const double minN = single_domain ? std::ldexp(1.0, -126) : std::ldexp(1.0, -1022);
 	if (std::fabs(exact) < minN)
 		s_fpscr_pending_sticky |= FPSCR_UX;
 }
@@ -417,7 +418,8 @@ ATTR_MS_ABI void ppc_fpscr_update_cr1_abi()
 static void ppc_fpscr_defer_end(double ps0_result, bool single_domain)
 {
 	s_fpscr_defer = false;
-	s_fpscr_pending_sticky = s_fpscr_acc_sticky;
+	// Merge any post-lane sticky notes (e.g. pack_arith OX after fdiv).
+	s_fpscr_pending_sticky = s_fpscr_acc_sticky | s_fpscr_pending_sticky;
 	// If whole-register VE suppressed both lanes, stickies only.
 	const bool was_suppressed = s_fma_suppressed;
 	s_fma_suppressed = s_fpscr_acc_suppressed;
@@ -2140,6 +2142,14 @@ ATTR_MS_ABI double ppc_ps_pack_arith(double r)
 	const uint64 b = *(const uint64*)&r;
 	if ((b & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL)
 		return r;
+	// Finite double that overflows single-domain (HUGE+HUGE, HUGE/tiny): Inf + OX|XX.
+	constexpr double kMaxSingle = 0x1.fffffep+127;
+	if (std::isfinite(r) && std::fabs(r) > kMaxSingle)
+	{
+		ppc_fpscr_note_sticky(FPSCR_OX | FPSCR_XX);
+		const uint64 inf = (b & 0x8000000000000000ULL) | 0x7FF0000000000000ULL;
+		return *(const double*)&inf;
+	}
 	return ppc_ps_quantize(r);
 }
 
@@ -2367,18 +2377,27 @@ ATTR_MS_ABI double ppc_fadds(double a, double b)
 	const double exact = va + vb; // double intermediate = exact for single pack
 	volatile float s = (float)exact;
 	volatile double r = (double)s;
-	if (fpcr & (1ull << 24))
-		__arm_wsr64("fpcr", fpcr);
-	ppc_fpscr_note_host_fpsr();
-	// Inexact: single pack lost bits
-	if ((float)exact != exact && std::isfinite(exact))
-		s_fpscr_pending_sticky |= FPSCR_XX;
-	// Tininess before rounding to single (suite: min_single ± min_double → UX)
-	ppc_fpscr_note_tininess_ux(exact, true);
+	// Inexact + tininess while FZ is still clear (compare against packed bits).
 	uint32 sb;
 	std::memcpy(&sb, (const void*)&s, sizeof(sb));
-	if ((s_fpscr_pending_sticky & FPSCR_XX) && (sb & 0x7FFFFFFFu) < 0x00800000u)
-		s_fpscr_pending_sticky |= FPSCR_UX;
+	const uint64 exb = *(const uint64*)&exact;
+	const uint64 rdb = ConvertToDoubleNoFTZ(sb);
+	if (std::isfinite(exact) && exb != rdb)
+		s_fpscr_pending_sticky |= FPSCR_XX;
+	ppc_fpscr_note_host_fpsr();
+	ppc_fpscr_note_tininess_ux(exact, true);
+	if ((s_fpscr_pending_sticky & FPSCR_XX) && (sb & 0x7FFFFFFFu) != 0 &&
+		(sb & 0x7FFFFFFFu) <= 0x00800000u)
+		s_fpscr_pending_sticky |= FPSCR_UX; // denorm or min-normal after tininess
+	// Finite + finite → Inf single (PS HUGE+HUGE, suite OX|XX)
+	{
+		const uint64 ua = *(const uint64*)&a, ub = *(const uint64*)&b;
+		if (!ppc_bits_is_nan(ua) && !ppc_bits_is_nan(ub) && !ppc_bits_is_inf(ua) &&
+			!ppc_bits_is_inf(ub) && (sb & 0x7FFFFFFFu) == 0x7F800000u)
+			s_fpscr_pending_sticky |= FPSCR_OX | FPSCR_XX;
+	}
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
 	ppc_arith_commit_fpscr(r, true);
 	return r;
 }
@@ -2402,16 +2421,25 @@ ATTR_MS_ABI double ppc_fsubs(double a, double b)
 	const double exact = va - vb;
 	volatile float s = (float)exact;
 	volatile double r = (double)s;
-	if (fpcr & (1ull << 24))
-		__arm_wsr64("fpcr", fpcr);
-	ppc_fpscr_note_host_fpsr();
-	if ((float)exact != exact && std::isfinite(exact))
-		s_fpscr_pending_sticky |= FPSCR_XX;
-	ppc_fpscr_note_tininess_ux(exact, true);
 	uint32 sb;
 	std::memcpy(&sb, (const void*)&s, sizeof(sb));
-	if ((s_fpscr_pending_sticky & FPSCR_XX) && (sb & 0x7FFFFFFFu) < 0x00800000u)
+	const uint64 exb = *(const uint64*)&exact;
+	const uint64 rdb = ConvertToDoubleNoFTZ(sb);
+	if (std::isfinite(exact) && exb != rdb)
+		s_fpscr_pending_sticky |= FPSCR_XX;
+	ppc_fpscr_note_host_fpsr();
+	ppc_fpscr_note_tininess_ux(exact, true);
+	if ((s_fpscr_pending_sticky & FPSCR_XX) && (sb & 0x7FFFFFFFu) != 0 &&
+		(sb & 0x7FFFFFFFu) <= 0x00800000u)
 		s_fpscr_pending_sticky |= FPSCR_UX;
+	{
+		const uint64 ua = *(const uint64*)&a, ub = *(const uint64*)&b;
+		if (!ppc_bits_is_nan(ua) && !ppc_bits_is_nan(ub) && !ppc_bits_is_inf(ua) &&
+			!ppc_bits_is_inf(ub) && (sb & 0x7FFFFFFFu) == 0x7F800000u)
+			s_fpscr_pending_sticky |= FPSCR_OX | FPSCR_XX;
+	}
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
 	ppc_arith_commit_fpscr(r, true);
 	return r;
 }
