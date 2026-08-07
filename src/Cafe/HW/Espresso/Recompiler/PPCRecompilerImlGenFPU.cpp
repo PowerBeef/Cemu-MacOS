@@ -7,6 +7,7 @@
 
 ATTR_MS_ABI double frsqrte_espresso(double input);
 ATTR_MS_ABI double fres_espresso(double input);
+ATTR_MS_ABI double roundTo25BitAccuracy(double d);
 
 IMLReg _GetRegCR(ppcImlGenContext_t* ppcImlGenContext, uint8 crReg, uint8 crBit);
 
@@ -14,6 +15,15 @@ IMLReg _GetRegCR(ppcImlGenContext_t* ppcImlGenContext, uint8 crReg, uint8 crBit)
 #define DefinePS1(name, regIndex) IMLReg name = _GetFPRRegPS1(ppcImlGenContext, regIndex);
 #define DefinePSX(name, regIndex, isPS1) IMLReg name = isPS1 ? _GetFPRRegPS1(ppcImlGenContext, regIndex) : _GetFPRRegPS0(ppcImlGenContext, regIndex);
 #define DefineTempFPR(name, index) IMLReg name = _GetFPRTemp(ppcImlGenContext, index);
+
+// Espresso single-precision mul/FMA: product uses frC at 25-bit mantissa accuracy.
+// Writes rounded value to dest (may equal src after the call only if RA allows; prefer a temp).
+static void emit_roundFrC_to25Bit(ppcImlGenContext_t* ppcImlGenContext, IMLReg dest, IMLReg src)
+{
+	if (dest != src)
+		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, dest, src);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)roundTo25BitAccuracy, dest, IMLREG_INVALID, IMLREG_INVALID, dest);
+}
 
 IMLReg _GetFPRRegPS0(ppcImlGenContext_t* ppcImlGenContext, uint32 regIndex)
 {
@@ -305,6 +315,18 @@ bool PPCRecompilerImlGen_FNMSUB(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	return true;
 }
 
+bool PPCRecompilerImlGen_FNMADD(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
+{
+	sint32 frD, frA, frB, frC;
+	PPC_OPC_TEMPL_A(opcode, frD, frA, frB, frC);
+	DefinePS0(fprA, frA);
+	DefinePS0(fprB, frB);
+	DefinePS0(fprC, frC);
+	DefinePS0(fprD, frD);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FNMADD, fprD, fprA, fprC, fprB);
+	return true;
+}
+
 #define PSE_CopyResultToPs1() 	if( ppcImlGenContext->PSE ) \
 								{ \
 									DefinePS1(fprDPS1, frD); \
@@ -316,24 +338,14 @@ bool PPCRecompilerImlGen_FMULS(ppcImlGenContext_t* ppcImlGenContext, uint32 opco
 	sint32 frD, frA, frB_unused, frC;
 	PPC_OPC_TEMPL_A(opcode, frD, frA, frB_unused, frC);
 
-	if( frD == frC )
-	{
-		// swap frA and frC
-		sint32 temp = frA;
-		frA = frC;
-		frC = temp;
-	}
 	DefinePS0(fprA, frA);
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
-	// move frA to frD (if different register)
-	if( frD != frA )
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprD, fprA);
-	// multiply bottom double of frD with bottom double of frB
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprD, fprC);
-	// adjust accuracy
+	DefineTempFPR(fprC25, 0);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
+	// A * C25 → D (3-op multiply when D may alias A or C)
+	ppcImlGenContext->emitInst().make_fpr_r_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprD, fprA, fprC25);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
-	// if paired single mode, copy frD ps0 to ps1
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -419,8 +431,10 @@ bool PPCRecompilerImlGen_FMADDS(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	DefinePS0(fprB, frB);
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
-	// Fused at double precision, then round to single (PPC single FMA semantics).
-	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMADD, fprD, fprA, fprC, fprB);
+	DefineTempFPR(fprC25, 0);
+	// Fused A*C25+B at double precision, then round to single. frC is 25-bit on Espresso.
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMADD, fprD, fprA, fprC25, fprB);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
 	PSE_CopyResultToPs1();
 	return true;
@@ -434,7 +448,9 @@ bool PPCRecompilerImlGen_FMSUBS(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	DefinePS0(fprB, frB);
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
-	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMSUB, fprD, fprA, fprC, fprB);
+	DefineTempFPR(fprC25, 0);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMSUB, fprD, fprA, fprC25, fprB);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
 	PSE_CopyResultToPs1();
 	return true;
@@ -448,7 +464,25 @@ bool PPCRecompilerImlGen_FNMSUBS(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprB, frB);
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
-	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FNMSUB, fprD, fprA, fprC, fprB);
+	DefineTempFPR(fprC25, 0);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FNMSUB, fprD, fprA, fprC25, fprB);
+	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
+	PSE_CopyResultToPs1();
+	return true;
+}
+
+bool PPCRecompilerImlGen_FNMADDS(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
+{
+	sint32 frD, frA, frB, frC;
+	PPC_OPC_TEMPL_A(opcode, frD, frA, frB, frC);
+	DefinePS0(fprA, frA);
+	DefinePS0(fprB, frB);
+	DefinePS0(fprC, frC);
+	DefinePS0(fprD, frD);
+	DefineTempFPR(fprC25, 0);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FNMADD, fprD, fprA, fprC25, fprB);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
 	PSE_CopyResultToPs1();
 	return true;
@@ -901,23 +935,12 @@ bool PPCRecompilerImlGen_PS_MULSX(ppcImlGenContext_t* ppcImlGenContext, uint32 o
 	DefinePS0(fprDps0, frD);
 	DefinePS1(fprDps1, frD);
 
-	DefineTempFPR(fprTmp0, 0);
-	DefineTempFPR(fprTmp1, 1);
+	DefineTempFPR(fprC25, 0);
 
-	// todo - optimize cases where a temporary is not necessary
-	// todo - round fprC to 25bit accuracy
-
-	// copy ps0 and ps1 to temporary
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprTmp0, fprAps0);
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprTmp1, fprAps1);
-
-	// multiply
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprTmp0, fprC);
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprTmp1, fprC);
-
-	// copy back to result
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprDps0, fprTmp0);
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprDps1, fprTmp1);
+	// Espresso: second multiply factor is 25-bit; both lanes share the same rounded C lane.
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprDps0, fprAps0, fprC25);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprDps1, fprAps1, fprC25);
 
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
@@ -942,27 +965,12 @@ bool PPCRecompilerImlGen_PS_MADDSX(ppcImlGenContext_t* ppcImlGenContext, uint32 
 	DefinePS0(fprDps0, frD);
 	DefinePS1(fprDps1, frD);
 
-	DefineTempFPR(fprTmp0, 0);
-	DefineTempFPR(fprTmp1, 1);
+	DefineTempFPR(fprC25, 0);
 
-	// todo - round C to 25bit
-	// todo - optimize cases where a temporary is not necessary
-
-	// copy ps0 and ps1 to temporary
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprTmp0, fprAps0);
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprTmp1, fprAps1);
-
-	// multiply
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprTmp0, fprC);
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprTmp1, fprC);
-
-	// add
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ADD, fprTmp0, fprBps0);
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ADD, fprTmp1, fprBps1);
-
-	// copy back to result
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprDps0, fprTmp0);
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprDps1, fprTmp1);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25, fprC);
+	// Fused A*C25+B per lane (same rounded C lane for both).
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMADD, fprDps0, fprAps0, fprC25, fprBps0);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMADD, fprDps1, fprAps1, fprC25, fprBps1);
 
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
@@ -1050,24 +1058,10 @@ bool PPCRecompilerImlGen_PS_MUL(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	DefineTempFPR(fprTemp0, 0);
 	DefineTempFPR(fprTemp1, 1);
 
-	// todo: Optimize for when a temporary isnt necessary
-	// todo: Round to 25bit?
-
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprTemp0, fprCps0);
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprTemp1, fprCps1);
-	if (frD == frA)
-	{
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprDps0, fprTemp0);
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprDps1, fprTemp1);
-	}
-	else
-	{
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprTemp0, fprAps0);
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprTemp1, fprAps1);
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprDps0, fprTemp0);
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprDps1, fprTemp1);
-	}
-	// adjust accuracy
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprTemp0, fprCps0);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprTemp1, fprCps1);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprDps0, fprAps0, fprTemp0);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprDps1, fprAps1, fprTemp1);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
 	return true;
@@ -1130,9 +1124,12 @@ bool PPCRecompilerImlGen_PS_MADD(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprCps0, frC);
 	DefinePS1(fprCps1, frC);
 
-	// todo - Espresso rounds frC to 25-bit mantissa before the product; leave that orthogonal.
-	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMADD, fprDps0, fprAps0, fprCps0, fprBps0);
-	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMADD, fprDps1, fprAps1, fprCps1, fprBps1);
+	DefineTempFPR(fprC25_0, 0);
+	DefineTempFPR(fprC25_1, 1);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_0, fprCps0);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_1, fprCps1);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMADD, fprDps0, fprAps0, fprC25_0, fprBps0);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FMADD, fprDps1, fprAps1, fprC25_1, fprBps1);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
 	return true;
@@ -1156,8 +1153,12 @@ bool PPCRecompilerImlGen_PS_NMADD(ppcImlGenContext_t* ppcImlGenContext, uint32 o
 	DefinePS1(fprCps1, frC);
 
 	// Splatoon wants denormal flush for this family; leave that as a separate accuracy item.
-	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FNMADD, fprDps0, fprAps0, fprCps0, fprBps0);
-	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FNMADD, fprDps1, fprAps1, fprCps1, fprBps1);
+	DefineTempFPR(fprC25_0, 0);
+	DefineTempFPR(fprC25_1, 1);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_0, fprCps0);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_1, fprCps1);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FNMADD, fprDps0, fprAps0, fprC25_0, fprBps0);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_FNMADD, fprDps1, fprAps1, fprC25_1, fprBps1);
 	return true;
 }
 
@@ -1179,9 +1180,13 @@ bool PPCRecompilerImlGen_PS_MSUB(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	DefinePS0(fprCps0, frC);
 	DefinePS1(fprCps1, frC);
 
+	DefineTempFPR(fprC25_0, 0);
+	DefineTempFPR(fprC25_1, 1);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_0, fprCps0);
+	emit_roundFrC_to25Bit(ppcImlGenContext, fprC25_1, fprCps1);
 	const sint32 op = withNegative ? PPCREC_IML_OP_FPR_FNMSUB : PPCREC_IML_OP_FPR_FMSUB;
-	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(op, fprDps0, fprAps0, fprCps0, fprBps0);
-	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(op, fprDps1, fprAps1, fprCps1, fprBps1);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(op, fprDps0, fprAps0, fprC25_0, fprBps0);
+	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(op, fprDps1, fprAps1, fprC25_1, fprBps1);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
 	return true;

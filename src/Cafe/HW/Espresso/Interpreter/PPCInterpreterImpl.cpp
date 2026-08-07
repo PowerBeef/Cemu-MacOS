@@ -482,6 +482,9 @@ public:
 				case 2: // Assassin's Creed 3, Sonic All Stars Racing
 					PPCInterpreter_PS_CMPU1(hCPU, opcode);
 					break;
+				case 3: // ps_cmpo1 — ordered compare of ps1 (was unimplemented)
+					PPCInterpreter_PS_CMPO1(hCPU, opcode);
+					break;
 				default:
 					cemuLog_logDebug(LogType::Force, "Unknown execute {:04x} as [4->0] at {:08x}", PPC_getBits(opcode, 25, 5), hCPU->instructionPointer);
 					cemu_assert_unimplemented();

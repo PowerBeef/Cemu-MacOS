@@ -502,8 +502,59 @@ void PPCInterpreter_PS_CMPU1(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frB = (Opcode >> 11) & 0x1F;
 	frA = (Opcode >> 16) & 0x1F;
 	crfD = (Opcode >> 21) & (0x7 << 2);
+	fcmpu_espresso(hCPU, crfD, hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1);
+	PPCInterpreter_nextInstruction(hCPU);
+}
+
+// ps_cmpo1 — ordered compare of the high (ps1) slot. Was missing entirely: the primary-4
+// compare sub-dispatch only had CMPU0/CMPO0/CMPU1, so case 3 fell into
+// cemu_assert_unimplemented. 14 values-only suite failures.
+void PPCInterpreter_PS_CMPO1(PPCInterpreter_t* hCPU, uint32 Opcode)
+{
+	FPUCheckAvailable();
+
+	sint32 crfD, frA, frB;
+	uint32 c = 0;
+	frB = (Opcode >> 11) & 0x1F;
+	frA = (Opcode >> 16) & 0x1F;
+	crfD = (Opcode >> 23) & 0x7;
+
 	double a = hCPU->fpr[frA].fp1;
 	double b = hCPU->fpr[frB].fp1;
-	fcmpu_espresso(hCPU, crfD, hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1);
+
+	ppc_setCRBit(hCPU, crfD * 4 + 0, 0);
+	ppc_setCRBit(hCPU, crfD * 4 + 1, 0);
+	ppc_setCRBit(hCPU, crfD * 4 + 2, 0);
+	ppc_setCRBit(hCPU, crfD * 4 + 3, 0);
+
+	if (IS_NAN(*(uint64*)&a) || IS_NAN(*(uint64*)&b))
+	{
+		c = 1;
+		ppc_setCRBit(hCPU, crfD * 4 + CR_BIT_SO, 1);
+	}
+	else if (a < b)
+	{
+		c = 8;
+		ppc_setCRBit(hCPU, crfD * 4 + CR_BIT_LT, 1);
+	}
+	else if (a > b)
+	{
+		c = 4;
+		ppc_setCRBit(hCPU, crfD * 4 + CR_BIT_GT, 1);
+	}
+	else
+	{
+		c = 2;
+		ppc_setCRBit(hCPU, crfD * 4 + CR_BIT_EQ, 1);
+	}
+
+	hCPU->fpscr = (hCPU->fpscr & 0xffff0fff) | (c << 12);
+	// Match FCMPO / ordered semantics for SNaN and VXVC (PS_CMPO0 is missing these flags
+	// and is left alone for now so this change is bisectable).
+	if (IS_SNAN(*(uint64*)&a) || IS_SNAN(*(uint64*)&b))
+		hCPU->fpscr |= FPSCR_VXSNAN;
+	else if (!(hCPU->fpscr & FPSCR_VE) || IS_QNAN(*(uint64*)&a) || IS_QNAN(*(uint64*)&b))
+		hCPU->fpscr |= FPSCR_VXVC;
+
 	PPCInterpreter_nextInstruction(hCPU);
 }

@@ -184,12 +184,9 @@ static inline uint32 ppc_getCR(PPCInterpreter_t* hCPU)
 
 #define FPSCR_VE				(1 <<  7)
 
-inline double roundTo25BitAccuracy(double d)
-{
-	uint64 v = *(uint64*)&d;
-	v = (v & 0xFFFFFFFFF8000000ULL) + (v & 0x8000000ULL);
-	return *(double*)&v;
-}
+// Espresso single-precision multiply factor: 25-bit mantissa for frC.
+// Non-inline so the recompiler can call it via make_call_imm (same ABI as fres_espresso).
+ATTR_MS_ABI double roundTo25BitAccuracy(double d);
 
 ATTR_MS_ABI double fres_espresso(double input);
 ATTR_MS_ABI double frsqrte_espresso(double input);
@@ -297,6 +294,7 @@ void PPCInterpreter_PS_MULS0(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_PS_MULS1(PPCInterpreter_t* hCPU, uint32 Opcode);
 
 void PPCInterpreter_PS_CMPO0(PPCInterpreter_t* hCPU, uint32 Opcode);
+void PPCInterpreter_PS_CMPO1(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_PS_CMPU0(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_PS_CMPU1(PPCInterpreter_t* hCPU, uint32 Opcode);
 

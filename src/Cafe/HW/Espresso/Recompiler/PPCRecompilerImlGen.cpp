@@ -2684,6 +2684,11 @@ bool PPCRecompiler_decodePPCInstruction(ppcImlGenContext_t* ppcImlGenContext)
 				unsupportedInstructionFound = true;
 			ppcImlGenContext->hasFPUInstruction = true;
 			break;
+		case 31:
+			if (PPCRecompilerImlGen_FNMADDS(ppcImlGenContext, opcode) == false)
+				unsupportedInstructionFound = true;
+			ppcImlGenContext->hasFPUInstruction = true;
+			break;
 		default:
 			unsupportedInstructionFound = true;
 			break;
@@ -2759,6 +2764,11 @@ bool PPCRecompiler_decodePPCInstruction(ppcImlGenContext_t* ppcImlGenContext)
 			break;
 		case 30:
 			if (PPCRecompilerImlGen_FNMSUB(ppcImlGenContext, opcode) == false)
+				unsupportedInstructionFound = true;
+			ppcImlGenContext->hasFPUInstruction = true;
+			break;
+		case 31:
+			if (PPCRecompilerImlGen_FNMADD(ppcImlGenContext, opcode) == false)
 				unsupportedInstructionFound = true;
 			ppcImlGenContext->hasFPUInstruction = true;
 			break;

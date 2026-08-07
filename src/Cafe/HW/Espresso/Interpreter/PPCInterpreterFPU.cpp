@@ -113,6 +113,15 @@ espresso_fres_entry_t fresLookupTable[32] =
 	{0x88400, 0x11a},	{0x65000, 0x11a},	{0x41c00, 0x108},	{0x20c00, 0x106}
 };
 
+ATTR_MS_ABI double roundTo25BitAccuracy(double d)
+{
+	// Truncate the IEEE-754 double mantissa to 25 bits, with round-to-nearest via the
+	// sticky next bit (Espresso single-precision multiply product factor for frC).
+	uint64 v = *(uint64*)&d;
+	v = (v & 0xFFFFFFFFF8000000ULL) + (v & 0x8000000ULL);
+	return *(double*)&v;
+}
+
 ATTR_MS_ABI double fres_espresso(double input)
 {
 	// based on testing we know that fres uses only the first 15 bits of the mantissa
