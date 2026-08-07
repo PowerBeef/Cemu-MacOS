@@ -1960,8 +1960,8 @@
       "title": "Fix the 354 real floating-point and paired-single conformance failures",
       "area": "cpu",
       "status": "open",
-      "verdict": "Values-only suite is **197** failures (was 354 → … → 279 → 229 → 197). Arms identical. fmadd family: NaN selection A→B→C + FPSCR[VE] result suppress (ppc_fma_bind_dest). **mtfsb0 was unimplemented** so VE stuck after the suite's first enable — fixed. Remaining mad ~34; fres/rsqrte; frsp/fctiw; ps_mul/div/res; a few fadd/fsub VE edges.",
-      "gate": "Continue values-only. Next: remaining mad (~34 underflow/FTZ/numeric), then fres/rsqrte tables, frsp/fctiw, general VE suppress for fadd/fmul.",
+      "verdict": "Values-only suite is **188** failures (was 354 → … → 229 → 197 → 188). Arms identical. fmadd: NaN A→B→C, VE suppress, mtfsb0, 25-bit HUGE clamp, single-domain fmaf for exact f32 (denorm sticky), double fma with FZ clear. Remaining mad ~25 (overflow/sign edges); fres/rsqrte; frsp/fctiw; ps_mul/div/res.",
+      "gate": "Continue values-only. Next: remaining mad overflow edges, fres/rsqrte tables.",
       "ref": "docs/testing/00-test-strategy.md — First result",
       "commits": [
         "09bfedd",
@@ -1969,11 +1969,12 @@
         "3883c2b",
         "bbd147e",
         "3dc410b",
-        "426bf98"
+        "426bf98",
+        "96b7ff3"
       ],
       "measured": {
         "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
-        "at_commit": "426bf98",
+        "at_commit": "96b7ff3",
         "date": "2026-08-07",
         "n": 1
       }
