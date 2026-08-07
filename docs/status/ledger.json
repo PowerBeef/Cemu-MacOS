@@ -1960,8 +1960,8 @@
       "title": "Fix the 354 real floating-point and paired-single conformance failures",
       "area": "cpu",
       "status": "open",
-      "verdict": "Values-only suite is **10** failures (was 354 → … → 37 → 10). Arms identical. Closed FPSCR moves (mcrfs/mtfs*/mffs), FEX/VX recompute, and Rc CR1 on scalar/PS move ops. Remaining: 3 excess-range ps_merge00, 2 ps_rsqrte, fdiv/fdivs UX, mtxer/stwcx., lfd quirk.",
-      "gate": "Continue values-only. Next: merge excess-range quirks; frsqrte; fdiv UX; integer odds.",
+      "verdict": "Values-only suite is **6** failures (was 354 → … → 10 → 6). Arms identical. Closed mcrxr, stwcx wrong-EA, fdiv/fdivs UX tininess. Remaining: 3 excess-range ps_merge00 (+ related lfd), 2 ps_rsqrte.",
+      "gate": "Continue values-only. Next: excess-range merge/stfd layout; frsqrte denorm/HUGE table.",
       "ref": "docs/testing/00-test-strategy.md — First result",
       "commits": [
         "09bfedd",
@@ -1977,11 +1977,12 @@
         "b3d2f01",
         "ffd5b9f",
         "b141717",
-        "ffdc0d6"
+        "ffdc0d6",
+        "8640495"
       ],
       "measured": {
         "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
-        "at_commit": "ffdc0d6",
+        "at_commit": "8640495",
         "date": "2026-08-07",
         "n": 1
       }
