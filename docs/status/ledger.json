@@ -1960,8 +1960,8 @@
       "title": "Fix the 354 real floating-point and paired-single conformance failures",
       "area": "cpu",
       "status": "open",
-      "verdict": "Values-only suite is **77** failures (was 354 → … → 137 → 77). Arms identical. Closed mul/div/add/sub specials (NaN order, VE/ZE suppress) and fres via calc_fres float-bit table. Remaining: frsp (7), fctiw (7+), ps_add/sub/sum/merge, mcrfs/mtfs*, 2 ps_rsqrte, UX underflow fdiv.",
-      "gate": "Continue values-only. Next: frsp/fctiw; ps_add family; frsqrte table; FPSCR move ops.",
+      "verdict": "Values-only suite is **59** failures (was 354 → … → 77 → 59). Arms identical. Closed frsp (FZ clear across down-cast and re-expand; SNaN+VE) and fctiw[z] (0xFFF8000x pack, NaN→0x80000000, VE suppress). Remaining: ps_add/sub/sum/merge (~25), mcrfs/mtfs* (~15), fmr./fneg./fabs./fnabs. CR1, 2 ps_rsqrte, 1 fdiv/fdivs UX, lfd/mtxer/stwcx.",
+      "gate": "Continue values-only. Next: ps_add family (denorm/NaN/VE); FPSCR move ops; frsqrte table; unary CR1.",
       "ref": "docs/testing/00-test-strategy.md — First result",
       "commits": [
         "09bfedd",
@@ -1974,11 +1974,12 @@
         "f030324",
         "167308c",
         "4ceb811",
-        "b3d2f01"
+        "b3d2f01",
+        "ffd5b9f"
       ],
       "measured": {
         "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
-        "at_commit": "b3d2f01",
+        "at_commit": "ffd5b9f",
         "date": "2026-08-07",
         "n": 1
       }
