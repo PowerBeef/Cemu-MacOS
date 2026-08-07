@@ -16,9 +16,11 @@ public:
 
 	inline static void ppcMem_writeDataDouble(PPCInterpreter_t* hCPU, uint32 address, double vf)
 	{
-		uint64 v = *(uint64*)&vf;
+		uint64 v;
+		std::memcpy(&v, &vf, sizeof(v));
+		v = ppc_stfd_prepare_bits(v);
 		uint32 v1 = v & 0xFFFFFFFF;
-		uint32 v2 = v >> 32;
+		uint32 v2 = (uint32)(v >> 32);
 		uint8* ptr = memory_getPointerFromVirtualOffset(address);
 		*(uint32*)(ptr + 4) = CPU_swapEndianU32(v1);
 		*(uint32*)(ptr + 0) = CPU_swapEndianU32(v2);
@@ -91,7 +93,7 @@ public:
 
 	inline static void ppcMem_writeDataFloatEx(PPCInterpreter_t* hCPU, uint32 addr, uint64 value)
 	{
-		*(uint32*)(memory_base + addr) = _swapEndianU32(ConvertToSingleNoFTZ(value));
+		*(uint32*)(memory_base + addr) = _swapEndianU32(ppc_stfs_prepare_bits(value));
 	}
 
 	inline static uint64 getTB(PPCInterpreter_t* hCPU)
@@ -310,9 +312,11 @@ public:
 
 	inline static void ppcMem_writeDataDouble(PPCInterpreter_t* hCPU, uint32 address, double vf)
 	{
-		uint64 v = *(uint64*)&vf;
+		uint64 v;
+		std::memcpy(&v, &vf, sizeof(v));
+		v = ppc_stfd_prepare_bits(v);
 		uint32 v1 = v & 0xFFFFFFFF;
-		uint32 v2 = v >> 32;
+		uint32 v2 = (uint32)(v >> 32);
 		uint8* ptr = ppcMem_getDataPtr(hCPU, address);
 		*(uint32*)(ptr + 4) = CPU_swapEndianU32(v1);
 		*(uint32*)(ptr + 0) = CPU_swapEndianU32(v2);
@@ -419,7 +423,7 @@ public:
 
 	inline static void ppcMem_writeDataFloatEx(PPCInterpreter_t* hCPU, uint32 addr, uint64 value)
 	{
-		*(uint32*)(memory_base + addr) = _swapEndianU32(ConvertToSingleNoFTZ(value));
+		*(uint32*)(memory_base + addr) = _swapEndianU32(ppc_stfs_prepare_bits(value));
 	}
 
 	inline static uint64 getTB(PPCInterpreter_t* hCPU)
@@ -468,7 +472,10 @@ public:
 			PPCInterpreter_nextInstruction(hCPU);
 			break;
 		case 4:
-			switch (PPC_getBits(opcode, 30, 5))
+		{
+			const uint32 psSub = PPC_getBits(opcode, 30, 5);
+			const sint32 psFrD = (sint32)((opcode >> 21) & 0x1F);
+			switch (psSub)
 			{
 			case 0: // subcategory compare
 				switch (PPC_getBits(opcode, 25, 5))
@@ -602,7 +609,11 @@ public:
 				hCPU->instructionPointer += 4;
 				break;
 			}
+			// Paired-single writes set dirty for the lfd→ps1 hazard (not cmp/store/dcbz).
+			if (psSub != 0 && psSub != 6 && psSub != 7 && psSub != 22)
+				PPCInterpreter_NotePsWrite(hCPU, psFrD);
 			break;
+		}
 		case 7:
 			PPCInterpreter_MULLI(hCPU, opcode);
 			break;

@@ -390,8 +390,8 @@ void PPCInterpreter_SYNC(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 void PPCInterpreter_ISYNC(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
-	// no-op
-	// next instruction
+	// Clear PS-write dirty bits so a following lfd will not leak into ps1.
+	hCPU->psWriteDirty = 0;
 	PPCInterpreter_nextInstruction(hCPU);
 }
 

@@ -141,6 +141,35 @@ static inline uint32 quantize_double_to_float_bits(double d)
 	return bits;
 }
 
+// lfd → ps1 shadow leak: high word of the loaded double as a single expanded
+// (suite: "high word of a double value loaded from lfd can leak into the second slot").
+static inline uint64 ppc_lfd_shadow_from_double_bits(uint64 d)
+{
+	return ConvertToDoubleNoFTZ((uint32)(d >> 32));
+}
+
+// PS underflow sticky: expand(min normal) | 1 (see ppc_ps_quantize).
+static inline bool ppc_ps_bits_is_underflow_sticky(uint64 b)
+{
+	return (b & 0x7FFFFFFFFFFFFFFFULL) == 0x3810000000000001ULL;
+}
+
+// stfd of sticky underflow stores signed zero (suite denorm-merge).
+static inline uint64 ppc_stfd_prepare_bits(uint64 v)
+{
+	if (ppc_ps_bits_is_underflow_sticky(v))
+		return v & 0x8000000000000000ULL;
+	return v;
+}
+
+// stfs of sticky underflow stores min single normal.
+static inline uint32 ppc_stfs_prepare_bits(uint64 v)
+{
+	if (ppc_ps_bits_is_underflow_sticky(v))
+		return (uint32)((v >> 32) & 0x80000000u) | 0x00800000u;
+	return ConvertToSingleNoFTZ(v);
+}
+
 // Integer dequantize returns a float. Type-0 must use dequantize_to_double instead
 // so SNaN/QNaN bit patterns survive the expand to FPR doubles.
 static float dequantize(uint32 data, sint32 type, uint8 scale)

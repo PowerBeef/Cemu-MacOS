@@ -33,6 +33,10 @@ ATTR_MS_ABI double ppc_fctiwz(double b);
 ATTR_MS_ABI double ppc_ps_quantize(double d);
 ATTR_MS_ABI double ppc_ps_quantize_tz(double d);
 ATTR_MS_ABI double ppc_ps_fold_estimate(double input, double result);
+extern uintptr_t g_lfd_ps1_fr_fn[32];
+extern uintptr_t g_note_ps_write_fr_fn[32];
+ATTR_MS_ABI void ppc_note_ps_write(sint32 frD);
+ATTR_MS_ABI void ppc_isync_clear_ps_dirty();
 ATTR_MS_ABI double ppc_ps_pack_arith(double r);
 
 // Bind current frD (for FPSCR[VE] suppress) then call a 3-arg FMA helper.
@@ -132,8 +136,13 @@ bool PPCRecompilerImlGen_LFS_LFSU_LFD_LFDU(ppcImlGenContext_t* ppcImlGenContext,
 	DefinePS0(fpPs0, frD);
 	if (isDouble)
 	{
-		// LFD/LFDU
+		// LFD/LFDU — high word may leak into ps1 if FPR is PS-write dirty.
 		ppcImlGenContext->emitInst().make_fpr_r_memory(fpPs0, gprRegister, imm, PPCREC_FPR_LD_MODE_DOUBLE, true);
+		if (ppcImlGenContext->PSE)
+		{
+			DefinePS1(fpPs1, frD);
+			ppcImlGenContext->emitInst().make_call_imm(g_lfd_ps1_fr_fn[frD & 31], fpPs0, fpPs1, IMLREG_INVALID, fpPs1);
+		}
 	}
 	else
 	{
@@ -169,6 +178,11 @@ bool PPCRecompilerImlGen_LFSX_LFSUX_LFDX_LFDUX(ppcImlGenContext_t* ppcImlGenCont
 			ppcImlGenContext->emitInst().make_fpr_r_memory(fpPs0, gprRegister1, 0, PPCREC_FPR_LD_MODE_DOUBLE, true);
 		else
 			ppcImlGenContext->emitInst().make_fpr_r_memory_indexed(fpPs0, gprRegister1, gprRegister2, PPCREC_FPR_LD_MODE_DOUBLE, true);
+		if (ppcImlGenContext->PSE)
+		{
+			DefinePS1(fpPs1, frD);
+			ppcImlGenContext->emitInst().make_call_imm(g_lfd_ps1_fr_fn[frD & 31], fpPs0, fpPs1, IMLREG_INVALID, fpPs1);
+		}
 	}
 	else
 	{
@@ -985,6 +999,8 @@ bool PPCRecompilerImlGen_PS_MULSX(ppcImlGenContext_t* ppcImlGenContext, uint32 o
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
 
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1010,6 +1026,8 @@ bool PPCRecompilerImlGen_PS_MADDSX(ppcImlGenContext_t* ppcImlGenContext, uint32 
 		fprDps0, fprDps1,
 		fprAps0, fprC, fprBps0,
 		fprAps1, fprC, fprBps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1045,6 +1063,8 @@ bool PPCRecompilerImlGen_PS_ADD(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1079,6 +1099,8 @@ bool PPCRecompilerImlGen_PS_SUB(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1111,6 +1133,8 @@ bool PPCRecompilerImlGen_PS_MUL(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1151,6 +1175,8 @@ bool PPCRecompilerImlGen_PS_DIV(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	// adjust accuracy
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
 	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1175,6 +1201,8 @@ bool PPCRecompilerImlGen_PS_MADD(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 		fprDps0, fprDps1,
 		fprAps0, fprCps0, fprBps0,
 		fprAps1, fprCps1, fprBps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1200,6 +1228,8 @@ bool PPCRecompilerImlGen_PS_NMADD(ppcImlGenContext_t* ppcImlGenContext, uint32 o
 		fprDps0, fprDps1,
 		fprAps0, fprCps0, fprBps0,
 		fprAps1, fprCps1, fprBps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1226,6 +1256,8 @@ bool PPCRecompilerImlGen_PS_MSUB(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 		fprDps0, fprDps1,
 		fprAps0, fprCps0, fprBps0,
 		fprAps1, fprCps1, fprBps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1267,6 +1299,8 @@ bool PPCRecompilerImlGen_PS_SUM0(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	// If suppressed, Dps1 was already quantized into itself wrongly — commit both via prev.
 	// Re-commit Dps1 from prev when suppressed: use commit_lane(prev1, Dps1).
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprDps1, IMLREG_INVALID, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1299,6 +1333,8 @@ bool PPCRecompilerImlGen_PS_SUM1(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, fprCps0, IMLREG_INVALID, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprDps0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1321,6 +1357,8 @@ bool PPCRecompilerImlGen_PS_NEG(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	}
 	ppcImlGenContext->emitInst().make_fpr_r(PPCREC_IML_OP_FPR_NEGATE, fprDps0);
 	ppcImlGenContext->emitInst().make_fpr_r(PPCREC_IML_OP_FPR_NEGATE, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1340,6 +1378,8 @@ bool PPCRecompilerImlGen_PS_ABS(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 
 	ppcImlGenContext->emitInst().make_fpr_r(PPCREC_IML_OP_FPR_ABS, fprDps0);
 	ppcImlGenContext->emitInst().make_fpr_r(PPCREC_IML_OP_FPR_ABS, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1371,6 +1411,8 @@ bool PPCRecompilerImlGen_PS_RES(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1402,6 +1444,8 @@ bool PPCRecompilerImlGen_PS_RSQRTE(ppcImlGenContext_t* ppcImlGenContext, uint32 
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1417,6 +1461,8 @@ bool PPCRecompilerImlGen_PS_MR(ppcImlGenContext_t* ppcImlGenContext, uint32 opco
 	// Always quantize (including frD==frB excess-precision cases).
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, fprBps0, IMLREG_INVALID, IMLREG_INVALID, fprDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, fprBps1, IMLREG_INVALID, IMLREG_INVALID, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1439,6 +1485,8 @@ bool PPCRecompilerImlGen_PS_SEL(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 
 	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_SELECT, fprDps0, fprAps0, fprBps0, fprCps0);
 	ppcImlGenContext->emitInst().make_fpr_r_r_r_r(PPCREC_IML_OP_FPR_SELECT, fprDps1, fprAps1, fprBps1, fprCps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1455,6 +1503,8 @@ bool PPCRecompilerImlGen_PS_MERGE00(ppcImlGenContext_t* ppcImlGenContext, uint32
 	// Dest slot0 RN, slot1 truncate (suite excess-range merge).
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize_tz, frpBps0, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpAps0, IMLREG_INVALID, IMLREG_INVALID, frpDps0);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1471,6 +1521,8 @@ bool PPCRecompilerImlGen_PS_MERGE01(ppcImlGenContext_t* ppcImlGenContext, uint32
 
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpAps0, IMLREG_INVALID, IMLREG_INVALID, frpDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize_tz, frpBps1, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1498,6 +1550,8 @@ bool PPCRecompilerImlGen_PS_MERGE10(ppcImlGenContext_t* ppcImlGenContext, uint32
 		ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpAps1, IMLREG_INVALID, IMLREG_INVALID, frpDps0);
 		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, frpDps1, frpTemp);
 	}
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 
@@ -1515,6 +1569,8 @@ bool PPCRecompilerImlGen_PS_MERGE11(ppcImlGenContext_t* ppcImlGenContext, uint32
 
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize, frpAps1, IMLREG_INVALID, IMLREG_INVALID, frpDps0);
 	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_quantize_tz, frpBps1, IMLREG_INVALID, IMLREG_INVALID, frpDps1);
+	ppcImlGenContext->emitInst().make_call_imm(g_note_ps_write_fr_fn[frD & 31], IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+
 	return true;
 }
 

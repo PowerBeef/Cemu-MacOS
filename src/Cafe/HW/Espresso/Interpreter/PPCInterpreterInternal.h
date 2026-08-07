@@ -305,6 +305,13 @@ ATTR_MS_ABI double ppc_ps_quantize(double d);
 ATTR_MS_ABI double ppc_ps_quantize_tz(double d);
 // Fold PS estimate result when input was single-format (low 29 bits clear).
 ATTR_MS_ABI double ppc_ps_fold_estimate(double input, double result);
+// lfd → ps1 shadow from high word of the loaded double.
+ATTR_MS_ABI double ppc_lfd_ps_shadow(double d);
+ATTR_MS_ABI void ppc_isync_clear_ps_dirty();
+ATTR_MS_ABI void ppc_note_ps_write(sint32 frD);
+// Per-frD helpers (recompiler picks by frD at gen time).
+extern uintptr_t g_lfd_ps1_fr_fn[32];
+extern uintptr_t g_note_ps_write_fr_fn[32];
 // After arithmetic: keep Inf/NaN double-form (check_ps_nan); quantize finites.
 ATTR_MS_ABI double ppc_ps_pack_arith(double r);
 

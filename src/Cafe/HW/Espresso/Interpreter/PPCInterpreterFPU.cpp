@@ -1232,19 +1232,49 @@ static inline double ppc_ps_bit_fold_single(uint64 b)
 	return *(const double*)&e;
 }
 
+// PS underflow sticky encoding: expand(min single normal) with low bit set.
+// Distinct from a clean lfs of min normal (low bits 0). stfd stores 0; stfs
+// stores min normal (suite denorm-merge dual view).
+static constexpr uint64 kPsUnderflowStickyAbs = 0x3810000000000001ULL;
+
+static inline double ppc_ps_underflow_sticky(uint64 signBit)
+{
+	const uint64 bits = (signBit & 0x8000000000000000ULL) | kPsUnderflowStickyAbs;
+	double out;
+	std::memcpy(&out, &bits, sizeof(out));
+	return out;
+}
+
+static inline bool ppc_ps_is_underflow_sticky(uint64 b)
+{
+	return (b & 0x7FFFFFFFFFFFFFFFULL) == kPsUnderflowStickyAbs;
+}
+
 // PS lane quantize (RN) for merge slot0, mr/neg/abs, and finite add/sub results.
 // Suite: "Slot 0 is rounded". Host float RN for values in the single-normal
-// window and above; freescale bit fold for tinies (exp < 896) so merge11 of a
-// double-range rsqrte result (e.g. 0x1FF00008…) yields 0x3F800041, not zero.
+// window and above; freescale bit fold for tinies (exp < 896).
+// Underflow of nonzero → sticky min-normal encoding (stfd→0 / stfs→min normal).
 ATTR_MS_ABI double ppc_ps_quantize(double d)
 {
-	const uint64 b = *(const uint64*)&d;
+	uint64 b;
+	std::memcpy(&b, &d, sizeof(b));
+	if (ppc_ps_is_underflow_sticky(b))
+		return d; // keep sticky through merge/mr
 	const uint64 abs = b & 0x7FFFFFFFFFFFFFFFULL;
+	if (abs == 0)
+		return d;
 	if (abs >= 0x7FF0000000000000ULL)
 		return ppc_ps_bit_fold_single(b);
 	const uint32 exp = (uint32)((b >> 52) & 0x7FFu);
 	if (exp < 896)
-		return ppc_ps_bit_fold_single(b);
+	{
+		const double folded = ppc_ps_bit_fold_single(b);
+		uint64 fb;
+		std::memcpy(&fb, &folded, sizeof(fb));
+		if ((fb & 0x7FFFFFFFFFFFFFFFULL) == 0)
+			return ppc_ps_underflow_sticky(b);
+		return folded;
+	}
 	// Finite in single-normal/overflow range: host RN, FZ clear.
 	const uint64 fpcr = __arm_rsr64("fpcr");
 	if (fpcr & (1ull << 24))
@@ -1254,6 +1284,10 @@ ATTR_MS_ABI double ppc_ps_quantize(double d)
 	volatile double r = (double)sf;
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
+	uint64 rb;
+	std::memcpy(&rb, (const void*)&r, sizeof(rb));
+	if ((rb & 0x7FFFFFFFFFFFFFFFULL) == 0)
+		return ppc_ps_underflow_sticky(b);
 	return r;
 }
 
@@ -1261,8 +1295,102 @@ ATTR_MS_ABI double ppc_ps_quantize(double d)
 // Suite: "slot 1 is truncated"; HUGE → max normal single re-expanded.
 ATTR_MS_ABI double ppc_ps_quantize_tz(double d)
 {
-	return ppc_ps_bit_fold_single(*(const uint64*)&d);
+	uint64 b;
+	std::memcpy(&b, &d, sizeof(b));
+	if (ppc_ps_is_underflow_sticky(b))
+		return d;
+	const uint64 abs = b & 0x7FFFFFFFFFFFFFFFULL;
+	if (abs == 0)
+		return d;
+	const double folded = ppc_ps_bit_fold_single(b);
+	uint64 fb;
+	std::memcpy(&fb, &folded, sizeof(fb));
+	if (abs < 0x7FF0000000000000ULL && (fb & 0x7FFFFFFFFFFFFFFFULL) == 0)
+		return ppc_ps_underflow_sticky(b);
+	return folded;
 }
+
+// lfd high-word → ps1 shadow (suite paired-single / double mode notes).
+ATTR_MS_ABI double ppc_lfd_ps_shadow(double d)
+{
+	uint64 b;
+	std::memcpy(&b, &d, sizeof(b));
+	const uint64 s = ppc_lfd_shadow_from_double_bits(b);
+	double out;
+	std::memcpy(&out, &s, sizeof(out));
+	return out;
+}
+
+ATTR_MS_ABI void ppc_isync_clear_ps_dirty()
+{
+	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+	if (hCPU)
+		hCPU->psWriteDirty = 0;
+}
+
+ATTR_MS_ABI void ppc_note_ps_write(sint32 frD)
+{
+	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+	if (hCPU && (uint32)frD < 32u)
+		hCPU->psWriteDirty |= 1u << frD;
+}
+
+#define PPC_NOTE_PS_DEF(n) \
+	ATTR_MS_ABI void ppc_note_ps_write_fr##n() { ppc_note_ps_write(n); }
+PPC_NOTE_PS_DEF(0) PPC_NOTE_PS_DEF(1) PPC_NOTE_PS_DEF(2) PPC_NOTE_PS_DEF(3)
+PPC_NOTE_PS_DEF(4) PPC_NOTE_PS_DEF(5) PPC_NOTE_PS_DEF(6) PPC_NOTE_PS_DEF(7)
+PPC_NOTE_PS_DEF(8) PPC_NOTE_PS_DEF(9) PPC_NOTE_PS_DEF(10) PPC_NOTE_PS_DEF(11)
+PPC_NOTE_PS_DEF(12) PPC_NOTE_PS_DEF(13) PPC_NOTE_PS_DEF(14) PPC_NOTE_PS_DEF(15)
+PPC_NOTE_PS_DEF(16) PPC_NOTE_PS_DEF(17) PPC_NOTE_PS_DEF(18) PPC_NOTE_PS_DEF(19)
+PPC_NOTE_PS_DEF(20) PPC_NOTE_PS_DEF(21) PPC_NOTE_PS_DEF(22) PPC_NOTE_PS_DEF(23)
+PPC_NOTE_PS_DEF(24) PPC_NOTE_PS_DEF(25) PPC_NOTE_PS_DEF(26) PPC_NOTE_PS_DEF(27)
+PPC_NOTE_PS_DEF(28) PPC_NOTE_PS_DEF(29) PPC_NOTE_PS_DEF(30) PPC_NOTE_PS_DEF(31)
+#undef PPC_NOTE_PS_DEF
+
+uintptr_t g_note_ps_write_fr_fn[32] = {
+	(uintptr_t)ppc_note_ps_write_fr0,  (uintptr_t)ppc_note_ps_write_fr1,  (uintptr_t)ppc_note_ps_write_fr2,  (uintptr_t)ppc_note_ps_write_fr3,
+	(uintptr_t)ppc_note_ps_write_fr4,  (uintptr_t)ppc_note_ps_write_fr5,  (uintptr_t)ppc_note_ps_write_fr6,  (uintptr_t)ppc_note_ps_write_fr7,
+	(uintptr_t)ppc_note_ps_write_fr8,  (uintptr_t)ppc_note_ps_write_fr9,  (uintptr_t)ppc_note_ps_write_fr10, (uintptr_t)ppc_note_ps_write_fr11,
+	(uintptr_t)ppc_note_ps_write_fr12, (uintptr_t)ppc_note_ps_write_fr13, (uintptr_t)ppc_note_ps_write_fr14, (uintptr_t)ppc_note_ps_write_fr15,
+	(uintptr_t)ppc_note_ps_write_fr16, (uintptr_t)ppc_note_ps_write_fr17, (uintptr_t)ppc_note_ps_write_fr18, (uintptr_t)ppc_note_ps_write_fr19,
+	(uintptr_t)ppc_note_ps_write_fr20, (uintptr_t)ppc_note_ps_write_fr21, (uintptr_t)ppc_note_ps_write_fr22, (uintptr_t)ppc_note_ps_write_fr23,
+	(uintptr_t)ppc_note_ps_write_fr24, (uintptr_t)ppc_note_ps_write_fr25, (uintptr_t)ppc_note_ps_write_fr26, (uintptr_t)ppc_note_ps_write_fr27,
+	(uintptr_t)ppc_note_ps_write_fr28, (uintptr_t)ppc_note_ps_write_fr29, (uintptr_t)ppc_note_ps_write_fr30, (uintptr_t)ppc_note_ps_write_fr31,
+};
+
+#define PPC_LFD_PS1_DEF(n) \
+	ATTR_MS_ABI double ppc_lfd_ps1_fr##n(double loaded, double curPs1) \
+	{ \
+		PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance(); \
+		if (!hCPU) return curPs1; \
+		const uint32 bit = 1u << (n); \
+		if ((hCPU->psWriteDirty & bit) == 0) return curPs1; \
+		hCPU->psWriteDirty &= ~bit; \
+		uint64 ps1bits; \
+		std::memcpy(&ps1bits, &curPs1, sizeof(ps1bits)); \
+		if ((ps1bits & 0x7FFFFFFFFFFFFFFFULL) != 0) return curPs1; \
+		return ppc_lfd_ps_shadow(loaded); \
+	}
+PPC_LFD_PS1_DEF(0) PPC_LFD_PS1_DEF(1) PPC_LFD_PS1_DEF(2) PPC_LFD_PS1_DEF(3)
+PPC_LFD_PS1_DEF(4) PPC_LFD_PS1_DEF(5) PPC_LFD_PS1_DEF(6) PPC_LFD_PS1_DEF(7)
+PPC_LFD_PS1_DEF(8) PPC_LFD_PS1_DEF(9) PPC_LFD_PS1_DEF(10) PPC_LFD_PS1_DEF(11)
+PPC_LFD_PS1_DEF(12) PPC_LFD_PS1_DEF(13) PPC_LFD_PS1_DEF(14) PPC_LFD_PS1_DEF(15)
+PPC_LFD_PS1_DEF(16) PPC_LFD_PS1_DEF(17) PPC_LFD_PS1_DEF(18) PPC_LFD_PS1_DEF(19)
+PPC_LFD_PS1_DEF(20) PPC_LFD_PS1_DEF(21) PPC_LFD_PS1_DEF(22) PPC_LFD_PS1_DEF(23)
+PPC_LFD_PS1_DEF(24) PPC_LFD_PS1_DEF(25) PPC_LFD_PS1_DEF(26) PPC_LFD_PS1_DEF(27)
+PPC_LFD_PS1_DEF(28) PPC_LFD_PS1_DEF(29) PPC_LFD_PS1_DEF(30) PPC_LFD_PS1_DEF(31)
+#undef PPC_LFD_PS1_DEF
+
+uintptr_t g_lfd_ps1_fr_fn[32] = {
+	(uintptr_t)ppc_lfd_ps1_fr0,  (uintptr_t)ppc_lfd_ps1_fr1,  (uintptr_t)ppc_lfd_ps1_fr2,  (uintptr_t)ppc_lfd_ps1_fr3,
+	(uintptr_t)ppc_lfd_ps1_fr4,  (uintptr_t)ppc_lfd_ps1_fr5,  (uintptr_t)ppc_lfd_ps1_fr6,  (uintptr_t)ppc_lfd_ps1_fr7,
+	(uintptr_t)ppc_lfd_ps1_fr8,  (uintptr_t)ppc_lfd_ps1_fr9,  (uintptr_t)ppc_lfd_ps1_fr10, (uintptr_t)ppc_lfd_ps1_fr11,
+	(uintptr_t)ppc_lfd_ps1_fr12, (uintptr_t)ppc_lfd_ps1_fr13, (uintptr_t)ppc_lfd_ps1_fr14, (uintptr_t)ppc_lfd_ps1_fr15,
+	(uintptr_t)ppc_lfd_ps1_fr16, (uintptr_t)ppc_lfd_ps1_fr17, (uintptr_t)ppc_lfd_ps1_fr18, (uintptr_t)ppc_lfd_ps1_fr19,
+	(uintptr_t)ppc_lfd_ps1_fr20, (uintptr_t)ppc_lfd_ps1_fr21, (uintptr_t)ppc_lfd_ps1_fr22, (uintptr_t)ppc_lfd_ps1_fr23,
+	(uintptr_t)ppc_lfd_ps1_fr24, (uintptr_t)ppc_lfd_ps1_fr25, (uintptr_t)ppc_lfd_ps1_fr26, (uintptr_t)ppc_lfd_ps1_fr27,
+	(uintptr_t)ppc_lfd_ps1_fr28, (uintptr_t)ppc_lfd_ps1_fr29, (uintptr_t)ppc_lfd_ps1_fr30, (uintptr_t)ppc_lfd_ps1_fr31,
+};
 
 // After PS estimate (suite excess-range ps_rsqrte):
 // - Double-format input (low 29 fraction bits set): keep full result exponent,

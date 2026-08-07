@@ -660,13 +660,41 @@ static void PPCInterpreter_LFSU(PPCInterpreter_t* hCPU, uint32 Opcode) //Copied
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
+// After lfd under PSE: incomplete interlocking can leak the loaded double's
+// high word into the ps1 shadow (suite). Observed when a prior PS write left
+// the shadow at ±0 (ps_mr of zero); isync clears dirty so lfd_ps is safe.
+// Non-zero shadows after merge/etc. are preserved (suite fmr-over-PS tests).
+static inline void PPCInterpreter_LFD_FinishPs1(PPCInterpreter_t* hCPU, sint32 frD, double v)
+{
+	if (!PPC_PSE)
+		return;
+	const uint32 bit = 1u << (frD & 31);
+	if ((hCPU->psWriteDirty & bit) == 0)
+		return;
+	hCPU->psWriteDirty &= ~bit;
+	uint64 ps1bits;
+	std::memcpy(&ps1bits, &hCPU->fpr[frD].fp1, sizeof(ps1bits));
+	if ((ps1bits & 0x7FFFFFFFFFFFFFFFULL) != 0)
+		return; // non-zero shadow kept
+	hCPU->fpr[frD].fp1 = ppc_lfd_ps_shadow(v);
+}
+
+// Mark dest FPR as having received a paired-single write (for lfd hazard).
+static inline void PPCInterpreter_NotePsWrite(PPCInterpreter_t* hCPU, sint32 frD)
+{
+	if (PPC_PSE)
+		hCPU->psWriteDirty |= 1u << (frD & 31);
+}
+
 static void PPCInterpreter_LFD(PPCInterpreter_t* hCPU, uint32 Opcode) //Copied
 {
 	FPUCheckAvailable();
 	sint32 rA, frD;
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(Opcode, frD, rA, imm);
-	hCPU->fpr[frD].fpr = ppcItpCtrl::ppcMem_readDataDouble(hCPU, (rA ? hCPU->gpr[rA] : 0) + imm);//ppcItpCtrl::ppcMem_readDataQUAD((rA?hCPU->gpr[rA]:0)+imm);
+	const double v = ppcItpCtrl::ppcMem_readDataDouble(hCPU, (rA ? hCPU->gpr[rA] : 0) + imm);
+	hCPU->fpr[frD].fpr = v;
+	PPCInterpreter_LFD_FinishPs1(hCPU, frD, v);
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
@@ -677,7 +705,9 @@ static void PPCInterpreter_LFDU(PPCInterpreter_t* hCPU, uint32 Opcode)
 	uint32 imm;
 	PPC_OPC_TEMPL_D_SImm(Opcode, frD, rA, imm);
 
-	hCPU->fpr[frD].fpr = ppcItpCtrl::ppcMem_readDataDouble(hCPU, (rA ? hCPU->gpr[rA] : 0) + imm);//ppcItpCtrl::ppcMem_readDataQUAD((rA?hCPU->gpr[rA]:0)+imm);
+	const double v = ppcItpCtrl::ppcMem_readDataDouble(hCPU, (rA ? hCPU->gpr[rA] : 0) + imm);
+	hCPU->fpr[frD].fpr = v;
+	PPCInterpreter_LFD_FinishPs1(hCPU, frD, v);
 	if (rA)
 		hCPU->gpr[rA] += imm;
 	PPCInterpreter_nextInstruction(hCPU);
@@ -688,7 +718,9 @@ static void PPCInterpreter_LFDX(PPCInterpreter_t* hCPU, uint32 Opcode)
 	FPUCheckAvailable();
 	sint32 rA, frD, rB;
 	PPC_OPC_TEMPL_X(Opcode, frD, rA, rB);
-	hCPU->fpr[frD].fpr = ppcItpCtrl::ppcMem_readDataDouble(hCPU, (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB]);
+	const double v = ppcItpCtrl::ppcMem_readDataDouble(hCPU, (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB]);
+	hCPU->fpr[frD].fpr = v;
+	PPCInterpreter_LFD_FinishPs1(hCPU, frD, v);
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
@@ -697,7 +729,9 @@ static void PPCInterpreter_LFDUX(PPCInterpreter_t* hCPU, uint32 Opcode)
 	FPUCheckAvailable();
 	sint32 rA, frD, rB;
 	PPC_OPC_TEMPL_X(Opcode, frD, rA, rB);
-	hCPU->fpr[frD].fpr = ppcItpCtrl::ppcMem_readDataDouble(hCPU, (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB]);
+	const double v = ppcItpCtrl::ppcMem_readDataDouble(hCPU, (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB]);
+	hCPU->fpr[frD].fpr = v;
+	PPCInterpreter_LFD_FinishPs1(hCPU, frD, v);
 	if (rA)
 		hCPU->gpr[rA] += hCPU->gpr[rB];
 	PPCInterpreter_nextInstruction(hCPU);

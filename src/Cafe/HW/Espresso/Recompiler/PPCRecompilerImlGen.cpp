@@ -770,6 +770,9 @@ bool PPCRecompilerImlGen_BCSPR(ppcImlGenContext_t* ppcImlGenContext, uint32 opco
 
 bool PPCRecompilerImlGen_ISYNC(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
 {
+	extern ATTR_MS_ABI void ppc_isync_clear_ps_dirty();
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_isync_clear_ps_dirty,
+		IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
 	return true;
 }
 

@@ -95,6 +95,10 @@ struct PPCInterpreter_t
 	}sprExtended;
 	uint8 LSQE;
 	uint8 PSE;
+	// Bit i set => FPR i had a paired-single write since the last isync.
+	// lfd to a dirty FPR leaks the loaded double's high word into ps1
+	// (suite 750CL dual-mode hazard); isync clears all bits (lfd_ps).
+	uint32 psWriteDirty;
 	// global CPU values
 	PPCInterpreterGlobal_t* global;
 	// interpreter control

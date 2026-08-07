@@ -1203,6 +1203,12 @@ bool AArch64GenContext_t::fpr_store(IMLInstruction* imlInstruction, bool indexed
 	sint32 memOffset = imlInstruction->op_storeLoad.immS32;
 	uint8 mode = imlInstruction->op_storeLoad.mode;
 
+	// x16/x17: free IP scratch for PS underflow sticky store quirks.
+	const XReg SCRATCH0{16};
+	const XReg SCRATCH1{17};
+	// Sticky abs = 0x3810000000000001
+	constexpr uint64 kStickyAbs = 0x3810000000000001ULL;
+
 	if (mode == PPCREC_FPR_ST_MODE_SINGLE)
 	{
 		add_imm(TEMP_GPR1.WReg, memReg, memOffset, TEMP_GPR1.WReg);
@@ -1216,8 +1222,22 @@ bool AArch64GenContext_t::fpr_store(IMLInstruction* imlInstruction, bool indexed
 		}
 		else
 		{
+			fmov(TEMP_GPR2.XReg, dataDReg);
+			// if sticky underflow: store min single normal with sign
+			mov(SCRATCH0, kStickyAbs);
+			and_(SCRATCH1, TEMP_GPR2.XReg, (uint64)0x7FFFFFFFFFFFFFFFULL);
+			Label notStickyS;
+			cmp(SCRATCH1, SCRATCH0);
+			bne(notStickyS);
+			lsr(TEMP_GPR2.XReg, TEMP_GPR2.XReg, 63);
+			lsl(TEMP_GPR2.WReg, TEMP_GPR2.WReg, 31);
+			orr(TEMP_GPR2.WReg, TEMP_GPR2.WReg, 0x00800000);
+			Label doneS;
+			b(doneS);
+			L(notStickyS);
 			fcvt(TEMP_FPR.SReg, dataDReg);
 			fmov(TEMP_GPR2.WReg, TEMP_FPR.SReg);
+			L(doneS);
 		}
 		rev(TEMP_GPR2.WReg, TEMP_GPR2.WReg);
 		str(TEMP_GPR2.WReg, AdrExt(MEM_BASE_REG, TEMP_GPR1.WReg, ExtMod::UXTW));
@@ -1228,6 +1248,15 @@ bool AArch64GenContext_t::fpr_store(IMLInstruction* imlInstruction, bool indexed
 		if (indexed)
 			add(TEMP_GPR1.WReg, TEMP_GPR1.WReg, indexReg);
 		fmov(TEMP_GPR2.XReg, dataDReg);
+		// sticky underflow → signed zero
+		mov(SCRATCH0, kStickyAbs);
+		and_(SCRATCH1, TEMP_GPR2.XReg, (uint64)0x7FFFFFFFFFFFFFFFULL);
+		Label notStickyD;
+		cmp(SCRATCH1, SCRATCH0);
+		bne(notStickyD);
+		lsr(TEMP_GPR2.XReg, TEMP_GPR2.XReg, 63);
+		lsl(TEMP_GPR2.XReg, TEMP_GPR2.XReg, 63);
+		L(notStickyD);
 		rev(TEMP_GPR2.XReg, TEMP_GPR2.XReg);
 		str(TEMP_GPR2.XReg, AdrExt(MEM_BASE_REG, TEMP_GPR1.WReg, ExtMod::UXTW));
 	}
