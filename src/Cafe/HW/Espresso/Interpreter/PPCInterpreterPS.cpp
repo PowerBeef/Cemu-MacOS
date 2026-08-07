@@ -42,8 +42,19 @@ void PPCInterpreter_PS_MUL(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	hCPU->fpr[frD].fp0 = flushDenormalToZero((float)(hCPU->fpr[frA].fp0 * roundTo25BitAccuracy(hCPU->fpr[frC].fp0)));
-	hCPU->fpr[frD].fp1 = flushDenormalToZero((float)(hCPU->fpr[frA].fp1 * roundTo25BitAccuracy(hCPU->fpr[frC].fp1)));
+	// Raw frC; 25-bit + ldexp product inside ppc_fmuls.
+	// Whole-register VE: invalid on either lane suppresses both writes.
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_ps_fma_reset_suppress();
+	ppc_fma_bind_dest(prev0);
+	const double r0 = ppc_fmuls(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0);
+	ppc_ps_fma_note_suppress();
+	ppc_fma_bind_dest(prev1);
+	const double r1 = ppc_fmuls(hCPU->fpr[frA].fp1, hCPU->fpr[frC].fp1);
+	ppc_ps_fma_note_suppress();
+	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
+	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -294,12 +305,18 @@ void PPCInterpreter_PS_MULS0(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp0);
-	float s0 = (float)(hCPU->fpr[frA].fp0 * c);
-	float s1 = (float)(hCPU->fpr[frA].fp1 * c);
-
-	hCPU->fpr[frD].fp0 = s0;
-	hCPU->fpr[frD].fp1 = s1;
+	const double c = hCPU->fpr[frC].fp0;
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_ps_fma_reset_suppress();
+	ppc_fma_bind_dest(prev0);
+	const double r0 = ppc_fmuls(hCPU->fpr[frA].fp0, c);
+	ppc_ps_fma_note_suppress();
+	ppc_fma_bind_dest(prev1);
+	const double r1 = ppc_fmuls(hCPU->fpr[frA].fp1, c);
+	ppc_ps_fma_note_suppress();
+	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
+	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -313,12 +330,18 @@ void PPCInterpreter_PS_MULS1(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp1);
-	float s0 = (float)(hCPU->fpr[frA].fp0 * c);
-	float s1 = (float)(hCPU->fpr[frA].fp1 * c);
-
-	hCPU->fpr[frD].fp0 = s0;
-	hCPU->fpr[frD].fp1 = s1;
+	const double c = hCPU->fpr[frC].fp1;
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_ps_fma_reset_suppress();
+	ppc_fma_bind_dest(prev0);
+	const double r0 = ppc_fmuls(hCPU->fpr[frA].fp0, c);
+	ppc_ps_fma_note_suppress();
+	ppc_fma_bind_dest(prev1);
+	const double r1 = ppc_fmuls(hCPU->fpr[frA].fp1, c);
+	ppc_ps_fma_note_suppress();
+	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
+	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }

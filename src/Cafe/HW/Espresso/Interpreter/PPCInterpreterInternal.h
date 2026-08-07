@@ -212,6 +212,8 @@ ATTR_MS_ABI double ppc_fmadds(double a, double c, double b);
 ATTR_MS_ABI double ppc_fmsubs(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmadds(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmsubs(double a, double c, double b);
+// Single-precision multiply (*S / ps_mul*): raw frC, 25-bit + ldexp product.
+ATTR_MS_ABI double ppc_fmuls(double a, double c);
 
 ATTR_MS_ABI double fres_espresso(double input);
 ATTR_MS_ABI double frsqrte_espresso(double input);

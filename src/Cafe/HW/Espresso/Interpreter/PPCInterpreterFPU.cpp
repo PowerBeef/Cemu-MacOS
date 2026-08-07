@@ -116,29 +116,55 @@ espresso_fres_entry_t fresLookupTable[32] =
 	{0x88400, 0x11a},	{0x65000, 0x11a},	{0x41c00, 0x108},	{0x20c00, 0x106}
 };
 
-ATTR_MS_ABI double roundTo25BitAccuracy(double d)
+// Core 25-bit round. Host FZ must already be clear — restoring FZ before a
+// denormal result is consumed flushes it to zero (breaks ∞·min_denorm → ∞).
+static inline double roundTo25BitAccuracy_nofz(double d)
 {
-	// Truncate the IEEE-754 double mantissa to 25 bits, with round-to-nearest via the
-	// sticky next bit (Espresso single-precision multiply product factor for frC).
-	// Round-up of DBL_MAX overflows to Inf — that is intentional: `1 * HUGE + -HUGE`
-	// becomes +Inf with OX, while `HUGE * 1 + -HUGE` stays 0 (25-bit is frC only).
-	// `0 * HUGE + 1` is handled separately: Inf-from-25-bit is not a true Inf operand.
-	uint64 v = *(uint64*)&d;
+	const uint64 v = *(const uint64*)&d;
 	if ((v & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL)
 		return d;
+	if ((v & 0x7FFFFFFFFFFFFFFFULL) == 0)
+		return d; // ±0
 
-	const uint64 rounded = (v & 0xFFFFFFFFF8000000ULL) + (v & 0x8000000ULL);
-	return *(double*)&rounded;
+	int exp = 0;
+	double m = std::frexp(std::fabs(d), &exp); // [0.5, 1)
+	uint64 mb = *(uint64*)&m;
+	const uint64 rounded = (mb & 0xFFFFFFFFF8000000ULL) + (mb & 0x8000000ULL);
+	if ((rounded & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL)
+		return std::copysign(std::numeric_limits<double>::infinity(), d);
+	double rm = *(double*)&rounded;
+	if (rm >= 1.0)
+	{
+		rm = 0.5;
+		exp += 1;
+	}
+	// ldexp may overflow to Inf (DBL_MAX → 2^1024).
+	return std::copysign(std::ldexp(rm, exp), d);
 }
 
-// Like roundTo25BitAccuracy, but reports whether a finite input overflowed to Inf.
+ATTR_MS_ABI double roundTo25BitAccuracy(double d)
+{
+	// Espresso single-precision product factor for frC: 25-bit significand,
+	// round-half-up on the next bit. Denormals are normalized before rounding
+	// (suite: 2^1023 * denorm). Round-up of DBL_MAX overflows to Inf.
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	const double r = roundTo25BitAccuracy_nofz(d);
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
+	return r;
+}
+
+// Like roundTo25BitAccuracy_nofz, but reports whether a finite input overflowed to Inf.
+// Host FZ must already be clear (see roundTo25BitAccuracy_nofz).
 static inline double roundTo25BitAccuracyEx(double d, bool* outOverflowToInf)
 {
 	if (outOverflowToInf)
 		*outOverflowToInf = false;
 	const uint64 vIn = *(const uint64*)&d;
 	const bool wasFinite = ((vIn & 0x7FF0000000000000ULL) != 0x7FF0000000000000ULL);
-	const double r = roundTo25BitAccuracy(d);
+	const double r = roundTo25BitAccuracy_nofz(d);
 	if (outOverflowToInf && wasFinite)
 	{
 		const uint64 vOut = *(const uint64*)&r;
@@ -413,13 +439,22 @@ static inline double ppc_fma_result_to_single(double r)
 // from Inf-from-HUGE (needed for 0·HUGE vs 1·HUGE + −HUGE vs 0.5·HUGE + −HUGE).
 static inline double ppc_fma_single_domain(double a, double cIn, double b, bool isMsub, bool negate)
 {
+	// Keep FZ clear for the whole path so denormal frC/frA survive 25-bit + product.
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+
 	bool cOverflowToInf = false;
 	double c = roundTo25BitAccuracyEx(cIn, &cOverflowToInf);
 
 	double special;
 	const int kind = ppc_fmadd_try_special(a, b, c, isMsub, &special, cOverflowToInf);
 	if (kind != 0)
+	{
+		if (fpcr & (1ull << 24))
+			__arm_wsr64("fpcr", fpcr);
 		return ppc_fma_finish_special(kind, special);
+	}
 	s_fma_suppressed = false;
 
 	if (isMsub)
@@ -468,16 +503,14 @@ static inline double ppc_fma_single_domain(double a, double cIn, double b, bool 
 		else
 		{
 			// Exact f32 operands: fmaf keeps denormal sticky (suite 0x7F000001).
-			const uint64 fpcr = __arm_rsr64("fpcr");
-			if (fpcr & (1ull << 24))
-				__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+			// FZ already clear for this whole function.
 			const uint32 sr = ppc_f32_to_bits(std::fmaf(fa, fc, fb));
-			if (fpcr & (1ull << 24))
-				__arm_wsr64("fpcr", fpcr);
 			const uint64 dr = ConvertToDoubleNoFTZ(sr);
 			r = *(double*)&dr;
 		}
 	}
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
 	return negate ? -r : r;
 }
 
@@ -497,6 +530,94 @@ ATTR_MS_ABI double ppc_fnmadds(double a, double c, double b)
 ATTR_MS_ABI double ppc_fnmsubs(double a, double c, double b)
 {
 	return ppc_fma_single_domain(a, c, b, true, true);
+}
+
+// Pack multiply result to single-domain FPR: IEEE RN via (float), not
+// ConvertToSingleNoFTZ truncate (suite: 1.5·1.333…25 → 2.0, not 0x3FFFFFFF).
+static inline double ppc_mul_result_to_single(double r)
+{
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	const float f = static_cast<float>(r);
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
+	const uint32 sr = ppc_f32_to_bits(f);
+	const uint64 dr = ConvertToDoubleNoFTZ(sr);
+	return *(double*)&dr;
+}
+
+// Single-precision multiply specials (NaN A→C; 0·∞ / ∞·0 → default QNaN).
+// cOverflowToInf: 25-bit of finite HUGE — not a true Inf for VXIMZ (0·HUGE → 0).
+static int ppc_fmul_try_special(double a, double c, double* out, bool cOverflowToInf)
+{
+	const uint64 ua = *(const uint64*)&a;
+	const uint64 uc = *(const uint64*)&c;
+
+	const bool snanA = ppc_bits_is_snan(ua);
+	const bool snanC = ppc_bits_is_snan(uc);
+	const bool anySNaN = snanA || snanC;
+	const bool nanA = ppc_bits_is_nan(ua);
+	const bool nanC = ppc_bits_is_nan(uc);
+
+	if (nanA || nanC)
+	{
+		// Quiet then fold through single domain (suite: 1·SNaN(-1) → 0xFFFFFFFFE0000000).
+		const uint64 selected = ppc_quiet_nan(nanA ? ua : uc);
+		const uint32 sr = ConvertToSingleNoFTZ(selected);
+		const uint64 dr = ConvertToDoubleNoFTZ(sr);
+		*out = *(double*)&dr;
+		return anySNaN ? 2 : 1;
+	}
+
+	if (ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc) && !cOverflowToInf)
+	{
+		*out = *(double*)&kPpcDefaultQNaN;
+		return 2;
+	}
+	if (ppc_bits_is_inf(ua) && ppc_bits_is_zero(uc))
+	{
+		*out = *(double*)&kPpcDefaultQNaN;
+		return 2;
+	}
+	return 0;
+}
+
+// Single-precision multiply: raw frC, 25-bit + ldexp(|a|,1024) when C overflows.
+// Suite: min_denorm·HUGE → finite; 0·HUGE → 0; HUGE·HUGE → +Inf; ∞·min_denorm → ∞.
+ATTR_MS_ABI double ppc_fmuls(double a, double cIn)
+{
+	// FZ clear for whole function — denormal frC must not flush between 25-bit and mul.
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+
+	bool cOverflowToInf = false;
+	double c = roundTo25BitAccuracyEx(cIn, &cOverflowToInf);
+
+	double special;
+	const int kind = ppc_fmul_try_special(a, c, &special, cOverflowToInf);
+	if (kind != 0)
+	{
+		if (fpcr & (1ull << 24))
+			__arm_wsr64("fpcr", fpcr);
+		return ppc_fma_finish_special(kind, special);
+	}
+	s_fma_suppressed = false;
+
+	double prod;
+	if (cOverflowToInf)
+	{
+		const double mag = std::ldexp(std::fabs(a), 1024);
+		prod = (std::signbit(a) != std::signbit(c)) ? -mag : mag;
+	}
+	else
+		prod = a * c;
+
+	const double result = ppc_mul_result_to_single(prod);
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
+	return result;
 }
 
 ATTR_MS_ABI double fres_espresso(double input)
@@ -1003,7 +1124,8 @@ void PPCInterpreter_FMULS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 	PPC_ASSERT(frB == 0);
 
-	hCPU->fpr[frD].fpr = (float)(hCPU->fpr[frA].fpr * roundTo25BitAccuracy(hCPU->fpr[frC].fpr));
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	hCPU->fpr[frD].fpr = ppc_fmuls(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
