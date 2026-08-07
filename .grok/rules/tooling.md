@@ -73,6 +73,20 @@ rather than guessing.
 | Status | `python3 docs/status/build-status.py` | After ledger edits; `--verify` before push |
 | Scene capture | `testing/capture-scene.sh` | Raise window first; needs keys + ROM |
 
+## Playtest / character control (Phase 0)
+
+| Path | Role |
+|------|------|
+| `testing/profiles/gamepad-keyboard.xml` | Keyboard → GamePad profile for automation |
+| `testing/profiles/BUTTON_MAP.md` | VPAD ButtonId ↔ keycode ↔ character |
+| `testing/playtest/` | Python: `press`/`hold`/`raise_window`/`install_keyboard_profile` |
+| `testing/scenarios/` | JSON step lists (e.g. `botw-load-save.json`) |
+| `testing/drive-botw.sh` | One-shot BotW boot to most recent save |
+
+**Rules:** Accessibility on for Terminal/Grok; window **frontmost** before keys; holds ≥ **150 ms**.
+Do not invent keycodes — use the button map. Phase 1 will add a `tessera-playtest` MCP; Phase 2
+in-emulator ScriptedController for focus-independent analog sticks.
+
 ## Anti-patterns
 
 - Axiom **SwiftUI / iOS / SpriteKit** auditors for this **C++20 Metal** emulator.
@@ -81,3 +95,4 @@ rather than guessing.
 - Trusting a counter **zero** without an increment site (see measurement rule).
 - Reintroducing **`CLAUDE.md`** next to `AGENTS.md` (double-loads context).
 - Building test ROMs via the deleted from-source fallback; official install only.
+- Scripted **taps** shorter than one emulated frame (use hold ≥ 150 ms).

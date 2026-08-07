@@ -1,0 +1,19 @@
+{
+  "name": "botw-load-save",
+  "description": "From title screen to most recent save (same sequence as drive-botw.sh).",
+  "rom_hint": "Roms/Legend of Zelda, The - Breath of the Wild (USA) (En,Fr,Es).wux",
+  "controller_profile": "testing/profiles/gamepad-keyboard.xml",
+  "steps": [
+    {"raise": true},
+    {"sleep": 2},
+    {"press": {"button": "A", "ms": 150}},
+    {"sleep": 6},
+    {"press": {"button": "B", "ms": 150}},
+    {"sleep": 4},
+    {"press": {"button": "A", "ms": 150}},
+    {"sleep": 6},
+    {"press": {"button": "A", "ms": 150}},
+    {"sleep": 20},
+    {"press": {"button": "A", "ms": 150}}
+  ]
+}
