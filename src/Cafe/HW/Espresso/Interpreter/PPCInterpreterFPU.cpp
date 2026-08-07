@@ -781,6 +781,75 @@ void PPCInterpreter_FSEL(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
+// fctiw[z]: convert to 32-bit signed int, pack as 0xFFF8000x_xxxxxxxx (750CL high word).
+// NaN → 0x80000000 (VXCVI; +VXSNAN for SNaN). Out-of-range / Inf → clamp + VXCVI.
+// VE suppresses the write (suite check_fpu_noresult_nofprf).
+static inline double ppc_fctiw_pack(uint32 v, bool negZero)
+{
+	uint64 r = 0xFFF8000000000000ULL | (uint64)v;
+	if (negZero)
+		r |= 0x100000000ull; // high word 0xFFF80001 for −0 → 0
+	return *(double*)&r;
+}
+
+static inline double ppc_fctiw_common(double b, bool roundTowardZero)
+{
+	const uint64 ub = *(const uint64*)&b;
+	const bool isNan = ppc_bits_is_nan(ub);
+	const bool isSNan = ppc_bits_is_snan(ub);
+	const bool isInf = ppc_bits_is_inf(ub);
+	const bool sign = (ub >> 63) != 0;
+
+	uint32 v;
+	bool invalid = false;
+
+	if (isNan)
+	{
+		v = 0x80000000u;
+		invalid = true;
+	}
+	else if (b > (double)0x7FFFFFFF || (isInf && !sign))
+	{
+		v = 0x7FFFFFFFu;
+		invalid = true;
+	}
+	else if (b < -(double)0x80000000 || (isInf && sign))
+	{
+		v = 0x80000000u;
+		invalid = true;
+	}
+	else
+	{
+		if (roundTowardZero)
+			v = (uint32)(sint32)b; // trunc toward zero
+		else
+			v = (uint32)(sint32)std::lrint(b); // FPSCR[RN] via host mode
+		// Exact 2^31 is already handled by the > 0x7FFFFFFF test; in-range only here.
+	}
+
+	// kind 2 = invalid for VE suppress (SNaN or VXCVI).
+	if (invalid || isSNan)
+	{
+		const double packed = ppc_fctiw_pack(v, false);
+		return ppc_fma_finish_special(2, packed);
+	}
+
+	s_fma_suppressed = false;
+	// −0 → integer 0 with high-word low bit set (suite fctiw high-word tests).
+	const bool negZero = (v == 0) && sign;
+	return ppc_fctiw_pack(v, negZero);
+}
+
+ATTR_MS_ABI double ppc_fctiw(double b)
+{
+	return ppc_fctiw_common(b, false);
+}
+
+ATTR_MS_ABI double ppc_fctiwz(double b)
+{
+	return ppc_fctiw_common(b, true);
+}
+
 void PPCInterpreter_FCTIWZ(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();
@@ -788,24 +857,8 @@ void PPCInterpreter_FCTIWZ(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_X(Opcode, frD, frA, frB);
 	PPC_ASSERT(frA==0);
 
-	double b = hCPU->fpr[frB].fpr;
-	uint64 v;
-	if (b > (double)0x7FFFFFFF)
-	{
-		v = (uint64)0x7FFFFFFF;
-	}
-	else if (b < -(double)0x80000000)
-	{
-		v = (uint64)0x80000000;
-	}
-	else
-	{
-		v = (uint64)(uint32)(sint32)b;
-	}
-
-	hCPU->fpr[frD].guint = 0xFFF8000000000000ULL | v;
-	if (v == 0 && ((*(uint64*)&b) >> 63))
-		hCPU->fpr[frD].guint |= 0x100000000ull;
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	hCPU->fpr[frD].fpr = ppc_fctiwz(hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -818,25 +871,8 @@ void PPCInterpreter_FCTIW(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_X(Opcode, frD, frA, frB);
 	PPC_ASSERT(frA==0);
 
-	double b = hCPU->fpr[frB].fpr;
-	uint64 v;
-	if (b > (double)0x7FFFFFFF)
-	{
-		v = (uint64)0x7FFFFFFF;
-	}
-	else if (b < -(double)0x80000000)
-	{
-		v = (uint64)0x80000000;
-	}
-	else
-	{
-		// Honour FPSCR[RN] via the host mode set by PPCInterpreter_setRoundingModeFromFPSCR.
-		// lrint uses the current C rounding mode; the old +0.5 path only ever did round-half-up.
-		v = (uint64)(uint32)(sint32)std::lrint(b);
-	}
-	hCPU->fpr[frD].guint = 0xFFF8000000000000ULL | v;
-	if (v == 0 && ((*(uint64*)&b) >> 63))
-		hCPU->fpr[frD].guint |= 0x100000000ull;
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	hCPU->fpr[frD].fpr = ppc_fctiw(hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -856,6 +892,40 @@ void PPCInterpreter_FNEG(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
+// frsp: round double → single → re-expand. Host FZ is set for Espresso (coreinit
+// thread entry); it must stay clear for BOTH the down-cast and the re-expand —
+// restoring FZ before (double)s flushes a denormal float input to 0 (suite: min
+// single denorm exact). SNaN quiets; VE suppresses the write.
+ATTR_MS_ABI double ppc_frsp(double b)
+{
+	const uint64 ub = *(const uint64*)&b;
+	if (ppc_bits_is_nan(ub))
+	{
+		if (ppc_bits_is_snan(ub))
+		{
+			const uint64 q = ppc_quiet_nan(ub);
+			return ppc_fma_finish_special(2, *(double*)&q);
+		}
+		// QNaN: preserve exact payload (suite fmr %f4,%f10).
+		s_fma_suppressed = false;
+		return b;
+	}
+
+	// Host RN already tracks FPSCR via PPCInterpreter_setRoundingModeFromFPSCR.
+	// Keep FZ clear across both casts; volatile blocks reordering across the MSR.
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	volatile double vb = b;
+	volatile float s = (float)vb;
+	volatile double r = (double)s;
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
+
+	s_fma_suppressed = false;
+	return r;
+}
+
 void PPCInterpreter_FRSP(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();
@@ -864,14 +934,16 @@ void PPCInterpreter_FRSP(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_X(Opcode, frD, frA, frB);
 	PPC_ASSERT(frA==0);
 
-	if( PPC_PSE )
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	const double r = ppc_frsp(hCPU->fpr[frB].fpr);
+	if (PPC_PSE)
 	{
-		hCPU->fpr[frD].fp0 = (float)hCPU->fpr[frB].fpr;
-		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+		hCPU->fpr[frD].fp0 = r;
+		hCPU->fpr[frD].fp1 = r;
 	}
 	else
 	{
-		hCPU->fpr[frD].fpr = (float)hCPU->fpr[frB].fpr;
+		hCPU->fpr[frD].fpr = r;
 	}
 
 	PPCInterpreter_nextInstruction(hCPU);

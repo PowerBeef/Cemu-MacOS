@@ -27,6 +27,9 @@ ATTR_MS_ABI double ppc_fadd(double a, double b);
 ATTR_MS_ABI double ppc_fsub(double a, double b);
 ATTR_MS_ABI double ppc_fres(double b);
 ATTR_MS_ABI double ppc_frsqrte(double b);
+ATTR_MS_ABI double ppc_frsp(double b);
+ATTR_MS_ABI double ppc_fctiw(double b);
+ATTR_MS_ABI double ppc_fctiwz(double b);
 
 // Bind current frD (for FPSCR[VE] suppress) then call a 3-arg FMA helper.
 static void emit_ppc_fma_call(ppcImlGenContext_t* ctx, uintptr_t fn, IMLReg fprD, IMLReg fprA, IMLReg fprC, IMLReg fprB)
@@ -588,9 +591,9 @@ bool PPCRecompilerImlGen_FRSP(ppcImlGenContext_t* ppcImlGenContext, uint32 opcod
 	PPC_ASSERT(frA==0);
 	DefinePS0(fprB, frB);
 	DefinePS0(fprD, frD);
-	if( fprD != fprB )
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprD, fprB);
-	ppcImlGenContext->emitInst().make_fpr_r(PPCREC_IML_OP_FPR_ROUND_TO_SINGLE_PRECISION_BOTTOM, fprD);
+	// Helper clears host FZ (denorm results) and honours VE on SNaN.
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprD, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_frsp, fprB, IMLREG_INVALID, IMLREG_INVALID, fprD);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -643,7 +646,20 @@ bool PPCRecompilerImlGen_FCTIWZ(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	PPC_OPC_TEMPL_X(opcode, frD, frA, frB);
 	DefinePS0(fprB, frB);
 	DefinePS0(fprD, frD);
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_FCTIWZ, fprD, fprB);
+	// Pack 0xFFF8000x high word + NaN/range/VE — not a bare fcvtzs.
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprD, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fctiwz, fprB, IMLREG_INVALID, IMLREG_INVALID, fprD);
+	return true;
+}
+
+bool PPCRecompilerImlGen_FCTIW(ppcImlGenContext_t* ppcImlGenContext, uint32 opcode)
+{
+	sint32 frD, frA, frB;
+	PPC_OPC_TEMPL_X(opcode, frD, frA, frB);
+	DefinePS0(fprB, frB);
+	DefinePS0(fprD, frD);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprD, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fctiw, fprB, IMLREG_INVALID, IMLREG_INVALID, fprD);
 	return true;
 }
 

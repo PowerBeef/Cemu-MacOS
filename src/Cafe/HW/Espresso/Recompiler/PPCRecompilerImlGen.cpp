@@ -2717,6 +2717,11 @@ bool PPCRecompiler_decodePPCInstruction(ppcImlGenContext_t* ppcImlGenContext)
 				unsupportedInstructionFound = true;
 			ppcImlGenContext->hasFPUInstruction = true;
 			break;
+		case 14:
+			if (PPCRecompilerImlGen_FCTIW(ppcImlGenContext, opcode) == false)
+				unsupportedInstructionFound = true;
+			ppcImlGenContext->hasFPUInstruction = true;
+			break;
 		case 15:
 			if (PPCRecompilerImlGen_FCTIWZ(ppcImlGenContext, opcode) == false)
 				unsupportedInstructionFound = true;
