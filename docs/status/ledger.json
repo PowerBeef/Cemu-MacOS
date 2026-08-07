@@ -1965,8 +1965,15 @@
       "ref": "docs/testing/00-test-strategy.md \u2014 First result",
       "commits": [
         "09bfedd",
-        "59706a9"
-      ]
+        "59706a9",
+        "3883c2b"
+      ],
+      "measured": {
+        "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
+        "at_commit": "3883c2b",
+        "date": "2026-08-07",
+        "n": 1
+      }
     },
     {
       "id": "rm-homebrew-exit-crash",
