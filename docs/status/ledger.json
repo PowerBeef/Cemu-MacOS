@@ -1531,7 +1531,8 @@
       "area": "tooling",
       "status": "landed",
       "commits": [
-        "115eb38"
+        "115eb38",
+        "d7c9c51"
       ],
       "verdict": "Slimmed `AGENTS.md` to constraints/build/architecture; moved measurement traps to `.grok/rules/measurement.md` and the tool matrix to `.grok/rules/tooling.md`. Added project skill `tessera-measure`. `CLAUDE.md` stays deleted.",
       "ref": ".grok/rules/tooling.md"
@@ -1857,7 +1858,7 @@
       "status": "open",
       "verdict": "Two instruments disagree: 28.6 fps / 149 passes / ~1190 draws / 15.6 ms GPU versus 30.06 fps / 132 passes / 3784 draws / 14.0 ms. Different counting (draw *calls* vs draw *sequences*), and the GPU figures predate the `839466d` `busy_ns` fix.",
       "gate": "None — one run with the current harness settles it. Until then, quote neither.",
-      "ref": "AGENTS.md — Current baseline"
+      "ref": ".grok/rules/measurement.md — Current baseline (2026-07-26, after the Stage 5 idle-wait fixes)"
     },
     {
       "id": "rm-notarization",
