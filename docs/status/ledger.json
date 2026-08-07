@@ -1960,8 +1960,8 @@
       "title": "Fix the 354 real floating-point and paired-single conformance failures",
       "area": "cpu",
       "status": "open",
-      "verdict": "Values-only suite is **173** failures (was 354 → … → 197 → 188 → 173). Arms identical. FMA: 25-bit DBL_MAX product via ldexp(|a|,1024) (1·HUGE+−HUGE → +Inf, 0.5·HUGE+−HUGE → −Inf, 0·HUGE+1 → 1); in-range pack ConvertToSingleNoFTZ, out-of-range ±Inf; raw frC into *S helpers. Remaining mad 12 = PS VE/SNaN multi-lane only; fres/rsqrte; frsp/fctiw; ps_mul/div/res.",
-      "gate": "Continue values-only. Next: PS mad VE/SNaN per-lane suppress; fres/rsqrte tables.",
+      "verdict": "Values-only suite is **161** failures (was 354 → … → 188 → 173 → 161). Arms identical. FMA cluster closed: 25-bit HUGE via ldexp(|a|,1024), single overflow→Inf, PS whole-register VE suppress on any-lane invalid (mixed SNaN+overflow). Remaining: fres/rsqrte tables, frsp/fctiw, ps_mul/div/res/add/sub, fmuls.",
+      "gate": "Continue values-only. Next: fres/rsqrte estimate tables; frsp/fctiw; ps_mul family.",
       "ref": "docs/testing/00-test-strategy.md — First result",
       "commits": [
         "09bfedd",
@@ -1971,11 +1971,12 @@
         "3dc410b",
         "426bf98",
         "96b7ff3",
-        "f030324"
+        "f030324",
+        "167308c"
       ],
       "measured": {
         "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
-        "at_commit": "f030324",
+        "at_commit": "167308c",
         "date": "2026-08-07",
         "n": 1
       }
