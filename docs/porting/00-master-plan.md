@@ -1178,7 +1178,7 @@ survives casual checking.
 > Found while doing this: the `build` field in every telemetry header is stale. `CMakeLists.txt:15`
 > captures the hash at cmake *configure* time, so a binary compiled from `cebe17f` reported
 > `064d9a7`. `capture-scene.sh` fails the other way, stamping `baseline.tsv` from the repo's HEAD
-> rather than the binary. Both are recorded in CLAUDE.md; the runs above were taken after an
+> rather than the binary. Both are recorded in AGENTS.md; the runs above were taken after an
 > explicit reconfigure, which is why their headers read `cebe17f`.
 
 ---
@@ -1466,7 +1466,7 @@ That system cache is real and on this machine: `$(getconf DARWIN_USER_CACHE_DIR)
 **111 MB**, `functions*.data`/`.list`, mtime tracking our runs. It is the most likely explanation for
 a 0.11 ms/shader frontend, which is far too fast for real MSL compilation — and it means **every
 shader-compile measurement on this fork has been taken with Apple's cache warm.** Recorded in
-CLAUDE.md as a trap.
+AGENTS.md as a trap.
 
 **Verdict: Phase 2 as designed is cancelled.** 296–319 ms, targeting the one half macOS already
 caches for free, against Apple's explicit advice, for 2–3 days of work.

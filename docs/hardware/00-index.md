@@ -23,7 +23,7 @@ should do, and deliberately shallow where it does not (`08-io-peripherals.md` sa
 
 Related, and assumed rather than repeated here: `../porting/00-master-plan.md` (staged plan and risk
 register), `../porting/02-cpu-jit-memory.md` (recompiler internals), `../porting/03-graphics-metal.md`
-(Metal backend), and `../../CLAUDE.md` (build, measurement protocol, current baselines).
+(Metal backend), and `../../AGENTS.md` (build, measurement protocol, current baselines).
 
 ## Provenance tags
 

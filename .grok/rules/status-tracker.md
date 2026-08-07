@@ -2,11 +2,11 @@
 
 `docs/status/index.html` is the fork's live record — every item attempted since the fork point and
 what it measured. It is generated, committed, and **maintained as work happens, not reconstructed
-afterwards.** This file is the standing obligation; `CLAUDE.md` points here and restates the
+afterwards.** This file is the standing obligation; `AGENTS.md` points here and restates the
 one-sentence version of it.
 
-> This is a project-level `.claude/rules/` file and may not be auto-loaded the way `CLAUDE.md` is.
-> That is why `CLAUDE.md` carries the obligation too. If you are reading this at all, follow it.
+> This lives under `.grok/rules/` (Grok always loads it) and is restated in `AGENTS.md` because the
+> obligation is easy to miss. If you are reading this at all, follow it.
 
 ## The obligation
 
@@ -68,9 +68,9 @@ people learn to ignore. It asks a question with an exact answer — is this figu
 record at all? `WARN`, because prose legitimately carries context the ledger does not, and a check
 that fails the build on a legitimate sentence gets switched off within a week.
 
-**Only README.** Adding `CLAUDE.md` was tried and reverted: it carries per-counter tables and phase
-breakdowns the ledger deliberately does not, since a verdict here is one line and a pointer. It
-produced 35 warnings, every one working as intended.
+**Only README.** Adding the agent brief (`AGENTS.md`, then still named `CLAUDE.md`) was tried and
+reverted: it carries per-counter tables and phase breakdowns the ledger deliberately does not, since
+a verdict here is one line and a pointer. It produced 35 warnings, every one working as intended.
 
 The check has a **positive control**, because a linter that reports nothing is indistinguishable from
 one that does not run. Against the README as of `584521b` it flags 8 figures, `183%` among them.
@@ -139,7 +139,7 @@ each entry was born in, and warns when that commit changed code the entry does n
 Two things about it are deliberate:
 
 - **Prose is not the trigger; `src/`, `testing/` and `tools/` are.** A record commit here routinely
-  updates CLAUDE.md, a porting doc or a testing README alongside the entry — that *is* the recording.
+  updates AGENTS.md, a porting doc or a testing README alongside the entry — that *is* the recording.
   Triggering on any file outside `docs/status/` fires on 60 of 71 correct entries, including all 55
   the tracker's own genesis commit back-filled, and a check that noisy gets switched off in a week.
 - **It has a structural blind spot, and that is not a bug to fix later.** An entry born in a commit
@@ -156,7 +156,7 @@ audit that prompted it.
 
 `stages[]` carries the staged plan; items claim a stage with `"stage": "s3"`. The page computes how
 much of each stage landed. **Do not hand-write a stage's completion** — that is exactly the surface
-that drifted before, when the master plan said "Stage 3: complete" while CLAUDE.md still described
+that drifted before, when the master plan said "Stage 3: complete" while AGENTS.md still described
 one of its defects as open. An item that belongs to no stage is fine and is listed as cross-cutting.
 
 ## Two things that are structural, not sloppiness

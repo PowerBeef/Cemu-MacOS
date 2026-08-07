@@ -3,7 +3,7 @@
 **Status: the CPU layer is built, runs, and has produced its first result. Everything else is still
 plan.** Read [§7 Status](#7-status-honest) before quoting anything here as a capability.
 
-`CLAUDE.md` says "There is **no test suite.**" That is now out of date for the CPU layer.
+`AGENTS.md` no longer claims there is no test suite for the CPU layer (an older draft did).
 
 ### First result (2026-08-03)
 

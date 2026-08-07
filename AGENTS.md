@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Project instructions for agents working in this repository (Grok-native; same brief formerly named `CLAUDE.md`).
 
 ## What this fork is
 
@@ -22,7 +22,7 @@ homebrew and need a toolchain; install it with the official devkitPro path in
 
 **`docs/status/index.html` is the fork's live record, and keeping it current is a standing obligation — not optional cleanup.** Every item attempted since the fork point and what it measured, in one filterable page. **When a work item lands, add an entry to `docs/status/ledger.json` naming its commits, run `python3 docs/status/build-status.py`, and commit the regenerated HTML alongside it.** A negative result is a first-class entry: `refuted` (tested against a control, false), `cancelled` (gated out before being built) and `reverted` (built, measured, removed) are distinct and all belong on the page.
 
-**Read `.claude/rules/status-tracker.md` before editing the ledger** — it is the full rule. The two things worth knowing up front: the generator derives the commit list, diffstat, baseline table and counter totals *from the repo*, so never type those into the ledger; and a verdict is one line plus a `ref`, because `docs/porting/00-master-plan.md` owns the reasoning and a second copy of an argument is a second thing to keep in sync.
+**Read `.grok/rules/status-tracker.md` before editing the ledger** — it is the full rule. The two things worth knowing up front: the generator derives the commit list, diffstat, baseline table and counter totals *from the repo*, so never type those into the ledger; and a verdict is one line plus a `ref`, because `docs/porting/00-master-plan.md` owns the reasoning and a second copy of an argument is a second thing to keep in sync.
 
 **A claim about another project carries a date, or it does not get made.** Everything else here rots
 when *this* repo changes, and something watches for that. A statement about upstream Cemu, Apple, or
@@ -36,9 +36,9 @@ and least checkable.
 **`--verify` also checks that every measurement in `README.md` appears verbatim in the ledger.**
 That is a traceability question with an exact answer, not a numeric comparison — correlating prose to
 entries is guesswork, and a guessing linter is one people learn to ignore. It is reported as `WARN`.
-Deliberately **README only**: adding CLAUDE.md was tried and reverted, because this file carries
-per-counter tables and phase breakdowns the ledger intentionally does not, and it produced 35
-warnings that were all working as intended. Verified with a positive control rather than by finding
+Deliberately **README only**: adding this agent brief to the check was tried and reverted, because
+this file carries per-counter tables and phase breakdowns the ledger intentionally does not, and it
+produced 35 warnings that were all working as intended. Verified with a positive control rather than by finding
 nothing — run against the README as of `584521b` it flags 8 figures, including the `183%` that stood
 against a ledger saying 184.
 

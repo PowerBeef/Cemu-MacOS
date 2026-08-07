@@ -236,7 +236,7 @@ LEDGER_REL = "docs/status/ledger.json"
 
 # What counts as "this commit did the work", as opposed to "this commit wrote it down".
 #
-# Prose is not the signal. A record commit in this repo routinely updates CLAUDE.md, a porting
+# Prose is not the signal. A record commit in this repo routinely updates AGENTS.md, a porting
 # doc or a testing README in the same breath as the ledger entry -- that IS the recording. Using
 # any-file-outside-docs/status/ as the trigger fires on 60 of 71 correct entries, including all
 # 55 back-filled by the tracker's own genesis commit, and a check that noisy gets switched off.
@@ -409,7 +409,7 @@ def ref_section_found(path: Path, section: str) -> bool:
 # not traceable to the record; that is where "107 counters" against a real 113 and "183%" against a
 # ledger that says 184 both sat, across several rewrites, in the most-read file in the repo.
 #
-# CLAUDE.md is NOT checked, and adding it was tried and reverted. It is the working notebook: it
+# AGENTS.md is NOT checked, and adding it was tried and reverted. It is the working notebook: it
 # carries per-counter tables and phase breakdowns the ledger deliberately does not, because a
 # verdict there is one line and a pointer. Requiring every figure in it to appear verbatim in the
 # ledger produced 35 warnings, every one of them working as intended -- and a check that is always
@@ -665,7 +665,7 @@ def stages_body(ledger: dict) -> str:
     """Goals, with completion DERIVED from which items claim each stage.
 
     The point is that a stage's status is a computed fact, not a sentence someone has to
-    remember to update. The master plan once said "Stage 3: complete" while CLAUDE.md still
+    remember to update. The master plan once said "Stage 3: complete" while AGENTS.md still
     described one of its defects as open; deriving it removes the surface that can disagree.
 
     Emits its own markup rather than going through table(), because table() routes cells

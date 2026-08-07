@@ -895,7 +895,7 @@
       ],
       "verdict": "**Fourteen stale or wrong claims corrected in one pass**, across five documents.",
       "note": "The direct motivation for this status page: fourteen hand-typed facts had drifted from the code at once, and nothing in the workflow would have caught them.",
-      "ref": "CLAUDE.md"
+      "ref": "AGENTS.md"
     },
     {
       "id": "pass-structure-audit",
@@ -973,7 +973,7 @@
       ],
       "verdict": "One generated page for what changed versus upstream, what was tried and what it measured. Commit list, diffstat, baseline rows and counter totals are read from the repo — only verdicts are hand-maintained. CI reports any commit that lands without a ledger entry.",
       "note": "It caught its own first bug: the counter parser read **114** against the real 113, matching the `TLM_COUNTER(...)` example inside the `.def`'s own header comment. Two self-references bound the design — a ledger entry cannot name the hash of the commit containing it, and the page embeds the commit that carries it — so CI advises rather than blocks, and `--check` is local-only. The tracker's own upkeep (claiming commits, stamping measurements, correcting the ledger) is claimed by this entry rather than excused under `unattributed`, so the act of tracking is itself tracked.",
-      "ref": ".claude/rules/status-tracker.md"
+      "ref": ".grok/rules/status-tracker.md"
     },
     {
       "id": "korok-remeasure",
@@ -1197,7 +1197,7 @@
         "date": "2026-08-03",
         "n": 1
       },
-      "ref": "CLAUDE.md"
+      "ref": "AGENTS.md"
     },
     {
       "id": "vs-texelfetch-supportbuffer",
@@ -1423,7 +1423,7 @@
       ],
       "verdict": "`--verify` now extracts measurement-shaped figures from `README.md` and requires each to appear verbatim in the ledger. Reported as `WARN`, because prose legitimately carries context the ledger does not. Deliberately README-only: adding `CLAUDE.md` was tried and reverted after producing 35 warnings that were all working as intended.",
       "note": "The derive-don't-type discipline protected the ledger and left the most-read file in the repo unchecked, which is exactly where the errors landed: **107 counters against a real 113, and 183% against a ledger saying 184**, the latter surviving three rewrites because each copied the previous. Traceability is a question with an exact answer; a numeric comparison would be guesswork, and a guessing linter is one people learn to ignore. It carries a **positive control** — against the README as of `584521b` it flags 8 figures, `183%` among them — because a linter that reports nothing is indistinguishable from one that does not run. The same commit added the rule that a claim about another project carries a date or does not get made. Extends the linter added in `b95bde3`, which is claimed by [`status-tracker`]; kept separate because the reverted `CLAUDE.md` experiment and its positive control are the finding, not the plumbing.",
-      "ref": ".claude/rules/status-tracker.md — The same rule now applies outward, to `README.md`"
+      "ref": ".grok/rules/status-tracker.md — The same rule now applies outward, to `README.md`"
     },
     {
       "id": "ledger-self-claim-check",
@@ -1436,7 +1436,7 @@
       ],
       "verdict": "`3d4fca9` through `a2761e9` were each claimed by the entry describing the **next** commit, and `--verify` reported a clean ledger throughout — it finds a commit *nothing* claims and is blind to one claimed by the *wrong* entry, because from its side that looks claimed. Three of the five stamps were not merely stale but impossible: `fbfetch-coordinate-sized` was stamped at a commit predating both instruments its measurement needs. `--verify` now replays `ledger.json`'s own history to find each entry's birth commit and reports one that changed code the entry does not claim.",
       "note": "The cause is mechanical, which is what made it checkable: writing an entry for work still in the working tree and reaching for its hash with `git log -1` returns HEAD, which is the **previous** commit. Two design choices carry the check. **Prose is not the trigger** — a record commit here routinely updates CLAUDE.md or a testing README alongside the entry, and triggering on any file outside `docs/status/` fires on 60 of 71 correct entries including all 55 the genesis commit back-filled; `src/`, `testing/` and `tools/` are the signal. And it has a **structural blind spot that is not a bug**: an entry born in a docs-only work commit is byte-for-byte the same shape as a record commit, so two of the five are invisible to it and only reading the content catches those. New severity `SUSPECT`, kept apart from `WARN` because \"check this attribution\" and \"this number is old\" call for different actions. **Positive control:** five against the ledger at `c33153f`, none against the corrected one. The fifth was found by the check rather than by the audit that prompted it — `ab78ce7` created the reproducer's `run.sh` while filing that entry and claiming the commit elsewhere.",
-      "ref": ".claude/rules/status-tracker.md — The check that catches a *wrong* claim, not just a missing one"
+      "ref": ".grok/rules/status-tracker.md — The check that catches a *wrong* claim, not just a missing one"
     },
     {
       "id": "shader-preload-measured",
@@ -1494,10 +1494,20 @@
       "area": "tooling",
       "status": "landed",
       "commits": [
-        "ec4cb33"
+        "ec4cb33",
+        "434cb48"
       ],
       "verdict": "Official `dkp-pacman -S wiiu-dev` into `/opt/devkitpro` is the only supported path (same as CI). Deleted `testing/toolchain/build-devkitppc.sh` and rewrote present-tense setup docs so nothing points at `~/.local/devkitpro` or a no-root rebuild.",
       "ref": "docs/testing/00-test-strategy.md — 4. The toolchain"
+    },
+    {
+      "id": "agents-md-native",
+      "title": "Convert agent project rules to Grok-native naming",
+      "area": "tooling",
+      "status": "landed",
+      "commits": [],
+      "verdict": "Root brief is `AGENTS.md` (was `CLAUDE.md`); status-tracker rule lives at `.grok/rules/status-tracker.md` (was `.claude/rules/`). Present-tense docs and ledger `ref`s retargeted; historical ledger prose that names the old path is left as a record of the past.",
+      "ref": ".grok/rules/status-tracker.md — The obligation"
     }
   ],
   "refuted": [
@@ -1819,7 +1829,7 @@
       "status": "open",
       "verdict": "Two instruments disagree: 28.6 fps / 149 passes / ~1190 draws / 15.6 ms GPU versus 30.06 fps / 132 passes / 3784 draws / 14.0 ms. Different counting (draw *calls* vs draw *sequences*), and the GPU figures predate the `839466d` `busy_ns` fix.",
       "gate": "None — one run with the current harness settles it. Until then, quote neither.",
-      "ref": "CLAUDE.md — Current baseline"
+      "ref": "AGENTS.md — Current baseline"
     },
     {
       "id": "rm-notarization",

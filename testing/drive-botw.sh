@@ -13,7 +13,7 @@
 # offers, which is why BotW is the measurement target. Note that NEITHER is
 # GPU-bound: measured GPU duty cycle is ~42% (shrine) and ~37% (forest). An
 # earlier version of this comment claimed 108-147% of budget; that divided by a
-# 60fps budget for a 30fps title. See docs/hardware/ and CLAUDE.md.
+# 60fps budget for a 30fps title. See docs/hardware/ and AGENTS.md.
 #
 # No controller and no human input required. This works because:
 #   - controllerProfiles/ ships empty, so we write controller0.xml ourselves;

@@ -121,5 +121,5 @@ git pull --recurse-submodules
 
 ## Running
 
-See [README.md](/README.md) for `keys.txt` setup, and [CLAUDE.md](/CLAUDE.md) for architecture
+See [README.md](/README.md) for `keys.txt` setup, and [AGENTS.md](/AGENTS.md) for architecture
 notes, profiling commands and the verification workflow.
