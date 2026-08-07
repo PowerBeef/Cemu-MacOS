@@ -81,7 +81,7 @@ static float dequantize(uint32 data, sint32 type, uint8 scale)
 		f = (float)(sint8)data;
 		f *= LD_SCALE[scale];
 		break;
-	case 7: // float
+	case 7: // s16
 		f = (float)(sint16)data;
 		f *= LD_SCALE[scale];
 		break;
@@ -96,38 +96,48 @@ static float dequantize(uint32 data, sint32 type, uint8 scale)
 
 static uint32 quantize(float data, sint32 type, uint8 scale)
 {
+	// Espresso psq_st truncates toward zero after scaling (suite: "rounding (truncation)").
+	// Never cast a possibly-negative float through uint32 — that zeros negatives on arm64.
 	uint32 val;
 
 	switch (type)
 	{
 	case 4: // u8
+	{
 		data *= ST_SCALE[scale];
-		if (data < 0) data = 0;
-		if (data > 255) data = 255;
-		val = (uint8)(uint32)data; 
+		if (data < 0.0f) data = 0.0f;
+		if (data > 255.0f) data = 255.0f;
+		val = (uint32)(sint32)data;
 		break;
+	}
 	case 5: // u16
+	{
 		data *= ST_SCALE[scale];
-		if (data < 0) data = 0;
-		if (data > 65535) data = 65535;
-		val = (uint16)(uint32)data; 
+		if (data < 0.0f) data = 0.0f;
+		if (data > 65535.0f) data = 65535.0f;
+		val = (uint32)(sint32)data;
 		break;
+	}
 	case 6: // s8
+	{
 		data *= ST_SCALE[scale];
-		if (data < -128) data = -128;
-		if (data > 127) data = 127;
-		val = (sint8)(uint8)(sint32)(uint32)data;
+		if (data < -128.0f) data = -128.0f;
+		if (data > 127.0f) data = 127.0f;
+		val = (uint32)(sint32)data;
 		break;
+	}
 	case 7: // s16
+	{
 		data *= ST_SCALE[scale];
-		if (data < -32768) data = -32768;
-		if (data > 32767) data = 32767;
-		val = (sint16)(uint16)(sint32)(uint32)data;
+		if (data < -32768.0f) data = -32768.0f;
+		if (data > 32767.0f) data = 32767.0f;
+		val = (uint32)(sint32)data;
 		break;
+	}
 	case 0: // float
-	default: 
+	default:
 		// scale does not apply when storing floats
-		*((float*)&val) = data; 
+		*((float*)&val) = data;
 		break;
 	}
 	return val;

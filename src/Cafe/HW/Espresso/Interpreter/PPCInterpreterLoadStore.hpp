@@ -867,36 +867,44 @@ static void PPCInterpreter_STFIWX(PPCInterpreter_t* hCPU, uint32 Opcode)
 #define PSWX         (opcode & (1<<(7+3)))
 #define PSIX         ((opcode >> 7) & 7)
 
+// PSQ D-form low halfword is NOT a plain 16-bit signed imm: bits 0-11 = d (signed),
+// bits 12-14 = I (GQR), bit 15 = W. Using PPC_OPC_TEMPL_D_SImm folds W/I into the
+// displacement and breaks every W=1 or nonzero-I form.
+static inline sint32 psq_d_form_disp(uint32 opcode)
+{
+	return (sint32)(opcode << 20) >> 20; // sign-extend 12-bit field in bits 0-11
+}
+
+static void psq_store_pair(PPCInterpreter_t* hCPU, uint32 ea, sint32 frD, sint32 type, uint8 scale, bool oneSlot)
+{
+	if ((type == 4) || (type == 6))
+		ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
+	else if ((type == 5) || (type == 7))
+		ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
+	else
+		ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
+
+	if (oneSlot)
+		return;
+
+	if ((type == 4) || (type == 6))
+		ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea + 1, quantize((float)hCPU->fpr[frD].fp1, type, scale));
+	else if ((type == 5) || (type == 7))
+		ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea + 2, quantize((float)hCPU->fpr[frD].fp1, type, scale));
+	else
+		ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea + 4, quantize((float)hCPU->fpr[frD].fp1, type, scale));
+}
+
 static void PPCInterpreter_PSQ_ST(PPCInterpreter_t* hCPU, unsigned int opcode)
 {
 	FPUCheckAvailable();
-	sint32 rA, frD;
-	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(opcode, frD, rA, imm);
+	const sint32 frD = (opcode >> 21) & 0x1F;
+	const sint32 rA = (opcode >> 16) & 0x1F;
+	const uint32 ea = (uint32)psq_d_form_disp(opcode) + (rA ? hCPU->gpr[rA] : 0);
 
-	uint32 ea = _uint32_fastSignExtend(imm, 11);
-
-	ea += (rA ? hCPU->gpr[rA] : 0);
-
-	sint32 type = ST_TYPE(PSI);
-	uint8 scale = (uint8)ST_SCALE(PSI);
-
-	if (opcode & 0x8000) // PSW?
-	{
-		if ((type == 4) || (type == 6)) ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else if ((type == 5) || (type == 7)) ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-	}
-	else
-	{
-		if ((type == 4) || (type == 6)) ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else if ((type == 5) || (type == 7)) ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-
-		if ((type == 4) || (type == 6)) ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea + 1, quantize((float)hCPU->fpr[frD].fp1, type, scale));
-		else if ((type == 5) || (type == 7)) ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea + 2, quantize((float)hCPU->fpr[frD].fp1, type, scale));
-		else ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea + 4, quantize((float)hCPU->fpr[frD].fp1, type, scale));
-	}
+	const sint32 type = ST_TYPE(PSI);
+	const uint8 scale = (uint8)ST_SCALE(PSI);
+	psq_store_pair(hCPU, ea, frD, type, scale, (opcode & 0x8000) != 0);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -904,75 +912,40 @@ static void PPCInterpreter_PSQ_ST(PPCInterpreter_t* hCPU, unsigned int opcode)
 static void PPCInterpreter_PSQ_STU(PPCInterpreter_t* hCPU, unsigned int opcode)
 {
 	FPUCheckAvailable();
-	sint32 rA, frD;
-	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(opcode, frD, rA, imm);
-	uint32 ea = _uint32_fastSignExtend(imm, 11);
-
-	if (ea & 0x800)
-		ea |= 0xfffff000;
-
-	ea += (rA ? hCPU->gpr[rA] : 0);
+	const sint32 frD = (opcode >> 21) & 0x1F;
+	const sint32 rA = (opcode >> 16) & 0x1F;
+	const uint32 ea = (uint32)psq_d_form_disp(opcode) + (rA ? hCPU->gpr[rA] : 0);
 	if (rA)
 		hCPU->gpr[rA] = ea;
 
-	sint32 type = ST_TYPE((opcode >> 12) & 0x7);
-	uint8 scale = (uint8)ST_SCALE(PSI);
-
-	if (opcode & 0x8000) //PSW?
-	{
-		if ((type == 4) || (type == 6)) ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else if ((type == 5) || (type == 7)) ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-	}
-	else
-	{
-		if ((type == 4) || (type == 6)) ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else if ((type == 5) || (type == 7)) ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-
-		if ((type == 4) || (type == 6)) ppcItpCtrl::ppcMem_writeDataU8(hCPU, ea + 1, quantize((float)hCPU->fpr[frD].fp1, type, scale));
-		else if ((type == 5) || (type == 7)) ppcItpCtrl::ppcMem_writeDataU16(hCPU, ea + 2, quantize((float)hCPU->fpr[frD].fp1, type, scale));
-		else ppcItpCtrl::ppcMem_writeDataU32(hCPU, ea + 4, quantize((float)hCPU->fpr[frD].fp1, type, scale));
-	}
+	const sint32 type = ST_TYPE(PSI);
+	const uint8 scale = (uint8)ST_SCALE(PSI);
+	psq_store_pair(hCPU, ea, frD, type, scale, (opcode & 0x8000) != 0);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
 
+// X-form psq_stx (XO=7) and psq_stux (XO=39). Same 5-bit secondary switch
+// case — bit 6 of the instruction word (XO bit 5) selects the update form.
 static void PPCInterpreter_PSQ_STX(PPCInterpreter_t* hCPU, unsigned int opcode)
 {
 	FPUCheckAvailable();
 
-	// next instruction
+	const sint32 frD = (opcode >> 21) & 0x1F;
+	const uint32 rA = (opcode >> 16) & 0x1F;
+	const uint32 rB = (opcode >> 11) & 0x1F;
+	// X-form EA: rA==0 means zero (not gpr0); rB always uses gpr[rB] (rB==0 is gpr0).
+	const uint32 EA = (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB];
+	const bool withUpdate = (opcode & 0x40) != 0; // psq_stux
+	if (withUpdate && rA)
+		hCPU->gpr[rA] = EA;
+
+	const sint32 type = ST_TYPE(PSIX);
+	const uint8 scale = (uint8)ST_SCALE(PSIX);
+	psq_store_pair(hCPU, EA, frD, type, scale, PSWX != 0);
+
 	PPCInterpreter_nextInstruction(hCPU);
-
-	sint32 frD;
-	uint32 rA, rB;
-	frD = (opcode >> (31 - 10)) & 0x1F;
-	rA = (opcode >> (31 - 15)) & 0x1F;
-	rB = (opcode >> (31 - 20)) & 0x1F;
-	uint32 EA = (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB];
-
-	sint32 type = ST_TYPE(PSIX);
-	uint8 scale = (uint8)ST_SCALE(PSIX);
-
-	if (PSWX)
-	{
-		if ((type == 4) || (type == 6)) ppcItpCtrl::ppcMem_writeDataU8(hCPU, EA, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else if ((type == 5) || (type == 7)) ppcItpCtrl::ppcMem_writeDataU16(hCPU, EA, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else ppcItpCtrl::ppcMem_writeDataU32(hCPU, EA, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-	}
-	else
-	{
-		if ((type == 4) || (type == 6)) ppcItpCtrl::ppcMem_writeDataU8(hCPU, EA, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else if ((type == 5) || (type == 7)) ppcItpCtrl::ppcMem_writeDataU16(hCPU, EA, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-		else ppcItpCtrl::ppcMem_writeDataU32(hCPU, EA, quantize((float)hCPU->fpr[frD].fp0, type, scale));
-
-		if ((type == 4) || (type == 6)) ppcItpCtrl::ppcMem_writeDataU8(hCPU, EA + 1, quantize((float)hCPU->fpr[frD].fp1, type, scale));
-		else if ((type == 5) || (type == 7)) ppcItpCtrl::ppcMem_writeDataU16(hCPU, EA + 2, quantize((float)hCPU->fpr[frD].fp1, type, scale));
-		else ppcItpCtrl::ppcMem_writeDataU32(hCPU, EA + 4, quantize((float)hCPU->fpr[frD].fp1, type, scale));
-	}
 }
 
 static void PPCInterpreter_PSQ_L(PPCInterpreter_t* hCPU, unsigned int opcode)
@@ -981,17 +954,14 @@ static void PPCInterpreter_PSQ_L(PPCInterpreter_t* hCPU, unsigned int opcode)
 	// next instruction
 	PPCInterpreter_nextInstruction(hCPU);
 
-	sint32 rA, frD;
-	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(opcode, frD, rA, imm);
+	const sint32 frD = (opcode >> 21) & 0x1F;
+	const sint32 rA = (opcode >> 16) & 0x1F;
+	uint32 data0 = 0, data1 = 0;
+	const sint32 type = LD_TYPE(PSI);
+	const uint8 scale = (uint8)LD_SCALE(PSI);
 
-	uint32 EA, data0 = 0, data1 = 0;
-	sint32 type = LD_TYPE(PSI);
-	uint8 scale = (uint8)LD_SCALE(PSI);
-
-	EA = _uint32_fastSignExtend(opcode, 11);
-
-	if (rA) EA += hCPU->gpr[rA];
+	// 12-bit signed displacement (not 11, and not the full 16-bit field).
+	const uint32 EA = (uint32)psq_d_form_disp(opcode) + (rA ? hCPU->gpr[rA] : 0);
 
 	if (opcode & 0x8000)
 	{
@@ -1043,16 +1013,13 @@ static void PPCInterpreter_PSQ_LU(PPCInterpreter_t* hCPU, unsigned int opcode)
 	// next instruction
 	PPCInterpreter_nextInstruction(hCPU);
 
-	int rA, frD;
-	uint32 imm;
-	PPC_OPC_TEMPL_D_SImm(opcode, frD, rA, imm);
+	const sint32 frD = (opcode >> 21) & 0x1F;
+	const sint32 rA = (opcode >> 16) & 0x1F;
+	uint32 data0 = 0, data1 = 0;
+	const sint32 type = LD_TYPE(PSI);
+	const uint8 scale = (uint8)LD_SCALE(PSI);
 
-	uint32 EA = opcode & 0xfff, data0 = 0, data1 = 0;
-	sint32 type = LD_TYPE(PSI);
-	uint8 scale = (uint8)LD_SCALE(PSI);
-
-	if (EA & 0x800) EA |= 0xfffff000;
-
+	uint32 EA = (uint32)psq_d_form_disp(opcode);
 	if (rA)
 	{
 		EA += hCPU->gpr[rA];
@@ -1089,24 +1056,23 @@ static void PPCInterpreter_PSQ_LU(PPCInterpreter_t* hCPU, unsigned int opcode)
 	}
 }
 
+// X-form psq_lx (XO=6) and psq_lux (XO=38). Update form selected by bit 6.
 static void PPCInterpreter_PSQ_LX(PPCInterpreter_t* hCPU, unsigned int opcode)
 {
 	FPUCheckAvailable();
-	// next instruction
-	PPCInterpreter_nextInstruction(hCPU);
 
-	sint32 frD;
-	uint32 rA, rB;
-
-	frD = (opcode >> (32 - 11)) & 0x1F;
-	rA = (opcode >> (32 - 16)) & 0x1F;
-	rB = (opcode >> (32 - 21)) & 0x1F;
-
-	uint32 EA = (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB];
+	const sint32 frD = (opcode >> 21) & 0x1F;
+	const uint32 rA = (opcode >> 16) & 0x1F;
+	const uint32 rB = (opcode >> 11) & 0x1F;
+	// X-form EA: rA==0 means zero; rB always gpr[rB].
+	const uint32 EA = (rA ? hCPU->gpr[rA] : 0) + hCPU->gpr[rB];
+	const bool withUpdate = (opcode & 0x40) != 0; // psq_lux
+	if (withUpdate && rA)
+		hCPU->gpr[rA] = EA;
 
 	uint32 data0 = 0, data1 = 0;
-	sint32 type = LD_TYPE(PSIX);
-	uint8 scale = (uint8)LD_SCALE(PSIX);
+	const sint32 type = LD_TYPE(PSIX);
+	const uint8 scale = (uint8)LD_SCALE(PSIX);
 
 	if (PSWX)
 	{
@@ -1136,6 +1102,8 @@ static void PPCInterpreter_PSQ_LX(PPCInterpreter_t* hCPU, unsigned int opcode)
 		hCPU->fpr[frD].fp0 = (double)dequantize(data0, type, scale);
 		hCPU->fpr[frD].fp1 = (double)dequantize(data1, type, scale);
 	}
+
+	PPCInterpreter_nextInstruction(hCPU);
 }
 
 // misc
