@@ -199,6 +199,9 @@ static inline void ppc_fpscr_update_cr1(PPCInterpreter_t* hCPU)
 	hCPU->cr[7] = (f & FPSCR_OX) ? 1 : 0;
 }
 
+// Recompiler entry: CR1 ← FPSCR[FX,FEX,VX,OX] after an Rc FP op.
+ATTR_MS_ABI void ppc_fpscr_update_cr1_abi();
+
 #define MSR_SF			(1<<31)
 #define MSR_UNKNOWN		(1<<30)
 #define MSR_UNKNOWN2	(1<<27)

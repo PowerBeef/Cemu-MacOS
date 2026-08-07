@@ -335,6 +335,10 @@ void PPCInterpreter_PS_SEL(PPCInterpreter_t* hCPU, uint32 Opcode)
 	else
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frB].fp1;
 
+	// ps_sel does not touch FPSCR; Rc still copies CR1 ← FPSCR field 0.
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
+
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
@@ -561,6 +565,8 @@ void PPCInterpreter_PS_RSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
 	// FPRF from ps0 (suite excess-range rsqrte checks FPRF +normal = 0x4000).
 	ppc_fpscr_defer_end_double(hCPU->fpr[frD].fp0);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }

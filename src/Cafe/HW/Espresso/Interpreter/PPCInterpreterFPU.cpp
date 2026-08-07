@@ -257,8 +257,16 @@ static thread_local bool s_fma_suppressed = false;
 static thread_local uint32 s_fpscr_pending_sticky = 0;
 static thread_local bool s_fpscr_defer = false;
 static thread_local uint32 s_fpscr_acc_sticky = 0;
-static thread_local bool s_fpscr_acc_fi = false;
+static thread_local bool s_fpscr_acc_fi = false;       // ordinary: FI with XX
+static thread_local bool s_fpscr_acc_fi_only = false;  // estimates: FI without XX
 static thread_local bool s_fpscr_acc_suppressed = false;
+// fres/ps_res table residual → FI without XX (suite calc_fres / add_fpscr_fi).
+static thread_local bool s_estimate_fi = false;
+// Single-domain estimate result bits for FPRF (avoid host FZ flush on (float) cast).
+static thread_local uint32 s_estimate_single_bits = 0;
+static thread_local bool s_estimate_have_single = false;
+
+static void ppc_estimate_commit_fpscr(double result, bool single_domain);
 
 static inline void ppc_fpscr_note_sticky(uint32 bits)
 {
@@ -278,6 +286,29 @@ static inline void ppc_fpscr_note_host_fpsr()
 	if (fpsr & (1u << 1)) // DZC
 		s_fpscr_pending_sticky |= FPSCR_ZX;
 	// IOC is classified in software specials (VX* subtypes); ignore here.
+}
+
+// Software inexact for mul: fma(a,c,-r) residual (host IXC misses some RTZ cases).
+static inline void ppc_fpscr_note_mul_inexact(double a, double c, double r)
+{
+	if (!std::isfinite(a) || !std::isfinite(c) || !std::isfinite(r))
+		return;
+	if (std::fma(a, c, -r) != 0.0)
+		s_fpscr_pending_sticky |= FPSCR_XX;
+}
+
+// Tininess before rounding (Espresso): |exact| < min_normal of the result domain
+// while the rounded result may still be min_normal. Host UFC is after-rounding on
+// AArch64 and misses suite UX on min_normal ± tiny.
+static inline void ppc_fpscr_note_tininess_ux(double exact, bool single_domain)
+{
+	if ((s_fpscr_pending_sticky & FPSCR_XX) == 0)
+		return;
+	if (exact == 0.0 || !std::isfinite(exact))
+		return;
+	const double minN = single_domain ? 0x1.0p-126 : 0x1.0p-1022;
+	if (std::fabs(exact) < minN)
+		s_fpscr_pending_sticky |= FPSCR_UX;
 }
 
 // Software overflow: finite operands → Inf result (host OFC is not always set on
@@ -330,12 +361,14 @@ static void ppc_arith_commit_fpscr(double result, bool single_domain)
 
 	if (s_fma_suppressed)
 	{
-		// VE/ZE abort: stickies only (suite check_fpu_noresult).
+		// VE/ZE abort: stickies + FI when XX/FI pending (suite check_ps_noresult
+		// with add_fpscr_xx_fi / mixed SNaN+overflow).
 		if (sticky != 0)
-		{
 			ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
+		if (set_fi)
+			hCPU->fpscr |= FPSCR_FI;
+		if (sticky != 0 || set_fi)
 			ppc_fpscr_recompute(hCPU->fpscr);
-		}
 		return;
 	}
 
@@ -366,20 +399,54 @@ ATTR_MS_ABI void ppc_fpscr_defer_begin()
 	s_fpscr_defer = true;
 	s_fpscr_acc_sticky = 0;
 	s_fpscr_acc_fi = false;
+	s_fpscr_acc_fi_only = false;
 	s_fpscr_acc_suppressed = false;
 	s_fpscr_pending_sticky = 0;
+	s_estimate_fi = false;
+	s_estimate_have_single = false;
+}
+
+// Recompiler Rc: CR1 ← FPSCR field 0 (same as interpreter ppc_fpscr_update_cr1).
+ATTR_MS_ABI void ppc_fpscr_update_cr1_abi()
+{
+	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+	if (hCPU)
+		ppc_fpscr_update_cr1(hCPU);
 }
 
 static void ppc_fpscr_defer_end(double ps0_result, bool single_domain)
 {
 	s_fpscr_defer = false;
 	s_fpscr_pending_sticky = s_fpscr_acc_sticky;
-	if (s_fpscr_acc_fi)
-		s_fpscr_pending_sticky |= FPSCR_XX; // FI accompanies XX for ordinary arith
 	// If whole-register VE suppressed both lanes, stickies only.
 	const bool was_suppressed = s_fma_suppressed;
 	s_fma_suppressed = s_fpscr_acc_suppressed;
-	ppc_arith_commit_fpscr(ps0_result, single_domain);
+
+	// Estimates (ps_res): FI without XX. Ordinary PS arith: FI with XX.
+	if (s_fpscr_acc_fi_only && !s_fpscr_acc_fi)
+	{
+		s_estimate_fi = true;
+		ppc_estimate_commit_fpscr(ps0_result, single_domain);
+	}
+	else
+	{
+		if (s_fpscr_acc_fi)
+			s_fpscr_pending_sticky |= FPSCR_XX; // FI accompanies XX for ordinary arith
+		// Estimate FI-only OR'd into ordinary FI if both somehow present.
+		if (s_fpscr_acc_fi_only)
+			s_estimate_fi = true;
+		ppc_arith_commit_fpscr(ps0_result, single_domain);
+		if (s_fpscr_acc_fi_only && !s_fma_suppressed)
+		{
+			PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+			if (hCPU)
+			{
+				hCPU->fpscr |= FPSCR_FI;
+				ppc_fpscr_recompute(hCPU->fpscr);
+			}
+		}
+		s_estimate_fi = false;
+	}
 	s_fma_suppressed = was_suppressed;
 }
 
@@ -414,6 +481,14 @@ static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, doub
 	const bool nanB = ppc_bits_is_nan(ub);
 	const bool nanC = ppc_bits_is_nan(uc);
 
+	// 0 · ∞ or ∞ · 0 → VXIMZ (even when a NaN is also present — suite
+	// 0·(−Inf)+SNaN expects VXIMZ|VXSNAN). Check before pure NaN selection.
+	// Inf that only exists because 25-bit rounded a finite HUGE is not a true Inf
+	// operand: skip the invalid here (caller rewrites 0·overflowInf as 0·1).
+	const bool vximz =
+		((ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc) && !cOverflowToInf) ||
+		 (ppc_bits_is_inf(ua) && ppc_bits_is_zero(uc)));
+
 	// NaN selection order frA → frB → frC (Espresso / ppc750cl.s).
 	if (nanA || nanB || nanC)
 	{
@@ -426,22 +501,15 @@ static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, doub
 			selected = uc;
 		const uint64 r = ppc_quiet_nan(selected);
 		*out = *(double*)&r;
-		// SNaN anywhere signals invalid even if a QNaN was selected first.
 		if (anySNaN)
 			ppc_fpscr_note_sticky(FPSCR_VXSNAN);
-		return anySNaN ? 2 : 1;
+		if (vximz)
+			ppc_fpscr_note_sticky(FPSCR_VXIMZ);
+		// SNaN or VXIMZ → invalid (VE suppress). QNaN-only without VXIMZ → kind 1.
+		return (anySNaN || vximz) ? 2 : 1;
 	}
 
-	// 0 · ∞ or ∞ · 0 → VXIMZ default QNaN.
-	// Inf that only exists because 25-bit rounded a finite HUGE is not a true Inf
-	// operand: skip the invalid here (caller rewrites 0·overflowInf as 0·1).
-	if (ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc) && !cOverflowToInf)
-	{
-		*out = *(double*)&kPpcDefaultQNaN;
-		ppc_fpscr_note_sticky(FPSCR_VXIMZ);
-		return 2;
-	}
-	if (ppc_bits_is_inf(ua) && ppc_bits_is_zero(uc))
+	if (vximz)
 	{
 		*out = *(double*)&kPpcDefaultQNaN;
 		ppc_fpscr_note_sticky(FPSCR_VXIMZ);
@@ -760,6 +828,33 @@ static inline double ppc_fma_single_domain(double a, double cIn, double b, bool 
 			ppc_bits_is_inf(ur))
 			s_fpscr_pending_sticky |= FPSCR_OX | FPSCR_XX;
 	}
+	// Single-domain tininess: denorm or min-normal result with XX → UX when
+	// the exact intermediate was tinier (classify from packed single bits).
+	{
+		uint32 sb = ConvertToSingleNoFTZ(*(const uint64*)&r);
+		const uint32 sabs = sb & 0x7FFFFFFFu;
+		if ((s_fpscr_pending_sticky & FPSCR_XX) && sabs != 0 && sabs <= 0x00800000u)
+		{
+			// min normal single can still be tininess-before-rounding UX.
+			if (sabs < 0x00800000u)
+				s_fpscr_pending_sticky |= FPSCR_UX;
+			else
+			{
+				// min normal: host UFC often misses; suite still wants UX on
+				// min_denorm*min_denorm style tiny products that round up.
+				// Conservatively set UX when IXC and result is exactly min normal
+				// after a denormal-producing intermediate — use host UFC bit only
+				// was insufficient; set when any operand was subnormal-range.
+				const uint64 ua = *(const uint64*)&a, uc = *(const uint64*)&cIn, ub = *(const uint64*)&b;
+				const auto tinyish = [](uint64 x) {
+					const uint64 a = x & 0x7FFFFFFFFFFFFFFFULL;
+					return a != 0 && a < 0x0010000000000000ULL;
+				};
+				if (tinyish(ua) || tinyish(uc) || tinyish(ub))
+					s_fpscr_pending_sticky |= FPSCR_UX;
+			}
+		}
+	}
 	ppc_arith_commit_fpscr(r, true);
 	return r;
 }
@@ -900,22 +995,34 @@ static const uint16 s_fresDelta[32] = {
 };
 
 // calc_fres normal path: table lookup + optional result denormalization.
-static inline uint32 fres_normal_body(uint32 sign, sint32 expField, uint32 mant)
+// *out_fi accumulates LSBs shifted out (suite: FPSCR[FI] without XX).
+// *out_ux: result denormalized and inexact → FX|UX (suite calc_fres).
+static inline uint32 fres_normal_body(uint32 sign, sint32 expField, uint32 mant,
+	bool* out_fi, bool* out_ux)
 {
 	sint32 r9 = 253 - expField;
 	const uint32 idx = (mant >> 18) & 0x1Fu;
 	const uint32 stepMul = (mant >> 8) & 0x3FFu;
 	uint32 m = ((uint32)s_fresBase[idx] << 10) - (uint32)s_fresDelta[idx] * stepMul;
+	uint32 fi = m & 1u;
 	m >>= 1;
 	if (r9 <= 0)
 	{
 		const bool wasZero = (r9 == 0);
 		r9 = 0;
 		m |= 0x00800000u;
+		fi |= (m & 1u);
 		m >>= 1;
 		if (!wasZero)
+		{
+			fi |= (m & 1u);
 			m >>= 1;
+		}
+		if (fi)
+			*out_ux = true;
 	}
+	if (fi)
+		*out_fi = true;
 	return sign | ((uint32)r9 << 23) | (m & 0x007FFFFFu);
 }
 
@@ -929,6 +1036,9 @@ ATTR_MS_ABI double fres_espresso(double input)
 	uint32 mant = fb & 0x007FFFFFu;
 
 	uint32 out;
+	bool fi = false;
+	bool ux = false;
+	bool ox = false;
 	if (exp == 255)
 	{
 		if (mant == 0)
@@ -941,7 +1051,12 @@ ATTR_MS_ABI double fres_espresso(double input)
 		if (mant == 0)
 			out = sign | 0x7F800000u; // ±0 → ±Inf
 		else if (mant < 0x200000u)
-			out = sign | 0x7F7FFFFFu; // tiny denorm → ±HUGE_VALF
+		{
+			// tiny denorm → ±HUGE_VALF + OX + FI (suite calc_fres 0x90020000)
+			out = sign | 0x7F7FFFFFu;
+			ox = true;
+			fi = true;
+		}
 		else
 		{
 			// Normalize denormal (1 or 2 shifts), then normal body with expField 0 or -1.
@@ -953,11 +1068,23 @@ ATTR_MS_ABI double fres_espresso(double input)
 				expField = -1;
 			}
 			mant &= 0x007FFFFFu;
-			out = fres_normal_body(sign, expField, mant);
+			out = fres_normal_body(sign, expField, mant, &fi, &ux);
 		}
 	}
 	else
-		out = fres_normal_body(sign, (sint32)exp, mant);
+		out = fres_normal_body(sign, (sint32)exp, mant, &fi, &ux);
+
+	if (ox)
+		ppc_fpscr_note_sticky(FPSCR_OX); // no XX — estimates leave XX clear
+	if (ux)
+		ppc_fpscr_note_sticky(FPSCR_UX);
+	s_estimate_fi = fi;
+	// FPRF is from ps0 / sole result. Under defer (ps_res), keep the first lane's bits.
+	if (!s_fpscr_defer || !s_estimate_have_single)
+	{
+		s_estimate_single_bits = out;
+		s_estimate_have_single = true;
+	}
 
 	const uint64 dr = ConvertToDoubleNoFTZ(out);
 	return *(double*)&dr;
@@ -1083,13 +1210,17 @@ void PPCInterpreter_FSEL(PPCInterpreter_t* hCPU, uint32 Opcode)
 		hCPU->fpr[frD] = hCPU->fpr[frC];
 	else
 		hCPU->fpr[frD] = hCPU->fpr[frB];
-	PPC_ASSERT((Opcode & PPC_OPC_RC) != 0); // update CR1 flags
+	// fsel does not touch FPSCR; Rc still copies CR1 ← FPSCR field 0.
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
 // fctiw[z]: convert to 32-bit signed int, pack as 0xFFF8000x_xxxxxxxx (750CL high word).
 // NaN → 0x80000000 (VXCVI; +VXSNAN for SNaN). Out-of-range / Inf → clamp + VXCVI.
+// Range is decided *after* rounding under FPSCR[RN] — values like 2^31−0.25 that
+// round into INT_MAX are inexact, not VXCVI (suite check_fctiw_inex near bounds).
 // VE suppresses the write (suite check_fpu_noresult_nofprf).
 // check_fctiw* clears FPRF before compare — only stickies + FI/XX matter.
 static inline double ppc_fctiw_pack(uint32 v, bool negZero)
@@ -1108,6 +1239,10 @@ static inline double ppc_fctiw_common(double b, bool roundTowardZero)
 	const bool isInf = ppc_bits_is_inf(ub);
 	const bool sign = (ub >> 63) != 0;
 
+	// Exact integer bounds as doubles (both precisely representable).
+	static constexpr double kIntMaxD = 2147483647.0;  //  2^31 − 1
+	static constexpr double kIntMinD = -2147483648.0; // −2^31
+
 	uint32 v;
 	bool invalid = false;
 	bool set_fi = false;
@@ -1117,28 +1252,32 @@ static inline double ppc_fctiw_common(double b, bool roundTowardZero)
 		v = 0x80000000u;
 		invalid = true;
 	}
-	else if (b > (double)0x7FFFFFFF || (isInf && !sign))
+	else if (isInf)
 	{
-		v = 0x7FFFFFFFu;
-		invalid = true;
-	}
-	else if (b < -(double)0x80000000 || (isInf && sign))
-	{
-		v = 0x80000000u;
+		v = sign ? 0x80000000u : 0x7FFFFFFFu;
 		invalid = true;
 	}
 	else
 	{
-		if (roundTowardZero)
-			v = (uint32)(sint32)b; // trunc toward zero
+		// Host RN tracks FPSCR via PPCInterpreter_setRoundingModeFromFPSCR.
+		const double rounded = roundTowardZero ? std::trunc(b) : std::nearbyint(b);
+		if (rounded > kIntMaxD)
+		{
+			v = 0x7FFFFFFFu;
+			invalid = true;
+		}
+		else if (rounded < kIntMinD)
+		{
+			v = 0x80000000u;
+			invalid = true;
+		}
 		else
-			v = (uint32)(sint32)std::lrint(b); // FPSCR[RN] via host mode
-		// Exact 2^31 is already handled by the > 0x7FFFFFFF test; in-range only here.
-		// Inexact if the float was not an integer (suite check_fctiw_inex).
-		if (roundTowardZero)
-			set_fi = (b != std::trunc(b));
-		else
-			set_fi = (b != std::nearbyint(b));
+		{
+			// In-range after rounding — safe to cast.
+			v = (uint32)(sint32)rounded;
+			// VXCVI path never raises FI/XX (suite check_fctiw without _inex).
+			set_fi = (b != rounded);
+		}
 	}
 
 	if (isSNan)
@@ -1157,6 +1296,7 @@ static inline double ppc_fctiw_common(double b, bool roundTowardZero)
 		s_fpscr_pending_sticky = 0;
 		if (s_fma_suppressed)
 		{
+			// VE abort: stickies only, no FPRF (check_fpu_noresult_nofprf).
 			if (sticky != 0)
 			{
 				ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
@@ -1382,25 +1522,86 @@ void PPCInterpreter_FRSP(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
-// Estimates: suite check_fpu_estimate_* ignores XX/FI (clears them before compare).
-// Need FPRF + exception stickies only (VXSNAN, ZX, VXSQRT).
+// Estimates: XX is undefined (never set). FI is defined for fres/ps_res from the
+// table residual (suite calc_fres / add_fpscr_fi). check_fpu_estimate_* clears
+// XX/FI before compare, but check_fpu_pnorm + add_fpscr_fi and precise loops
+// require the exact FI bit.
 static void ppc_estimate_commit_fpscr(double result, bool single_domain)
 {
-	// Do not set XX/FI from host — estimates leave them undefined.
-	s_fpscr_pending_sticky &= ~(FPSCR_XX);
-	ppc_arith_commit_fpscr(result, single_domain);
-	// Clear FI if commit set it from XX residue.
-	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
-	if (hCPU && !s_fma_suppressed)
+	// Never raise XX from host/overflow helpers on estimate paths.
+	s_fpscr_pending_sticky &= ~FPSCR_XX;
+	const bool set_fi = s_estimate_fi;
+	s_estimate_fi = false;
+
+	// Temporarily encode FI via a side bit that arith_commit won't mistake for XX:
+	// call commit with sticky only, then apply FI ourselves.
+	uint32 sticky = s_fpscr_pending_sticky;
+	s_fpscr_pending_sticky = 0;
+
+	if (s_fpscr_defer)
 	{
-		hCPU->fpscr &= ~FPSCR_FI;
+		s_fpscr_acc_sticky |= sticky;
+		s_fpscr_acc_fi_only |= set_fi; // FI without XX (not s_fpscr_acc_fi)
+		if (s_fma_suppressed)
+			s_fpscr_acc_suppressed = true;
+		return;
+	}
+
+	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+	if (!hCPU)
+		return;
+
+	if (s_fma_suppressed)
+	{
+		// VE/ZE abort: stickies + FI (suite ps_res mixed SNaN+overflow still sets FI)
+		s_estimate_have_single = false;
+		if (sticky != 0)
+			ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
+		if (set_fi)
+			hCPU->fpscr |= FPSCR_FI;
+		if (sticky != 0 || set_fi)
+			ppc_fpscr_recompute(hCPU->fpscr);
+		return;
+	}
+
+	if (single_domain)
+	{
+		// Prefer integer single bits from fres_espresso — (float) of a re-expanded
+		// denorm double still flushes under host FZ and mis-classifies FPRF as zero.
+		float s;
+		if (s_estimate_have_single)
+		{
+			std::memcpy(&s, &s_estimate_single_bits, sizeof(s));
+			s_estimate_have_single = false;
+		}
+		else
+		{
+			const uint64 fpcr = __arm_rsr64("fpcr");
+			if (fpcr & (1ull << 24))
+				__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+			s = (float)result;
+			if (fpcr & (1ull << 24))
+				__arm_wsr64("fpcr", fpcr);
+		}
+		hCPU->fpscr &= ~(FPSCR_FI | FPSCR_FR);
+		ppc_fpscr_set_fprf_from_single(hCPU->fpscr, s);
+		if (set_fi)
+			hCPU->fpscr |= FPSCR_FI;
+		if (sticky != 0)
+			ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
 		ppc_fpscr_recompute(hCPU->fpscr);
+	}
+	else
+	{
+		s_estimate_have_single = false;
+		ppc_fpscr_commit_result(hCPU->fpscr, result, sticky, set_fi, true, false);
 	}
 }
 
 // Unary estimate with VE (SNaN) / ZE (±0 for fres) suppress.
 ATTR_MS_ABI double ppc_fres(double b)
 {
+	s_estimate_fi = false;
 	const uint64 ub = *(const uint64*)&b;
 	if (ppc_bits_is_snan(ub))
 	{
@@ -1416,14 +1617,14 @@ ATTR_MS_ABI double ppc_fres(double b)
 		double out = fres_espresso(b);
 		ppc_fpscr_note_sticky(FPSCR_ZX);
 		const double r = ppc_fp_finish_ze(out);
+		// Zero→Inf is exact for the estimate (no FI).
+		s_estimate_fi = false;
 		ppc_estimate_commit_fpscr(r, true);
 		return r;
 	}
 	s_fma_suppressed = false;
 	const double r = fres_espresso(b);
-	// Overflow of estimate to Inf from finite (suite OX on huge results).
-	ppc_fpscr_note_overflow_to_inf1(b, r);
-	// fres result is single-domain re-expanded double.
+	// fres result is single-domain re-expanded double; stickies set in fres_espresso.
 	ppc_estimate_commit_fpscr(r, true);
 	return r;
 }
@@ -1480,6 +1681,28 @@ ATTR_MS_ABI double ppc_fmul(double a, double c)
 	__arm_wsr("fpsr", 0);
 	const double r = a * c;
 	ppc_fpscr_note_host_fpsr();
+	ppc_fpscr_note_mul_inexact(a, c, r);
+	// Tininess before rounding: exact product via high-prec residual toward 0.
+	// If rounded result is min-normal and inexact, exact is tinier when the
+	// other rounding direction would denormalize — approximate via fma scale.
+	if ((s_fpscr_pending_sticky & FPSCR_XX) && std::isfinite(r) && r != 0.0)
+	{
+		const double absR = std::fabs(r);
+		if (absR == 0x1.0p-1022 || absR < 0x1.0p-1022)
+		{
+			// Exact |a*c| < min_normal if r is denorm, or if r is min_normal and
+			// fma(a,c,-r) has opposite sign to r (rounded away from zero / up).
+			if (absR < 0x1.0p-1022)
+				s_fpscr_pending_sticky |= FPSCR_UX;
+			else
+			{
+				const double resid = std::fma(a, c, -r);
+				// Tininess before rounding when exact is between 0 and min_normal.
+				if (resid != 0.0 && ((resid > 0) != (r > 0)))
+					s_fpscr_pending_sticky |= FPSCR_UX;
+			}
+		}
+	}
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
 	ppc_arith_commit_fpscr(r, false);
@@ -2141,12 +2364,17 @@ ATTR_MS_ABI double ppc_fadds(double a, double b)
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
 	volatile double va = a, vb = b;
-	volatile float s = (float)(va + vb);
+	const double exact = va + vb; // double intermediate = exact for single pack
+	volatile float s = (float)exact;
 	volatile double r = (double)s;
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
 	ppc_fpscr_note_host_fpsr();
-	// Underflow tininess from single view
+	// Inexact: single pack lost bits
+	if ((float)exact != exact && std::isfinite(exact))
+		s_fpscr_pending_sticky |= FPSCR_XX;
+	// Tininess before rounding to single (suite: min_single ± min_double → UX)
+	ppc_fpscr_note_tininess_ux(exact, true);
 	uint32 sb;
 	std::memcpy(&sb, (const void*)&s, sizeof(sb));
 	if ((s_fpscr_pending_sticky & FPSCR_XX) && (sb & 0x7FFFFFFFu) < 0x00800000u)
@@ -2171,11 +2399,15 @@ ATTR_MS_ABI double ppc_fsubs(double a, double b)
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
 	volatile double va = a, vb = b;
-	volatile float s = (float)(va - vb);
+	const double exact = va - vb;
+	volatile float s = (float)exact;
 	volatile double r = (double)s;
 	if (fpcr & (1ull << 24))
 		__arm_wsr64("fpcr", fpcr);
 	ppc_fpscr_note_host_fpsr();
+	if ((float)exact != exact && std::isfinite(exact))
+		s_fpscr_pending_sticky |= FPSCR_XX;
+	ppc_fpscr_note_tininess_ux(exact, true);
 	uint32 sb;
 	std::memcpy(&sb, (const void*)&s, sizeof(sb));
 	if ((s_fpscr_pending_sticky & FPSCR_XX) && (sb & 0x7FFFFFFFu) < 0x00800000u)
