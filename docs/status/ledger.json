@@ -1568,7 +1568,9 @@
       "title": "Wire the 14 unincremented telemetry counters (mem.*, pipelines, readback_queued)",
       "area": "tooling",
       "status": "landed",
-      "commits": [],
+      "commits": [
+        "0577757"
+      ],
       "verdict": "All twelve `mem.*`, `gpu.pipelines_compiled`, and `acc.readback_queued` now increment on the real choke points (buffer-cache scan/upload, shader-state hit/aux/miss, tex check/reload/bytes, index upload bytes, Metal PSO create, readback queue). Zeros from these counters were previously indistinguishable from \"not wired\".",
       "note": "Locale pot drift (19 stale locales) is still open and deliberately not in this change. Positive-control verification is a BotW run with `--telemetry` showing non-zero mem.bufcache.* and mem.shadercache.hit in gameplay.",
       "ref": ".grok/rules/measurement.md"
@@ -1578,17 +1580,27 @@
       "title": "FMA \u2014 single-rounding multiply-add on recompiler and interpreter",
       "area": "cpu",
       "status": "landed",
-      "commits": [],
+      "commits": [
+        "0577757"
+      ],
       "verdict": "IML ops `FPR_FMADD/FMSUB/FNMADD/FNMSUB` emit AArch64 fused instructions with the documented fmsub\u2194fnmsub crossover; interpreter uses `std::fma`. Scalar + paired-single + *S variants. Values-only suite: 325 \u2192 319 (and both arms still match).",
       "note": "Does not alone clear the 116 mad-form residual \u2014 Espresso 25-bit frC product rounding is still missing on the recompiler path. That is a separate accuracy item under rm-fp-conformance.",
-      "ref": "02-cpu-jit-memory.md \u2014 3.2 FMA"
+      "ref": "02-cpu-jit-memory.md \u2014 3.2 FMA",
+      "measured": {
+        "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
+        "at_commit": "0577757",
+        "date": "2026-08-07",
+        "n": 1
+      }
     },
     {
       "id": "rm-mathmode-fix",
       "title": "Replace inert setFastMathEnabled with setMathMode so shaderFastMath=false works",
       "area": "graphics",
       "status": "landed",
-      "commits": [],
+      "commits": [
+        "0577757"
+      ],
       "verdict": "`RendererShaderMtl::LibraryFromSource` now calls `setMathMode(MathModeFast|Safe)` for both profile values. Previously only the true arm called the deprecated setter, so false was a silent no-op (fast math stayed on).",
       "note": "Behaviour change for the nine shipped profiles that set shaderFastMath false \u2014 they will now compile with safe math. accurateShaderMul Experiment 1 already showed strict mul is not a free Korok win; this is the other half of that contradiction.",
       "ref": "00-master-plan.md \u2014 Two findings that land regardless"
@@ -1947,7 +1959,13 @@
       "status": "open",
       "verdict": "Values-only suite (`IGNORE_FPSCR_STATE=1`) is **319** failures (was 354 at first measurement, 325 at session start). FMA family now uses fused `std::fma` / AArch64 `fmadd` with the PPC\u2194ARM mnemonic crossover isolated in the backend; `fctiw` honours FPSCR[RN] via `lrint`. Arms still identical (0 recompiler-only). Remaining mass is Espresso-specific: 25-bit frC product rounding, psq_*, fres/rsqrte tables, ps_cmpo1, frsp edge cases.",
       "gate": "Continue against values-only ranking. Next clusters: (1) Espresso 25-bit frC on single FMA/mul, (2) psq load/store quantisation, (3) fres/rsqrte tables, (4) ps_cmpo1. Do not rank against default FPSCR build.",
-      "ref": "docs/testing/00-test-strategy.md \u2014 First result"
+      "ref": "docs/testing/00-test-strategy.md \u2014 First result",
+      "measured": {
+        "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
+        "at_commit": "0577757",
+        "date": "2026-08-07",
+        "n": 1
+      }
     },
     {
       "id": "rm-homebrew-exit-crash",
