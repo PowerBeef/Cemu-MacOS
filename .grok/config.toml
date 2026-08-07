@@ -1,0 +1,13 @@
+# Project-scoped Grok config (TesseraEmu)
+# See: https://github.com/Matt-Wood-23/cemu-re-mcp
+#
+# Guest PowerPC live debug via TesseraEmu's GDB stub.
+# Launch the emulator with: --enable-gdbstub  (port 1337)
+# Then: connect_tool → resume_tool → memory/register/BP tools.
+# First-time setup: ./tools/cemu-re-mcp/setup.sh
+
+[mcp_servers.cemu-re]
+command = "tools/cemu-re-mcp/.venv/bin/python"
+args = ["-m", "cemu_re_mcp.server"]
+enabled = true
+startup_timeout_sec = 60

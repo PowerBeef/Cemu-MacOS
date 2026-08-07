@@ -69,3 +69,6 @@ bin/graphicPacks/*
 # silently kept dist/macos/*.entitlements out of the repo -- the files the
 # bundle is signed with. A repo rule outranks the global one, so re-include it.
 !dist/
+
+# cemu-re-mcp local venv (bootstrap with tools/cemu-re-mcp/setup.sh)
+tools/cemu-re-mcp/.venv/
