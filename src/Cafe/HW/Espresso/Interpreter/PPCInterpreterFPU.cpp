@@ -260,6 +260,12 @@ static thread_local uint32 s_fpscr_acc_sticky = 0;
 static thread_local bool s_fpscr_acc_fi = false;       // ordinary: FI with XX
 static thread_local bool s_fpscr_acc_fi_only = false;  // estimates: FI without XX
 static thread_local bool s_fpscr_acc_suppressed = false;
+// PS VE: if only ps1 is invalid, write is suppressed but FPRF still comes from
+// ps0 (suite: HUGE+SNaN mixed → check_ps_pinf with prior frD).
+static thread_local bool s_fpscr_acc_ps0_suppressed = false;
+static thread_local double s_fpscr_acc_ps0_result = 0.0;
+static thread_local bool s_fpscr_acc_have_ps0 = false;
+static thread_local int s_fpscr_defer_lane = 0;
 // fres/ps_res table residual → FI without XX (suite calc_fres / add_fpscr_fi).
 static thread_local bool s_estimate_fi = false;
 // Single-domain estimate result bits for FPRF (avoid host FZ flush on (float) cast).
@@ -353,6 +359,14 @@ static void ppc_arith_commit_fpscr(double result, bool single_domain)
 		s_fpscr_acc_fi |= set_fi;
 		if (s_fma_suppressed)
 			s_fpscr_acc_suppressed = true;
+		// Lane 0: remember would-be result and whether VE/ZE killed it.
+		if (s_fpscr_defer_lane == 0)
+		{
+			s_fpscr_acc_ps0_result = result;
+			s_fpscr_acc_have_ps0 = true;
+			s_fpscr_acc_ps0_suppressed = s_fma_suppressed;
+		}
+		s_fpscr_defer_lane++;
 		return;
 	}
 
@@ -402,6 +416,9 @@ ATTR_MS_ABI void ppc_fpscr_defer_begin()
 	s_fpscr_acc_fi = false;
 	s_fpscr_acc_fi_only = false;
 	s_fpscr_acc_suppressed = false;
+	s_fpscr_acc_ps0_suppressed = false;
+	s_fpscr_acc_have_ps0 = false;
+	s_fpscr_defer_lane = 0;
 	s_fpscr_pending_sticky = 0;
 	s_estimate_fi = false;
 	s_estimate_have_single = false;
@@ -420,25 +437,49 @@ static void ppc_fpscr_defer_end(double ps0_result, bool single_domain)
 	s_fpscr_defer = false;
 	// Merge any post-lane sticky notes (e.g. pack_arith OX after fdiv).
 	s_fpscr_pending_sticky = s_fpscr_acc_sticky | s_fpscr_pending_sticky;
-	// If whole-register VE suppressed both lanes, stickies only.
 	const bool was_suppressed = s_fma_suppressed;
+	// Whole-register suppress if either lane VE/ZE-aborted.
 	s_fma_suppressed = s_fpscr_acc_suppressed;
+
+	// Prefer would-be ps0 result for FPRF (commit_lane may have left prior frD).
+	const double fprf_src = s_fpscr_acc_have_ps0 ? s_fpscr_acc_ps0_result : ps0_result;
+	// SNaN only in ps1: still classify FPRF from successful ps0 (check_ps_pinf).
+	// SNaN in ps0: no FPRF (check_ps_noresult / check_fpu_noresult_nofprf).
+	const bool fprf_ok = !s_fpscr_acc_ps0_suppressed;
 
 	// Estimates (ps_res): FI without XX. Ordinary PS arith: FI with XX.
 	if (s_fpscr_acc_fi_only && !s_fpscr_acc_fi)
 	{
 		s_estimate_fi = true;
-		ppc_estimate_commit_fpscr(ps0_result, single_domain);
+		if (s_fma_suppressed && fprf_ok)
+		{
+			// Write suppressed but FPRF from ps0 (ps_res mixed SNaN+overflow).
+			s_fma_suppressed = false;
+			ppc_estimate_commit_fpscr(fprf_src, single_domain);
+			// Restore suppress flag for callers; write already skipped by commit_lane.
+			s_fma_suppressed = true;
+		}
+		else
+			ppc_estimate_commit_fpscr(fprf_src, single_domain);
 	}
 	else
 	{
 		if (s_fpscr_acc_fi)
 			s_fpscr_pending_sticky |= FPSCR_XX; // FI accompanies XX for ordinary arith
-		// Estimate FI-only OR'd into ordinary FI if both somehow present.
 		if (s_fpscr_acc_fi_only)
 			s_estimate_fi = true;
-		ppc_arith_commit_fpscr(ps0_result, single_domain);
-		if (s_fpscr_acc_fi_only && !s_fma_suppressed)
+
+		if (s_fma_suppressed && fprf_ok)
+		{
+			// Stickies + FPRF from would-be ps0; destination already left unchanged.
+			s_fma_suppressed = false;
+			ppc_arith_commit_fpscr(fprf_src, single_domain);
+			s_fma_suppressed = true;
+		}
+		else
+			ppc_arith_commit_fpscr(fprf_src, single_domain);
+
+		if (s_fpscr_acc_fi_only)
 		{
 			PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
 			if (hCPU)
@@ -1546,6 +1587,13 @@ static void ppc_estimate_commit_fpscr(double result, bool single_domain)
 		s_fpscr_acc_fi_only |= set_fi; // FI without XX (not s_fpscr_acc_fi)
 		if (s_fma_suppressed)
 			s_fpscr_acc_suppressed = true;
+		if (s_fpscr_defer_lane == 0)
+		{
+			s_fpscr_acc_ps0_result = result;
+			s_fpscr_acc_have_ps0 = true;
+			s_fpscr_acc_ps0_suppressed = s_fma_suppressed;
+		}
+		s_fpscr_defer_lane++;
 		return;
 	}
 
@@ -1684,25 +1732,25 @@ ATTR_MS_ABI double ppc_fmul(double a, double c)
 	const double r = a * c;
 	ppc_fpscr_note_host_fpsr();
 	ppc_fpscr_note_mul_inexact(a, c, r);
-	// Tininess before rounding: exact product via high-prec residual toward 0.
-	// If rounded result is min-normal and inexact, exact is tinier when the
-	// other rounding direction would denormalize — approximate via fma scale.
-	if ((s_fpscr_pending_sticky & FPSCR_XX) && std::isfinite(r) && r != 0.0)
+	// Tininess before rounding via frexp exponents (host UFC/IXC miss some
+	// min-normal edges, e.g. (2·min−1ulp)·0.5).
+	if (std::isfinite(a) && std::isfinite(c) && a != 0.0 && c != 0.0 && std::isfinite(r))
 	{
-		const double absR = std::fabs(r);
-		if (absR == 0x1.0p-1022 || absR < 0x1.0p-1022)
+		int ea = 0, ec = 0;
+		double ma = std::frexp(std::fabs(a), &ea);
+		double mc = std::frexp(std::fabs(c), &ec);
+		double mm = ma * mc;
+		int ep = ea + ec;
+		if (mm < 0.5)
 		{
-			// Exact |a*c| < min_normal if r is denorm, or if r is min_normal and
-			// fma(a,c,-r) has opposite sign to r (rounded away from zero / up).
-			if (absR < 0x1.0p-1022)
-				s_fpscr_pending_sticky |= FPSCR_UX;
-			else
-			{
-				const double resid = std::fma(a, c, -r);
-				// Tininess before rounding when exact is between 0 and min_normal.
-				if (resid != 0.0 && ((resid > 0) != (r > 0)))
-					s_fpscr_pending_sticky |= FPSCR_UX;
-			}
+			mm *= 2.0;
+			ep -= 1;
+		}
+		// product ≈ mm·2^ep, mm∈[0.5,1). Tininess if |exact| < min_normal (2^-1022)
+		// ↔ frexp-exp of exact < -1021.
+		if (ep < -1021)
+		{
+			s_fpscr_pending_sticky |= FPSCR_UX | FPSCR_XX;
 		}
 	}
 	if (fpcr & (1ull << 24))
@@ -2140,17 +2188,26 @@ ATTR_MS_ABI double ppc_ps_fold_estimate(double input, double result)
 ATTR_MS_ABI double ppc_ps_pack_arith(double r)
 {
 	const uint64 b = *(const uint64*)&r;
+	double out = r;
 	if ((b & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL)
-		return r;
-	// Finite double that overflows single-domain (HUGE+HUGE, HUGE/tiny): Inf + OX|XX.
-	constexpr double kMaxSingle = 0x1.fffffep+127;
-	if (std::isfinite(r) && std::fabs(r) > kMaxSingle)
+		out = r;
+	else
 	{
-		ppc_fpscr_note_sticky(FPSCR_OX | FPSCR_XX);
-		const uint64 inf = (b & 0x8000000000000000ULL) | 0x7FF0000000000000ULL;
-		return *(const double*)&inf;
+		// Finite double that overflows single-domain (HUGE+HUGE, HUGE/tiny): Inf + OX|XX.
+		constexpr double kMaxSingle = 0x1.fffffep+127;
+		if (std::isfinite(r) && std::fabs(r) > kMaxSingle)
+		{
+			ppc_fpscr_note_sticky(FPSCR_OX | FPSCR_XX);
+			const uint64 inf = (b & 0x8000000000000000ULL) | 0x7FF0000000000000ULL;
+			out = *(const double*)&inf;
+		}
+		else
+			out = ppc_ps_quantize(r);
 	}
-	return ppc_ps_quantize(r);
+	// After pack of lane 0, refresh would-be FPRF source (fdiv then pack).
+	if (s_fpscr_defer && s_fpscr_defer_lane == 1 && s_fpscr_acc_have_ps0)
+		s_fpscr_acc_ps0_result = out;
+	return out;
 }
 
 void PPCInterpreter_FADD(PPCInterpreter_t* hCPU, uint32 Opcode)

@@ -28,7 +28,8 @@ void PPCInterpreter_PS_ADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	// Pack before commit so VE leave-prev is not re-quantized.
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
-	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
+	// Would-be ps0 for FPRF when only ps1 VE-aborts.
+	ppc_fpscr_defer_end_single(r0);
 	if (Opcode & PPC_OPC_RC)
 		ppc_fpscr_update_cr1(hCPU);
 
@@ -56,7 +57,7 @@ void PPCInterpreter_PS_SUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_note_suppress();
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
-	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
+	ppc_fpscr_defer_end_single(r0);
 	if (Opcode & PPC_OPC_RC)
 		ppc_fpscr_update_cr1(hCPU);
 
@@ -86,7 +87,7 @@ void PPCInterpreter_PS_MUL(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_note_suppress();
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
-	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
+	ppc_fpscr_defer_end_single(r0);
 	if (Opcode & PPC_OPC_RC)
 		ppc_fpscr_update_cr1(hCPU);
 
@@ -116,6 +117,10 @@ void PPCInterpreter_PS_DIV(PPCInterpreter_t* hCPU, uint32 Opcode)
 	double r1 = ppc_fdiv(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1);
 	const bool s1 = ppc_fma_was_suppressed();
 	ppc_ps_fma_note_suppress();
+	// Always single-pack for OX/FPRF (even when VE/ZE suppress the write —
+	// suite mixed SNaN+overflow still wants OX|XX from the overflow lane).
+	r0 = ppc_ps_pack_arith(r0);
+	r1 = ppc_ps_pack_arith(r1);
 	if (s0 || s1)
 	{
 		hCPU->fpr[frD].fp0 = prev0;
@@ -123,11 +128,10 @@ void PPCInterpreter_PS_DIV(PPCInterpreter_t* hCPU, uint32 Opcode)
 	}
 	else
 	{
-		// Single-domain pack with OX on overflow (suite HUGE/tiny → Inf).
-		hCPU->fpr[frD].fp0 = ppc_ps_pack_arith(r0);
-		hCPU->fpr[frD].fp1 = ppc_ps_pack_arith(r1);
+		hCPU->fpr[frD].fp0 = r0;
+		hCPU->fpr[frD].fp1 = r1;
 	}
-	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
+	ppc_fpscr_defer_end_single(r0);
 	if (Opcode & PPC_OPC_RC)
 		ppc_fpscr_update_cr1(hCPU);
 
@@ -181,8 +185,8 @@ static inline void ppc_ps_fma_both(double& d0, double& d1,
 	ppc_ps_fma_note_suppress();
 	d0 = ppc_ps_fma_commit_lane(prev0, r0);
 	d1 = ppc_ps_fma_commit_lane(prev1, r1);
-	// FPRF from ps0; stickies/FI from both lanes (suite).
-	ppc_fpscr_defer_end_single(d0);
+	// FPRF from would-be ps0 (even if VE left d0 as prev).
+	ppc_fpscr_defer_end_single(r0);
 }
 
 void PPCInterpreter_PS_MADD(PPCInterpreter_t* hCPU, uint32 Opcode)
@@ -421,7 +425,7 @@ void PPCInterpreter_PS_MULS0(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_note_suppress();
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
-	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
+	ppc_fpscr_defer_end_single(r0);
 	if (Opcode & PPC_OPC_RC)
 		ppc_fpscr_update_cr1(hCPU);
 
@@ -450,7 +454,7 @@ void PPCInterpreter_PS_MULS1(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_note_suppress();
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
-	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
+	ppc_fpscr_defer_end_single(r0);
 	if (Opcode & PPC_OPC_RC)
 		ppc_fpscr_update_cr1(hCPU);
 
@@ -558,8 +562,8 @@ void PPCInterpreter_PS_RSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 		__arm_wsr64("fpcr", fpcr);
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
-	// FPRF from ps0 (suite excess-range rsqrte checks FPRF +normal = 0x4000).
-	ppc_fpscr_defer_end_double(hCPU->fpr[frD].fp0);
+	// FPRF from would-be ps0 (suite excess-range + VE mixed).
+	ppc_fpscr_defer_end_double(r0);
 	if (Opcode & PPC_OPC_RC)
 		ppc_fpscr_update_cr1(hCPU);
 
@@ -663,7 +667,7 @@ void PPCInterpreter_PS_RES(PPCInterpreter_t* hCPU, uint32 Opcode)
 	ppc_ps_fma_note_suppress();
 	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
 	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
-	ppc_fpscr_defer_end_single(hCPU->fpr[frD].fp0);
+	ppc_fpscr_defer_end_single(r0);
 	if (Opcode & PPC_OPC_RC)
 		ppc_fpscr_update_cr1(hCPU);
 
