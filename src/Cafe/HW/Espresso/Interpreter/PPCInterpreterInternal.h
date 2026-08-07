@@ -182,7 +182,8 @@ static inline uint32 ppc_getCR(PPCInterpreter_t* hCPU)
 #define IS_QNAN(X)				((((X) & 0x000fffffffffffffULL) != 0) && (((X) & 0x7ff8000000000000ULL) == 0x7ff8000000000000ULL))
 #define IS_SNAN(X)				((((X) & 0x000fffffffffffffULL) != 0) && (((X) & 0x7ff8000000000000ULL) == 0x7ff0000000000000ULL))
 
-#define FPSCR_VE				(1 <<  7)
+#define FPSCR_VE				(1 <<  7)	// FPSCR bit 24 — invalid enable
+#define FPSCR_ZE				(1 <<  4)	// FPSCR bit 27 — zero-divide enable
 
 // Espresso single-precision multiply factor: 25-bit mantissa for frC.
 // Non-inline so the recompiler can call it via make_call_imm (same ABI as fres_espresso).
@@ -214,6 +215,14 @@ ATTR_MS_ABI double ppc_fnmadds(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmsubs(double a, double c, double b);
 // Single-precision multiply (*S / ps_mul*): raw frC, 25-bit + ldexp product.
 ATTR_MS_ABI double ppc_fmuls(double a, double c);
+// Double-precision mul/div with Espresso NaN order and VE/ZE suppress.
+ATTR_MS_ABI double ppc_fmul(double a, double c);
+ATTR_MS_ABI double ppc_fdiv(double a, double b);
+ATTR_MS_ABI double ppc_fadd(double a, double b);
+ATTR_MS_ABI double ppc_fsub(double a, double b);
+// Estimates with SNaN quiet + VE/ZE suppress (bind_dest before call).
+ATTR_MS_ABI double ppc_fres(double b);
+ATTR_MS_ABI double ppc_frsqrte(double b);
 
 ATTR_MS_ABI double fres_espresso(double input);
 ATTR_MS_ABI double frsqrte_espresso(double input);

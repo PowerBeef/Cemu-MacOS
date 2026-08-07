@@ -68,8 +68,35 @@ void PPCInterpreter_PS_DIV(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	hCPU->fpr[frD].fp0 = (float)(hCPU->fpr[frA].fp0 / hCPU->fpr[frB].fp0);
-	hCPU->fpr[frD].fp1 = (float)(hCPU->fpr[frA].fp1 / hCPU->fpr[frB].fp1);
+	// Double-specials then single pack; whole-register VE/ZE suppress.
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_ps_fma_reset_suppress();
+	ppc_fma_bind_dest(prev0);
+	double r0 = ppc_fdiv(hCPU->fpr[frA].fp0, hCPU->fpr[frB].fp0);
+	const bool s0 = ppc_fma_was_suppressed();
+	ppc_ps_fma_note_suppress();
+	ppc_fma_bind_dest(prev1);
+	double r1 = ppc_fdiv(hCPU->fpr[frA].fp1, hCPU->fpr[frB].fp1);
+	const bool s1 = ppc_fma_was_suppressed();
+	ppc_ps_fma_note_suppress();
+	if (s0 || s1)
+	{
+		hCPU->fpr[frD].fp0 = prev0;
+		hCPU->fpr[frD].fp1 = prev1;
+	}
+	else
+	{
+		// Pack finite results to single; keep NaN/Inf double form from helper.
+		auto pack = [](double r) -> double {
+			const uint64 b = *(const uint64*)&r;
+			if (((b & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL))
+				return r;
+			return (double)(float)r;
+		};
+		hCPU->fpr[frD].fp0 = pack(r0);
+		hCPU->fpr[frD].fp1 = pack(r1);
+	}
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -410,8 +437,18 @@ void PPCInterpreter_PS_RSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frB = (Opcode>>11)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 	
-	hCPU->fpr[frD].fp0 = (float)frsqrte_espresso(hCPU->fpr[frB].fp0);
-	hCPU->fpr[frD].fp1 = (float)frsqrte_espresso(hCPU->fpr[frB].fp1);
+	// Whole-register VE suppress for mixed SNaN / negative lanes.
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_ps_fma_reset_suppress();
+	ppc_fma_bind_dest(prev0);
+	const double r0 = ppc_frsqrte(hCPU->fpr[frB].fp0);
+	ppc_ps_fma_note_suppress();
+	ppc_fma_bind_dest(prev1);
+	const double r1 = ppc_frsqrte(hCPU->fpr[frB].fp1);
+	ppc_ps_fma_note_suppress();
+	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
+	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -495,8 +532,17 @@ void PPCInterpreter_PS_RES(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frB = (Opcode>>11)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 	
-	hCPU->fpr[frD].fp0 = (float)fres_espresso(hCPU->fpr[frB].fp0);
-	hCPU->fpr[frD].fp1 = (float)fres_espresso(hCPU->fpr[frB].fp1);
+	const double prev0 = hCPU->fpr[frD].fp0;
+	const double prev1 = hCPU->fpr[frD].fp1;
+	ppc_ps_fma_reset_suppress();
+	ppc_fma_bind_dest(prev0);
+	const double r0 = ppc_fres(hCPU->fpr[frB].fp0);
+	ppc_ps_fma_note_suppress();
+	ppc_fma_bind_dest(prev1);
+	const double r1 = ppc_fres(hCPU->fpr[frB].fp1);
+	ppc_ps_fma_note_suppress();
+	hCPU->fpr[frD].fp0 = ppc_ps_fma_commit_lane(prev0, r0);
+	hCPU->fpr[frD].fp1 = ppc_ps_fma_commit_lane(prev1, r1);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }

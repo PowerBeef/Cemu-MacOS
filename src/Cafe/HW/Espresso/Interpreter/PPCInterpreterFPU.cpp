@@ -44,9 +44,9 @@ ATTR_MS_ABI double frsqrte_espresso(double input)
 	// 0.0 and -0.0
 	if ((x << 1) == 0)
 	{
-		// result is inf or -inf
-		x &= ~0x7FFFFFFFFFFFFFFF;
-		x |= 0x7FF0000000000000;
+		// result is inf or -inf (same sign)
+		x &= ~0x7FFFFFFFFFFFFFFFULL;
+		x |= 0x7FF0000000000000ULL;
 		return *(double*)&x;
 	}
 	// get exponent
@@ -54,25 +54,25 @@ ATTR_MS_ABI double frsqrte_espresso(double input)
 	// NaN or INF
 	if (e == 0x7FF)
 	{
-		if ((x&((1ull << ieee_double_m_bits) - 1)) == 0)
+		if ((x & ((1ull << ieee_double_m_bits) - 1)) == 0)
 		{
 			// negative INF returns +NaN
 			if ((sint64)x < 0)
 			{
-				x = 0x7FF8000000000000;
+				x = 0x7FF8000000000000ULL;
 				return *(double*)&x;
 			}
 			// positive INF returns +0.0
 			return 0.0;
 		}
-		// result is NaN with same sign and same mantissa (todo: verify)
-		return *(double*)&x;
+		// Quiet SNaN; keep QNaN payload (suite: frsqrte SNaN → quieted).
+		return *(double*)&(x = x | 0x0008000000000000ULL);
 	}
 	// negative number (other than -0.0)
 	if ((sint64)x < 0)
 	{
 		// result is positive NaN
-		x = 0x7FF8000000000000;
+		x = 0x7FF8000000000000ULL;
 		return *(double*)&x;
 	}
 	// todo: handle denormals
@@ -277,10 +277,11 @@ static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, doub
 	return 0;
 }
 
-// Prior frD + VE, set by ppc_fma_bind_dest before each helper call so both the
-// interpreter and the recompiler can honour FPSCR[VE] result suppression.
+// Prior frD + VE/ZE, set by ppc_fma_bind_dest before each helper call so both
+// the interpreter and the recompiler can honour FPSCR result suppression.
 static thread_local double s_fma_prev = 0.0;
 static thread_local bool s_fma_ve = false;
+static thread_local bool s_fma_ze = false;
 static thread_local bool s_fma_suppressed = false;
 
 ATTR_MS_ABI void ppc_fma_bind_dest(double prevFrD)
@@ -289,11 +290,24 @@ ATTR_MS_ABI void ppc_fma_bind_dest(double prevFrD)
 	s_fma_suppressed = false;
 	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
 	s_fma_ve = hCPU && (hCPU->fpscr & FPSCR_VE);
+	s_fma_ze = hCPU && (hCPU->fpscr & FPSCR_ZE);
 }
 
 ATTR_MS_ABI bool ppc_fma_was_suppressed()
 {
 	return s_fma_suppressed;
+}
+
+static inline double ppc_fp_finish_ze(double specialResult)
+{
+	// ZE + exact zero divisor → leave destination unchanged (suite check_fpu_noresult).
+	if (s_fma_ze)
+	{
+		s_fma_suppressed = true;
+		return s_fma_prev;
+	}
+	s_fma_suppressed = false;
+	return specialResult;
 }
 
 // PS FMA whole-register VE suppress: if either lane hits invalid with VE, neither
@@ -547,9 +561,10 @@ static inline double ppc_mul_result_to_single(double r)
 	return *(double*)&dr;
 }
 
-// Single-precision multiply specials (NaN A→C; 0·∞ / ∞·0 → default QNaN).
+// Multiply specials (NaN A→C; 0·∞ / ∞·0 → default QNaN).
 // cOverflowToInf: 25-bit of finite HUGE — not a true Inf for VXIMZ (0·HUGE → 0).
-static int ppc_fmul_try_special(double a, double c, double* out, bool cOverflowToInf)
+// singleDomain: quieted NaN is folded through float bits (fmuls); double keeps payload.
+static int ppc_fmul_try_special(double a, double c, double* out, bool cOverflowToInf, bool singleDomain)
 {
 	const uint64 ua = *(const uint64*)&a;
 	const uint64 uc = *(const uint64*)&c;
@@ -562,11 +577,16 @@ static int ppc_fmul_try_special(double a, double c, double* out, bool cOverflowT
 
 	if (nanA || nanC)
 	{
-		// Quiet then fold through single domain (suite: 1·SNaN(-1) → 0xFFFFFFFFE0000000).
 		const uint64 selected = ppc_quiet_nan(nanA ? ua : uc);
-		const uint32 sr = ConvertToSingleNoFTZ(selected);
-		const uint64 dr = ConvertToDoubleNoFTZ(sr);
-		*out = *(double*)&dr;
+		if (singleDomain)
+		{
+			// Suite: 1·SNaN(-1) → 0xFFFFFFFFE0000000 after single fold.
+			const uint32 sr = ConvertToSingleNoFTZ(selected);
+			const uint64 dr = ConvertToDoubleNoFTZ(sr);
+			*out = *(double*)&dr;
+		}
+		else
+			*out = *(double*)&selected;
 		return anySNaN ? 2 : 1;
 	}
 
@@ -596,7 +616,7 @@ ATTR_MS_ABI double ppc_fmuls(double a, double cIn)
 	double c = roundTo25BitAccuracyEx(cIn, &cOverflowToInf);
 
 	double special;
-	const int kind = ppc_fmul_try_special(a, c, &special, cOverflowToInf);
+	const int kind = ppc_fmul_try_special(a, c, &special, cOverflowToInf, true);
 	if (kind != 0)
 	{
 		if (fpcr & (1ull << 24))
@@ -620,57 +640,82 @@ ATTR_MS_ABI double ppc_fmuls(double a, double cIn)
 	return result;
 }
 
+// Espresso fres table from ppc750cl.s calc_fres (base,delta) pairs — 32 intervals.
+static const uint16 s_fresBase[32] = {
+	0x3FFC,0x3C1C,0x3875,0x3504,0x31C4,0x2EB1,0x2BC8,0x2904,
+	0x2664,0x23E5,0x2184,0x1F40,0x1D16,0x1B04,0x190A,0x1725,
+	0x1554,0x1396,0x11EB,0x104F,0x0EC4,0x0D48,0x0BD7,0x0A7C,
+	0x0922,0x07DF,0x069C,0x056F,0x0442,0x0328,0x020E,0x0106
+};
+static const uint16 s_fresDelta[32] = {
+	0x3E1,0x3A7,0x371,0x340,0x313,0x2EA,0x2C4,0x2A0,
+	0x27F,0x261,0x245,0x22A,0x212,0x1FB,0x1E5,0x1D1,
+	0x1BE,0x1AC,0x19B,0x18B,0x17C,0x16E,0x15B,0x15B,
+	0x143,0x143,0x12D,0x12D,0x11A,0x11A,0x108,0x106
+};
+
+// calc_fres normal path: table lookup + optional result denormalization.
+static inline uint32 fres_normal_body(uint32 sign, sint32 expField, uint32 mant)
+{
+	sint32 r9 = 253 - expField;
+	const uint32 idx = (mant >> 18) & 0x1Fu;
+	const uint32 stepMul = (mant >> 8) & 0x3FFu;
+	uint32 m = ((uint32)s_fresBase[idx] << 10) - (uint32)s_fresDelta[idx] * stepMul;
+	m >>= 1;
+	if (r9 <= 0)
+	{
+		const bool wasZero = (r9 == 0);
+		r9 = 0;
+		m |= 0x00800000u;
+		m >>= 1;
+		if (!wasZero)
+			m >>= 1;
+	}
+	return sign | ((uint32)r9 << 23) | (m & 0x007FFFFFu);
+}
+
 ATTR_MS_ABI double fres_espresso(double input)
 {
-	// based on testing we know that fres uses only the first 15 bits of the mantissa
-	// seee eeee eeee mmmm mmmm mmmm mmmx xxxx ....		(s = sign, e = exponent, m = mantissa, x = not used)
-	// the mantissa bits are interpreted as following:
-	// 0000 0000 0000 iiii ifff ffff fff0 ...			(i = table look up index , f = step multiplier)
-	unsigned long long x = *(unsigned long long*)&input;
+	// fres is a single-precision estimate: operate on float bits (suite calc_fres
+	// does stfs→lwz), then expand the 32-bit result back to the FPR.
+	const uint32 fb = ConvertToSingleNoFTZ(*(const uint64*)&input);
+	const uint32 sign = fb & 0x80000000u;
+	uint32 exp = (fb >> 23) & 0xFFu;
+	uint32 mant = fb & 0x007FFFFFu;
 
-	// get index
-	uint32 idx = (x >> (ieee_double_m_bits - espresso_fres_i_bits))&((1 << espresso_fres_i_bits) - 1);
-	// get step multiplier
-	uint32 stepMul = (x >> (ieee_double_m_bits - espresso_fres_i_bits - 10))&((1 << 10) - 1);
-
-
-	uint32 sum = fresLookupTable[idx].offset - (fresLookupTable[idx].step * stepMul + 1) / 2;
-
-	// get exponent
-	uint32 e = (x >> ieee_double_m_bits) & ((1ull << ieee_double_e_bits) - 1ull);
-	if (e == 0)
+	uint32 out;
+	if (exp == 255)
 	{
-		// todo?
-		//x &= 0x7FFFFFFFFFFFFFFFull;
-		x |= 0x7FF0000000000000ull;
-		return *(double*)&x;
+		if (mant == 0)
+			out = sign; // ±Inf → ±0
+		else
+			out = fb | 0x00400000u; // quiet NaN
 	}
-	else if (e == 0x7ff) // NaN or INF
+	else if (exp == 0)
 	{
-		if ((x&((1ull << ieee_double_m_bits) - 1)) == 0)
+		if (mant == 0)
+			out = sign | 0x7F800000u; // ±0 → ±Inf
+		else if (mant < 0x200000u)
+			out = sign | 0x7F7FFFFFu; // tiny denorm → ±HUGE_VALF
+		else
 		{
-			// negative INF returns -0.0
-			if ((sint64)x < 0)
+			// Normalize denormal (1 or 2 shifts), then normal body with expField 0 or -1.
+			sint32 expField = 0;
+			mant <<= 1;
+			if ((mant & 0x00800000u) == 0)
 			{
-				x = 0x8000000000000000;
-				return *(double*)&x;
+				mant <<= 1;
+				expField = -1;
 			}
-			// positive INF returns +0.0
-			return 0.0;
+			mant &= 0x007FFFFFu;
+			out = fres_normal_body(sign, expField, mant);
 		}
-		// result is NaN with same sign and same mantissa (todo: verify)
-		return *(double*)&x;
 	}
-	// todo - needs more testing (especially NaN and INF values)
+	else
+		out = fres_normal_body(sign, (sint32)exp, mant);
 
-	e = 2045 - e;
-	x &= ~(((1ull << ieee_double_e_bits) - 1ull) << ieee_double_m_bits);
-	x |= ((unsigned long long)e << ieee_double_m_bits);
-
-	x &= ~((1ull << ieee_double_m_bits) - 1ull);
-	x += ((unsigned long long)sum << 29ull);
-
-	return *(double*)&x;
+	const uint64 dr = ConvertToDoubleNoFTZ(out);
+	return *(double*)&dr;
 }
 
 void fcmpu_espresso(PPCInterpreter_t* hCPU, int crfD, double a, double b)
@@ -832,6 +877,119 @@ void PPCInterpreter_FRSP(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
+// Unary estimate with VE (SNaN) / ZE (±0 for fres) suppress.
+ATTR_MS_ABI double ppc_fres(double b)
+{
+	const uint64 ub = *(const uint64*)&b;
+	if (ppc_bits_is_snan(ub))
+	{
+		double q = fres_espresso(b); // quiets
+		return ppc_fma_finish_special(2, q);
+	}
+	if (ppc_bits_is_zero(ub))
+	{
+		// ±0 → ±Inf; ZE suppresses write.
+		double r = fres_espresso(b);
+		return ppc_fp_finish_ze(r);
+	}
+	s_fma_suppressed = false;
+	return fres_espresso(b);
+}
+
+ATTR_MS_ABI double ppc_frsqrte(double b)
+{
+	const uint64 ub = *(const uint64*)&b;
+	if (ppc_bits_is_snan(ub) || (ppc_bits_is_inf(ub) && (ub >> 63)) ||
+		(!ppc_bits_is_zero(ub) && !ppc_bits_is_nan(ub) && !ppc_bits_is_inf(ub) && (ub >> 63)))
+	{
+		// SNaN, −Inf, or negative finite → invalid (NaN); VE suppresses.
+		// Negative zero is allowed (→ −Inf).
+		if (ppc_bits_is_snan(ub) || ((ub >> 63) && !ppc_bits_is_zero(ub)))
+		{
+			double r = frsqrte_espresso(b);
+			return ppc_fma_finish_special(2, r);
+		}
+	}
+	if (ppc_bits_is_zero(ub))
+	{
+		double r = frsqrte_espresso(b); // ±0 → ±Inf
+		return ppc_fp_finish_ze(r);
+	}
+	s_fma_suppressed = false;
+	return frsqrte_espresso(b);
+}
+
+// Double-precision mul: NaN A→C, 0·∞ → default QNaN, VE suppress.
+ATTR_MS_ABI double ppc_fmul(double a, double c)
+{
+	double special;
+	const int kind = ppc_fmul_try_special(a, c, &special, false, false);
+	if (kind != 0)
+		return ppc_fma_finish_special(kind, special);
+	s_fma_suppressed = false;
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	const double r = a * c;
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
+	return r;
+}
+
+// Double-precision div: NaN A→B, 0/0 & ∞/∞ → default QNaN, x/0 with ZE suppress.
+ATTR_MS_ABI double ppc_fdiv(double a, double b)
+{
+	const uint64 ua = *(const uint64*)&a;
+	const uint64 ub = *(const uint64*)&b;
+	const bool snanA = ppc_bits_is_snan(ua);
+	const bool snanB = ppc_bits_is_snan(ub);
+	const bool nanA = ppc_bits_is_nan(ua);
+	const bool nanB = ppc_bits_is_nan(ub);
+
+	if (nanA || nanB)
+	{
+		const uint64 selected = nanA ? ua : ub;
+		const uint64 q = ppc_quiet_nan(selected);
+		double out = *(double*)&q;
+		return ppc_fma_finish_special((snanA || snanB) ? 2 : 1, out);
+	}
+
+	const bool zA = ppc_bits_is_zero(ua);
+	const bool zB = ppc_bits_is_zero(ub);
+	const bool iA = ppc_bits_is_inf(ua);
+	const bool iB = ppc_bits_is_inf(ub);
+
+	if (zA && zB)
+	{
+		// 0/0 → VXZDZ default QNaN
+		double out = *(double*)&kPpcDefaultQNaN;
+		return ppc_fma_finish_special(2, out);
+	}
+	if (iA && iB)
+	{
+		// ∞/∞ → VXIDI default QNaN
+		double out = *(double*)&kPpcDefaultQNaN;
+		return ppc_fma_finish_special(2, out);
+	}
+	if (zB && !zA)
+	{
+		// x/0 → ±Inf; ZE suppresses
+		const uint64 sign = (ua ^ ub) & 0x8000000000000000ULL;
+		const uint64 inf = sign | 0x7FF0000000000000ULL;
+		double out = *(double*)&inf;
+		return ppc_fp_finish_ze(out);
+	}
+
+	s_fma_suppressed = false;
+	const uint64 fpcr = __arm_rsr64("fpcr");
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
+	const double r = a / b;
+	if (fpcr & (1ull << 24))
+		__arm_wsr64("fpcr", fpcr);
+	return r;
+}
+
 void PPCInterpreter_FRSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();
@@ -840,7 +998,8 @@ void PPCInterpreter_FRSQRTE(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 	PPC_ASSERT(frA==0 && frC==0);
 	
-	hCPU->fpr[frD].fpr = frsqrte_espresso(hCPU->fpr[frB].fpr);
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	hCPU->fpr[frD].fpr = ppc_frsqrte(hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -853,7 +1012,8 @@ void PPCInterpreter_FRES(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 	PPC_ASSERT(frA==0 && frC==0);
 
-	hCPU->fpr[frD].fpr = fres_espresso(hCPU->fpr[frB].fpr);
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	hCPU->fpr[frD].fpr = ppc_fres(hCPU->fpr[frB].fpr);
 	
 	if(PPC_PSE) 
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
@@ -889,6 +1049,57 @@ void PPCInterpreter_FNABS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
+// Add/sub specials: NaN A→B; ∞−∞ / ∞+−∞ → default QNaN; VE suppress.
+static int ppc_faddsub_try_special(double a, double b, bool isSub, double* out)
+{
+	const uint64 ua = *(const uint64*)&a;
+	const uint64 ub = *(const uint64*)&b;
+	const bool snanA = ppc_bits_is_snan(ua);
+	const bool snanB = ppc_bits_is_snan(ub);
+	const bool nanA = ppc_bits_is_nan(ua);
+	const bool nanB = ppc_bits_is_nan(ub);
+	if (nanA || nanB)
+	{
+		const uint64 q = ppc_quiet_nan(nanA ? ua : ub);
+		*out = *(double*)&q;
+		return (snanA || snanB) ? 2 : 1;
+	}
+	if (ppc_bits_is_inf(ua) && ppc_bits_is_inf(ub))
+	{
+		const uint64 sa = ua & 0x8000000000000000ULL;
+		uint64 sb = ub & 0x8000000000000000ULL;
+		if (isSub)
+			sb ^= 0x8000000000000000ULL;
+		if (sa != sb)
+		{
+			// opposite-signed infinities cancel → VXISI
+			*out = *(double*)&kPpcDefaultQNaN;
+			return 2;
+		}
+	}
+	return 0;
+}
+
+ATTR_MS_ABI double ppc_fadd(double a, double b)
+{
+	double special;
+	const int kind = ppc_faddsub_try_special(a, b, false, &special);
+	if (kind != 0)
+		return ppc_fma_finish_special(kind, special);
+	s_fma_suppressed = false;
+	return a + b;
+}
+
+ATTR_MS_ABI double ppc_fsub(double a, double b)
+{
+	double special;
+	const int kind = ppc_faddsub_try_special(a, b, true, &special);
+	if (kind != 0)
+		return ppc_fma_finish_special(kind, special);
+	s_fma_suppressed = false;
+	return a - b;
+}
+
 void PPCInterpreter_FADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();
@@ -897,7 +1108,8 @@ void PPCInterpreter_FADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 	PPC_ASSERT(frC==0);
 
-	hCPU->fpr[frD].fpr = hCPU->fpr[frA].fpr + hCPU->fpr[frB].fpr;
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	hCPU->fpr[frD].fpr = ppc_fadd(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -910,7 +1122,8 @@ void PPCInterpreter_FDIV(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 	PPC_ASSERT(frC==0);
 
-	hCPU->fpr[frD].fpr = hCPU->fpr[frA].fpr / hCPU->fpr[frB].fpr;
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	hCPU->fpr[frD].fpr = ppc_fdiv(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -923,7 +1136,8 @@ void PPCInterpreter_FSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 	PPC_ASSERT(frC==0);
 
-	hCPU->fpr[frD].fpr = hCPU->fpr[frA].fpr - hCPU->fpr[frB].fpr;
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	hCPU->fpr[frD].fpr = ppc_fsub(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -934,9 +1148,10 @@ void PPCInterpreter_FMUL(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
-	PPC_ASSERT(frC == 0);
+	PPC_ASSERT(frB == 0);
 
-	hCPU->fpr[frD].fpr = hCPU->fpr[frA].fpr * hCPU->fpr[frC].fpr;
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	hCPU->fpr[frD].fpr = ppc_fmul(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1107,9 +1322,17 @@ void PPCInterpreter_FDIVS(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
-	PPC_ASSERT(frB==0);
+	PPC_ASSERT(frC==0);
 
-	hCPU->fpr[frD].fpr = (float)(hCPU->fpr[frA].fpr / hCPU->fpr[frB].fpr);
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	double r = ppc_fdiv(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
+	if (!ppc_fma_was_suppressed())
+	{
+		const uint64 b = *(const uint64*)&r;
+		if ((b & 0x7FF0000000000000ULL) != 0x7FF0000000000000ULL)
+			r = (double)(float)r;
+	}
+	hCPU->fpr[frD].fpr = r;
 	if( PPC_PSE )
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 

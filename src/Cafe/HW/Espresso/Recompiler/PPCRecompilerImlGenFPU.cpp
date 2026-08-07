@@ -21,6 +21,12 @@ ATTR_MS_ABI double ppc_fmsubs(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmadds(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmsubs(double a, double c, double b);
 ATTR_MS_ABI double ppc_fmuls(double a, double c);
+ATTR_MS_ABI double ppc_fmul(double a, double c);
+ATTR_MS_ABI double ppc_fdiv(double a, double b);
+ATTR_MS_ABI double ppc_fadd(double a, double b);
+ATTR_MS_ABI double ppc_fsub(double a, double b);
+ATTR_MS_ABI double ppc_fres(double b);
+ATTR_MS_ABI double ppc_frsqrte(double b);
 
 // Bind current frD (for FPSCR[VE] suppress) then call a 3-arg FMA helper.
 static void emit_ppc_fma_call(ppcImlGenContext_t* ctx, uintptr_t fn, IMLReg fprD, IMLReg fprA, IMLReg fprC, IMLReg fprB)
@@ -255,11 +261,11 @@ bool PPCRecompilerImlGen_FADD(ppcImlGenContext_t* ppcImlGenContext, uint32 opcod
 {
 	sint32 frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(opcode, frD, frA, frB, frC);
-	PPC_ASSERT(frC==0);
 	DefinePS0(fprA, frA);
 	DefinePS0(fprB, frB);
 	DefinePS0(fprD, frD);
-	ppcImlGenContext->emitInst().make_fpr_r_r_r(PPCREC_IML_OP_FPR_ADD, fprD, fprA, fprB);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprD, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fadd, fprA, fprB, IMLREG_INVALID, fprD);
 	return true;
 }
 
@@ -267,11 +273,11 @@ bool PPCRecompilerImlGen_FSUB(ppcImlGenContext_t* ppcImlGenContext, uint32 opcod
 {
 	sint32 frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(opcode, frD, frA, frB, frC);
-	PPC_ASSERT(frC==0);
 	DefinePS0(fprA, frA);
 	DefinePS0(fprB, frB);
 	DefinePS0(fprD, frD);
-	ppcImlGenContext->emitInst().make_fpr_r_r_r(PPCREC_IML_OP_FPR_SUB, fprD, fprA, fprB);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprD, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fsub, fprA, fprB, IMLREG_INVALID, fprD);
 	return true;
 }
 
@@ -279,21 +285,11 @@ bool PPCRecompilerImlGen_FMUL(ppcImlGenContext_t* ppcImlGenContext, uint32 opcod
 {
 	sint32 frD, frA, frB_unused, frC;
 	PPC_OPC_TEMPL_A(opcode, frD, frA, frB_unused, frC);
-	if( frD == frC )
-	{
-		// swap frA and frB
-		sint32 temp = frA;
-		frA = frC;
-		frC = temp;
-	}
 	DefinePS0(fprA, frA);
 	DefinePS0(fprC, frC);
 	DefinePS0(fprD, frD);
-	// move frA to frD (if different register)
-	if( frD != frA )
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprD, fprA);
-	// multiply bottom double of frD with bottom double of frB
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_MULTIPLY, fprD, fprC);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprD, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fmul, fprA, fprC, IMLREG_INVALID, fprD);
 	return true;
 }
 
@@ -301,26 +297,11 @@ bool PPCRecompilerImlGen_FDIV(ppcImlGenContext_t* ppcImlGenContext, uint32 opcod
 {
 	sint32 frD, frA, frB, frC_unused;
 	PPC_OPC_TEMPL_A(opcode, frD, frA, frB, frC_unused);
-	PPC_ASSERT(frB==0);
 	DefinePS0(fprA, frA);
 	DefinePS0(fprB, frB);
 	DefinePS0(fprD, frD);
-	if( frB == frD && frA != frB )
-	{
-		DefineTempFPR(fprTemp, 0);
-		// move frA to temporary register
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprTemp, fprA);
-		// divide bottom double of temporary register by bottom double of frB
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_DIVIDE, fprTemp, fprB);
-		// move result to frD
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprD, fprTemp);
-		return true;
-	}
-	// move frA to frD (if different register)
-	if( frD != frA )
-		ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprD, fprA); // copy ps0
-	// divide bottom double of frD by bottom double of frB
-	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_DIVIDE, fprD, fprB);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprD, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fdiv, fprA, fprB, IMLREG_INVALID, fprD);
 	return true;
 }
 
@@ -594,9 +575,8 @@ bool PPCRecompilerImlGen_FRES(ppcImlGenContext_t* ppcImlGenContext, uint32 opcod
 	PPC_ASSERT(frA==0);
 	DefinePS0(fprB, frB);
 	DefinePS0(fprD, frD);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)fres_espresso, fprB, IMLREG_INVALID, IMLREG_INVALID, fprD);
-	// adjust accuracy
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprD, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fres, fprB, IMLREG_INVALID, IMLREG_INVALID, fprD);
 	PSE_CopyResultToPs1();
 	return true;
 }
@@ -652,9 +632,8 @@ bool PPCRecompilerImlGen_FRSQRTE(ppcImlGenContext_t* ppcImlGenContext, uint32 op
 	PPC_OPC_TEMPL_A(opcode, frD, frA, frB, frC);
 	DefinePS0(fprB, frB);
 	DefinePS0(fprD, frD);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)frsqrte_espresso, fprB, IMLREG_INVALID, IMLREG_INVALID, fprD);
-	// adjust accuracy
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprD);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprD, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_frsqrte, fprB, IMLREG_INVALID, IMLREG_INVALID, fprD);
 	return true;
 }
 
@@ -1340,11 +1319,21 @@ bool PPCRecompilerImlGen_PS_RES(ppcImlGenContext_t* ppcImlGenContext, uint32 opc
 	DefinePS0(fprDps0, frD);
 	DefinePS1(fprDps1, frD);
 
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)fres_espresso, fprBps0, IMLREG_INVALID, IMLREG_INVALID, fprDps0);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)fres_espresso, fprBps1, IMLREG_INVALID, IMLREG_INVALID, fprDps1);
-	// adjust accuracy
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
+	DefineTempFPR(fprT0, 0);
+	DefineTempFPR(fprT1, 1);
+	DefineTempFPR(fprPrev0, 2);
+	DefineTempFPR(fprPrev1, 3);
+	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprPrev0, fprDps0);
+	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprPrev1, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_reset_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev0, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fres, fprBps0, IMLREG_INVALID, IMLREG_INVALID, fprT0);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev1, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fres, fprBps1, IMLREG_INVALID, IMLREG_INVALID, fprT1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
 	return true;
 }
 
@@ -1359,11 +1348,21 @@ bool PPCRecompilerImlGen_PS_RSQRTE(ppcImlGenContext_t* ppcImlGenContext, uint32 
 	DefinePS0(fprDps0, frD);
 	DefinePS1(fprDps1, frD);
 
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)frsqrte_espresso, fprBps0, IMLREG_INVALID, IMLREG_INVALID, fprDps0);
-	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)frsqrte_espresso, fprBps1, IMLREG_INVALID, IMLREG_INVALID, fprDps1);
-	// adjust accuracy
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps0);
-	PPRecompilerImmGen_roundToSinglePrecision(ppcImlGenContext, fprDps1);
+	DefineTempFPR(fprT0, 0);
+	DefineTempFPR(fprT1, 1);
+	DefineTempFPR(fprPrev0, 2);
+	DefineTempFPR(fprPrev1, 3);
+	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprPrev0, fprDps0);
+	ppcImlGenContext->emitInst().make_fpr_r_r(PPCREC_IML_OP_FPR_ASSIGN, fprPrev1, fprDps1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_reset_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev0, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_frsqrte, fprBps0, IMLREG_INVALID, IMLREG_INVALID, fprT0);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_fma_bind_dest, fprPrev1, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_frsqrte, fprBps1, IMLREG_INVALID, IMLREG_INVALID, fprT1);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_note_suppress, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID, IMLREG_INVALID);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev0, fprT0, IMLREG_INVALID, fprDps0);
+	ppcImlGenContext->emitInst().make_call_imm((uintptr_t)ppc_ps_fma_commit_lane, fprPrev1, fprT1, IMLREG_INVALID, fprDps1);
 	return true;
 }
 
