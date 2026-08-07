@@ -80,7 +80,21 @@ Output is `TESSERA-CPUTEST` lines on stdout via `--forward-console-logging`. Pip
 **A non-zero count on the first run is the expected outcome, not a setback.** This is a 23,502-line
 silicon-validated suite meeting a JIT that has never been conformance-tested.
 
-### Measured, 2026-08-03
+### Measured (current — see `docs/status` item `rm-fp-conformance`)
+
+| run | failures |
+|---|---|
+| recompiler, full FPSCR (`IGNORE` off) | **928** |
+| interpreter, full FPSCR | **928** |
+| unique to either arm | **0** |
+| either arm, `IGNORE_FPSCR_STATE=1` (values only) | **0** |
+
+**Values-only is green.** Every wrong *result* the suite can see under `IGNORE_FPSCR_STATE=1` is
+fixed; both arms stay identical. The residual **928** on the full suite is FPSCR bookkeeping
+(FPRF, FI/FR, exception stickies and enables) — dominated by `frsp`, the mad family, `fctiw`, and
+PS arithmetic. Gate for further work: wire those bits, re-measure the **full** suite.
+
+### First landing (2026-08-03, historical)
 
 | run | failures |
 |---|---|
@@ -89,11 +103,9 @@ silicon-validated suite meeting a JIT that has never been conformance-tested.
 | unique to either arm | **0** |
 | recompiler, `IGNORE_FPSCR_STATE=1` | **354** |
 
-**The recompiler and interpreter fail identically**, so no defect here is specific to the AArch64
-backend. **676 of 1,030 are FPSCR state bits** the emulator does not maintain -- a documented
-shortcut, not bugs. The remaining **354 are wrong values**: 175 paired-single, 120 double-extended,
-36 single-extended, 19 `psq_*`, and only **3 integer**. The integer core is essentially correct; the
-FP and paired-single paths are not.
+At first landing the arms were already identical (shared decode/semantics, not AArch64-only). Of
+1,030, **676** were FPSCR state and **354** wrong values. The value pile is closed; full-suite
+count fell 1,030 → **928**.
 
 ## What it does not cover
 

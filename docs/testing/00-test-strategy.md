@@ -1,51 +1,48 @@
 # Testing TesseraEmu — strategy, tools, provenance
 
-**Status: the CPU layer is built, runs, and has produced its first result. Everything else is still
-plan.** Read [§7 Status](#7-status-honest) before quoting anything here as a capability.
+**Status: the CPU conformance suite is the live gate for FP/PS accuracy.** Values-only is green;
+full suite residual is FPSCR bookkeeping. Read [§7 Status](#7-status-honest) and
+`docs/status` item `rm-fp-conformance` before quoting numbers.
 
-`AGENTS.md` no longer claims there is no test suite for the CPU layer (an older draft did).
+### Current result (2026-08-07 — `rm-fp-conformance`)
 
-### First result (2026-08-03)
+| run | failures |
+|---|---|
+| recompiler, full FPSCR (`IGNORE` off) | **928** |
+| interpreter, full FPSCR | **928** |
+| failures unique to either arm | **0** |
+| either arm, `IGNORE_FPSCR_STATE=1` (values only) | **0** |
 
-`ppc750cl.rpx` runs on TesseraEmu and reports machine-readable failures. Headline numbers:
+**What that means:**
+
+1. **Values-only is closed.** Every wrong *result* the suite can see with FPSCR state checks
+   suppressed is fixed; arms stay identical. The integer core was already essentially correct; the
+   FP and paired-single *value* paths are now suite-green under IGNORE.
+2. **Full suite residual is FPSCR bookkeeping** (FPRF, FI/FR, exception stickies/enables), not a
+   second pile of wrong answers. Highest volume: `frsp`, the mad family, `fctiw`, PS arithmetic.
+3. **Arms remain identical** on both builds — still shared decode/semantics, not AArch64-only.
+
+Landed along the way (ledger has the commits): PS quantize / VE / FMA, frsp/fctiw FZ paths, mad
+double-rounding, FPSCR moves (mcrfs/mtfs*/CR1), mcrxr/stwcx, fdiv tininess, excess-range merge
+slot asymmetry, frsqrte denorms, lfd→ps1 hazard, denorm-merge sticky store encoding. Detail lives
+in `docs/status/ledger.json` and the commit trail claimed by `rm-fp-conformance`.
+
+**Next lever:** wire FPRF + FI/FR on `frsp` and the mad family; re-measure the **full** suite.
+
+### First result (2026-08-03, historical)
 
 | run | failures |
 |---|---|
 | recompiler | **1,030** |
-| interpreter (`--force-interpreter`) | **1,030** |
-| failures unique to either arm | **0** |
-| recompiler, `IGNORE_FPSCR_STATE=1` | **354** |
+| interpreter | **1,030** |
+| unique to either arm | **0** |
+| `IGNORE_FPSCR_STATE=1` | **354** |
 
-Three conclusions, each of which is the point of having done this:
-
-1. **The AArch64 recompiler is exactly as correct as the interpreter on this suite.** Not one failure
-   is unique to either arm. Whatever is wrong is in shared decode/semantics, not in the JIT backend.
-   That is a genuinely reassuring result about the riskiest part of the fork, and nothing before this
-   could have established it.
-2. **676 of the 1,030 (66%) are FPSCR state-bit bookkeeping**, which this emulator does not maintain.
-   That is a deliberate, documented emulator shortcut, not 676 bugs.
-3. **354 are real** — wrong values, not wrong status bits. They are almost entirely floating point:
-   175 paired-single, 120 double-extended, 36 single-extended, 19 `psq_*`, and only **3 integer**.
-   **The integer core is essentially correct; the FP and paired-single paths are not.**
-
-`report.py` groups those 354 by mnemonic (derived via `powerpc-eabi-objdump`, not tabulated), and
-the shape is a lead rather than a category:
-
-| group | count | instructions |
-|---|---|---|
-| **multiply-add / subtract** | **131** | `ps_nmadd` 18, `ps_madd` 16, `ps_nmsub` 16, `fnmadd` 11, `ps_msub` 11, `fmsub` 10, `fmadd` 9, `fnmsub` 9, `fmadds` 7, … |
-| multiply | 29 | `ps_mul` 14, `fmuls` 11, `fmul` 4 |
-| reciprocal estimates | 29 | `ps_res` 10, `ps_rsqrte` 8, `fres` 6, `frsqrte` 5 |
-| quantised store | 16 | `psq_st` |
-| compare / convert | 42 | `frsp` 15, `ps_cmpo1` 14, `fctiw` 13 |
-
-**37% being the multiply-add family is the strongest signal in the whole result**, and it points at a
-documented Espresso deviation rather than a random bug: the suite's own changelog records tests added
-to verify that *"the result of fmadds/ps_madd is not rounded twice (to double and then to single
-precision)"* and *"non-rounding of the product using single-precision inputs"*. The 750CL does not
-round the `frC` mantissa to 24 bits the way a naive IEEE implementation would. libbinrec's Espresso
-test names (`750cl-fast-fmadds`, `750cl-fast-fmuls`, `750cl-single-prec-inputs`) enumerate the same
-family independently. That is where to start.
+At first landing the arms already matched (shared semantics, not backend). Split at the time:
+**676** FPSCR state, **354** wrong values — almost all FP/PS; only **3** integer. The mad family
+was ~37% of the value pile and pointed at Espresso 25-bit `frC` product rounding (suite changelog:
+*"fmadds/ps_madd is not rounded twice"*). That work is landed; do not re-open the value pile without
+a new values-only regression.
 
 ---
 
@@ -259,7 +256,7 @@ conformance-tested. Every failure is a finding and belongs in `docs/status/ledge
 | wut-tools (`elf2rpl`, `rplimportgen`, `wuhbtool`, …) | **via `wiiu-dev`** |
 | wut (`libwut.a` + headers) | **via `wiiu-dev`** |
 | `ppc750cl.rpx` / `.wuhb` | **builds** — 1,105 `ps_*`, 93 `psq_*` preserved into the ROM |
-| **`ppc750cl` executed on TesseraEmu** | **YES — 1,030 failures, both arms identical, 354 real** |
+| **`ppc750cl` executed on TesseraEmu** | **YES** — values-only **0**; full FPSCR **928**; both arms identical |
 | `report.py` classification and `--compare` | **working against real logs** |
 | Interpreter-vs-JIT fuzzer | not built |
 | HLE / `coreinit` tests | not built |
