@@ -1506,10 +1506,22 @@
       "area": "tooling",
       "status": "landed",
       "commits": [
-        "430ebdc"
+        "430ebdc",
+        "624f8cf"
       ],
       "verdict": "Root brief is `AGENTS.md` (was `CLAUDE.md`); status-tracker rule lives at `.grok/rules/status-tracker.md` (was `.claude/rules/`). Present-tense docs and ledger `ref`s retargeted; historical ledger prose that names the old path is left as a record of the past.",
       "ref": ".grok/rules/status-tracker.md — The obligation"
+    },
+    {
+      "id": "cemu-re-mcp",
+      "title": "Project-scoped cemu-re-mcp for GDB guest debugging",
+      "area": "tooling",
+      "status": "landed",
+      "commits": [
+        "8fd54d1"
+      ],
+      "verdict": "Added  MCP  pointing at a vendored, macOS-safe packaging of Matt-Wood-23/cemu-re-mcp (GDB path only; pymem skipped). Complements cpu-tests when inspecting guest state under .",
+      "ref": "tools/cemu-re-mcp/README.md"
     }
   ],
   "refuted": [
