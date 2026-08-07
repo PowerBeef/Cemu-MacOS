@@ -47,11 +47,10 @@ byte-identical to upstream and can be re-fetched and diffed.
 
 ## Building and running
 
-Needs a devkitPPC + wut toolchain — see [`testing/toolchain/`](../toolchain/README.md), which leads
-with devkitPro's installer and falls back to a from-source build needing no root.
+Needs a devkitPPC + wut toolchain — see [`testing/toolchain/`](../toolchain/README.md).
 
 ```sh
-export DEVKITPRO=$HOME/.local/devkitpro
+export DEVKITPRO=/opt/devkitpro
 export DEVKITPPC=$DEVKITPRO/devkitPPC
 export PATH="$DEVKITPRO/tools/bin:$DEVKITPPC/bin:$PATH"
 

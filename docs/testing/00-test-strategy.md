@@ -190,52 +190,28 @@ evidence until you have checked it has an increment site.
   of work. Not now.
 - **Espresso timing/cycle verification.** Requires hardware. Will not happen.
 
-## 4. The toolchain, and why it was hard
+## 4. The toolchain
 
-Worth recording because it is non-obvious and will be re-encountered.
+The only supported install is the official devkitPro path into `/opt/devkitpro` — same as CI. See
+[`testing/toolchain/README.md`](../../testing/toolchain/README.md):
 
-**Nothing here required root.** The devkitPro installer needs `sudo`, which is unavailable when
-driving this repo remotely (and the agent shell has no TTY, so sudo credential caching cannot carry
-across either). Everything below builds into `$HOME`.
+```sh
+curl -fsSLO https://github.com/devkitPro/pacman/releases/download/v6.0.2/devkitpro-pacman-installer.pkg
+sudo installer -pkg devkitpro-pacman-installer.pkg -target /
+sudo dkp-pacman -Syu --noconfirm
+sudo dkp-pacman -S --noconfirm wiiu-dev
+export DEVKITPRO=/opt/devkitpro DEVKITPPC=/opt/devkitpro/devkitPPC
+export PATH="$DEVKITPRO/tools/bin:$DEVKITPPC/bin:$PATH"
+```
 
-**`downloads.devkitpro.org` is Cloudflare-403 from this network** — including its root, while
-`cloudflare.com` and `github.com` return 200, so it is site-specific rather than a general block. It
-serves **every** source devkitPro's buildscripts need, not just their own components.
+`wiiu-dev` brings the compiler, wut-tools and wut. Graphics tests also need CafeGLSL's
+`glslcompiler.rpl` (documented in the same README).
 
-The workaround: devkitPro's download loop skips files that already exist
-(`if [ ! -f $archive ]`) and honours `BUILD_DKPRO_SRCDIR`. Pre-staging all six archives from
-reachable upstream mirrors makes the stock scripts run untouched apart from the install prefix.
-
-| component | version | reachable source |
-|---|---|---|
-| binutils | 2.45.1 | ftp.gnu.org |
-| gcc | 15.2.0 | ftp.gnu.org |
-| newlib | 4.6.0.20260123 | sourceware.org |
-| devkitppc-crtls | 1.0.0 | GitHub tag (repacked — GitHub uses `<org>-<repo>-<hash>/`, the scripts expect `<name>-<version>/`) |
-| devkitppc-rules | 1.2.1 | GitHub tag (same repack) |
-| binutils (mn10200) | 2.24 | **skipped** — GameCube/Wii DSP toolchain, irrelevant to Wii U |
-
-### Four defects hit on the way, all recorded so they are not re-diagnosed
-
-1. **Bundled zlib versus the macOS SDK.** binutils and gcc bundle a zlib whose `zutil.h` does
-   `#define fdopen(fd,mode) NULL`, which then breaks the SDK's `stdio.h` declaration of `fdopen`.
-   Fix: `--with-system-zlib`. devkitPro's scripts do not pass it.
-2. **A genuine bug in devkitPro's buildscripts.** `extract_and_patch binutils $MN_BINUTILS_VER bz2`
-   passes three arguments to a four-argument function (`name ver pkgrel ext`), so `bz2` is read as
-   the package release and the extension ends up empty, producing a malformed `tar` invocation. Only
-   affects the mn10200 step, which we skip.
-3. **`libgloss/libsysbase/dummy.c` is missing.** The devkitPro patch adds it to the Makefile but no
-   patch *creates* it — it ships inside devkitPro's repackaged newlib tarball, which is unreachable.
-   54 sibling `libsysbase/*.c` files are present; only this one is absent. Stubbed as a placeholder
-   translation unit. **This is the one substitution that could differ from a stock devkitPro
-   install**, so it is called out rather than buried.
-4. **Stock binutils is not devkitPro's binutils.** devkitPro patches `opcodes/ppc-opc.c` among
-   others. A stock build assembles `ppc750cl.s` correctly (verified), but do not assume equivalence
-   for RPX linking.
-
-A standalone stock binutils (`--target=powerpc-eabi --with-system-zlib`) is enough to *assemble*
-`ppc750cl.s` and was how that was first proved — but it **cannot link a `.rpx`**, which needs wut's
-rules, `elf2rpl` and `libwut.a`. Do not treat it as a shortcut for running the suite.
+A from-source fallback once lived at `testing/toolchain/build-devkitppc.sh` for when the installer
+needed interactive `sudo` and `downloads.devkitpro.org` was Cloudflare-403 from this network. Both
+halves of that problem are gone on the machine of record, the official packages install cleanly, and
+the fallback — with its deliberate deviations from a stock install — has been removed so there is
+only one path to keep honest.
 
 ## 5. Provenance and licences
 
@@ -262,7 +238,8 @@ forum post and not in wut, WiiUBrew or decaf, assume leaked-SDK origin and do no
 ## 6. Running the tests
 
 ```sh
-export PATH="$HOME/.local/devkitpro/tools/bin:$HOME/.local/devkitpro/devkitPPC/bin:$PATH"
+export DEVKITPRO=/opt/devkitpro DEVKITPPC=/opt/devkitpro/devkitPPC
+export PATH="$DEVKITPRO/tools/bin:$DEVKITPPC/bin:$PATH"
 
 cd testing/cpu-tests && make                               # build ppc750cl
 ./run.sh                     | ./report.py -               # recompiler arm
@@ -278,9 +255,9 @@ conformance-tested. Every failure is a finding and belongs in `docs/status/ledge
 
 | item | status |
 |---|---|
-| devkitPPC toolchain (binutils 2.45.1, gcc 15.2.0, newlib) | **built from source**, `~/.local/devkitpro`, no root |
-| wut-tools (`elf2rpl`, `rplimportgen`, `wuhbtool`, …) | **built and installed** |
-| wut (`libwut.a` + headers) | **built and installed** |
+| devkitPPC + wut (`dkp-pacman -S wiiu-dev` → `/opt/devkitpro`) | **official install only** — see `testing/toolchain/README.md` |
+| wut-tools (`elf2rpl`, `rplimportgen`, `wuhbtool`, …) | **via `wiiu-dev`** |
+| wut (`libwut.a` + headers) | **via `wiiu-dev`** |
 | `ppc750cl.rpx` / `.wuhb` | **builds** — 1,105 `ps_*`, 93 `psq_*` preserved into the ROM |
 | **`ppc750cl` executed on TesseraEmu** | **YES — 1,030 failures, both arms identical, 354 real** |
 | `report.py` classification and `--compare` | **working against real logs** |
@@ -291,9 +268,8 @@ conformance-tested. Every failure is a finding and belongs in `docs/status/ledge
 
 ### What CI does and does not check
 
-`.github/workflows/cpu_tests.yml` runs on `macos-26`, installs devkitPPC + wut (CI runners have
-passwordless sudo and are not subject to the Cloudflare block described in §4), builds the ROM, and
-asserts that:
+`.github/workflows/cpu_tests.yml` runs on `macos-26`, installs devkitPPC + wut the same way as
+§4, builds the ROM, and asserts that:
 
 - `vendor/ppc750cl.s` still carries its licence and validation lines and is still 23,502 lines, so
   the suite cannot silently stop being the upstream-validated one;
@@ -331,19 +307,3 @@ Two hypotheses were tested and refuted; do not retry them:
 Both produced a byte-identical backtrace, which places the fault inside wx's own top-level teardown
 rather than in our shutdown ordering. Tracked as `rm-homebrew-exit-crash`.
 
-### Known deviations from a stock devkitPro install
-
-The toolchain was built from upstream sources because devkitPro's package host is unreachable here.
-Three substitutions could in principle differ from an official install, and are listed so any strange
-result can be checked against them first:
-
-1. **`libgloss/libsysbase/dummy.c` was stubbed.** No devkitPro patch creates it; it ships in their
-   repackaged newlib. 54 sibling files were present, only this one absent.
-2. **`uint32_t`/`int32_t` are `long`/`unsigned long`** with this newlib rather than `int`/`unsigned
-   int`. This forced a one-line signature fix in wut (`__syscall_lock_try_acquire_recursive`, to
-   match newlib's `sys/iosupport.h`) and `-Wno-format` for wut's build. Both types are 32-bit on
-   powerpc-eabi, so this is diagnostic-only, not an ABI difference.
-3. **mn10200 binutils skipped** — GameCube/Wii DSP toolchain, irrelevant to Wii U.
-
-None of these plausibly explains a floating-point result mismatch, but rule them out before blaming
-the emulator for anything exotic.

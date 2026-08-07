@@ -34,7 +34,7 @@ was real here until a phantom entry in an expectation file caught it.
 Toolchain setup is in [`testing/toolchain/`](../toolchain/README.md).
 
 ```sh
-export DEVKITPRO=$HOME/.local/devkitpro
+export DEVKITPRO=/opt/devkitpro
 export DEVKITPPC=$DEVKITPRO/devkitPPC
 export PATH="$DEVKITPRO/tools/bin:$DEVKITPPC/bin:$PATH"
 

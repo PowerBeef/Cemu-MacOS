@@ -1487,6 +1487,15 @@
       "verdict": "Apple's header states `fastMathEnabled defaults to YES` (`MTLLibrary.h:306`) and deprecates the property (`API_DEPRECATED(\"Use mathMode instead\", macos(10.11, 15.0))`, `:308`). `RendererShaderMtl.cpp:316-317` calls the setter **only when the profile says true**, so setting it false sets nothing. **Nine of the twelve shipped game profiles that mention the key set it false**, and all nine silently get fast math.",
       "note": "Found while scoping `rm-shader-cost`. It also puts the fork in contradiction with itself: fast math licenses the compiler to violate IEEE 754 on every shader, while `accurateShaderMul` — also on by default — pays **52,072 `mul_nonIEEE` call sites** to emulate `0 × Inf → 0`. Whichever is right, one is being paid for and not delivered. Fix is `setMathMode`, filed as `rm-mathmode-fix` because making the checkbox work is a real behaviour change for those nine titles.",
       "ref": "00-master-plan.md — `gpu.frame_critical_path_ns` is not a deadline instrument"
+    },
+    {
+      "id": "remove-devkitppc-from-source",
+      "title": "Remove the from-source devkitPPC fallback",
+      "area": "tooling",
+      "status": "landed",
+      "commits": [],
+      "verdict": "Official `dkp-pacman -S wiiu-dev` into `/opt/devkitpro` is the only supported path (same as CI). Deleted `testing/toolchain/build-devkitppc.sh` and rewrote present-tense setup docs so nothing points at `~/.local/devkitpro` or a no-root rebuild.",
+      "ref": "docs/testing/00-test-strategy.md — 4. The toolchain"
     }
   ],
   "refuted": [
@@ -1707,7 +1716,7 @@
     },
     {
       "title": "The graphics-test toolchain is three separate installs, and two of them are optional-looking but are not",
-      "body": "Building a Wii U test ROM needs devkitPPC (compiler), **wut-tools** (host utilities: `elf2rpl`, `rplimportgen`, `wuhbtool`) and **wut** (the library) — three separate builds. Missing wut-tools fails deep inside wut's build with `rplimportgen: No such file or directory` rather than anything resembling \"a tool is missing\". `wuhbtool` additionally needs **libfreeimage**, whose absence fails at *configure* time with `'libfreeimage' not found` and takes the whole tools build with it. And graphics tests additionally need **CafeGLSL**'s `glslcompiler.rpl` in `cafeLibs/` — without it a ROM builds fine and reports `glslcompiler.rpl-not-found` at runtime. `testing/toolchain/build-devkitppc.sh` does all of it; `testing/toolchain/README.md` explains why each piece is there."
+      "body": "Building a Wii U test ROM needs devkitPPC (compiler), **wut-tools** (host utilities: `elf2rpl`, `rplimportgen`, `wuhbtool`) and **wut** (the library). Missing wut-tools fails deep inside wut's build with `rplimportgen: No such file or directory` rather than anything resembling \"a tool is missing\". `wuhbtool` additionally needs **libfreeimage**, whose absence fails at *configure* time with `'libfreeimage' not found` and takes the whole tools build with it. And graphics tests additionally need **CafeGLSL**'s `glslcompiler.rpl` in `cafeLibs/` — without it a ROM builds fine and reports `glslcompiler.rpl-not-found` at runtime. Official `dkp-pacman -S wiiu-dev` installs the first three together into `/opt/devkitpro`; CafeGLSL remains a separate download — see `testing/toolchain/README.md`."
     }
   ],
   "roadmap": [

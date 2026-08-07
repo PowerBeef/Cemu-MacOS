@@ -164,10 +164,10 @@ change is needed. The ROM reports `RESULT=ERROR reason=glslcompiler.rpl-not-foun
 
 ## Building and running
 
-Toolchain setup — including with no root — is in [`testing/toolchain/`](../toolchain/README.md).
+Toolchain setup is in [`testing/toolchain/`](../toolchain/README.md).
 
 ```sh
-export DEVKITPRO=$HOME/.local/devkitpro
+export DEVKITPRO=/opt/devkitpro
 export DEVKITPPC=$DEVKITPRO/devkitPPC
 export PATH="$DEVKITPRO/tools/bin:$DEVKITPPC/bin:$PATH"
 
