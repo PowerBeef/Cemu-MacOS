@@ -46,10 +46,12 @@ MIN_HOLD_S = 0.15
 
 
 def resolve_button(name: str) -> ButtonSpec:
-	key = name.strip().upper().replace(" ", "_")
-	# allow single-char passthrough: "z" means char z
-	if len(name) == 1 and name.isalpha():
-		return ("char", name.lower())
-	if key not in BUTTONS:
-		raise KeyError(f"unknown button {name!r}; known: {sorted(BUTTONS)}")
-	return BUTTONS[key]
+	raw = name.strip()
+	key = raw.upper().replace(" ", "_")
+	# Named GamePad buttons first (including single-letter A/B/X/Y/L/R).
+	if key in BUTTONS:
+		return BUTTONS[key]
+	# Lowercase single-char passthrough for raw keys already in the profile ("z", "w").
+	if len(raw) == 1 and raw.isalpha():
+		return ("char", raw.lower())
+	raise KeyError(f"unknown button {name!r}; known: {sorted(BUTTONS)}")
