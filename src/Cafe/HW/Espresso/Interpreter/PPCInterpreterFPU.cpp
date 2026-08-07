@@ -1887,6 +1887,8 @@ void PPCInterpreter_FADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fadd(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1901,6 +1903,8 @@ void PPCInterpreter_FDIV(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fdiv(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1915,6 +1919,8 @@ void PPCInterpreter_FSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fsub(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1929,6 +1935,8 @@ void PPCInterpreter_FMUL(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fmul(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1942,6 +1950,8 @@ void PPCInterpreter_FMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fmadd(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1955,6 +1965,8 @@ void PPCInterpreter_FNMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fnmadd(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1968,6 +1980,8 @@ void PPCInterpreter_FMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fmsub(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -1981,6 +1995,8 @@ void PPCInterpreter_FNMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fnmsub(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -2177,30 +2193,49 @@ void PPCInterpreter_FDIVS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 	PPC_ASSERT(frC==0);
 
+	// fdiv sets double-domain FPSCR; then pack to single and refresh FPRF (+ FI/XX if
+	// the single round is inexact beyond what the double divide already recorded).
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	double r = ppc_fdiv(hCPU->fpr[frA].fpr, hCPU->fpr[frB].fpr);
 	if (!ppc_fma_was_suppressed())
 	{
-		const uint64 b = *(const uint64*)&r;
-		if ((b & 0x7FF0000000000000ULL) != 0x7FF0000000000000ULL)
+		const uint64 bits = *(const uint64*)&r;
+		if (!ppc_bits_is_nan(bits) && !ppc_bits_is_inf(bits))
 		{
-			// Pack to single with FZ clear (same tininess case as fdiv).
 			const uint64 fpcr = __arm_rsr64("fpcr");
 			if (fpcr & (1ull << 24))
 				__arm_wsr64("fpcr", fpcr & ~(1ull << 24));
 			std::atomic_signal_fence(std::memory_order_seq_cst);
+			__arm_wsr("fpsr", 0);
 			volatile double vr = r;
 			volatile float sf = (float)vr;
 			volatile double out = (double)sf;
 			std::atomic_signal_fence(std::memory_order_seq_cst);
+			const uint32 fpsr = __arm_rsr("fpsr");
 			if (fpcr & (1ull << 24))
 				__arm_wsr64("fpcr", fpcr);
 			r = out;
+			// FPRF from single result; keep prior exception stickies from fdiv.
+			hCPU->fpscr &= ~FPSCR_FPRF_MASK;
+			ppc_fpscr_set_fprf_from_single(hCPU->fpscr, sf);
+			if (fpsr & (1u << 4)) // IXC on single round
+			{
+				ppc_fpscr_or_sticky(hCPU->fpscr, FPSCR_XX);
+				hCPU->fpscr |= FPSCR_FI;
+			}
+			if (fpsr & (1u << 3)) // UFC
+				ppc_fpscr_or_sticky(hCPU->fpscr, FPSCR_UX);
+			if (fpsr & (1u << 2)) // OFC
+				ppc_fpscr_or_sticky(hCPU->fpscr, FPSCR_OX);
+			ppc_fpscr_recompute(hCPU->fpscr);
 		}
+		// Inf/NaN: leave FPRF from the double fdiv commit.
 	}
 	hCPU->fpr[frD].fpr = r;
-	if( PPC_PSE )
+	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -2217,6 +2252,8 @@ void PPCInterpreter_FMULS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	hCPU->fpr[frD].fpr = ppc_fmuls(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -2244,6 +2281,8 @@ void PPCInterpreter_FMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	hCPU->fpr[frD].fpr = ppc_fmadds(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -2259,6 +2298,8 @@ void PPCInterpreter_FNMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	hCPU->fpr[frD].fpr = ppc_fnmadds(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -2274,6 +2315,8 @@ void PPCInterpreter_FMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	hCPU->fpr[frD].fp0 = ppc_fmsubs(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -2289,6 +2332,8 @@ void PPCInterpreter_FNMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	hCPU->fpr[frD].fp0 = ppc_fnmsubs(hCPU->fpr[frA].fp0, hCPU->fpr[frC].fp0, hCPU->fpr[frB].fp0);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
