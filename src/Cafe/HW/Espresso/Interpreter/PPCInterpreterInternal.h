@@ -78,14 +78,20 @@
 #define FPSCR_ZE		(1u << 4)	// also used by FMA ZE suppress
 #define FPSCR_XE		(1u << 3)
 // FPRF field (PPC bits 15–19) lives at host bits 12–16.
+// Encodings match ppc750cl check_fpu_* (ori/oris into expected FPSCR).
 #define FPSCR_FPRF_MASK	(0x1Fu << 12)
-#define FPSCR_FPRF_PN	(0x4u << 12)	// +normal  (suite 0x4000)
-#define FPSCR_FPRF_NN	(0x8u << 12)	// −normal
-#define FPSCR_FPRF_PZ	(0x2u << 12)	// +zero
-#define FPSCR_FPRF_NZ	(0x12u << 12)	// −zero
-#define FPSCR_FPRF_PINF	(0x5u << 12)	// +inf
-#define FPSCR_FPRF_NINF	(0x9u << 12)	// −inf
-#define FPSCR_FPRF_QNAN	(0x11u << 12)	// QNaN
+#define FPSCR_FPRF_PN	(0x4u << 12)	// +normal   (suite 0x4000)
+#define FPSCR_FPRF_NN	(0x8u << 12)	// −normal   (suite 0x8000)
+#define FPSCR_FPRF_PZ	(0x2u << 12)	// +zero     (suite 0x2000)
+#define FPSCR_FPRF_NZ	(0x12u << 12)	// −zero     (suite 0x12000)
+#define FPSCR_FPRF_PD	(0x14u << 12)	// +denorm   (suite 0x14000)
+#define FPSCR_FPRF_ND	(0x18u << 12)	// −denorm   (suite 0x18000)
+#define FPSCR_FPRF_PINF	(0x5u << 12)	// +inf      (suite 0x5000)
+#define FPSCR_FPRF_NINF	(0x9u << 12)	// −inf      (suite 0x9000)
+#define FPSCR_FPRF_QNAN	(0x11u << 12)	// QNaN      (suite 0x11000)
+// FI/FR: PPC bits 14/13 → host 17/18. Suite tests FI; FR is ignored by check_fpscr.
+#define FPSCR_FI		(1u << 17)
+#define FPSCR_FR		(1u << 18)
 #define FPSCR_VX_ANY	(FPSCR_VXSNAN | FPSCR_VXISI | FPSCR_VXIDI | FPSCR_VXZDZ | FPSCR_VXIMZ | \
 			 FPSCR_VXVC | FPSCR_VXSOFT | FPSCR_VXSQRT | FPSCR_VXCVI)
 #define FPSCR_ANY_X	(FPSCR_OX | FPSCR_UX | FPSCR_ZX | FPSCR_XX | FPSCR_VX_ANY)
@@ -93,21 +99,47 @@
 // Bit 20 (PPC) / host bit 11 is reserved; hardware ignores writes to it.
 #define FPSCR_RESERVED_MASK	(0xFFFFF7FFu)
 
-// Set FPRF from a result value (minimal class set for estimates / suite).
+// Full FPRF class set (including denorms). Double-precision result domain.
 static inline void ppc_fpscr_set_fprf_from_double(uint32& fpscr, double v)
 {
 	uint64 bits;
 	std::memcpy(&bits, &v, sizeof(bits));
 	const uint64 abs = bits & 0x7FFFFFFFFFFFFFFFULL;
+	const bool sign = (bits >> 63) != 0;
 	uint32 cls;
 	if (abs > 0x7FF0000000000000ULL)
 		cls = FPSCR_FPRF_QNAN;
 	else if (abs == 0x7FF0000000000000ULL)
-		cls = (bits >> 63) ? FPSCR_FPRF_NINF : FPSCR_FPRF_PINF;
+		cls = sign ? FPSCR_FPRF_NINF : FPSCR_FPRF_PINF;
 	else if (abs == 0)
-		cls = (bits >> 63) ? FPSCR_FPRF_NZ : FPSCR_FPRF_PZ;
+		cls = sign ? FPSCR_FPRF_NZ : FPSCR_FPRF_PZ;
+	else if (abs < 0x0010000000000000ULL)
+		cls = sign ? FPSCR_FPRF_ND : FPSCR_FPRF_PD; // subnormal
 	else
-		cls = (bits >> 63) ? FPSCR_FPRF_NN : FPSCR_FPRF_PN;
+		cls = sign ? FPSCR_FPRF_NN : FPSCR_FPRF_PN;
+	fpscr = (fpscr & ~FPSCR_FPRF_MASK) | cls;
+}
+
+// FPRF in the *single-precision* domain (frsp / single-arith results).
+// A min single denorm re-expanded to double looks like a normal double, but
+// suite check_fpu_pdenorm expects the single-domain class (0x14000 / 0x18000).
+static inline void ppc_fpscr_set_fprf_from_single(uint32& fpscr, float v)
+{
+	uint32 bits;
+	std::memcpy(&bits, &v, sizeof(bits));
+	const uint32 abs = bits & 0x7FFFFFFFu;
+	const bool sign = (bits >> 31) != 0;
+	uint32 cls;
+	if (abs > 0x7F800000u)
+		cls = FPSCR_FPRF_QNAN;
+	else if (abs == 0x7F800000u)
+		cls = sign ? FPSCR_FPRF_NINF : FPSCR_FPRF_PINF;
+	else if (abs == 0)
+		cls = sign ? FPSCR_FPRF_NZ : FPSCR_FPRF_PZ;
+	else if (abs < 0x00800000u)
+		cls = sign ? FPSCR_FPRF_ND : FPSCR_FPRF_PD;
+	else
+		cls = sign ? FPSCR_FPRF_NN : FPSCR_FPRF_PN;
 	fpscr = (fpscr & ~FPSCR_FPRF_MASK) | cls;
 }
 
@@ -124,6 +156,37 @@ static inline void ppc_fpscr_recompute(uint32& fpscr)
 		fpscr |= FPSCR_FEX;
 	else
 		fpscr &= ~FPSCR_FEX;
+}
+
+// OR exception stickies; set FX when a sticky in ANY_X transitions 0→1.
+static inline void ppc_fpscr_or_sticky(uint32& fpscr, uint32 sticky_or)
+{
+	const uint32 newX = sticky_or & FPSCR_ANY_X;
+	if (newX != 0 && (fpscr & newX) != newX)
+		fpscr |= FPSCR_FX;
+	fpscr |= sticky_or;
+}
+
+// single_domain: FPRF from float view (frsp / *s). Else from double bits.
+// update_fprf=false for check_fpu_noresult_nofprf (VE fctiw abort).
+static inline void ppc_fpscr_commit_result(uint32& fpscr, double result, uint32 sticky_or,
+	bool set_fi, bool update_fprf = true, bool single_domain = false)
+{
+	fpscr &= ~(FPSCR_FI | FPSCR_FR);
+	if (update_fprf)
+	{
+		if (single_domain)
+			ppc_fpscr_set_fprf_from_single(fpscr, (float)result);
+		else
+			ppc_fpscr_set_fprf_from_double(fpscr, result);
+	}
+	if (set_fi)
+		fpscr |= FPSCR_FI;
+	if (sticky_or != 0)
+		ppc_fpscr_or_sticky(fpscr, sticky_or);
+	// XX without FI is wrong for ordinary arith; callers pass XX|FI together.
+	// fres/ps_res are the FI-without-XX special case (suite add_fpscr_fi).
+	ppc_fpscr_recompute(fpscr);
 }
 
 // CR1 ← FPSCR field 0 (FX, FEX, VX, OX) for Rc forms of FP ops.

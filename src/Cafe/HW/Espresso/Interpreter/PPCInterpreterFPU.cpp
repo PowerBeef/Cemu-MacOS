@@ -932,10 +932,76 @@ void PPCInterpreter_FNEG(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
+// Commit FPSCR after frsp. FPRF from the intermediate single (FZ-cleared);
+// never (float) the re-expanded double under host FZ — that flushes denorms
+// to zero and mis-classifies check_fpu_pdenorm as +zero.
+static void ppc_frsp_commit_fpscr(double input, double result, float single_bits,
+	bool is_snan, bool suppressed)
+{
+	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+	if (!hCPU)
+		return;
+
+	uint32 sticky = 0;
+	bool set_fi = false;
+
+	if (is_snan)
+		sticky |= FPSCR_VXSNAN;
+
+	if (!suppressed && !ppc_bits_is_nan(*(const uint64*)&result))
+	{
+		// Inexact: double was not exactly representable as single.
+		// Compare input to re-expanded result (both free of host FZ artifacts).
+		const uint64 inb = *(const uint64*)&input;
+		const uint64 outb = *(const uint64*)&result;
+		if (inb != outb)
+		{
+			set_fi = true;
+			sticky |= FPSCR_XX;
+		}
+		const uint64 iabs = inb & 0x7FFFFFFFFFFFFFFFULL;
+		const uint64 oabs = outb & 0x7FFFFFFFFFFFFFFFULL;
+		// Overflow: finite input → ±inf single.
+		if (iabs < 0x7FF0000000000000ULL && oabs == 0x7FF0000000000000ULL)
+			sticky |= FPSCR_OX;
+		// Underflow: tiny and inexact (denorm single or flushed zero).
+		// Classify tininess from the *single* bits (exp field), not the
+		// re-expanded double (denorm singles look normal as doubles).
+		uint32 sb;
+		std::memcpy(&sb, &single_bits, sizeof(sb));
+		const uint32 sabs = sb & 0x7FFFFFFFu;
+		if (set_fi && sabs < 0x00800000u)
+			sticky |= FPSCR_UX;
+	}
+
+	if (suppressed)
+	{
+		if (sticky != 0)
+		{
+			ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
+			ppc_fpscr_recompute(hCPU->fpscr);
+		}
+		return;
+	}
+
+	// Build FPSCR: FPRF from single intermediate, then FI/stickies.
+	hCPU->fpscr &= ~(FPSCR_FI | FPSCR_FR);
+	if (is_snan || ppc_bits_is_nan(*(const uint64*)&result))
+		ppc_fpscr_set_fprf_from_double(hCPU->fpscr, result); // NaN payload as double
+	else
+		ppc_fpscr_set_fprf_from_single(hCPU->fpscr, single_bits);
+	if (set_fi)
+		hCPU->fpscr |= FPSCR_FI;
+	if (sticky != 0)
+		ppc_fpscr_or_sticky(hCPU->fpscr, sticky);
+	ppc_fpscr_recompute(hCPU->fpscr);
+}
+
 // frsp: round double → single → re-expand. Host FZ is set for Espresso (coreinit
 // thread entry); it must stay clear for BOTH the down-cast and the re-expand —
 // restoring FZ before (double)s flushes a denormal float input to 0 (suite: min
 // single denorm exact). SNaN quiets; VE suppresses the write.
+// Also updates FPSCR FPRF/FI/XX/OX/UX/VXSNAN so both arms stay identical.
 ATTR_MS_ABI double ppc_frsp(double b)
 {
 	const uint64 ub = *(const uint64*)&b;
@@ -944,10 +1010,13 @@ ATTR_MS_ABI double ppc_frsp(double b)
 		if (ppc_bits_is_snan(ub))
 		{
 			const uint64 q = ppc_quiet_nan(ub);
-			return ppc_fma_finish_special(2, *(double*)&q);
+			const double r = ppc_fma_finish_special(2, *(double*)&q);
+			ppc_frsp_commit_fpscr(b, r, 0.0f, true, s_fma_suppressed);
+			return r;
 		}
 		// QNaN: preserve exact payload (suite fmr %f4,%f10).
 		s_fma_suppressed = false;
+		ppc_frsp_commit_fpscr(b, b, 0.0f, false, false);
 		return b;
 	}
 
@@ -963,6 +1032,7 @@ ATTR_MS_ABI double ppc_frsp(double b)
 		__arm_wsr64("fpcr", fpcr);
 
 	s_fma_suppressed = false;
+	ppc_frsp_commit_fpscr(b, r, s, false, false);
 	return r;
 }
 
@@ -976,15 +1046,21 @@ void PPCInterpreter_FRSP(PPCInterpreter_t* hCPU, uint32 Opcode)
 
 	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	const double r = ppc_frsp(hCPU->fpr[frB].fpr);
-	if (PPC_PSE)
+	// Suppress: leave destination unchanged (VE + SNaN).
+	if (!s_fma_suppressed)
 	{
-		hCPU->fpr[frD].fp0 = r;
-		hCPU->fpr[frD].fp1 = r;
+		if (PPC_PSE)
+		{
+			hCPU->fpr[frD].fp0 = r;
+			hCPU->fpr[frD].fp1 = r;
+		}
+		else
+		{
+			hCPU->fpr[frD].fpr = r;
+		}
 	}
-	else
-	{
-		hCPU->fpr[frD].fpr = r;
-	}
+	if (Opcode & PPC_OPC_RC)
+		ppc_fpscr_update_cr1(hCPU);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }

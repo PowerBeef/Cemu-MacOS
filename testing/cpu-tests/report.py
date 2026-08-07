@@ -163,6 +163,75 @@ def emit(run, label):
         for insn, n in repeated[:15]:
             print(f"    {n:>6}x  {insn:08X}  {family(insn)}")
 
+    # Got-FPSCR breakdown (check_fpu: aux[2]; check_ps: aux[3]). Values-only is
+    # green, so residual full-suite fails are almost all FPSCR bookkeeping —
+    # this is how you rank the next lever without re-running IGNORE builds.
+    emit_fpscr(run, mnem if mnem else {})
+
+
+# Host bit layout matches PEM / src FPSCR_* (bit = 1 << (31 - ppc_bit)).
+_FPSCR_BITS = (
+    (31, "FX"), (30, "FEX"), (29, "VX"), (28, "OX"), (27, "UX"),
+    (26, "ZX"), (25, "XX"), (24, "VXSNAN"), (23, "VXISI"), (22, "VXIDI"),
+    (21, "VXZDZ"), (20, "VXIMZ"), (19, "VXVC"), (18, "FR"), (17, "FI"),
+    (10, "VXSOFT"), (9, "VXSQRT"), (8, "VXCVI"),
+)
+_FPRF_CLASSES = {
+    0x00: "empty",
+    0x02: "+zero",
+    0x04: "+norm",
+    0x05: "+inf",
+    0x08: "-norm",
+    0x09: "-inf",
+    0x11: "qNaN",
+    0x12: "-zero",
+    0x14: "+denorm",
+    0x18: "-denorm",
+}
+
+
+def got_fpscr(fail):
+    """FPSCR recorded in a failure record (word 4 for FPU, word 5 for PS)."""
+    if ((fail["insn"] >> 26) & 0x3F) == 4:
+        return fail["aux"][3]
+    return fail["aux"][2]
+
+
+def emit_fpscr(run, mnem):
+    fails = run["fails"]
+    if not fails:
+        return
+    zero = nonzero = 0
+    by_class = Counter()
+    bit_hits = Counter()
+    zero_by_mnem = Counter()
+    for f in fails:
+        fps = got_fpscr(f)
+        fprf = (fps >> 12) & 0x1F
+        by_class[_FPRF_CLASSES.get(fprf, f"fprf=0x{fprf:02X}")] += 1
+        if fps == 0:
+            zero += 1
+            zero_by_mnem[mnem.get(f["insn"], family(f["insn"]))] += 1
+        else:
+            nonzero += 1
+        for bit, name in _FPSCR_BITS:
+            if fps & (1 << bit):
+                bit_hits[name] += 1
+
+    print(f"\n  got FPSCR: {zero} zero / {nonzero} nonzero "
+          f"(zero = op left FPSCR untouched)")
+    print("  FPRF class in got FPSCR:")
+    for cls, n in by_class.most_common():
+        print(f"    {n:>6}  {cls}")
+    if bit_hits:
+        print("  sticky / FI bits set in got FPSCR:")
+        for name, n in bit_hits.most_common():
+            print(f"    {n:>6}  {name}")
+    if zero_by_mnem:
+        print("  FPSCR-zero failures by mnemonic (top 15):")
+        for m, n in zero_by_mnem.most_common(15):
+            print(f"    {n:>6}  {m}")
+
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
