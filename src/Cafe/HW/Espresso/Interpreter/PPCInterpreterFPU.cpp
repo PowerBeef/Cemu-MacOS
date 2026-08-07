@@ -122,6 +122,120 @@ ATTR_MS_ABI double roundTo25BitAccuracy(double d)
 	return *(double*)&v;
 }
 
+// --- PowerPC fused multiply-add specials (ppc750cl.s, Espresso silicon) ---
+// NaN selection order is frA → frB → frC (not the A→C→B PEM order). SNaNs are
+// quieted. Generated invalids (0·∞, ∞−∞) yield the default QNaN 0x7FF8… .
+// For nmadd/nmsub the outer negation must NOT flip the sign of a selected NaN.
+
+static constexpr uint64 kPpcDefaultQNaN = 0x7FF8000000000000ULL;
+
+static inline bool ppc_bits_is_nan(uint64 x)
+{
+	return ((x & 0x7FF0000000000000ULL) == 0x7FF0000000000000ULL)
+		&& ((x & 0x000FFFFFFFFFFFFFULL) != 0);
+}
+
+static inline bool ppc_bits_is_inf(uint64 x)
+{
+	return (x & 0x7FFFFFFFFFFFFFFFULL) == 0x7FF0000000000000ULL;
+}
+
+static inline bool ppc_bits_is_zero(uint64 x)
+{
+	return (x & 0x7FFFFFFFFFFFFFFFULL) == 0;
+}
+
+static inline uint64 ppc_quiet_nan(uint64 x)
+{
+	return x | 0x0008000000000000ULL;
+}
+
+// Returns true and writes *out when a special (NaN / invalid) short-circuits.
+// isMsub: effective addend is −b for the ∞±∞ check only; NaN selection uses raw b.
+// FPSCR[VE] result-suppression (check_fpu_noresult) is not handled here — both
+// arms leave that residual for a later FPSCR-aware pass.
+static bool ppc_fmadd_try_special(double a, double b, double c, bool isMsub, double* out)
+{
+	const uint64 ua = *(uint64*)&a;
+	const uint64 ub = *(uint64*)&b;
+	const uint64 uc = *(uint64*)&c;
+
+	if (ppc_bits_is_nan(ua))
+	{
+		const uint64 r = ppc_quiet_nan(ua);
+		*out = *(double*)&r;
+		return true;
+	}
+	if (ppc_bits_is_nan(ub))
+	{
+		const uint64 r = ppc_quiet_nan(ub);
+		*out = *(double*)&r;
+		return true;
+	}
+	if (ppc_bits_is_nan(uc))
+	{
+		const uint64 r = ppc_quiet_nan(uc);
+		*out = *(double*)&r;
+		return true;
+	}
+
+	// 0 · ∞ or ∞ · 0 → VXIMZ default QNaN
+	if ((ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc)) || (ppc_bits_is_inf(ua) && ppc_bits_is_zero(uc)))
+	{
+		*out = *(double*)&kPpcDefaultQNaN;
+		return true;
+	}
+
+	// ∞ · finite ± ∞ of opposite sign → VXISI default QNaN
+	if ((ppc_bits_is_inf(ua) || ppc_bits_is_inf(uc)) && ppc_bits_is_inf(ub))
+	{
+		const uint64 prodSign = (ua ^ uc) & 0x8000000000000000ULL;
+		uint64 addSign = ub & 0x8000000000000000ULL;
+		if (isMsub)
+			addSign ^= 0x8000000000000000ULL;
+		if (prodSign != addSign)
+		{
+			*out = *(double*)&kPpcDefaultQNaN;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+ATTR_MS_ABI double ppc_fmadd(double a, double c, double b)
+{
+	double r;
+	if (ppc_fmadd_try_special(a, b, c, false, &r))
+		return r;
+	return std::fma(a, c, b);
+}
+
+ATTR_MS_ABI double ppc_fmsub(double a, double c, double b)
+{
+	double r;
+	if (ppc_fmadd_try_special(a, b, c, true, &r))
+		return r;
+	return std::fma(a, c, -b);
+}
+
+ATTR_MS_ABI double ppc_fnmadd(double a, double c, double b)
+{
+	double r;
+	// Selected/generated NaN is not sign-flipped (suite fnmadd NaN cases use f10/f12 as-is).
+	if (ppc_fmadd_try_special(a, b, c, false, &r))
+		return r;
+	return -std::fma(a, c, b);
+}
+
+ATTR_MS_ABI double ppc_fnmsub(double a, double c, double b)
+{
+	double r;
+	if (ppc_fmadd_try_special(a, b, c, true, &r))
+		return r;
+	return -std::fma(a, c, -b);
+}
+
 ATTR_MS_ABI double fres_espresso(double input)
 {
 	// based on testing we know that fres uses only the first 15 bits of the mantissa
@@ -450,8 +564,7 @@ void PPCInterpreter_FMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	// std::fma is single-rounding; a*c+b can double-round even when the host contracts.
-	hCPU->fpr[frD].fpr = std::fma(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = ppc_fmadd(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -463,7 +576,7 @@ void PPCInterpreter_FNMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = -std::fma(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = ppc_fnmadd(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -475,7 +588,7 @@ void PPCInterpreter_FMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = std::fma(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, -hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = ppc_fmsub(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -487,7 +600,7 @@ void PPCInterpreter_FNMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = -std::fma(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, -hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = ppc_fnmsub(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -630,6 +743,17 @@ void PPCInterpreter_FMULS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	PPCInterpreter_nextInstruction(hCPU);
 }
 
+// Single-precision *S variants: round numeric results to float, but leave
+// selected/generated NaNs as the double-form quieted payload (suite compares
+// bit-exact against lfd constants like f12).
+static inline double ppc_maybe_round_single(double r)
+{
+	const uint64 bits = *(uint64*)&r;
+	if (ppc_bits_is_nan(bits) || ppc_bits_is_inf(bits))
+		return r;
+	return (double)(float)r;
+}
+
 void PPCInterpreter_FMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();
@@ -637,8 +761,8 @@ void PPCInterpreter_FMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	// Fused product-sum at double, then round to single.
-	hCPU->fpr[frD].fpr = (float)std::fma(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
+	const double r = ppc_fmadd(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = ppc_maybe_round_single(r);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -652,7 +776,8 @@ void PPCInterpreter_FNMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = (float)-std::fma(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
+	const double r = ppc_fnmadd(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = ppc_maybe_round_single(r);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -666,7 +791,8 @@ void PPCInterpreter_FMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fp0 = (float)std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), -hCPU->fpr[frB].fp0);
+	const double r = ppc_fmsub(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	hCPU->fpr[frD].fp0 = ppc_maybe_round_single(r);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -680,7 +806,8 @@ void PPCInterpreter_FNMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fp0 = (float)-std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), -hCPU->fpr[frB].fp0);
+	const double r = ppc_fnmsub(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	hCPU->fpr[frD].fp0 = ppc_maybe_round_single(r);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 

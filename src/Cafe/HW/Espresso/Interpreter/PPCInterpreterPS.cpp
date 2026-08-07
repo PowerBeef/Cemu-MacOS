@@ -64,6 +64,19 @@ void PPCInterpreter_PS_DIV(PPCInterpreter_t* hCPU, uint32 Opcode)
 }
 
 
+// Paired-single *S style: numeric → float + FTZ; NaN/Inf keep double-form payload
+// (check_ps_nan bit-compares ps0 as a double against the expected quieted NaN).
+static inline double ppc_ps_round_slot(double r, bool flushDenorm)
+{
+	const uint64 bits = *(uint64*)&r;
+	if (IS_NAN(bits) || ((bits & 0x7FFFFFFFFFFFFFFFULL) == 0x7FF0000000000000ULL))
+		return r;
+	float f = (float)r;
+	if (flushDenorm)
+		f = flushDenormalToZero(f);
+	return (double)f;
+}
+
 void PPCInterpreter_PS_MADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 {
 	FPUCheckAvailable();
@@ -74,13 +87,11 @@ void PPCInterpreter_PS_MADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	// ps_madd is FUSED: product is not rounded before the add. Use std::fma then cast once.
-	// ppc750cl.s changelog: 'fmadds/ps_madd is not rounded twice'.
-	float s0 = (float)std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
-	float s1 = (float)std::fma(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1);
-
-	hCPU->fpr[frD].fp0 = flushDenormalToZero(s0);
-	hCPU->fpr[frD].fp1 = flushDenormalToZero(s1);
+	// Fused A·C25+B; ppc750cl.s: 'fmadds/ps_madd is not rounded twice'.
+	const double r0 = ppc_fmadd(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	const double r1 = ppc_fmadd(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1);
+	hCPU->fpr[frD].fp0 = ppc_ps_round_slot(r0, true);
+	hCPU->fpr[frD].fp1 = ppc_ps_round_slot(r1, true);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -95,11 +106,10 @@ void PPCInterpreter_PS_NMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	float s0 = (float)-std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
-	float s1 = (float)-std::fma(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1);
-
-	hCPU->fpr[frD].fp0 = s0;
-	hCPU->fpr[frD].fp1 = s1;
+	const double r0 = ppc_fnmadd(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	const double r1 = ppc_fnmadd(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1);
+	hCPU->fpr[frD].fp0 = ppc_ps_round_slot(r0, false);
+	hCPU->fpr[frD].fp1 = ppc_ps_round_slot(r1, false);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -114,11 +124,10 @@ void PPCInterpreter_PS_MSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode >> 16) & 0x1F;
 	frD = (Opcode >> 21) & 0x1F;
 
-	float s0 = (float)std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), -hCPU->fpr[frB].fp0);
-	float s1 = (float)std::fma(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), -hCPU->fpr[frB].fp1);
-
-	hCPU->fpr[frD].fp0 = s0;
-	hCPU->fpr[frD].fp1 = s1;
+	const double r0 = ppc_fmsub(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	const double r1 = ppc_fmsub(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1);
+	hCPU->fpr[frD].fp0 = ppc_ps_round_slot(r0, false);
+	hCPU->fpr[frD].fp1 = ppc_ps_round_slot(r1, false);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -133,11 +142,10 @@ void PPCInterpreter_PS_NMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode >> 16) & 0x1F;
 	frD = (Opcode >> 21) & 0x1F;
 
-	float s0 = (float)-std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), -hCPU->fpr[frB].fp0);
-	float s1 = (float)-std::fma(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), -hCPU->fpr[frB].fp1);
-
-	hCPU->fpr[frD].fp0 = s0;
-	hCPU->fpr[frD].fp1 = s1;
+	const double r0 = ppc_fnmsub(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	const double r1 = ppc_fnmsub(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1);
+	hCPU->fpr[frD].fp0 = ppc_ps_round_slot(r0, false);
+	hCPU->fpr[frD].fp1 = ppc_ps_round_slot(r1, false);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -152,12 +160,11 @@ void PPCInterpreter_PS_MADDS0(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp0);
-	float s0 = (float)(hCPU->fpr[frA].fp0 * c + hCPU->fpr[frB].fp0);
-	float s1 = (float)(hCPU->fpr[frA].fp1 * c + hCPU->fpr[frB].fp1);
-
-	hCPU->fpr[frD].fp0 = s0;
-	hCPU->fpr[frD].fp1 = s1;
+	const double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp0);
+	const double r0 = ppc_fmadd(hCPU->fpr[frA].fp0, c, hCPU->fpr[frB].fp0);
+	const double r1 = ppc_fmadd(hCPU->fpr[frA].fp1, c, hCPU->fpr[frB].fp1);
+	hCPU->fpr[frD].fp0 = ppc_ps_round_slot(r0, false);
+	hCPU->fpr[frD].fp1 = ppc_ps_round_slot(r1, false);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -172,12 +179,11 @@ void PPCInterpreter_PS_MADDS1(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp1);
-	float s0 = (float)(hCPU->fpr[frA].fp0 * c + hCPU->fpr[frB].fp0);
-	float s1 = (float)(hCPU->fpr[frA].fp1 * c + hCPU->fpr[frB].fp1);
-
-	hCPU->fpr[frD].fp0 = s0;
-	hCPU->fpr[frD].fp1 = s1;
+	const double c = roundTo25BitAccuracy(hCPU->fpr[frC].fp1);
+	const double r0 = ppc_fmadd(hCPU->fpr[frA].fp0, c, hCPU->fpr[frB].fp0);
+	const double r1 = ppc_fmadd(hCPU->fpr[frA].fp1, c, hCPU->fpr[frB].fp1);
+	hCPU->fpr[frD].fp0 = ppc_ps_round_slot(r0, false);
+	hCPU->fpr[frD].fp1 = ppc_ps_round_slot(r1, false);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }

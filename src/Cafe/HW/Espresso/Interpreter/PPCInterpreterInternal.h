@@ -188,6 +188,15 @@ static inline uint32 ppc_getCR(PPCInterpreter_t* hCPU)
 // Non-inline so the recompiler can call it via make_call_imm (same ABI as fres_espresso).
 ATTR_MS_ABI double roundTo25BitAccuracy(double d);
 
+// PowerPC fused multiply-add family with Espresso NaN selection
+// (order frA → frB → frC; SNaN quieted; 0·∞ → default QNaN; nmadd does not
+// flip NaN sign). Args are (frA, frC, frB) matching the product A·C ± B.
+// Callables from the recompiler via make_call_imm.
+ATTR_MS_ABI double ppc_fmadd(double a, double c, double b);
+ATTR_MS_ABI double ppc_fmsub(double a, double c, double b);
+ATTR_MS_ABI double ppc_fnmadd(double a, double c, double b);
+ATTR_MS_ABI double ppc_fnmsub(double a, double c, double b);
+
 ATTR_MS_ABI double fres_espresso(double input);
 ATTR_MS_ABI double frsqrte_espresso(double input);
 
