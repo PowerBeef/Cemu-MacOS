@@ -1960,18 +1960,19 @@
       "title": "Fix the 354 real floating-point and paired-single conformance failures",
       "area": "cpu",
       "status": "open",
-      "verdict": "Values-only suite is **279** failures (was 354 → 325 → 319 → 305 → 292 → 279). Arms identical. psq_* cluster closed: type-0 load/store uses ConvertTo*NoFTZ (SNaN preserved, denorm flush on store only); flushDenormalToZero is real; integer quantize clamps NaN by sign like ±inf. Remaining: mad residual 116; fres/rsqrte; frsp/fctiw; ps_mul/div; 2 integer-extended; 1 lfd.",
-      "gate": "Continue values-only. Next: mad-form NaN/inf residual (116), then fres/rsqrte tables, frsp/fctiw edges.",
+      "verdict": "Values-only suite is **229** failures (was 354 → 325 → 319 → 305 → 292 → 279 → 229). Arms identical. psq_* closed. fmadd family: PowerPC NaN selection order frA→frB→frC, SNaN quieting, default QNaN for 0·∞/∞−∞, nmadd does not flip NaN sign — shared helpers on interpreter + recompiler. Remaining mad ~66 (FPSCR[VE] noresult, underflow/FTZ, numeric edges); fres/rsqrte; frsp/fctiw; ps_mul/div/res.",
+      "gate": "Continue values-only. Next: FPSCR[VE] result suppression on invalid FMA, underflow/FTZ edges, then fres/rsqrte tables.",
       "ref": "docs/testing/00-test-strategy.md — First result",
       "commits": [
         "09bfedd",
         "59706a9",
         "3883c2b",
-        "bbd147e"
+        "bbd147e",
+        "3dc410b"
       ],
       "measured": {
         "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1",
-        "at_commit": "bbd147e",
+        "at_commit": "3dc410b",
         "date": "2026-08-07",
         "n": 1
       }
