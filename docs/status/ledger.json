@@ -1557,7 +1557,9 @@
       "title": "Phase 1 playtest MCP for autonomous launch and input",
       "area": "tooling",
       "status": "landed",
-      "commits": [],
+      "commits": [
+        "626d0d5"
+      ],
       "verdict": "Added project MCP `tessera-playtest` (`tools/tessera-playtest/`): launch/stop, raise, press/hold, title wait, screenshot via capture-scene.sh, JSON scenarios, and BotW load-save convenience. Wired in `.grok/config.toml`. Builds on Phase 0 `testing/playtest` helpers; still OS-keyboard (frontmost + Accessibility). Phase 2 remains ScriptedController.",
       "ref": "tools/tessera-playtest/README.md"
     }
