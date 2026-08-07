@@ -1556,3 +1556,29 @@ of any performance outcome.
 > independently. I also asserted that BotW's profile "explicitly asks for" strict mul; it does not —
 > `True` is the global default (`GameProfile.h:59`), and restating a default is not a recorded
 > decision.
+
+#### Experiment 1 — `accurateShaderMul = false` (refuted, 2026-08-07)
+
+Gate fixed before the run: positive control MSL dump `mul_nonIEEE` 52,072 → 0; confounds draws /
+passes / attachment bytes within 1%; decision on gameplay-phase Δ`gpu.busy_ns` only — **&lt; 0.4 ms
+refutes the item**, 0.4–1.0 cancels, ≥1.0 **and** Δfence-entry ≥ 0.8 × Δbusy proceeds. Endpoint is
+**not** `gpu.frame_critical_path_ns`. Harness: `testing/run-mul-ab.sh` (equal boot/settle/record,
+profile flip per arm, `TESSERA_DUMP_MSL` for the control).
+
+| | true (default) | false |
+|---|---|---|
+| MSL `mul_nonIEEE` call sites | **52,072** (1,139 defs / 1,141 files) | **0** |
+| Strict shader mul (log) | true | false |
+| gameplay frame / fps (med, n=3) | 49.90 ms / 20.04 | 49.90 ms / 20.04 |
+| `gpu.busy_ns` ms (range, n=3) | **16.95 – 17.10** | **16.64 – 16.71** |
+| fence residual `frame − cp_fence` ms | 34.38 – 34.53 | 34.02 – 34.10 |
+| draws / passes / attach bytes | 3516–3524 / 203–204 / ~808 MB | 3513–3526 / 203–204 / ~805 MB |
+
+Build `a497562`, macOS 26.6 (25G72), BotW Korok gameplay (high-draw phase), RECORD 120 s, n=3 per
+arm. Median-of-medians **Δbusy = −0.33 ms** (false slightly lower). Ranges do not overlap, but the
+magnitude is under the 0.4 ms bar the gate set — **refute**. Confounds all within ±0.5%. Frame time
+and fps are vsync-locked at three slots either way; removing ~29% of emitted AIR as two-compare
+helpers does not move the Korok deadline. The item is closed as an instrument, not as a deliverable:
+shipping `accurateShaderMul = false` remains an accuracy tradeoff the guest did not ask for.
+
+Traces under `testing/traces/mul_ab/`; summary at `testing/traces/mul_ab/summary.json`.

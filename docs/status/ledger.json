@@ -1566,6 +1566,22 @@
   ],
   "refuted": [
     {
+      "id": "rm-shader-cost",
+      "title": "Shader cost — largest emitter construct (`accurateShaderMul` / `mul_nonIEEE`) does not buy Korok time",
+      "area": "graphics",
+      "status": "refuted",
+      "commits": [],
+      "verdict": "Experiment 1 (config flip only): MSL positive control **52,072 → 0** `mul_nonIEEE` call sites; confounds draws/passes/bytes within ±0.5%. Gameplay-phase Δ`gpu.busy_ns` median-of-medians **−0.33 ms** (true 16.95–17.10, false 16.64–16.71). Under the pre-committed **&lt; 0.4 ms** bar → **refute**. Frame/fps stay 49.90 ms / 20.04 both arms. Not a deliverable — shipping false is an accuracy tradeoff.",
+      "note": "Harness `testing/run-mul-ab.sh`; traces `testing/traces/mul_ab/` + `summary.json`. macOS 26.6. Default phase pick in `telemetry-report.py` is longest-by-frames (menu); analysis forced the high-draw phase. Fence residual also −0.31 ms; both under magnitude. ALU may still dominate Metal GPU counters, but this construct is not the lever for the Korok deadline.",
+      "ref": "00-master-plan.md — Experiment 1 — `accurateShaderMul = false`",
+      "measured": {
+        "scene": "botw-korok",
+        "at_commit": "a497562",
+        "date": "2026-08-07",
+        "n": 3
+      }
+    },
+    {
       "id": "r-mtlevent-chain",
       "title": "The `MTLEvent` chain is what holds the frame back",
       "area": "graphics",
@@ -1787,15 +1803,7 @@
     }
   ],
   "roadmap": [
-    {
-      "id": "rm-shader-cost",
-      "title": "Shader cost — the ALU and texture work in the MSL the Latte decompiler emits",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "Where the counters point: ALU is the top limiter in 45.6% of active GPU samples and texture sampling in 22.8%, against 12.8% for the whole memory path. Scoped 2026-08-06. **The prize is smaller and the ceiling lower than the item was written against**: the real deadline miss is 1.04–1.38 ms (not 1.90), and ~2 ms of saving buys 20.1 → **~28 fps**, saturating there because 10.2% of frames are a periodic heavy population needing ~7 ms. 30.06 fps is not reachable from shader work.",
-      "gate": "**Experiment 1 is a config flip, no code.** Write `~/Library/Application Support/TesseraEmu/gameProfiles/00050000101c9400.ini` with `accurateShaderMul = false` — the largest emitter-side ALU construct, **52,072 `mul_nonIEEE` call sites across 1,139 shaders**, ~29% of emitted AIR. It is an *instrument, never a deliverable*: shipping it would be a second instance of declining to do what the guest asked. Mandatory positive control — dump MSL in both arms and assert the call-site count goes 52,072 → 0, since nothing reports `strictMul` reaching the emitter. Mandatory confound check — draws, passes and attachment bytes within 1%. Decision rule fixed before the run: Δ`gpu.busy_ns` < 0.4 ms refutes the item, 0.4–1.0 ms cancels it, ≥1.0 ms **and** Δfence-entry ≥ 0.8 × Δbusy proceeds. **Do not use `gpu.frame_critical_path_ns` as an endpoint.**",
-      "ref": "00-master-plan.md — `gpu.frame_critical_path_ns` is not a deadline instrument"
-    },
+
     {
       "id": "rm-inpass-copy",
       "title": "In-pass streamout copy (revive)",
