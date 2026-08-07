@@ -1445,7 +1445,7 @@
       "stage": "s5",
       "status": "cancelled",
       "commits": [
-        "14551d8"
+        "b23dc3a"
       ],
       "verdict": "The graphics plan called binary caching \"the highest-value item after Phase 0\" and said MSL recompilation \"dominates cold-start time\", with no number — because the timer that would produce one was `#if BOOST_OS_WINDOWS` and had **never executed on this fork's only platform**. Un-gated and split: BotW preloads **1,139 shaders in 117–169 ms and 1,567 pipelines in 296–319 ms, 434–466 ms total**, RSS +173 MB. An `MTLBinaryArchive` is consulted only once an `MTLFunction` exists, so the frontend runs either way and **296–319 ms is the item's entire ceiling** — roughly 2 s extrapolated to MK8's 10,757 pipelines.",
       "note": "Three things beyond the number. **The item's mental model was inverted**: with the cache removed the same line reads 0 shaders in 5 ms, so the cache does not make launch slow, it *is* the launch cost — remove it and the work moves into gameplay as first-encounter compilation. **Apple's header argues against the design**: `MTLBinaryArchive.h` states Metal already maintains a per-app compiled-code cache that accelerates pipeline creation after first use, that the archive exists to accelerate the **first** run, and that updating one at runtime is \"not recommended\" — which is exactly what Phase 2 proposed, for a first-run benefit an emulator generating shaders from guest bytecode cannot obtain. **And that system cache is why the frontend looks free**: `$(getconf DARWIN_USER_CACHE_DIR)com.apple.metal` is 111 MB here and its mtime tracks our runs, so 0.11 ms/shader is almost certainly Apple answering, not us compiling. Recorded in CLAUDE.md as a measurement trap. The corrected instrument also fixed a comment of my own that had the two stages backwards, which inverts the conclusion.",
@@ -1464,7 +1464,7 @@
       "stage": "s5",
       "status": "refuted",
       "commits": [
-        "b23dc3a"
+        "90a00c6"
       ],
       "verdict": "**34.92 ms on frames that completed in 33.27 ms**, in all three runs — impossible for a span inside the frame. Its origin is re-zeroed inside the retirement poll (`MetalRenderer.cpp:2351-2356`) rather than at present, so it straddles a boundary whenever retirement observation lags. It separates 2-slot from 3-slot frames by **0.31 ms** and sits on the wrong side of the deadline in both; `frame_ns − gpu.cp_fence_ns` separates them by **1.1–1.4 ms** and lands correctly on both sides.",
       "note": "**This is the counter that produced the 1.90 ms figure six refuted attempts were aimed at.** The real miss is 1.04–1.38 ms. Found while scoping `rm-shader-cost` by re-deriving the number the item exists to close, which is the only reason it surfaced — it is stable to 0.03 ms across runs and looks impeccable until compared against the frame containing it. A clock-base mismatch is excluded: `gpu.queue_latency_rejected` totals 1/0/0. Kept rather than deleted, with the invalidation recorded at its declaration in `TelemetryCounters.def`, because it still tracks submission-to-retirement latency and deleting it would silently rewrite the history that quotes it.",
@@ -1482,7 +1482,7 @@
       "area": "graphics",
       "status": "landed",
       "commits": [
-        "b23dc3a"
+        "90a00c6"
       ],
       "verdict": "Apple's header states `fastMathEnabled defaults to YES` (`MTLLibrary.h:306`) and deprecates the property (`API_DEPRECATED(\"Use mathMode instead\", macos(10.11, 15.0))`, `:308`). `RendererShaderMtl.cpp:316-317` calls the setter **only when the profile says true**, so setting it false sets nothing. **Nine of the twelve shipped game profiles that mention the key set it false**, and all nine silently get fast math.",
       "note": "Found while scoping `rm-shader-cost`. It also puts the fork in contradiction with itself: fast math licenses the compiler to violate IEEE 754 on every shader, while `accurateShaderMul` — also on by default — pays **52,072 `mul_nonIEEE` call sites** to emulate `0 × Inf → 0`. Whichever is right, one is being paid for and not delivered. Fix is `setMathMode`, filed as `rm-mathmode-fix` because making the checkbox work is a real behaviour change for those nine titles.",
@@ -1518,7 +1518,8 @@
       "area": "tooling",
       "status": "landed",
       "commits": [
-        "8fd54d1"
+        "8fd54d1",
+        "6cfc4ec"
       ],
       "verdict": "Added  MCP  pointing at a vendored, macOS-safe packaging of Matt-Wood-23/cemu-re-mcp (GDB path only; pymem skipped). Complements cpu-tests when inspecting guest state under .",
       "ref": "tools/cemu-re-mcp/README.md"
@@ -1666,7 +1667,8 @@
       "stage": "s5",
       "status": "refuted",
       "commits": [
-        "1ba16d9"
+        "1ba16d9",
+        "14551d8"
       ],
       "verdict": "Refuted three ways without a run. **The size was a 14× units error** — 1,536 is the *texel* count; at `R32_G32_B32_A32_FLOAT` and `R16_G16_B16_A16_FLOAT` the six are **21,504 B**, which is the 21 KB `readback-targets` already recorded. **That entry had already answered the question**: the arrays are a GPU-computed data table the guest consumes, so the readback is not spurious. And **the cost is not divisible per surface** — every readback commits its own command buffer and every buffer waits on its predecessor, so `waitUntilCompleted()` transitively waits for all of them and skipping five of six recovers zero.",
       "note": "Filed as open on a paragraph that reopened a landed verdict without citing it. The paragraph disclaimed reopening `r-surgical-readback`, the *scheduling* refutation, and silently reopened the *policy* one beside it — while restating an established 21 KB as 1.5 KB, so the contradiction read as a new and more alarming finding rather than as an error. **Two live findings survive the closure.** `LatteTextureReadback_Initate` has a second caller at `LatteSurfaceCopy.cpp:136` gated on `!sourceIsLinear && destinationIsLinear`, which never consults `enableReadback`, so nothing on file attributes any of the six surfaces to `LatteTexture.cpp:1311` — the line the item named. And `LatteTextureReadback_ReadbackToLinearBlocking` calls `ForceFinish()` inline at `LatteTextureReadback.cpp:201`, which increments the same counter and timer, so **`gpu.readback_forcefinish_ns` is an upper bound on the `GX2DrawDone` drain, not a measurement of it**.",
