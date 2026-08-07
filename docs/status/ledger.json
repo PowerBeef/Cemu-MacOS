@@ -19,8 +19,8 @@
     "Adding work: append an item naming its commits, then run build-status.py. Any fork",
     "commit no item claims is rendered on the page as unattributed, so nothing goes missing."
   ],
-  "title": "TesseraEmu — fork status",
-  "tagline": "A hard fork of Cemu retargeted at Apple Silicon and macOS 26 only: one architecture, one renderer, and a measured record of everything tried — including the two thirds of it that did not work.",
+  "title": "TesseraEmu \u2014 fork status",
+  "tagline": "A hard fork of Cemu retargeted at Apple Silicon and macOS 26 only: one architecture, one renderer, and a measured record of everything tried \u2014 including the two thirds of it that did not work.",
   "fork_point": "b8f2cf4",
   "summary": "arm64 only, macOS 26.0 minimum, Metal only. Upstream Cemu is portable; this fork deliberately is not. `precompiled.h` refuses to compile on any other target, `BackendX64/` and the IML x86 machinery are gone, and the binary links Metal and QuartzCore and nothing else graphical.",
   "headline": [
@@ -32,7 +32,7 @@
     {
       "value": "20.04 fps",
       "label": "BotW open world (Korok Forest)",
-      "note": "**30.06** with `GX2DrawdoneSync` off — a config default, not the renderer"
+      "note": "**30.06** with `GX2DrawdoneSync` off \u2014 a config default, not the renderer"
     },
     {
       "value": "45.6%",
@@ -59,27 +59,27 @@
       "title": "Rewritten for this hardware",
       "entries": [
         "`cpu_features` for arm64; title and content decryption onto the **ARMv8 AES extensions**, validated against FIPS-197 by a standalone probe.",
-        "`FSpinlock` is now `os_unfair_lock` — a raw spin on an asymmetric-core CPU can burn a P-core against a descheduled E-core holder.",
+        "`FSpinlock` is now `os_unfair_lock` \u2014 a raw spin on an asymmetric-core CPU can burn a P-core against a descheduled E-core holder.",
         "**Thread QoS with a P/E split.** Guest cores and the GPU command thread `USER_INTERACTIVE`; compile pools sized against the efficiency cluster instead of `hardware_concurrency()`, which was spawning 17 threads on a 4P+4E machine.",
-        "Audio onto a **lock-free SPSC ring** — the mixer had been taking a mutex on CoreAudio's realtime thread.",
+        "Audio onto a **lock-free SPSC ring** \u2014 the mixer had been taking a mutex on CoreAudio's realtime thread.",
         "`MemMapper` for **16 KB pages**, screensaver inhibition through `NSProcessInfo`, and SDL input off a 5 ms main-thread timer."
       ]
     },
     {
       "title": "Added",
       "entries": [
-        "A **telemetry harness compiled into the core** — counters across GPU, CPU, memory and accuracy, `__thread`-local and cache-line striped, gated on one branch so a disabled build measurably costs nothing.",
+        "A **telemetry harness compiled into the core** \u2014 counters across GPU, CPU, memory and accuracy, `__thread`-local and cache-line striped, gated on one branch so a disabled build measurably costs nothing.",
         "A **golden-scene capture harness** (`testing/capture-scene.sh`) and a scripted BotW driver that reaches a repeatable scene with no human and no save file.",
-        "A **code-anchored Wii U hardware reference** — ten documents in `docs/hardware/`, written against the emulator's own source rather than wiki lore. Writing it found two bugs.",
+        "A **code-anchored Wii U hardware reference** \u2014 ten documents in `docs/hardware/`, written against the emulator's own source rather than wiki lore. Writing it found two bugs.",
         "A native **GameController.framework** input provider, crash diagnostics (`sigaltstack`, arm64 PC recovery, demangled backtraces), CMake-driven bundle signing, and standalone probes in `tools/probes/`."
       ]
     },
     {
       "title": "Bugs the port surfaced",
       "entries": [
-        "**248 bytes of heap corruption on every startup** — the Metal renderer initialised a `[3][31]` array with a loop bound of 4. It was the real cause of a long-standing `// HACK: ... garbage data` workaround.",
+        "**248 bytes of heap corruption on every startup** \u2014 the Metal renderer initialised a `[3][31]` array with a loop bound of 4. It was the real cause of a long-standing `// HACK: ... garbage data` workaround.",
         "`MemMapper` rounded a mapping's base but not its length and did no rounding at all on unmap, so releasing a guest range failed silently and left it writable across a title switch. 16 KB pages make this reachable where 4 KB pages hid it.",
-        "The AArch64 backend left the emitter cursor short of the end of generated code, so `readyRE()` **invalidated only part of the I-cache** — a stale-instruction hazard on cold paths only.",
+        "The AArch64 backend left the emitter cursor short of the end of generated code, so `readyRE()` **invalidated only part of the I-cache** \u2014 a stale-instruction hazard on cold paths only.",
         "Graphic packs corrupting GPU registers; sampler LOD bias never applied at all; an `MTLEvent` value wrap that silently disabled command-buffer serialisation every ~29 s; a missing `NSHighResolutionCapable` handing Metal a half-resolution drawable."
       ]
     }
@@ -88,7 +88,7 @@
     {
       "id": "t-scenes",
       "title": "The two BotW scenes, and why the open world is the interesting one",
-      "note": "`testing/drive-botw.sh` reaches the Shrine of Resurrection unattended. A Korok Forest save is the heavier scene and the one every current graphics conclusion rests on. **The Shrine column is not current** — it predates the `839466d` `busy_ns` fix and two different instruments disagree about it; re-measure before quoting it.",
+      "note": "`testing/drive-botw.sh` reaches the Shrine of Resurrection unattended. A Korok Forest save is the heavier scene and the one every current graphics conclusion rests on. **The Shrine column is not current** \u2014 it predates the `839466d` `busy_ns` fix and two different instruments disagree about it; re-measure before quoting it.",
       "columns": [
         "",
         "Shrine",
@@ -117,12 +117,12 @@
         ],
         [
           "GPU busy / frame",
-          "14.0 ms †",
-          "**16.4 – 16.5 ms**"
+          "14.0 ms \u2020",
+          "**16.4 \u2013 16.5 ms**"
         ],
         [
           "GPU duty cycle",
-          "42% †",
+          "42% \u2020",
           "**33%**"
         ]
       ]
@@ -130,7 +130,7 @@
     {
       "id": "t-frame",
       "title": "The 49.90 ms Korok frame, fully decomposed",
-      "note": "Nothing is saturated. Guest cores ~18% busy, GPU ~33% busy, command processor ~71% waiting. The frame is three whole vsync slots because it overruns the two-slot deadline of 33.27 ms and drops to the next division rather than degrading smoothly. **The 1.90 ms once quoted here came from `gpu.frame_critical_path_ns` and is wrong** — that counter reads 34.92 ms on frames that completed in 33.27 ms. On `frame_ns − gpu.cp_fence_ns` the real miss is **1.04–1.38 ms**.",
+      "note": "Nothing is saturated. Guest cores ~18% busy, GPU ~33% busy, command processor ~71% waiting. The frame is three whole vsync slots because it overruns the two-slot deadline of 33.27 ms and drops to the next division rather than degrading smoothly. **The 1.90 ms once quoted here came from `gpu.frame_critical_path_ns` and is wrong** \u2014 that counter reads 34.92 ms on frames that completed in 33.27 ms. On `frame_ns \u2212 gpu.cp_fence_ns` the real miss is **1.04\u20131.38 ms**.",
       "columns": [
         "",
         "ms / frame",
@@ -176,8 +176,8 @@
     },
     {
       "id": "t-limiters",
-      "title": "What actually limits the GPU — and it is not bandwidth",
-      "note": "`Metal GPU Counters`, Korok gameplay, 179,221 samples, conditioned on the 42.1% where some limiter exceeds 5%. **ALU and texture are the bottleneck in 86.1% of active samples; the memory path in 12.8%.** `Partial Renders Count` is 0 everywhere — no tile-memory spills. This is the measurement that cancelled the streamout work.",
+      "title": "What actually limits the GPU \u2014 and it is not bandwidth",
+      "note": "`Metal GPU Counters`, Korok gameplay, 179,221 samples, conditioned on the 42.1% where some limiter exceeds 5%. **ALU and texture are the bottleneck in 86.1% of active samples; the memory path in 12.8%.** `Partial Renders Count` is 0 everywhere \u2014 no tile-memory spills. This is the measurement that cancelled the streamout work.",
       "columns": [
         "limiter",
         "mean % active",
@@ -223,7 +223,7 @@
     },
     {
       "id": "t-levers",
-      "title": "The accuracy-for-speed levers — measured, neither default changed",
+      "title": "The accuracy-for-speed levers \u2014 measured, neither default changed",
       "note": "Two settings trade correctness for frame rate. Recording what each costs so the leave-it-on decision is informed rather than inherited. Changing a default is a product call, not an engineering one.",
       "columns": [
         "lever",
@@ -237,13 +237,13 @@
           "**`GX2DrawdoneSync`**",
           "on",
           "live, honoured",
-          "**20.04 → 30.06 fps** on Korok; critical path 35.25 → 18.64 ms; intra-frame GPU gap 16.39 → 0.25 ms (n=3 / n=2)",
+          "**20.04 \u2192 30.06 fps** on Korok; critical path 35.25 \u2192 18.64 ms; intra-frame GPU gap 16.39 \u2192 0.25 ms (n=3 / n=2)",
           "The guest asks for a full pipeline drain and does not get one. BotW reads back 21 KB of GPU-computed floats per frame that it genuinely consumes."
         ],
         [
           "**Accurate barriers**",
           "`true`",
-          "**not implemented** — dead code since `26e40a4`",
+          "**not implemented** \u2014 dead code since `26e40a4`",
           "unavailable; the fork already runs as if it were off, so its speed is banked in every number here",
           "Already being paid: anything sampling a render target while writing it reads undefined data. BotW lava and waterfalls are the known cases."
         ]
@@ -253,7 +253,7 @@
   "items": [
     {
       "id": "stage1-metal-baseline",
-      "title": "Stage 1 — a Metal-first baseline that boots on arm64",
+      "title": "Stage 1 \u2014 a Metal-first baseline that boots on arm64",
       "area": "platform",
       "stage": "s1",
       "status": "landed",
@@ -262,7 +262,7 @@
       ],
       "verdict": "First running arm64 build with Metal as the only configured renderer. Carried the fix for the `[3][31]`-array constructor overflow and moved decryption onto the ARMv8 AES extensions.",
       "note": "The overflow had been papered over by a `// HACK: ... garbage data` comment for years. Root-causing it deleted both the hack and the bug.",
-      "ref": "01-foundation-platform-packaging.md — Phase 0"
+      "ref": "01-foundation-platform-packaging.md \u2014 Phase 0"
     },
     {
       "id": "delete-gl-vulkan",
@@ -275,7 +275,7 @@
       ],
       "verdict": "Metal is the only renderer. The GLSL emitter and glslang went with them.",
       "note": "Deleting a backend exposes coupling only the linker finds: the MSL emitter forward-declared four helpers that were **defined in the GLSL emitter's translation unit**, and several files were receiving `robin_hood` and `StringBuf` only transitively through Vulkan includes.",
-      "ref": "01-foundation-platform-packaging.md — 1.1"
+      "ref": "01-foundation-platform-packaging.md \u2014 1.1"
     },
     {
       "id": "probe-mapjit",
@@ -288,12 +288,12 @@
         "8bf8278"
       ],
       "verdict": "4,000 regions succeed under hardened runtime on macOS 26. The risk this would have forced a custom JIT allocator is retired.",
-      "note": "A first probe appeared to confirm the limit — it was testing an RWX pattern xbyak never uses. **Probe the pattern the code actually uses, not the one the docs describe.** Preserved in `tools/probes/`.",
+      "note": "A first probe appeared to confirm the limit \u2014 it was testing an RWX pattern xbyak never uses. **Probe the pattern the code actually uses, not the one the docs describe.** Preserved in `tools/probes/`.",
       "measured": {
         "at_commit": "21a502a",
         "date": "2026-07-25"
       },
-      "ref": "00-master-plan.md — R1 probe result"
+      "ref": "00-master-plan.md \u2014 R1 probe result"
     },
     {
       "id": "stale-disclaimer",
@@ -305,7 +305,7 @@
         "f2945df"
       ],
       "verdict": "Upstream's warning that macOS is a preview is not true of a fork that targets only macOS. Also started ignoring `Roms/`.",
-      "ref": "01-foundation-platform-packaging.md — 1.10"
+      "ref": "01-foundation-platform-packaging.md \u2014 1.10"
     },
     {
       "id": "golden-harness",
@@ -320,7 +320,7 @@
       ],
       "verdict": "`testing/capture-scene.sh` records a window-only frame plus FPS/RSS/threads into `testing/golden/baseline.tsv`, which is the committed record every claim here is checked against.",
       "note": "There is no test suite in this repo. Verification is: it builds, it boots a title, the frame looks right, and nothing new appears in the log. The harness is what makes the last two checkable.",
-      "ref": "00-master-plan.md — Verification"
+      "ref": "00-master-plan.md \u2014 Verification"
     },
     {
       "id": "delete-x86-backend",
@@ -332,8 +332,8 @@
         "1354549"
       ],
       "verdict": "`BackendX64/` is gone. The `IMLUtil_*` helpers were kept as substrate for an AArch64 replacement.",
-      "note": "The only backend peephole pass that existed was x86-specific and went with it — there is currently **no backend peephole pass at all**.",
-      "ref": "02-cpu-jit-memory.md — 1.1"
+      "note": "The only backend peephole pass that existed was x86-specific and went with it \u2014 there is currently **no backend peephole pass at all**.",
+      "ref": "02-cpu-jit-memory.md \u2014 1.1"
     },
     {
       "id": "cpu-features-arm64",
@@ -345,7 +345,7 @@
         "0beefe5"
       ],
       "verdict": "The remaining x86 SIMD paths are gone. `g_CPUFeatures` now exposes `performanceCores` / `efficiencyCores`, which is what lets worker pools be sized against the right cluster.",
-      "ref": "01-foundation-platform-packaging.md — 1.4"
+      "ref": "01-foundation-platform-packaging.md \u2014 1.4"
     },
     {
       "id": "macos26-target",
@@ -359,7 +359,7 @@
       ],
       "verdict": "`precompiled.h` `#error`s on any other target. CMake hygiene alongside it: the inactive AppleClang warning fixed, and LTO left off in `RelWithDebInfo` deliberately.",
       "note": "LTO off keeps relinks fast and keeps `.o` files real Mach-O so `llvm-objdump` can inspect generated code. `Release` turns ThinLTO on and the objects become LLVM bitcode.",
-      "ref": "01-foundation-platform-packaging.md — 1.8, 1.9"
+      "ref": "01-foundation-platform-packaging.md \u2014 1.8, 1.9"
     },
     {
       "id": "page-16kb",
@@ -370,9 +370,9 @@
       "commits": [
         "d7c425e"
       ],
-      "verdict": "Mapping rounded the base but not the length, and unmapping rounded nothing — so releasing a guest range failed silently with `EINVAL` and left it writable across a title switch.",
+      "verdict": "Mapping rounded the base but not the length, and unmapping rounded nothing \u2014 so releasing a guest range failed silently with `EINVAL` and left it writable across a title switch.",
       "note": "Apple Silicon's 16 KB pages make this reachable where 4 KB pages hid it. A real bug the port surfaced rather than introduced.",
-      "ref": "02-cpu-jit-memory.md — 4.3"
+      "ref": "02-cpu-jit-memory.md \u2014 4.3"
     },
     {
       "id": "jit-cursor",
@@ -384,9 +384,9 @@
         "6ab5fe1",
         "bd67b38"
       ],
-      "verdict": "The cursor stopped short of the end of generated code, so `readyRE()` invalidated only part of the I-cache — a stale-instruction hazard that surfaces only on cold paths.",
+      "verdict": "The cursor stopped short of the end of generated code, so `readyRE()` invalidated only part of the I-cache \u2014 a stale-instruction hazard that surfaces only on cold paths.",
       "note": "The follow-up corrected a docs claim that xbyak performs no I-cache maintenance. It does.",
-      "ref": "02-cpu-jit-memory.md — 1.3"
+      "ref": "02-cpu-jit-memory.md \u2014 1.3"
     },
     {
       "id": "bundle-signing",
@@ -397,8 +397,8 @@
       "commits": [
         "135a6c9"
       ],
-      "verdict": "Signing happens inner-out — nested dylibs first, bundle last — as part of the build rather than as a manual step.",
-      "ref": "01-foundation-platform-packaging.md — 6.1, 6.2"
+      "verdict": "Signing happens inner-out \u2014 nested dylibs first, bundle last \u2014 as part of the build rather than as a manual step.",
+      "ref": "01-foundation-platform-packaging.md \u2014 6.1, 6.2"
     },
     {
       "id": "crash-diagnostics",
@@ -410,7 +410,7 @@
         "043b358"
       ],
       "verdict": "A stack-overflow SIGSEGV can now be reported instead of killing the handler, and backtraces are demangled with a recovered arm64 PC.",
-      "ref": "01-foundation-platform-packaging.md — Phase 7"
+      "ref": "01-foundation-platform-packaging.md \u2014 Phase 7"
     },
     {
       "id": "jit-leak",
@@ -423,11 +423,11 @@
         "74f147e"
       ],
       "verdict": "Epoch-based reclamation is a large piece of machinery for a leak nobody had measured. A counter went in first; reclamation waits on that counter showing a problem.",
-      "ref": "02-cpu-jit-memory.md — 4.4"
+      "ref": "02-cpu-jit-memory.md \u2014 4.4"
     },
     {
       "id": "qos-unfair-lock",
-      "title": "Stage 4 — `FSpinlock` becomes `os_unfair_lock`, then thread QoS",
+      "title": "Stage 4 \u2014 `FSpinlock` becomes `os_unfair_lock`, then thread QoS",
       "area": "platform",
       "stage": "s4",
       "status": "landed",
@@ -436,7 +436,7 @@
       ],
       "verdict": "`SetThreadName(name, ThreadRole)` maps a role to a QoS class: guest cores and the GPU command thread `USER_INTERACTIVE`, compile and background work `UTILITY`. 16 call sites pass a role.",
       "note": "Order mattered. A raw spinlock plus QoS on asymmetric cores can hang; `os_unfair_lock` donates priority, so the lock change had to land first. `UTILITY` rather than `BACKGROUND` because macOS throttles the latter hard.",
-      "ref": "01-foundation-platform-packaging.md — 4.2, 4.3"
+      "ref": "01-foundation-platform-packaging.md \u2014 4.2, 4.3"
     },
     {
       "id": "audio-ring",
@@ -447,9 +447,9 @@
       "commits": [
         "94fe786"
       ],
-      "verdict": "The mixer had been taking a mutex on CoreAudio's realtime thread — an unfixable priority inversion and a glitch source.",
+      "verdict": "The mixer had been taking a mutex on CoreAudio's realtime thread \u2014 an unfixable priority inversion and a glitch source.",
       "note": "The fix is not QoS. Raising the audio thread's priority would have made the inversion worse, not better; the callback itself had to stop blocking.",
-      "ref": "01-foundation-platform-packaging.md — 4.4"
+      "ref": "01-foundation-platform-packaging.md \u2014 4.4"
     },
     {
       "id": "native-macos",
@@ -462,7 +462,7 @@
       ],
       "verdict": "Screensaver inhibition through `NSProcessInfo`; SDL input off a 5 ms main-thread timer onto its own thread; Carbon key codes dropped; `NSHighResolutionCapable` added.",
       "note": "Without `NSHighResolutionCapable` macOS ran the whole app magnified and handed Metal a **half-resolution drawable**. SDL's own screensaver path was disabled on macOS because it initialises `SDL_INIT_VIDEO` inside a wx app that already owns `NSApplication`.",
-      "ref": "01-foundation-platform-packaging.md — 5.1, 5.3, 5.4, 5.5",
+      "ref": "01-foundation-platform-packaging.md \u2014 5.1, 5.3, 5.4, 5.5",
       "measured": {
         "scene": "mk8-attract",
         "at_commit": "755f7ad",
@@ -480,8 +480,8 @@
         "b9178ae"
       ],
       "verdict": "A first-party input path that does not go through SDL.",
-      "note": "`controllerProfiles/` ships empty, which is why input looks broken out of the box. Scripted driving writes a keyboard profile directly — the GUI combo boxes do not respond to accessibility scripting.",
-      "ref": "01-foundation-platform-packaging.md — 5.3"
+      "note": "`controllerProfiles/` ships empty, which is why input looks broken out of the box. Scripted driving writes a keyboard profile directly \u2014 the GUI combo boxes do not respond to accessibility scripting.",
+      "ref": "01-foundation-platform-packaging.md \u2014 5.3"
     },
     {
       "id": "idle-spins",
@@ -494,14 +494,14 @@
         "612d064",
         "321b9f7"
       ],
-      "verdict": "**1.77× less total process CPU on Mario Kart 8 — 184% → 104% of one core — at an identical locked 60 FPS.**",
-      "note": "An earlier baseline blamed `mach_continuous_time` at 47% self on the graphics idle path. Wrong caller: it was `__OSThreadCoreIdle` → `__OSCheckSystemEvents`, an unbounded busy-wait in the **scheduler**. Both idle-wait bugs were invisible to the `hostInstrCount / ppcInstrCount` metric the plan had ranked first — profile before picking a codegen target.",
+      "verdict": "**1.77\u00d7 less total process CPU on Mario Kart 8 \u2014 184% \u2192 104% of one core \u2014 at an identical locked 60 FPS.**",
+      "note": "An earlier baseline blamed `mach_continuous_time` at 47% self on the graphics idle path. Wrong caller: it was `__OSThreadCoreIdle` \u2192 `__OSCheckSystemEvents`, an unbounded busy-wait in the **scheduler**. Both idle-wait bugs were invisible to the `hostInstrCount / ppcInstrCount` metric the plan had ranked first \u2014 profile before picking a codegen target.",
       "measured": {
         "scene": "mk8-attract",
         "at_commit": "a7ed8ed",
         "date": "2026-07-26"
       },
-      "ref": "00-master-plan.md — Stage 5 progress"
+      "ref": "00-master-plan.md \u2014 Stage 5 progress"
     },
     {
       "id": "lod-bias",
@@ -513,11 +513,11 @@
         "3bb1049"
       ],
       "verdict": "LOD bias was being computed and never applied. `MTLSamplerDescriptor.lodBias` is new in macOS 26.0, which a fork pinned to macOS 26 can simply use.",
-      "ref": "03-graphics-metal.md — 3.2, F3"
+      "ref": "03-graphics-metal.md \u2014 3.2, F3"
     },
     {
       "id": "tbdr-shrine-verdict",
-      "title": "The TBDR work was rejected — then the rejection was found to be scene-dependent",
+      "title": "The TBDR work was rejected \u2014 then the rejection was found to be scene-dependent",
       "area": "graphics",
       "stage": "s5",
       "status": "refuted",
@@ -528,13 +528,13 @@
         "c23ec16"
       ],
       "verdict": "The audit closed the whole TBDR workstream on the argument that the GPU was idle at 2.83 ms/frame. It had sampled the **MK8 title card**, not gameplay. On a real scene the GPU is at 87.7% of a 16.67 ms budget.",
-      "note": "MK8's attract mode spends most of its wall-clock on the title card, so a short trace silently measures a near-idle scene. Gate on `draws/f > 200` to isolate race frames. The corrected verdict restored the graphics workstream and set the precondition — a GPU-heavy scene — under which the audit would later be redone.",
+      "note": "MK8's attract mode spends most of its wall-clock on the title card, so a short trace silently measures a near-idle scene. Gate on `draws/f > 200` to isolate race frames. The corrected verdict restored the graphics workstream and set the precondition \u2014 a GPU-heavy scene \u2014 under which the audit would later be redone.",
       "measured": {
         "scene": "mk8-attract",
         "at_commit": "fcb0677",
         "date": "2026-07-26"
       },
-      "ref": "00-master-plan.md — CORRECTION (2026-07-26)"
+      "ref": "00-master-plan.md \u2014 CORRECTION (2026-07-26)"
     },
     {
       "id": "memoryless-depth",
@@ -546,11 +546,11 @@
         "ffe1a0b"
       ],
       "verdict": "The safe wins are small and the large one needs pass-count work first. Later closed permanently for this scene: depth is **sampled by a shader on 390 draws/frame**, so `StoreActionDontCare` is not available.",
-      "ref": "00-master-plan.md — Memoryless-depth / load-store audit"
+      "ref": "00-master-plan.md \u2014 Memoryless-depth / load-store audit"
     },
     {
       "id": "deferred-copy",
-      "title": "The deferred texture copy is retired — the pass churn was buffer uploads",
+      "title": "The deferred texture copy is retired \u2014 the pass churn was buffer uploads",
       "area": "graphics",
       "stage": "s5",
       "status": "reverted",
@@ -558,11 +558,11 @@
         "5cb0620"
       ],
       "verdict": "Built against the hypothesis that texture copies were breaking render passes. They were not; buffer uploads were. The mechanism was removed and the finding kept.",
-      "ref": "00-master-plan.md — The render-pass churn was buffer uploads"
+      "ref": "00-master-plan.md \u2014 The render-pass churn was buffer uploads"
     },
     {
       "id": "hardware-reference",
-      "title": "A code-anchored Wii U hardware reference — and two bugs it found",
+      "title": "A code-anchored Wii U hardware reference \u2014 and two bugs it found",
       "area": "docs",
       "status": "landed",
       "commits": [
@@ -575,7 +575,7 @@
     },
     {
       "id": "telemetry-harness",
-      "title": "The telemetry harness — counters compiled into the core",
+      "title": "The telemetry harness \u2014 counters compiled into the core",
       "area": "tooling",
       "stage": "s5",
       "status": "landed",
@@ -585,9 +585,9 @@
         "9614b46",
         "f1f58aa"
       ],
-      "verdict": "X-macro `.def` → enum → `__thread` TLS rows, cache-line striped and summed at the frame boundary. Proven free when disabled *before* anything was instrumented. Every performance claim on this page comes from it.",
+      "verdict": "X-macro `.def` \u2192 enum \u2192 `__thread` TLS rows, cache-line striped and summed at the frame boundary. Proven free when disabled *before* anything was instrumented. Every performance claim on this page comes from it.",
       "note": "Phase 1 deliberately re-derived a result already known by other means, as a check on the instrument. Phase 3 found BotW was missing 31 imports. The follow-up fixed a race and a hot-path allocation the harness itself had introduced.",
-      "ref": "00-master-plan.md — Instrumenting three open questions at once"
+      "ref": "00-master-plan.md \u2014 Instrumenting three open questions at once"
     },
     {
       "id": "frame-decomposition",
@@ -599,15 +599,15 @@
         "7f2c0e4",
         "6ad76dd"
       ],
-      "verdict": "Korok Forest issues **fewer** draws than the shrine and leaves the GPU idle 62% of the time, yet runs slower. 49.90 ms is exactly three vsync slots, and p99 equals the median — no variance, which is the signature of quantisation, not of variable work.",
-      "note": "**Re-measured at HEAD and confirmed**, n=3: 49.90 ms median, p99 49.98–50.00, 3,517–3,528 draws and 202–203 passes per frame. The original derivation predates the phase-split fix `491f4ef`, so it was re-run with the segmenting reporter rather than assumed to still hold.",
+      "verdict": "Korok Forest issues **fewer** draws than the shrine and leaves the GPU idle 62% of the time, yet runs slower. 49.90 ms is exactly three vsync slots, and p99 equals the median \u2014 no variance, which is the signature of quantisation, not of variable work.",
+      "note": "**Re-measured at HEAD and confirmed**, n=3: 49.90 ms median, p99 49.98\u201350.00, 3,517\u20133,528 draws and 202\u2013203 passes per frame. The original derivation predates the phase-split fix `491f4ef`, so it was re-run with the segmenting reporter rather than assumed to still hold.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "cebe17f",
         "date": "2026-08-02",
         "n": 3
       },
-      "ref": "00-master-plan.md — The 33 ms frame decomposed"
+      "ref": "00-master-plan.md \u2014 The 33 ms frame decomposed"
     },
     {
       "id": "cpu-counters",
@@ -618,15 +618,15 @@
       "commits": [
         "e3ba7a0"
       ],
-      "verdict": "All three guest cores together are busy 26.89 ms of a 49.90 ms frame — **18% of three-core capacity**. There is no CPU wall to knock down.",
-      "note": "**Re-measured at HEAD and confirmed**, n=3: 26.84–27.18 ms across the three cores, 17.9–18.2% of capacity. This is the number that deprioritised the whole CPU workstream, and it was originally n=1 taken before the phase split, so it was the one most worth re-running.",
+      "verdict": "All three guest cores together are busy 26.89 ms of a 49.90 ms frame \u2014 **18% of three-core capacity**. There is no CPU wall to knock down.",
+      "note": "**Re-measured at HEAD and confirmed**, n=3: 26.84\u201327.18 ms across the three cores, 17.9\u201318.2% of capacity. This is the number that deprioritised the whole CPU workstream, and it was originally n=1 taken before the phase split, so it was the one most worth re-running.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "cebe17f",
         "date": "2026-08-02",
         "n": 3
       },
-      "ref": "00-master-plan.md — The 33 ms frame decomposed"
+      "ref": "00-master-plan.md \u2014 The 33 ms frame decomposed"
     },
     {
       "id": "hle-and-switches",
@@ -637,15 +637,15 @@
       "commits": [
         "d81aa90"
       ],
-      "verdict": "Every HLE call advances guest time by **zero cycles**, including `FSReadFile`, which on hardware is an IPC round trip to IOSU. And **79.4% of the 3,143 thread switches per frame are the guest voluntarily calling `OSYieldThread`** — BotW polling, faithfully emulated, because Cafe OS scheduling is cooperative.",
-      "note": "A flat per-call charge is ruled out by measurement, not opinion: `cpu.hle_would_charge_cycles` sums a hypothetical 500/call to **163% of the cycles actually retired**. The volume is `OSFastMutex_Lock/Unlock`, `OSGetCoreId` and GX2 register setters — tens of cycles each on hardware. Any charge must be tiered per function. **Re-measured at HEAD and confirmed**, n=3: 51,974–53,276 calls, 3,138–3,142 switches, the yield/quantum/blocked split 79.4–79.5% / 10.4–10.5% / 10.0%, and the charge ratio 163–164%. The blocked breakdown reproduces exactly: sleep 52%, message queue 24%, event 15%, semaphore 9%.",
+      "verdict": "Every HLE call advances guest time by **zero cycles**, including `FSReadFile`, which on hardware is an IPC round trip to IOSU. And **79.4% of the 3,143 thread switches per frame are the guest voluntarily calling `OSYieldThread`** \u2014 BotW polling, faithfully emulated, because Cafe OS scheduling is cooperative.",
+      "note": "A flat per-call charge is ruled out by measurement, not opinion: `cpu.hle_would_charge_cycles` sums a hypothetical 500/call to **163% of the cycles actually retired**. The volume is `OSFastMutex_Lock/Unlock`, `OSGetCoreId` and GX2 register setters \u2014 tens of cycles each on hardware. Any charge must be tiered per function. **Re-measured at HEAD and confirmed**, n=3: 51,974\u201353,276 calls, 3,138\u20133,142 switches, the yield/quantum/blocked split 79.4\u201379.5% / 10.4\u201310.5% / 10.0%, and the charge ratio 163\u2013164%. The blocked breakdown reproduces exactly: sleep 52%, message queue 24%, event 15%, semaphore 9%.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "cebe17f",
         "date": "2026-08-02",
         "n": 3
       },
-      "ref": "00-master-plan.md — The 33 ms frame decomposed"
+      "ref": "00-master-plan.md \u2014 The 33 ms frame decomposed"
     },
     {
       "id": "cp-fence-park",
@@ -664,7 +664,7 @@
         "at_commit": "5933733",
         "date": "2026-07-27"
       },
-      "ref": "00-master-plan.md — The menu waits on the fence exactly as long as the open world does"
+      "ref": "00-master-plan.md \u2014 The menu waits on the fence exactly as long as the open world does"
     },
     {
       "id": "rebrand",
@@ -703,7 +703,7 @@
         "e0f2d56"
       ],
       "verdict": "The `.pot` generation check was added, then immediately broke the Arabic plural forms; both the check and the catalog were fixed.",
-      "note": "~30 changed `_()` strings across 19 locales are still untranslated — see the roadmap.",
+      "note": "~30 changed `_()` strings across 19 locales are still untranslated \u2014 see the roadmap.",
       "ref": ".github/workflows/generate_pot.yml"
     },
     {
@@ -723,26 +723,26 @@
         "9ce5213"
       ],
       "verdict": "Describes what this fork is rather than what upstream is not, and states the goal (the best way to run Wii U games on a Mac) separately from the readiness (early, two titles, one machine, no releases).",
-      "note": "Successive corrections were of numbers invalidated by the immediately preceding commits, then of a two-column table that scored upstream rather than describing this fork, then of a tone that overcorrected into calling the project a research curiosity. Three hand-typed numbers had gone stale by `584521b` — 107 counters against 115, 155 anchors against 163 — one of them contradicting a passage two sections below it explaining why such counts are not typed. The title of this entry used to carry a correction count, which was the same mistake in miniature.",
+      "note": "Successive corrections were of numbers invalidated by the immediately preceding commits, then of a two-column table that scored upstream rather than describing this fork, then of a tone that overcorrected into calling the project a research curiosity. Three hand-typed numbers had gone stale by `584521b` \u2014 107 counters against 115, 155 anchors against 163 \u2014 one of them contradicting a passage two sections below it explaining why such counts are not typed. The title of this entry used to carry a correction count, which was the same mistake in miniature.",
       "ref": "README.md"
     },
     {
       "id": "fiber-switch",
-      "title": "Measure the fiber switch: 454 ns, a 70× gap, and not a frame-rate fix",
+      "title": "Measure the fiber switch: 454 ns, a 70\u00d7 gap, and not a frame-rate fix",
       "area": "cpu",
       "stage": "s5",
       "status": "landed",
       "commits": [
         "6be6636"
       ],
-      "verdict": "`swapcontext` costs **454.5 ns** against **6.5 ns** for a hand-written AArch64 switch — `swapcontext` on Darwin/arm64 calls `sigprocmask` on both save and restore. At 3,143 switches/frame that is **1.43 ms/frame**, 2.9% of the frame.",
-      "note": "Worth doing for power and headroom, not for fps: the frame already fits its work into one vsync period with 16.6% headroom, so removing 1.4 ms crosses no boundary. A microbenchmark is the right instrument — `Fiber::Switch` does not return until the fiber is resumed, so an in-process scope timer measures descheduled time and reported 197 ms of \"busy\" inside a 49.9 ms frame. (Status corrected 2026-08-03: this entry is the *measurement*, which landed; `rm-fiber-switch` carries the deferred rewrite. `deferred` in `items[]` violated this file's own schema.)",
+      "verdict": "`swapcontext` costs **454.5 ns** against **6.5 ns** for a hand-written AArch64 switch \u2014 `swapcontext` on Darwin/arm64 calls `sigprocmask` on both save and restore. At 3,143 switches/frame that is **1.43 ms/frame**, 2.9% of the frame.",
+      "note": "Worth doing for power and headroom, not for fps: the frame already fits its work into one vsync period with 16.6% headroom, so removing 1.4 ms crosses no boundary. A microbenchmark is the right instrument \u2014 `Fiber::Switch` does not return until the fiber is resumed, so an in-process scope timer measures descheduled time and reported 197 ms of \"busy\" inside a 49.9 ms frame. (Status corrected 2026-08-03: this entry is the *measurement*, which landed; `rm-fiber-switch` carries the deferred rewrite. `deferred` in `items[]` violated this file's own schema.)",
       "measured": {
         "at_commit": "6be6636",
         "date": "2026-07-30",
         "n": 1000000
       },
-      "ref": "02-cpu-jit-memory.md — 4.2"
+      "ref": "02-cpu-jit-memory.md \u2014 4.2"
     },
     {
       "id": "three-questions",
@@ -753,14 +753,14 @@
       "commits": [
         "7603cab"
       ],
-      "verdict": "`IT_MEM_SEMAPHORE` and the wait-for-flip spin are **exactly zero** in BotW. Snapshotting guest threads at fence-stall entry found the cores idle 95% of the time — against a 96% baseline, so it discriminated nothing.",
+      "verdict": "`IT_MEM_SEMAPHORE` and the wait-for-flip spin are **exactly zero** in BotW. Snapshotting guest threads at fence-stall entry found the cores idle 95% of the time \u2014 against a 96% baseline, so it discriminated nothing.",
       "note": "A probe with no control sample cannot discriminate. The 95%-vs-96% result is the cleanest example of that on this fork.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "7603cab",
         "date": "2026-07-30"
       },
-      "ref": "00-master-plan.md — Instrumenting three open questions"
+      "ref": "00-master-plan.md \u2014 Instrumenting three open questions"
     },
     {
       "id": "phase-split",
@@ -772,7 +772,7 @@
         "491f4ef"
       ],
       "verdict": "`drive-botw.sh` spends its first ~4,050 frames in menus at 113 draws and 33.27 ms, then ~4,750 frames of gameplay at 3,516 draws and 49.90 ms. A whole-file median lands wherever the phase ratio falls and **describes no frame that occurred**.",
-      "note": "This is not hypothetical. It produced a confident **\"−6.2% GPU busy\"** for a change whose real effect is +0.5%, because two runs of the same script had slightly different menu-to-gameplay ratios. `telemetry-report.py` now segments by draw load and analyses the longest phase. Any BotW number in this repo predating it is suspect.",
+      "note": "This is not hypothetical. It produced a confident **\"\u22126.2% GPU busy\"** for a change whose real effect is +0.5%, because two runs of the same script had slightly different menu-to-gameplay ratios. `telemetry-report.py` now segments by draw load and analyses the longest phase. Any BotW number in this repo predating it is suspect.",
       "ref": "testing/telemetry-report.py",
       "measured": {
         "scene": "botw-korok",
@@ -783,21 +783,21 @@
     },
     {
       "id": "cp-fence-vsync",
-      "title": "`cp_fence` is the vsync timer — solved, and never a defect",
+      "title": "`cp_fence` is the vsync timer \u2014 solved, and never a defect",
       "area": "graphics",
       "stage": "s5",
       "status": "landed",
       "commits": [
         "d889caf"
       ],
-      "verdict": "The fence releases **10 µs** after a vsync signal (p99 30 µs), exactly one vsync and one flip per stall, and the duration is identical in a 113-draw menu and in 3,516-draw gameplay. That is frame pacing working.",
-      "note": "**Do not try to recover this 15.58 ms.** It retroactively explains why parking the spin and committing work early both changed nothing — the guest was never waiting for the GPU. One flip per vsync also pins `swapInterval = 1`, so the grid is 16.68 ms and a 49.90 ms frame is the title taking three slots.",
+      "verdict": "The fence releases **10 \u00b5s** after a vsync signal (p99 30 \u00b5s), exactly one vsync and one flip per stall, and the duration is identical in a 113-draw menu and in 3,516-draw gameplay. That is frame pacing working.",
+      "note": "**Do not try to recover this 15.58 ms.** It retroactively explains why parking the spin and committing work early both changed nothing \u2014 the guest was never waiting for the GPU. One flip per vsync also pins `swapInterval = 1`, so the grid is 16.68 ms and a 49.90 ms frame is the title taking three slots.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "d889caf",
         "date": "2026-07-30"
       },
-      "ref": "00-master-plan.md — `cp_fence` solved: it is the vsync timer"
+      "ref": "00-master-plan.md \u2014 `cp_fence` solved: it is the vsync timer"
     },
     {
       "id": "gpu-dead-air",
@@ -808,15 +808,15 @@
       "commits": [
         "e34facb"
       ],
-      "verdict": "The idle is not diffuse — it is two large contiguous gaps, which is what made the next commit's single-cause explanation findable.",
-      "note": "**Re-measured at HEAD and confirmed**, n=3: `gpu.gap_count` 7, `gpu.gap_large` 2, 32.67–32.68 ms of gap per frame, identical to three decimal places across runs.",
+      "verdict": "The idle is not diffuse \u2014 it is two large contiguous gaps, which is what made the next commit's single-cause explanation findable.",
+      "note": "**Re-measured at HEAD and confirmed**, n=3: `gpu.gap_count` 7, `gpu.gap_large` 2, 32.67\u201332.68 ms of gap per frame, identical to three decimal places across runs.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "cebe17f",
         "date": "2026-08-02",
         "n": 3
       },
-      "ref": "00-master-plan.md — `cp_idle` and the GPU's 33 ms of dead air"
+      "ref": "00-master-plan.md \u2014 `cp_idle` and the GPU's 33 ms of dead air"
     },
     {
       "id": "drawdone-sync",
@@ -829,14 +829,14 @@
         "1616cd6"
       ],
       "verdict": "`gpu.frame_critical_path_ns` is **35.25 ms** against a two-slot deadline of 33.27 ms, so the frame takes three slots. Turning off **`GX2DrawdoneSync`** drops it to 18.64 ms and the scene to **30.06 fps**, deterministic across n=3 / n=2.",
-      "note": "The cost is `GX2DrawDone`'s `IT_HLE_SYNC_ASYNC_OPERATIONS` packet, which BotW emits twice per frame and whose handler force-finishes readbacks with bare `waitUntilCompleted()` on the Latte thread: **6.78 ms/frame, of which 6.75 ms is texture-readback force-finish**. **The default was not changed** — it is a documented accuracy tradeoff, and that is a product call.",
+      "note": "The cost is `GX2DrawDone`'s `IT_HLE_SYNC_ASYNC_OPERATIONS` packet, which BotW emits twice per frame and whose handler force-finishes readbacks with bare `waitUntilCompleted()` on the Latte thread: **6.78 ms/frame, of which 6.75 ms is texture-readback force-finish**. **The default was not changed** \u2014 it is a documented accuracy tradeoff, and that is a product call.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "c03dbbb",
         "date": "2026-07-30",
         "n": 3
       },
-      "ref": "00-master-plan.md — The 20-vs-30 fps question"
+      "ref": "00-master-plan.md \u2014 The 20-vs-30 fps question"
     },
     {
       "id": "mtlevent-wrap",
@@ -848,13 +848,13 @@
         "839466d"
       ],
       "verdict": "`EVENT_VALUE_WRAP` was 4096, so the signalled value went backwards every ~29 s and periodically disabled command-buffer serialisation. `gpu.busy_ns` sums per-buffer intervals, so overlapping buffers were **double-counted**.",
-      "note": "**Do not compare `gpu.busy_ns` across this commit.** The same scene reads 16.8 ms properly serialised against 19.1–19.4 before. The inflation grows with run length — the first wrap is ~29 s in — so old figures are inconsistently wrong, not uniformly so. Frame time and critical path were unaffected. The same commit fixed an uninitialised read; both were confounds.",
+      "note": "**Do not compare `gpu.busy_ns` across this commit.** The same scene reads 16.8 ms properly serialised against 19.1\u201319.4 before. The inflation grows with run length \u2014 the first wrap is ~29 s in \u2014 so old figures are inconsistently wrong, not uniformly so. Frame time and critical path were unaffected. The same commit fixed an uninitialised read; both were confounds.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "839466d",
         "date": "2026-07-30"
       },
-      "ref": "00-master-plan.md — The MTLEvent wrap was real"
+      "ref": "00-master-plan.md \u2014 The MTLEvent wrap was real"
     },
     {
       "id": "cb-timeline",
@@ -866,7 +866,7 @@
         "323e93f"
       ],
       "verdict": "Identity by pointer is unsound when the allocator reuses addresses. A monotonic timeline makes the ordering questions answerable at all.",
-      "ref": "03-graphics-metal.md — Phase 5"
+      "ref": "03-graphics-metal.md \u2014 Phase 5"
     },
     {
       "id": "readback-targets",
@@ -877,13 +877,13 @@
       "commits": [
         "1ba16d9"
       ],
-      "verdict": "Small, GPU-computed float arrays the guest genuinely consumes — delivered by draining the pipeline. The readback is not spurious, which is why the drain cannot simply be removed.",
+      "verdict": "Small, GPU-computed float arrays the guest genuinely consumes \u2014 delivered by draining the pipeline. The readback is not spurious, which is why the drain cannot simply be removed.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "1ba16d9",
         "date": "2026-07-30"
       },
-      "ref": "00-master-plan.md — What BotW actually reads back"
+      "ref": "00-master-plan.md \u2014 What BotW actually reads back"
     },
     {
       "id": "docs-reconcile",
@@ -899,22 +899,22 @@
     },
     {
       "id": "pass-structure-audit",
-      "title": "Pass-structure audit on the open world — the shrine verdict does not transfer",
+      "title": "Pass-structure audit on the open world \u2014 the shrine verdict does not transfer",
       "area": "graphics",
       "stage": "s5",
       "status": "landed",
       "commits": [
         "745b671"
       ],
-      "verdict": "202–203 render passes, **73–74 of them same-FBO splits (36%)**, 804 MB/frame of attachment traffic, and **390 depth-sampled draws** where the shrine had zero. **95.0–95.1% of the splits come from one call site**: `bufferCache_copyStreamoutToMainBuffer`.",
-      "note": "The old TBDR verdict rested on \"the GPU is idle\" and explicitly invited revisit on a GPU-heavy title; Korok gameplay met that precondition. The earlier 1,749 MB/frame estimate was 2.2× high — the formats had never been confirmed.",
+      "verdict": "202\u2013203 render passes, **73\u201374 of them same-FBO splits (36%)**, 804 MB/frame of attachment traffic, and **390 depth-sampled draws** where the shrine had zero. **95.0\u201395.1% of the splits come from one call site**: `bufferCache_copyStreamoutToMainBuffer`.",
+      "note": "The old TBDR verdict rested on \"the GPU is idle\" and explicitly invited revisit on a GPU-heavy title; Korok gameplay met that precondition. The earlier 1,749 MB/frame estimate was 2.2\u00d7 high \u2014 the formats had never been confirmed.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "745b671",
         "date": "2026-07-31",
         "n": 2
       },
-      "ref": "00-master-plan.md — The rest of the G-list TBDR work is not worth doing"
+      "ref": "00-master-plan.md \u2014 The rest of the G-list TBDR work is not worth doing"
     },
     {
       "id": "alu-bound",
@@ -926,13 +926,13 @@
         "fa24ab0"
       ],
       "verdict": "The premise was verified before the code was written, and it was false. **ALU and texture are the top limiter in 86.1% of active samples; the memory path in 12.8%.** Removing 300 MB/frame would relieve a subsystem that bottlenecks the GPU about an eighth of the time.",
-      "note": "Per the plan's own gate: report and stop rather than build it anyway. The *other* gate passed and is recorded for whoever revisits — `gpu.streamout_read_fragment` is **0** against a vertex control of 1,136/frame, so a vertex-only intrapass barrier would be legal. The first version of that detector read zero on both counters because the scope was self-defeating; the control is the only reason it was caught rather than published.",
+      "note": "Per the plan's own gate: report and stop rather than build it anyway. The *other* gate passed and is recorded for whoever revisits \u2014 `gpu.streamout_read_fragment` is **0** against a vertex control of 1,136/frame, so a vertex-only intrapass barrier would be legal. The first version of that detector read zero on both counters because the scope was self-defeating; the control is the only reason it was caught rather than published.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "fa24ab0",
         "date": "2026-07-31"
       },
-      "ref": "00-master-plan.md — The GPU is ALU- and texture-bound"
+      "ref": "00-master-plan.md \u2014 The GPU is ALU- and texture-bound"
     },
     {
       "id": "accurate-barriers-surfaces",
@@ -943,9 +943,9 @@
       "commits": [
         "abca397"
       ],
-      "verdict": "A config default, a Debug menu checkbox and a startup log line all reported a setting **nothing reads**. `CheckIfRenderPassNeedsFlush`, its declaration and its call site have been inside `/* */` since `26e40a4` — it arrived already-commented in the upstream Metal PR and has never run.",
+      "verdict": "A config default, a Debug menu checkbox and a startup log line all reported a setting **nothing reads**. `CheckIfRenderPassNeedsFlush`, its declaration and its call site have been inside `/* */` since `26e40a4` \u2014 it arrived already-commented in the upstream Metal PR and has never run.",
       "note": "The fork therefore runs permanently in the barriers-off regime: the speed is already banked in every number here, and the correctness cost is already being paid. The setting itself was kept, inert, so `settings.xml` round-trips and the self-dependency work has something to hang off.",
-      "ref": "03-graphics-metal.md — 3.1"
+      "ref": "03-graphics-metal.md \u2014 3.1"
     },
     {
       "id": "status-tracker",
@@ -971,28 +971,28 @@
         "cb1245d",
         "d9500c5"
       ],
-      "verdict": "One generated page for what changed versus upstream, what was tried and what it measured. Commit list, diffstat, baseline rows and counter totals are read from the repo — only verdicts are hand-maintained. CI reports any commit that lands without a ledger entry.",
-      "note": "It caught its own first bug: the counter parser read **114** against the real 113, matching the `TLM_COUNTER(...)` example inside the `.def`'s own header comment. Two self-references bound the design — a ledger entry cannot name the hash of the commit containing it, and the page embeds the commit that carries it — so CI advises rather than blocks, and `--check` is local-only. The tracker's own upkeep (claiming commits, stamping measurements, correcting the ledger) is claimed by this entry rather than excused under `unattributed`, so the act of tracking is itself tracked.",
+      "verdict": "One generated page for what changed versus upstream, what was tried and what it measured. Commit list, diffstat, baseline rows and counter totals are read from the repo \u2014 only verdicts are hand-maintained. CI reports any commit that lands without a ledger entry.",
+      "note": "It caught its own first bug: the counter parser read **114** against the real 113, matching the `TLM_COUNTER(...)` example inside the `.def`'s own header comment. Two self-references bound the design \u2014 a ledger entry cannot name the hash of the commit containing it, and the page embeds the commit that carries it \u2014 so CI advises rather than blocks, and `--check` is local-only. The tracker's own upkeep (claiming commits, stamping measurements, correcting the ledger) is claimed by this entry rather than excused under `unattributed`, so the act of tracking is itself tracked.",
       "ref": ".grok/rules/status-tracker.md"
     },
     {
       "id": "korok-remeasure",
-      "title": "Re-measure the four oldest Korok verdicts at HEAD — all four hold",
+      "title": "Re-measure the four oldest Korok verdicts at HEAD \u2014 all four hold",
       "area": "tooling",
       "stage": "s5",
       "status": "landed",
       "commits": [
         "273b81e"
       ],
-      "verdict": "Twelve of sixteen measured entries were taken before one of the two commits that invalidate earlier numbers wholesale, so the four load-bearing ones were re-run at HEAD, n=3, default configuration. **Every claim reproduced**, most of them to the decimal: frame 49.90 ms, three-core busy 17.9–18.2%, 3,138–3,142 switches at a 79.4% yield share, `gap_count` 7 with `gap_large` 2.",
-      "note": "The screen that selected them was mechanical — *does this entry predate `491f4ef` or `839466d`* — and mechanical screens over-select: a ratio like the yield share is insensitive to phase blending, and `839466d` only ever touched `gpu.busy_ns`. Re-running was still the cheap move, because one telemetry run refreshes all four at once and the alternative was arguing about which ones the gates really reached.",
+      "verdict": "Twelve of sixteen measured entries were taken before one of the two commits that invalidate earlier numbers wholesale, so the four load-bearing ones were re-run at HEAD, n=3, default configuration. **Every claim reproduced**, most of them to the decimal: frame 49.90 ms, three-core busy 17.9\u201318.2%, 3,138\u20133,142 switches at a 79.4% yield share, `gap_count` 7 with `gap_large` 2.",
+      "note": "The screen that selected them was mechanical \u2014 *does this entry predate `491f4ef` or `839466d`* \u2014 and mechanical screens over-select: a ratio like the yield share is insensitive to phase blending, and `839466d` only ever touched `gpu.busy_ns`. Re-running was still the cheap move, because one telemetry run refreshes all four at once and the alternative was arguing about which ones the gates really reached.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "cebe17f",
         "date": "2026-08-02",
         "n": 3
       },
-      "ref": "00-master-plan.md — Re-measuring the Korok verdicts at HEAD"
+      "ref": "00-master-plan.md \u2014 Re-measuring the Korok verdicts at HEAD"
     },
     {
       "id": "gs-texture-overflow",
@@ -1003,22 +1003,22 @@
       "commits": [
         "99003ba"
       ],
-      "verdict": "`MetalState::m_textures` held 54 slots but texture units are addressed as *stage base + unit* with the bases strided by 32 (PS 0, VS 32, **GS 64**), so it needed 82 — every geometry-shader binding wrote at 64–81, into `m_uniformBufferOffsets`. Neither the write nor the read path bounds-checked the unit.",
-      "note": "Never observed because `gpu.draws_mesh` is **0** in the only scene anyone measures: a heavily instrumented fork carried a memory-corruption bug because the instrument was pointed elsewhere. There is nothing to measure and no run was possible, so the verification is a `static_assert` tying the array size to the stage bases — the same discipline `BackendAArch64.cpp` uses for its 14 field offsets. Also confirms the `-DCMAKE_BUILD_TYPE=Debug` configuration compiles, which had never been tried in this fork.",
-      "ref": "00-master-plan.md — An audit with no game image"
+      "verdict": "`MetalState::m_textures` held 54 slots but texture units are addressed as *stage base + unit* with the bases strided by 32 (PS 0, VS 32, **GS 64**), so it needed 82 \u2014 every geometry-shader binding wrote at 64\u201381, into `m_uniformBufferOffsets`. Neither the write nor the read path bounds-checked the unit.",
+      "note": "Never observed because `gpu.draws_mesh` is **0** in the only scene anyone measures: a heavily instrumented fork carried a memory-corruption bug because the instrument was pointed elsewhere. There is nothing to measure and no run was possible, so the verification is a `static_assert` tying the array size to the stage bases \u2014 the same discipline `BackendAArch64.cpp` uses for its 14 field offsets. Also confirms the `-DCMAKE_BUILD_TYPE=Debug` configuration compiles, which had never been tried in this fork.",
+      "ref": "00-master-plan.md \u2014 An audit with no game image"
     },
     {
       "id": "self-dep-detector",
-      "title": "Wire the self-dependency counter — and find that item 3.1 is a different bug",
+      "title": "Wire the self-dependency counter \u2014 and find that item 3.1 is a different bug",
       "area": "graphics",
       "stage": "s6",
       "status": "landed",
       "commits": [
         "99003ba"
       ],
-      "verdict": "`acc.render_self_dependency` had **no increment site anywhere**, so its zero meant nothing. Wiring it showed the gap is not \"we never split\": `LatteDecompilerAnalyzer.cpp:888-957` *does* detect the pixel case and `LatteDecompilerEmitMSL.cpp:2322-2328` rewrites it to a framebuffer fetch — **discarding the texture coordinate**, so a blur or offset tap silently reads self.",
-      "note": "Detection only: no pass splitting, no behaviour change, guarded by `tlm::AreaEnabled`, sitting in the loop `BindStageResources` already runs beside the `gpu.depth_sampled_draws` hook that serves as its positive control. Three counters split covered (`acc.self_dep_fbfetch`) from uncovered (`acc.render_self_dependency`) from never-coverable (`acc.self_dep_nonpixel`), which is the answer this item needs. **It has never been run** — no game image is available — so every frequency claim about 3.1 remains a guess. It counts draws, not splits: `BindStageResources` executes after `GetRenderCommandEncoder()`, so a real fix must move the check ahead of that call.",
-      "ref": "03-graphics-metal.md — 3.1"
+      "verdict": "`acc.render_self_dependency` had **no increment site anywhere**, so its zero meant nothing. Wiring it showed the gap is not \"we never split\": `LatteDecompilerAnalyzer.cpp:888-957` *does* detect the pixel case and `LatteDecompilerEmitMSL.cpp:2322-2328` rewrites it to a framebuffer fetch \u2014 **discarding the texture coordinate**, so a blur or offset tap silently reads self.",
+      "note": "Detection only: no pass splitting, no behaviour change, guarded by `tlm::AreaEnabled`, sitting in the loop `BindStageResources` already runs beside the `gpu.depth_sampled_draws` hook that serves as its positive control. Three counters split covered (`acc.self_dep_fbfetch`) from uncovered (`acc.render_self_dependency`) from never-coverable (`acc.self_dep_nonpixel`), which is the answer this item needs. **It has never been run** \u2014 no game image is available \u2014 so every frequency claim about 3.1 remains a guess. It counts draws, not splits: `BindStageResources` executes after `GetRenderCommandEncoder()`, so a real fix must move the check ahead of that call.",
+      "ref": "03-graphics-metal.md \u2014 3.1"
     },
     {
       "id": "accuracy-register-botw",
@@ -1029,15 +1029,15 @@
       "commits": [
         "99003ba"
       ],
-      "verdict": "Every **wired** accuracy counter reads exactly zero across all 8,881 Korok frames — `d24_s8_use`, `unsupported_tex_format`, `unsupported_primitive`, `geometry_draw_dropped`, `draw_skipped_no_target`, `draw_skipped_shader_err`, `alpha_to_mask_draws`, `dcstorerange_no_notify`. The only non-zero is `acc.unsupported_hle_calls` at 44/frame.",
-      "note": "Derived from runs already on disk, not newly measured. It retires a priority label: `acc.d24_s8_use` is the counter behind item 3.3's \"live corruption path on every M-series Mac\" — the path is real and the format table does disagree with the decoder, but **BotW never takes it**, so do not promote that item until some title reads non-zero. Two caveats carry equal weight: one title is not coverage, and **the evidence is untracked** — `testing/.gitignore` excludes `traces/`, so these runs exist on one machine and cannot currently be regenerated.",
+      "verdict": "Every **wired** accuracy counter reads exactly zero across all 8,881 Korok frames \u2014 `d24_s8_use`, `unsupported_tex_format`, `unsupported_primitive`, `geometry_draw_dropped`, `draw_skipped_no_target`, `draw_skipped_shader_err`, `alpha_to_mask_draws`, `dcstorerange_no_notify`. The only non-zero is `acc.unsupported_hle_calls` at 44/frame.",
+      "note": "Derived from runs already on disk, not newly measured. It retires a priority label: `acc.d24_s8_use` is the counter behind item 3.3's \"live corruption path on every M-series Mac\" \u2014 the path is real and the format table does disagree with the decoder, but **BotW never takes it**, so do not promote that item until some title reads non-zero. Two caveats carry equal weight: one title is not coverage, and **the evidence is untracked** \u2014 `testing/.gitignore` excludes `traces/`, so these runs exist on one machine and cannot currently be regenerated.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "cebe17f",
         "date": "2026-08-02",
         "n": 3
       },
-      "ref": "00-master-plan.md — An audit with no game image"
+      "ref": "00-master-plan.md \u2014 An audit with no game image"
     },
     {
       "id": "audit-record-corrections",
@@ -1049,13 +1049,13 @@
         "99003ba",
         "968c724"
       ],
-      "verdict": "`CLAUDE.md` still said `MemMapperUnix.cpp` and the `MMURange` table \"contain 4 KB assumptions\" long after Stage 3 fixed both. `03-graphics-metal.md` told the next person to scan `m_state.m_textures` (a sticky global that is never cleared → spurious pass splits), called blend factors `0x0B`/`0x0C` constant-alpha when `LatteReg.h:778-779` names them `BLEND_BOTH_SRC_ALPHA`/`_INV_` and constant alpha is `0x13`/`0x14` already mapped, and asserted an `MTLBinaryArchive` payoff the code path disputes. A fifth correction (`968c724`): CLAUDE.md said the graphics ROM did not reproduce and all three `acc.self_dep_*` counters read zero. True before `97ae3ad` moved the detector, stale after it, and it was describing the fork's only graphics test as useless while that test was producing the measurement `rm-fbfetch-coordinate` rests on.",
-      "note": "The blend-factor entry is the one that matters: it was written as a two-line fix and following it would have duplicated an existing mapping onto the wrong tokens. The `MTLBinaryArchive` paragraph is flagged for re-verification rather than deleted — the descriptor's functions come from `newLibrary(m_mslCode)`, so the archive may skip only the backend compile. Also noted there: cold-launch cost is **unmeasurable today**, because the shader-cache timer is inside `#if BOOST_OS_WINDOWS` and has never run on this fork's only platform.",
-      "ref": "00-master-plan.md — An audit with no game image"
+      "verdict": "`CLAUDE.md` still said `MemMapperUnix.cpp` and the `MMURange` table \"contain 4 KB assumptions\" long after Stage 3 fixed both. `03-graphics-metal.md` told the next person to scan `m_state.m_textures` (a sticky global that is never cleared \u2192 spurious pass splits), called blend factors `0x0B`/`0x0C` constant-alpha when `LatteReg.h:778-779` names them `BLEND_BOTH_SRC_ALPHA`/`_INV_` and constant alpha is `0x13`/`0x14` already mapped, and asserted an `MTLBinaryArchive` payoff the code path disputes. A fifth correction (`968c724`): CLAUDE.md said the graphics ROM did not reproduce and all three `acc.self_dep_*` counters read zero. True before `97ae3ad` moved the detector, stale after it, and it was describing the fork's only graphics test as useless while that test was producing the measurement `rm-fbfetch-coordinate` rests on.",
+      "note": "The blend-factor entry is the one that matters: it was written as a two-line fix and following it would have duplicated an existing mapping onto the wrong tokens. The `MTLBinaryArchive` paragraph is flagged for re-verification rather than deleted \u2014 the descriptor's functions come from `newLibrary(m_mslCode)`, so the archive may skip only the backend compile. Also noted there: cold-launch cost is **unmeasurable today**, because the shader-cache timer is inside `#if BOOST_OS_WINDOWS` and has never run on this fork's only platform.",
+      "ref": "00-master-plan.md \u2014 An audit with no game image"
     },
     {
       "id": "cpu-conformance",
-      "title": "First CPU conformance result — and the recompiler is not the problem",
+      "title": "First CPU conformance result \u2014 and the recompiler is not the problem",
       "area": "cpu",
       "stage": "s6",
       "status": "landed",
@@ -1066,15 +1066,15 @@
         "b4d3d82",
         "cbb89f6"
       ],
-      "verdict": "`ppc750cl.s` — 23,502 lines of public-domain PowerPC assembly **validated by its author against real Espresso silicon** — now runs as Wii U homebrew. **1,030 failures, and the recompiler and interpreter arms are identical: zero unique to either.** 676 are FPSCR state bits the emulator does not maintain; **354 are wrong values**, of which only **3 are integer**.",
-      "note": "The identical-arms result is the load-bearing one: whatever is wrong is in shared decode/semantics, not the AArch64 backend, which is the riskiest part of this fork and had never been conformance-tested. The FPSCR split was established by rebuilding with `IGNORE_FPSCR_STATE=1`, which the suite provides for implementations that skip that bookkeeping and which shifts no test address, so the two runs are directly comparable. Needs no game image, console, keys or SDK — which is why it was possible at all with `Roms/` empty. Failures are grouped by mnemonic in `report.py` (derived via objdump): **131 of the 354 are multiply-add/subtract forms**, which matches a documented Espresso deviation rather than a random distribution. CI gates the test infrastructure but deliberately does not run the ROM — see the strategy doc.",
+      "verdict": "`ppc750cl.s` \u2014 23,502 lines of public-domain PowerPC assembly **validated by its author against real Espresso silicon** \u2014 now runs as Wii U homebrew. **1,030 failures, and the recompiler and interpreter arms are identical: zero unique to either.** 676 are FPSCR state bits the emulator does not maintain; **354 are wrong values**, of which only **3 are integer**.",
+      "note": "The identical-arms result is the load-bearing one: whatever is wrong is in shared decode/semantics, not the AArch64 backend, which is the riskiest part of this fork and had never been conformance-tested. The FPSCR split was established by rebuilding with `IGNORE_FPSCR_STATE=1`, which the suite provides for implementations that skip that bookkeeping and which shifts no test address, so the two runs are directly comparable. Needs no game image, console, keys or SDK \u2014 which is why it was possible at all with `Roms/` empty. Failures are grouped by mnemonic in `report.py` (derived via objdump): **131 of the 354 are multiply-add/subtract forms**, which matches a documented Espresso deviation rather than a random distribution. CI gates the test infrastructure but deliberately does not run the ROM \u2014 see the strategy doc.",
       "measured": {
         "scene": "ppc750cl-rpx",
         "at_commit": "59d8f21",
         "date": "2026-08-03",
         "n": 1
       },
-      "ref": "docs/testing/00-test-strategy.md — First result"
+      "ref": "docs/testing/00-test-strategy.md \u2014 First result"
     },
     {
       "id": "self-dep-reproducer",
@@ -1088,8 +1088,8 @@
         "97ae3ad",
         "ab78ce7"
       ],
-      "verdict": "A homebrew ROM that draws into a colour buffer while sampling that same surface, needing **no game image**. It reproduces: `acc.self_dep_fbfetch` reads **1.0/frame** while the other two read zero — exactly one of the covered/uncovered pair firing, which is the shape that says the detector works.",
-      "note": "The first run read zero on all three, and the cause was placement rather than the test. `_initTextureBindingPointsMTL` (`LatteDecompilerAnalyzer.cpp:527`) skips assigning a binding point to any unit with `textureRenderTargetIndex != 255`, so a framebuffer-fetch unit is stripped from the resource mapping — `textureCount` was **0** — and both hooks sat inside a loop the covered case can never enter. `acc.self_dep_fbfetch` was unreachable code. It is now counted from `shader->textureRenderTargetIndex[]`, which survives into the shader object. **A counter reading zero can mean the hook is somewhere the case never reaches, which looks identical to the case not occurring.**",
+      "verdict": "A homebrew ROM that draws into a colour buffer while sampling that same surface, needing **no game image**. It reproduces: `acc.self_dep_fbfetch` reads **1.0/frame** while the other two read zero \u2014 exactly one of the covered/uncovered pair firing, which is the shape that says the detector works.",
+      "note": "The first run read zero on all three, and the cause was placement rather than the test. `_initTextureBindingPointsMTL` (`LatteDecompilerAnalyzer.cpp:527`) skips assigning a binding point to any unit with `textureRenderTargetIndex != 255`, so a framebuffer-fetch unit is stripped from the resource mapping \u2014 `textureCount` was **0** \u2014 and both hooks sat inside a loop the covered case can never enter. `acc.self_dep_fbfetch` was unreachable code. It is now counted from `shader->textureRenderTargetIndex[]`, which survives into the shader object. **A counter reading zero can mean the hook is somewhere the case never reaches, which looks identical to the case not occurring.**",
       "measured": {
         "scene": "self-dependency-rpx",
         "at_commit": "97ae3ad",
@@ -1100,7 +1100,7 @@
     },
     {
       "id": "doc-coverage-audit",
-      "title": "Audit the new test docs for reproducibility — and CLAUDE.md for accuracy",
+      "title": "Audit the new test docs for reproducibility \u2014 and CLAUDE.md for accuracy",
       "area": "docs",
       "stage": "s6",
       "status": "landed",
@@ -1108,8 +1108,8 @@
         "ab78ce7",
         "e1e7330"
       ],
-      "verdict": "Two independent audits, judged strictly against the committed repo rather than against what the author remembered. The documentation audit found the graphics ROM had **no way to stop it and no way to read its result** — `telemetry-report.py` prints \"non-zero only\", and the entire published result is three zeros. The CLAUDE.md audit found ~20 inaccuracies including two wrong logging claims, two architecture claims that had drifted past their code, and one sentence that refuted itself.",
-      "note": "The most useful finding was self-inflicted: the dead-counter trap bullet still listed `acc.render_self_dependency` after the same session wired it, so an agent trusting CLAUDE.md would have dismissed a real unresolved measurement as a missing hook. The recurring mechanism across three separate findings is **appending a correction without deleting what it corrects** — 'eight commits stale' (twenty), '20.04 fps is exactly 59.94/3' (which the same sentence then refutes), and the graphics negative retracted nine lines later. Worth watching for, since this file accumulates corrections by design.",
+      "verdict": "Two independent audits, judged strictly against the committed repo rather than against what the author remembered. The documentation audit found the graphics ROM had **no way to stop it and no way to read its result** \u2014 `telemetry-report.py` prints \"non-zero only\", and the entire published result is three zeros. The CLAUDE.md audit found ~20 inaccuracies including two wrong logging claims, two architecture claims that had drifted past their code, and one sentence that refuted itself.",
+      "note": "The most useful finding was self-inflicted: the dead-counter trap bullet still listed `acc.render_self_dependency` after the same session wired it, so an agent trusting CLAUDE.md would have dismissed a real unresolved measurement as a missing hook. The recurring mechanism across three separate findings is **appending a correction without deleting what it corrects** \u2014 'eight commits stale' (twenty), '20.04 fps is exactly 59.94/3' (which the same sentence then refutes), and the graphics negative retracted nine lines later. Worth watching for, since this file accumulates corrections by design.",
       "ref": "docs/testing/00-test-strategy.md"
     },
     {
@@ -1121,8 +1121,8 @@
       "commits": [
         "6329314"
       ],
-      "verdict": "`testing/rom-tests/` — a growable suite of independently named assertions with per-test `.expected` files, a blacklist, and a two-arm config matrix. **17 assertions, all passing** across both recompiler and interpreter.",
-      "note": "This step was previously marked done by redefining the deliverable: what existed was two suites each emitting one aggregate verdict, not the named-test harness with expectations and a blacklist that the plan specified. The distinction is that a named-test suite grows — a new test is a function and a table entry. Verified by injection: a regression exits 1, a missing expectation exits 1, a clean run exits 0, and the blacklist suppresses. One real hole was found and closed during that testing — iterating only over *actual* results means a ROM that crashes halfway reports a clean run, so expectations are now iterated too and a test emitting no verdict counts as `MISSING`.",
+      "verdict": "`testing/rom-tests/` \u2014 a growable suite of independently named assertions with per-test `.expected` files, a blacklist, and a two-arm config matrix. **17 assertions, all passing** across both recompiler and interpreter.",
+      "note": "This step was previously marked done by redefining the deliverable: what existed was two suites each emitting one aggregate verdict, not the named-test harness with expectations and a blacklist that the plan specified. The distinction is that a named-test suite grows \u2014 a new test is a function and a table entry. Verified by injection: a regression exits 1, a missing expectation exits 1, a clean run exits 0, and the blacklist suppresses. One real hole was found and closed during that testing \u2014 iterating only over *actual* results means a ROM that crashes halfway reports a clean run, so expectations are now iterated too and a test emitting no verdict counts as `MISSING`.",
       "ref": "testing/rom-tests/README.md"
     },
     {
@@ -1134,7 +1134,7 @@
         "92a9885"
       ],
       "verdict": "Installing any graphic pack carrying output.glsl aborted the process on the Latte thread (nil Metal vertex function, because all six GraphicPack2 construction sites passed GetOpenGlVertexSource regardless of renderer), and on the way there wrote a pipeline pointer ~1.9 KB past a 12-element array once per presented frame. A third defect on the same review, m_lastUsedFBO surviving rendertarget_deleteCachedFBO, was found by reading rather than running. All three are inherited and all three are still live upstream.",
-      "note": "`acc.output_shader_custom` reads **1409 over 1409 frames** — once per present, which is what makes these continuous rather than one-shot. The guard written for the crash does not work: `RendererOutputShader`'s `if (!WaitForCompiled()) throw` never fires because `WaitForCompiled()` returns true on a failed Metal compile. With sRGB the out-of-bounds index wrapped in `uint8` to 5 instead of going out of bounds, aliasing the `s_hermit_shader_ud` slot in both directions — a wrong-pixels bug hiding behind a memory-safety one. Reproduced by `testing/graphics-tests/probe-pack`, which is kept as a fixture precisely because `titleIds=*` plus `default=1` makes it universal and self-enabling.",
+      "note": "`acc.output_shader_custom` reads **1409 over 1409 frames** \u2014 once per present, which is what makes these continuous rather than one-shot. The guard written for the crash does not work: `RendererOutputShader`'s `if (!WaitForCompiled()) throw` never fires because `WaitForCompiled()` returns true on a failed Metal compile. With sRGB the out-of-bounds index wrapped in `uint8` to 5 instead of going out of bounds, aliasing the `s_hermit_shader_ud` slot in both directions \u2014 a wrong-pixels bug hiding behind a memory-safety one. Reproduced by `testing/graphics-tests/probe-pack`, which is kept as a fixture precisely because `titleIds=*` plus `default=1` makes it universal and self-enabling.",
       "measured": {
         "scene": "self_dependency.rpx with probe-pack active",
         "at_commit": "92a9885",
@@ -1152,7 +1152,7 @@
         "69451df"
       ],
       "verdict": "The offset-texel case does not merely get rewritten to a framebuffer fetch, it reads the wrong pixel: 16 of 16 texels in the strip returned their own value instead of the neighbour's, with nothing in the `other` bucket. `rm-fbfetch-coordinate` now has a failing test instead of an inference.",
-      "note": "`UINT_R32` so the compare is bit-exact with no filtering tolerance, which is piglit's `blending-in-shader` trick. The strip at `[0,16)` reads `[16,32)`, which it does not write, so no feedback race can explain the result away. Two controls: `selfdep_seed` caught the first run outright, where inherited render state left colour writes off and the whole surface read zero — without it, two real verdicts would have been misread as emulator bugs. `selfdep_caseA_same_texel` passes, which is what makes the Case B line trustworthy, since a real sample and a framebuffer fetch must agree on a fragment's own texel. `run.sh` warns when a control fails and deliberately does not gate on Case B, which is expected to fail until the fix lands.",
+      "note": "`UINT_R32` so the compare is bit-exact with no filtering tolerance, which is piglit's `blending-in-shader` trick. The strip at `[0,16)` reads `[16,32)`, which it does not write, so no feedback race can explain the result away. Two controls: `selfdep_seed` caught the first run outright, where inherited render state left colour writes off and the whole surface read zero \u2014 without it, two real verdicts would have been misread as emulator bugs. `selfdep_caseA_same_texel` passes, which is what makes the Case B line trustworthy, since a real sample and a framebuffer fetch must agree on a fragment's own texel. `run.sh` warns when a control fails and deliberately does not gate on Case B, which is expected to fail until the fix lands.",
       "measured": {
         "scene": "self_dependency.rpx pixel oracle",
         "at_commit": "69451df",
@@ -1163,7 +1163,7 @@
     },
     {
       "id": "selfdep-pass-split",
-      "title": "Item 3.1 — split the render pass when a draw samples its own attachment",
+      "title": "Item 3.1 \u2014 split the render pass when a draw samples its own attachment",
       "area": "graphics",
       "stage": "s6",
       "status": "landed",
@@ -1172,7 +1172,7 @@
         "bad31b2"
       ],
       "verdict": "The uncovered self-dependency case now ends the encoder before joining a pass, and the result is verified in pixels, not inferred: `selfdep_caseC_vertex_stage` PASSES, with all 16 texels of the strip returning the seeded value after a vertex shader sampled the surface being rendered into. `acc.render_self_dependency` and `acc.self_dep_nonpixel` read non-zero for the first time in this fork's history.",
-      "note": "The decisive detail is placement: the detector that has run since `97ae3ad` lives inside `BindStageResources`, where the encoder is already open and it can only count. `ShaderHasUncoveredSelfDependency` answers the same question *above* `GetRenderCommandEncoder()`, walking the shader's own resource-mapped units rather than the sticky global `m_state.m_textures`, per the correction already in the design doc. Units the framebuffer-fetch rewrite covered are skipped — never bound, so they cannot alias — which is why the common pixel case still costs nothing. `vk_accurate_barriers` was marked inert in `CemuConfig.h` and now does something for the first time. **Measured:** `acc.self_dep_pass_splits` 1, firing on exactly the one uncovered draw, against `acc.self_dep_fbfetch` 377 correctly not split. **Three defects in the first cut were found by adversarial review and fixed in `bad31b2`.** It scanned `m_activeFBO` while the pass actually open belongs to `m_lastUsedFBO`, and `GetRenderCommandEncoder`'s reuse tests are one-sided, so a *dropped* attachment stayed live in the encoder unseen — the MRT case this item most needs to catch. It did not mirror `BindStageResources`' dim-mismatch substitution, so it split for units resolving to a null texture. And the aliasing test is pointer identity on `LatteTexture*`, which is documented in place and filed as `rm-selfdep-alias-identity`. **Validated on a real title (2026-08-04, Korok Forest, equal-length arms).** `vkAccurateBarriers` on vs off: **15 splits/frame vs 0**, and everything else flat — 204 vs 203 passes/frame, 49.90 ms and 20.04 fps in both. The design doc's expectation that this item would *cost* frame rate is not borne out: 15 splits per frame add about one render pass and no measurable time. The scene reproduces the committed baseline (3516 draws/f against 3517–3528 on file), so it is the right scene and the arms differ only in the setting.",
+      "note": "The decisive detail is placement: the detector that has run since `97ae3ad` lives inside `BindStageResources`, where the encoder is already open and it can only count. `ShaderHasUncoveredSelfDependency` answers the same question *above* `GetRenderCommandEncoder()`, walking the shader's own resource-mapped units rather than the sticky global `m_state.m_textures`, per the correction already in the design doc. Units the framebuffer-fetch rewrite covered are skipped \u2014 never bound, so they cannot alias \u2014 which is why the common pixel case still costs nothing. `vk_accurate_barriers` was marked inert in `CemuConfig.h` and now does something for the first time. **Measured:** `acc.self_dep_pass_splits` 1, firing on exactly the one uncovered draw, against `acc.self_dep_fbfetch` 377 correctly not split. **Three defects in the first cut were found by adversarial review and fixed in `bad31b2`.** It scanned `m_activeFBO` while the pass actually open belongs to `m_lastUsedFBO`, and `GetRenderCommandEncoder`'s reuse tests are one-sided, so a *dropped* attachment stayed live in the encoder unseen \u2014 the MRT case this item most needs to catch. It did not mirror `BindStageResources`' dim-mismatch substitution, so it split for units resolving to a null texture. And the aliasing test is pointer identity on `LatteTexture*`, which is documented in place and filed as `rm-selfdep-alias-identity`. **Validated on a real title (2026-08-04, Korok Forest, equal-length arms).** `vkAccurateBarriers` on vs off: **15 splits/frame vs 0**, and everything else flat \u2014 204 vs 203 passes/frame, 49.90 ms and 20.04 fps in both. The design doc's expectation that this item would *cost* frame rate is not borne out: 15 splits per frame add about one render pass and no measurable time. The scene reproduces the committed baseline (3516 draws/f against 3517\u20133528 on file), so it is the right scene and the arms differ only in the setting.",
       "measured": {
         "scene": "BotW Korok Forest, vkAccurateBarriers A/B",
         "at_commit": "3d4fca9",
@@ -1189,7 +1189,7 @@
       "commits": [
         "2bd3e06"
       ],
-      "verdict": "`MetalPipelineCompiler::Compile` passed a nil `GetFunction()` to `newRenderPipelineState`, which aborts from the Latte thread rather than returning an `NS::Error` — so the `if (error)` handler written for this could never run. It now checks the pointer, logs, counts `acc.pipeline_no_function` and skips the draw.",
+      "verdict": "`MetalPipelineCompiler::Compile` passed a nil `GetFunction()` to `newRenderPipelineState`, which aborts from the Latte thread rather than returning an `NS::Error` \u2014 so the `if (error)` handler written for this could never run. It now checks the pointer, logs, counts `acc.pipeline_no_function` and skips the draw.",
       "note": "Third appearance of the same trap in one day: `IsCompiled()` here, `WaitForCompiled()` on the graphic-pack output-shader path (`92a9885`). Both report success for a shader whose MSL failed to compile. **The function pointer is the only signal that does not lie**, and that is now written down in CLAUDE.md. Found while building a vertex-stage self-dependency test, where one unsupported shader construct took the whole emulator down.",
       "measured": {
         "scene": "self_dependency.rpx",
@@ -1209,7 +1209,7 @@
         "bad31b2"
       ],
       "verdict": "`LatteDecompilerAnalyzer.cpp:593` gated the `texUnitUsesTexelCoordinates -> hasUniformVarBlock` promotion on the pixel stage, while the `float2 tex{}Scale` SupportBuffer member and the `*supportBuffer.tex{}Scale` body reference are emitted for every stage and only the `constant SupportBuffer&` *parameter* is gated. A vertex or geometry shader using texel coordinates therefore produced MSL that failed with `use of undeclared identifier 'supportBuffer'`, yielding a nil function.",
-      "note": "The first diagnosis, \"vertex-stage texture sampling does not survive the MSL emitter\", was **wrong and too broad** — vertex texture sampling works; the trigger is texel-coordinate access (`GPU7_TEX_INST_LD`, or a SAMPLE with all four coordinates unnormalized), and the sampler's element type is irrelevant. Verified by running three shader variants: `usampler2D`+`texelFetch` failed, `sampler2D`+`texelFetch` failed identically, `sampler2D`+`texture()` compiled. It stayed hidden because any other reason to set `hasUniformVarBlock` — streamout, point size, a disabled viewport scale, a remapped uniform mode — rescues the shader, so only a *minimal* non-pixel texelFetch trips it. Before `2bd3e06` this took the whole process down rather than dropping a draw.",
+      "note": "The first diagnosis, \"vertex-stage texture sampling does not survive the MSL emitter\", was **wrong and too broad** \u2014 vertex texture sampling works; the trigger is texel-coordinate access (`GPU7_TEX_INST_LD`, or a SAMPLE with all four coordinates unnormalized), and the sampler's element type is irrelevant. Verified by running three shader variants: `usampler2D`+`texelFetch` failed, `sampler2D`+`texelFetch` failed identically, `sampler2D`+`texture()` compiled. It stayed hidden because any other reason to set `hasUniformVarBlock` \u2014 streamout, point size, a disabled viewport scale, a remapped uniform mode \u2014 rescues the shader, so only a *minimal* non-pixel texelFetch trips it. Before `2bd3e06` this took the whole process down rather than dropping a draw.",
       "measured": {
         "scene": "self_dependency.rpx",
         "at_commit": "bad31b2",
@@ -1229,7 +1229,7 @@
         "a42b2dc"
       ],
       "verdict": "`_initTextureBindingPointsMTL` stripped a covered unit's binding point unconditionally while the emitter's substitution was gated on the runtime option, so with `FramebufferFetch=false` every pixel-stage self-dependent draw emitted a sample against a unit with no binding, failed to compile and was refused. One predicate, `LatteMtl_IsUnitCoveredByFramebufferFetch`, now answers the question for all five sites.",
-      "note": "Measured with the option off, before → after: `acc.pipeline_no_function` **4 → 0**, `acc.self_dep_fbfetch` **287 → 0** (it had been reporting coverage in the one arm where no rewrite happens), `acc.self_dep_pass_splits` and `acc.render_self_dependency` **1 → 250** as the pixel draws reach the uncovered path. Default arm unchanged. **Explicitly not fixed:** with the option off `selfdep_caseA_same_texel` still fails, now because the draw runs and samples 0 rather than because it vanished. Splitting resolves prior writes but the surface remains an attachment of the new pass, so sampling it stays undefined — a splitter cannot fix that, and `FramebufferFetch=true` remains strictly better and stays the default.",
+      "note": "Measured with the option off, before \u2192 after: `acc.pipeline_no_function` **4 \u2192 0**, `acc.self_dep_fbfetch` **287 \u2192 0** (it had been reporting coverage in the one arm where no rewrite happens), `acc.self_dep_pass_splits` and `acc.render_self_dependency` **1 \u2192 250** as the pixel draws reach the uncovered path. Default arm unchanged. **Explicitly not fixed:** with the option off `selfdep_caseA_same_texel` still fails, now because the draw runs and samples 0 rather than because it vanished. Splitting resolves prior writes but the surface remains an attachment of the new pass, so sampling it stays undefined \u2014 a splitter cannot fix that, and `FramebufferFetch=true` remains strictly better and stays the default.",
       "measured": {
         "scene": "self_dependency.rpx, both FramebufferFetch arms",
         "at_commit": "a42b2dc",
@@ -1247,8 +1247,8 @@
       "commits": [
         "3db0cfc"
       ],
-      "verdict": "A draw sampling a different-format view of the surface it renders into was invisible to both halves of the mechanism — the analyzer compares format, the renderer compared `LatteTexture` pointers — while Cemu builds a second texture object for exactly that case (`LatteTexture.cpp:858` returns `VIEW_NOT_COMPATIBLE` on format alone). Matching `physAddress` as well catches it.",
-      "note": "A/B on one ROM with one variable: pointer identity gives `render_self_dependency` 1 and `pass_splits` 1; adding the address match gives **2 and 2**. Conservative by choice — exact base-address equality, not range overlap, since over-splitting is this item's named risk; partial overlaps at different base addresses stay invisible and `list_dataOverlap` is the raw material if that ever matters. **The first Case D passed while testing nothing:** its shader multiplied the sampled value by `0.0`, so the fetch was optimised away, no texture was bound and no alias existed — yet the draw-ran assertion passed and the counter read 1, which is indistinguishable from the miss it was built to show. The ROM now logs `caseD_samplerVars` so a vanished sampler cannot be mistaken for a missed alias.",
+      "verdict": "A draw sampling a different-format view of the surface it renders into was invisible to both halves of the mechanism \u2014 the analyzer compares format, the renderer compared `LatteTexture` pointers \u2014 while Cemu builds a second texture object for exactly that case (`LatteTexture.cpp:858` returns `VIEW_NOT_COMPATIBLE` on format alone). Matching `physAddress` as well catches it.",
+      "note": "A/B on one ROM with one variable: pointer identity gives `render_self_dependency` 1 and `pass_splits` 1; adding the address match gives **2 and 2**. Conservative by choice \u2014 exact base-address equality, not range overlap, since over-splitting is this item's named risk; partial overlaps at different base addresses stay invisible and `list_dataOverlap` is the raw material if that ever matters. **The first Case D passed while testing nothing:** its shader multiplied the sampled value by `0.0`, so the fetch was optimised away, no texture was bound and no alias existed \u2014 yet the draw-ran assertion passed and the counter read 1, which is indistinguishable from the miss it was built to show. The ROM now logs `caseD_samplerVars` so a vanished sampler cannot be mistaken for a missed alias.",
       "measured": {
         "scene": "self_dependency.rpx Case D, A/B",
         "at_commit": "3db0cfc",
@@ -1286,7 +1286,7 @@
         "8bf3e79"
       ],
       "verdict": "Its entire premise is that users turn accurate barriers off for performance, so known-problematic shaders must force them back on. Measured on Korok Forest, accurate barriers cost **nothing**: 49.90 ms and 20.04 fps with the splitter doing 15 splits/frame, identical to the arm with it disabled. If the setting is free there is no reason to disable it, and therefore nothing for an override to rescue.",
-      "note": "**Correction to the first reading.** The lava base hash `6f6f6e7b9aae57af` IS present in Korok Forest. The earlier \"appears zero times\" was an artefact of instrumentation: that run carried no shader detail on the *covered* counter, so the hash had nothing to appear in. With the detail added it shows up immediately — in the **covered** set, handled by framebuffer fetch, not on the uncovered path an override would force a split for. The waterfall-foam hash `4c0bd596e3aef4a6` is still absent, and Korok has no waterfalls, so that one remains untested rather than refuted. None of this changes the cancellation, which rests on the cost being zero: if accurate barriers are free, nobody disables them, and an override has nothing to rescue.",
+      "note": "**Correction to the first reading.** The lava base hash `6f6f6e7b9aae57af` IS present in Korok Forest. The earlier \"appears zero times\" was an artefact of instrumentation: that run carried no shader detail on the *covered* counter, so the hash had nothing to appear in. With the detail added it shows up immediately \u2014 in the **covered** set, handled by framebuffer fetch, not on the uncovered path an override would force a split for. The waterfall-foam hash `4c0bd596e3aef4a6` is still absent, and Korok has no waterfalls, so that one remains untested rather than refuted. None of this changes the cancellation, which rests on the cost being zero: if accurate barriers are free, nobody disables them, and an override has nothing to rescue.",
       "measured": {
         "scene": "BotW Korok Forest, vkAccurateBarriers A/B",
         "at_commit": "8bf3e79",
@@ -1307,8 +1307,8 @@
         "3db0cfc",
         "55362e8"
       ],
-      "verdict": "The pass splitter, the alias detection behind it and the `accurate_barriers` gate are all in. The remaining half of 3.1 — restricting the framebuffer-fetch substitution to cases where it is valid — is tracked separately as `rm-fbfetch-coordinate`, because it is a decompiler change rather than a scheduling one.",
-      "note": "This entry stood open for months carrying the warning \"expect it to **cost** frame rate — splitting passes raises pass count, the very thing the bandwidth work was trying to reduce.\" Measured on Korok Forest with equal-length arms: 15 splits/frame against 0, 204 passes/frame against 203, and 49.90 ms / 20.04 fps in **both**. The cost is not small, it is absent. It also predicted BotW lava and waterfalls as \"the known cases\"; the six shaders actually observed on the uncovered path are neither, though the scene contains neither hazard so that is untested rather than refuted. See `selfdep-pass-split`, `selfdep-alias-physaddr` and `self-dep-sized-on-botw`.",
+      "verdict": "The pass splitter, the alias detection behind it and the `accurate_barriers` gate are all in. The remaining half of 3.1 \u2014 restricting the framebuffer-fetch substitution to cases where it is valid \u2014 is tracked separately as `rm-fbfetch-coordinate`, because it is a decompiler change rather than a scheduling one.",
+      "note": "This entry stood open for months carrying the warning \"expect it to **cost** frame rate \u2014 splitting passes raises pass count, the very thing the bandwidth work was trying to reduce.\" Measured on Korok Forest with equal-length arms: 15 splits/frame against 0, 204 passes/frame against 203, and 49.90 ms / 20.04 fps in **both**. The cost is not small, it is absent. It also predicted BotW lava and waterfalls as \"the known cases\"; the six shaders actually observed on the uncovered path are neither, though the scene contains neither hazard so that is untested rather than refuted. See `selfdep-pass-split`, `selfdep-alias-physaddr` and `self-dep-sized-on-botw`.",
       "measured": {
         "scene": "BotW Korok Forest, vkAccurateBarriers A/B",
         "at_commit": "3d4fca9",
@@ -1326,8 +1326,8 @@
       "commits": [
         "8bf3e79"
       ],
-      "verdict": "The 498 covered self-dependencies per frame resolve to **11 distinct shaders, 22 (shader, unit) pairs**, and every one samples at `varying.xy / varying.w` — a perspective divide of an interpolated clip-space position, i.e. the fragment's own screen position. **Not one adds an offset.** So the coordinate-discarding framebuffer-fetch substitution is valid for 100% of the self-dependencies in this scene, and `rm-fbfetch-coordinate` is a guard against future shaders rather than a fix for current wrong pixels.",
-      "note": "Read from the emitted MSL, dumped with `FramebufferFetch=false` — with the substitution enabled the coordinate is already replaced by `col{N}` and the evidence is gone. The last write to the coordinate register before every sample is the multiply by the reciprocal, so \"no offset\" is a property of the code rather than of where I stopped looking. **Single scene.** Korok Forest has no waterfalls, no heat haze and no refraction, which are exactly the effects that would produce an offset tap; the waterfall-foam shader the design doc names never appears. This bounds the item for open-world play and says nothing about the rest of the game.",
+      "verdict": "The 498 covered self-dependencies per frame resolve to **11 distinct shaders, 22 (shader, unit) pairs**, and every one samples at `varying.xy / varying.w` \u2014 a perspective divide of an interpolated clip-space position, i.e. the fragment's own screen position. **Not one adds an offset.** So the coordinate-discarding framebuffer-fetch substitution is valid for 100% of the self-dependencies in this scene, and `rm-fbfetch-coordinate` is a guard against future shaders rather than a fix for current wrong pixels.",
+      "note": "Read from the emitted MSL, dumped with `FramebufferFetch=false` \u2014 with the substitution enabled the coordinate is already replaced by `col{N}` and the evidence is gone. The last write to the coordinate register before every sample is the multiply by the reciprocal, so \"no offset\" is a property of the code rather than of where I stopped looking. **Single scene.** Korok Forest has no waterfalls, no heat haze and no refraction, which are exactly the effects that would produce an offset tap; the waterfall-foam shader the design doc names never appears. This bounds the item for open-world play and says nothing about the rest of the game.",
       "measured": {
         "scene": "BotW Korok Forest, MSL dump with FramebufferFetch=false",
         "at_commit": "8bf3e79",
@@ -1346,8 +1346,8 @@
         "bc3682a",
         "dfd5534"
       ],
-      "verdict": "Nothing read the guest's rounding mode, so a guest asking for round-toward-negative-infinity got round-to-nearest. Wiring it fixed **zero** on its own — because `mtfsfi`, the standard way a guest selects a rounding mode, **was not implemented at all** and never reached the FPSCR. Implementing it took the wrong-value count **350 → 325**.",
-      "note": "The rounding sync looked like a failure and was a prerequisite: without it, implementing `mtfsfi` would have set FPSCR bits no arithmetic consulted. The gap was found by a test written *after* the sync landed — `fp_rounding_mode_honoured` in `testing/rom-tests`, which uses `mtfsfi 7,2` and failed immediately. The opcode-63 dispatcher had no `case 134`, so it fell through to `cemu_assert_unimplemented` and did nothing. **Two process errors on the way:** I read a `LogType::Force` probe on stdout and saw nothing, concluding the hook was dead, when it needs `--verbose` and was in log.txt; and I ranked targets off `report.py`'s default table, which spans the 676 FPSCR-state failures the gate says not to conflate with the 354 values.",
+      "verdict": "Nothing read the guest's rounding mode, so a guest asking for round-toward-negative-infinity got round-to-nearest. Wiring it fixed **zero** on its own \u2014 because `mtfsfi`, the standard way a guest selects a rounding mode, **was not implemented at all** and never reached the FPSCR. Implementing it took the wrong-value count **350 \u2192 325**.",
+      "note": "The rounding sync looked like a failure and was a prerequisite: without it, implementing `mtfsfi` would have set FPSCR bits no arithmetic consulted. The gap was found by a test written *after* the sync landed \u2014 `fp_rounding_mode_honoured` in `testing/rom-tests`, which uses `mtfsfi 7,2` and failed immediately. The opcode-63 dispatcher had no `case 134`, so it fell through to `cemu_assert_unimplemented` and did nothing. **Two process errors on the way:** I read a `LogType::Force` probe on stdout and saw nothing, concluding the hook was dead, when it needs `--verbose` and was in log.txt; and I ranked targets off `report.py`'s default table, which spans the 676 FPSCR-state failures the gate says not to conflate with the 354 values.",
       "measured": {
         "scene": "ppc750cl.s IGNORE_FPSCR_STATE=1, and rom-tests",
         "at_commit": "dfd5534",
@@ -1366,7 +1366,7 @@
         "a2761e9"
       ],
       "verdict": "`PPCInterpreter_PS_MADD` wrapped the product in its own `(float)` cast before adding, so the intermediate was rounded to single twice. PowerPC multiply-add is fused: the product must not be rounded. Removing the inner cast takes the wrong-value count from **354 to 350** and `ps_madd` specifically from **16 to 12**.",
-      "note": "Found by comparing against its own siblings: `PS_NMADD`, `PS_MSUB`, `PS_NMSUB` and `FMADDS` all cast only the whole expression, and `ps_madd` was the single member of the family that did not. The suite's own changelog names this case in as many words — *'fmadds/ps_madd is not rounded twice'*. **The full-suite count is unchanged at 1030**, because those four tests still fail their FPSCR-*state* check, which is the deliberate omission; only the values-only build shows the fix. That is also why the values-only build is the one to measure against.",
+      "note": "Found by comparing against its own siblings: `PS_NMADD`, `PS_MSUB`, `PS_NMSUB` and `FMADDS` all cast only the whole expression, and `ps_madd` was the single member of the family that did not. The suite's own changelog names this case in as many words \u2014 *'fmadds/ps_madd is not rounded twice'*. **The full-suite count is unchanged at 1030**, because those four tests still fail their FPSCR-*state* check, which is the deliberate omission; only the values-only build shows the fix. That is also why the values-only build is the one to measure against.",
       "measured": {
         "scene": "ppc750cl.s, IGNORE_FPSCR_STATE=1",
         "at_commit": "a2761e9",
@@ -1385,7 +1385,7 @@
         "dfd5534"
       ],
       "verdict": "Three assertions added to `testing/rom-tests`: `fp_fmadds_is_fused`, `fp_ps_madd_is_fused`, `fp_rounding_mode_honoured`. All three now pass on both arms, and one of them found a real gap within minutes of being written.",
-      "note": "Nine existing assertions, **zero** touching float, while two FP semantic changes landed the same day. The only regression signal was the conformance suite, which measures FP correctness rather than whether a title still runs. These are exact comparisons with no epsilon: the fused test picks `a = 1+2^-13, b = 1-2^-13` so that a rounded product gives exactly `0.0` and a fused one does not, which makes the property observable rather than a last-bit difference. `fp_rounding_mode_honoured` failed on first run and exposed that `mtfsfi` was unimplemented. Separately, BotW Korok after all three changes: frame time 49.90 ms and 20.04 fps identical to the committed baseline, 204 passes/frame in range, draws **3525**, inside the committed 3517–3528 range. That last figure is a correction: I first read the telemetry while the run was still writing, got 3472 from 936 gameplay frames, and reported it as the result. The complete file has 5112 gameplay frames and the median moves into range — an 18% sample of a phase-split run is exactly the trap CLAUDE.md documents, and I walked into it while answering a question about how we verify things.",
+      "note": "Nine existing assertions, **zero** touching float, while two FP semantic changes landed the same day. The only regression signal was the conformance suite, which measures FP correctness rather than whether a title still runs. These are exact comparisons with no epsilon: the fused test picks `a = 1+2^-13, b = 1-2^-13` so that a rounded product gives exactly `0.0` and a fused one does not, which makes the property observable rather than a last-bit difference. `fp_rounding_mode_honoured` failed on first run and exposed that `mtfsfi` was unimplemented. Separately, BotW Korok after all three changes: frame time 49.90 ms and 20.04 fps identical to the committed baseline, 204 passes/frame in range, draws **3525**, inside the committed 3517\u20133528 range. That last figure is a correction: I first read the telemetry while the run was still writing, got 3472 from 936 gameplay frames, and reported it as the result. The complete file has 5112 gameplay frames and the median moves into range \u2014 an 18% sample of a phase-split run is exactly the trap CLAUDE.md documents, and I walked into it while answering a question about how we verify things.",
       "measured": {
         "scene": "rom-tests both arms, and BotW Korok",
         "at_commit": "dfd5534",
@@ -1396,22 +1396,22 @@
     },
     {
       "id": "macos-266-rebaseline",
-      "title": "Every measurement predates macOS 26.6 — the control re-run on it, and the baseline holds",
+      "title": "Every measurement predates macOS 26.6 \u2014 the control re-run on it, and the baseline holds",
       "area": "tooling",
       "stage": "s5",
       "status": "landed",
       "commits": [
         "c33153f"
       ],
-      "verdict": "macOS 26.5.2 → 26.6 landed 2026-08-04, twenty-nine minutes after `d9500c5` and after every measurement on file. Re-run at n=3: **frame time, fps, draws, the readback drain and the critical path all overlap the 26.5.2 ranges**. `gpu.busy_ns` 16.84–17.03 and `gpu.cp_idle_ns` 18.89–18.96 sit marginally *below* the old ranges despite longer windows, so the soak biases against the observed direction. The one substantive move is `gpu.queue_latency_ns`, 15.7 → 14.5 ms, which does not track frame rate.",
-      "note": "**The host OS is a variable nothing in this repo tracks.** `--verify` marks a measurement stale when commits pass it; a driver update passes it invisibly, and no telemetry header records the OS version. Also the cleanest counter-example on file to reading a separated range as a result: `gpu.frame_critical_path_ns` separated cleanly on a **0.03 ms** gap, because both arms are tight enough to separate on noise. No attribution is claimed — the arms differ by the OS *and* by every commit from `cebe17f` to `d9500c5`, which six accuracy counters absent from the older arm prove outright.",
+      "verdict": "macOS 26.5.2 \u2192 26.6 landed 2026-08-04, twenty-nine minutes after `d9500c5` and after every measurement on file. Re-run at n=3: **frame time, fps, draws, the readback drain and the critical path all overlap the 26.5.2 ranges**. `gpu.busy_ns` 16.84\u201317.03 and `gpu.cp_idle_ns` 18.89\u201318.96 sit marginally *below* the old ranges despite longer windows, so the soak biases against the observed direction. The one substantive move is `gpu.queue_latency_ns`, 15.7 \u2192 14.5 ms, which does not track frame rate.",
+      "note": "**The host OS is a variable nothing in this repo tracks.** `--verify` marks a measurement stale when commits pass it; a driver update passes it invisibly, and no telemetry header records the OS version. Also the cleanest counter-example on file to reading a separated range as a result: `gpu.frame_critical_path_ns` separated cleanly on a **0.03 ms** gap, because both arms are tight enough to separate on noise. No attribution is claimed \u2014 the arms differ by the OS *and* by every commit from `cebe17f` to `d9500c5`, which six accuracy counters absent from the older arm prove outright.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "d9500c5",
         "date": "2026-08-06",
         "n": 3
       },
-      "ref": "00-master-plan.md — The baseline survives macOS 26.6"
+      "ref": "00-master-plan.md \u2014 The baseline survives macOS 26.6"
     },
     {
       "id": "readme-measurement-check",
@@ -1422,8 +1422,8 @@
         "3d4fca9"
       ],
       "verdict": "`--verify` now extracts measurement-shaped figures from `README.md` and requires each to appear verbatim in the ledger. Reported as `WARN`, because prose legitimately carries context the ledger does not. Deliberately README-only: adding `CLAUDE.md` was tried and reverted after producing 35 warnings that were all working as intended.",
-      "note": "The derive-don't-type discipline protected the ledger and left the most-read file in the repo unchecked, which is exactly where the errors landed: **107 counters against a real 113, and 183% against a ledger saying 184**, the latter surviving three rewrites because each copied the previous. Traceability is a question with an exact answer; a numeric comparison would be guesswork, and a guessing linter is one people learn to ignore. It carries a **positive control** — against the README as of `584521b` it flags 8 figures, `183%` among them — because a linter that reports nothing is indistinguishable from one that does not run. The same commit added the rule that a claim about another project carries a date or does not get made. Extends the linter added in `b95bde3`, which is claimed by [`status-tracker`]; kept separate because the reverted `CLAUDE.md` experiment and its positive control are the finding, not the plumbing.",
-      "ref": ".grok/rules/status-tracker.md — The same rule now applies outward, to `README.md`"
+      "note": "The derive-don't-type discipline protected the ledger and left the most-read file in the repo unchecked, which is exactly where the errors landed: **107 counters against a real 113, and 183% against a ledger saying 184**, the latter surviving three rewrites because each copied the previous. Traceability is a question with an exact answer; a numeric comparison would be guesswork, and a guessing linter is one people learn to ignore. It carries a **positive control** \u2014 against the README as of `584521b` it flags 8 figures, `183%` among them \u2014 because a linter that reports nothing is indistinguishable from one that does not run. The same commit added the rule that a claim about another project carries a date or does not get made. Extends the linter added in `b95bde3`, which is claimed by [`status-tracker`]; kept separate because the reverted `CLAUDE.md` experiment and its positive control are the finding, not the plumbing.",
+      "ref": ".grok/rules/status-tracker.md \u2014 The same rule now applies outward, to `README.md`"
     },
     {
       "id": "ledger-self-claim-check",
@@ -1434,9 +1434,9 @@
         "67ea113",
         "aff8390"
       ],
-      "verdict": "`3d4fca9` through `a2761e9` were each claimed by the entry describing the **next** commit, and `--verify` reported a clean ledger throughout — it finds a commit *nothing* claims and is blind to one claimed by the *wrong* entry, because from its side that looks claimed. Three of the five stamps were not merely stale but impossible: `fbfetch-coordinate-sized` was stamped at a commit predating both instruments its measurement needs. `--verify` now replays `ledger.json`'s own history to find each entry's birth commit and reports one that changed code the entry does not claim.",
-      "note": "The cause is mechanical, which is what made it checkable: writing an entry for work still in the working tree and reaching for its hash with `git log -1` returns HEAD, which is the **previous** commit. Two design choices carry the check. **Prose is not the trigger** — a record commit here routinely updates CLAUDE.md or a testing README alongside the entry, and triggering on any file outside `docs/status/` fires on 60 of 71 correct entries including all 55 the genesis commit back-filled; `src/`, `testing/` and `tools/` are the signal. And it has a **structural blind spot that is not a bug**: an entry born in a docs-only work commit is byte-for-byte the same shape as a record commit, so two of the five are invisible to it and only reading the content catches those. New severity `SUSPECT`, kept apart from `WARN` because \"check this attribution\" and \"this number is old\" call for different actions. **Positive control:** five against the ledger at `c33153f`, none against the corrected one. The fifth was found by the check rather than by the audit that prompted it — `ab78ce7` created the reproducer's `run.sh` while filing that entry and claiming the commit elsewhere.",
-      "ref": ".grok/rules/status-tracker.md — The check that catches a *wrong* claim, not just a missing one"
+      "verdict": "`3d4fca9` through `a2761e9` were each claimed by the entry describing the **next** commit, and `--verify` reported a clean ledger throughout \u2014 it finds a commit *nothing* claims and is blind to one claimed by the *wrong* entry, because from its side that looks claimed. Three of the five stamps were not merely stale but impossible: `fbfetch-coordinate-sized` was stamped at a commit predating both instruments its measurement needs. `--verify` now replays `ledger.json`'s own history to find each entry's birth commit and reports one that changed code the entry does not claim.",
+      "note": "The cause is mechanical, which is what made it checkable: writing an entry for work still in the working tree and reaching for its hash with `git log -1` returns HEAD, which is the **previous** commit. Two design choices carry the check. **Prose is not the trigger** \u2014 a record commit here routinely updates CLAUDE.md or a testing README alongside the entry, and triggering on any file outside `docs/status/` fires on 60 of 71 correct entries including all 55 the genesis commit back-filled; `src/`, `testing/` and `tools/` are the signal. And it has a **structural blind spot that is not a bug**: an entry born in a docs-only work commit is byte-for-byte the same shape as a record commit, so two of the five are invisible to it and only reading the content catches those. New severity `SUSPECT`, kept apart from `WARN` because \"check this attribution\" and \"this number is old\" call for different actions. **Positive control:** five against the ledger at `c33153f`, none against the corrected one. The fifth was found by the check rather than by the audit that prompted it \u2014 `ab78ce7` created the reproducer's `run.sh` while filing that entry and claiming the commit elsewhere.",
+      "ref": ".grok/rules/status-tracker.md \u2014 The check that catches a *wrong* claim, not just a missing one"
     },
     {
       "id": "shader-preload-measured",
@@ -1447,15 +1447,15 @@
       "commits": [
         "b23dc3a"
       ],
-      "verdict": "The graphics plan called binary caching \"the highest-value item after Phase 0\" and said MSL recompilation \"dominates cold-start time\", with no number — because the timer that would produce one was `#if BOOST_OS_WINDOWS` and had **never executed on this fork's only platform**. Un-gated and split: BotW preloads **1,139 shaders in 117–169 ms and 1,567 pipelines in 296–319 ms, 434–466 ms total**, RSS +173 MB. An `MTLBinaryArchive` is consulted only once an `MTLFunction` exists, so the frontend runs either way and **296–319 ms is the item's entire ceiling** — roughly 2 s extrapolated to MK8's 10,757 pipelines.",
-      "note": "Three things beyond the number. **The item's mental model was inverted**: with the cache removed the same line reads 0 shaders in 5 ms, so the cache does not make launch slow, it *is* the launch cost — remove it and the work moves into gameplay as first-encounter compilation. **Apple's header argues against the design**: `MTLBinaryArchive.h` states Metal already maintains a per-app compiled-code cache that accelerates pipeline creation after first use, that the archive exists to accelerate the **first** run, and that updating one at runtime is \"not recommended\" — which is exactly what Phase 2 proposed, for a first-run benefit an emulator generating shaders from guest bytecode cannot obtain. **And that system cache is why the frontend looks free**: `$(getconf DARWIN_USER_CACHE_DIR)com.apple.metal` is 111 MB here and its mtime tracks our runs, so 0.11 ms/shader is almost certainly Apple answering, not us compiling. Recorded in CLAUDE.md as a measurement trap. The corrected instrument also fixed a comment of my own that had the two stages backwards, which inverts the conclusion.",
+      "verdict": "The graphics plan called binary caching \"the highest-value item after Phase 0\" and said MSL recompilation \"dominates cold-start time\", with no number \u2014 because the timer that would produce one was `#if BOOST_OS_WINDOWS` and had **never executed on this fork's only platform**. Un-gated and split: BotW preloads **1,139 shaders in 117\u2013169 ms and 1,567 pipelines in 296\u2013319 ms, 434\u2013466 ms total**, RSS +173 MB. An `MTLBinaryArchive` is consulted only once an `MTLFunction` exists, so the frontend runs either way and **296\u2013319 ms is the item's entire ceiling** \u2014 roughly 2 s extrapolated to MK8's 10,757 pipelines.",
+      "note": "Three things beyond the number. **The item's mental model was inverted**: with the cache removed the same line reads 0 shaders in 5 ms, so the cache does not make launch slow, it *is* the launch cost \u2014 remove it and the work moves into gameplay as first-encounter compilation. **Apple's header argues against the design**: `MTLBinaryArchive.h` states Metal already maintains a per-app compiled-code cache that accelerates pipeline creation after first use, that the archive exists to accelerate the **first** run, and that updating one at runtime is \"not recommended\" \u2014 which is exactly what Phase 2 proposed, for a first-run benefit an emulator generating shaders from guest bytecode cannot obtain. **And that system cache is why the frontend looks free**: `$(getconf DARWIN_USER_CACHE_DIR)com.apple.metal` is 111 MB here and its mtime tracks our runs, so 0.11 ms/shader is almost certainly Apple answering, not us compiling. Recorded in CLAUDE.md as a measurement trap. The corrected instrument also fixed a comment of my own that had the two stages backwards, which inverts the conclusion.",
       "measured": {
         "scene": "botw-shadercache-preload",
         "at_commit": "14551d8",
         "date": "2026-08-06",
         "n": 3
       },
-      "ref": "00-master-plan.md — Shader preload, measured at last"
+      "ref": "00-master-plan.md \u2014 Shader preload, measured at last"
     },
     {
       "id": "critical-path-counter-invalid",
@@ -1466,15 +1466,15 @@
       "commits": [
         "90a00c6"
       ],
-      "verdict": "**34.92 ms on frames that completed in 33.27 ms**, in all three runs — impossible for a span inside the frame. Its origin is re-zeroed inside the retirement poll (`MetalRenderer.cpp:2351-2356`) rather than at present, so it straddles a boundary whenever retirement observation lags. It separates 2-slot from 3-slot frames by **0.31 ms** and sits on the wrong side of the deadline in both; `frame_ns − gpu.cp_fence_ns` separates them by **1.1–1.4 ms** and lands correctly on both sides.",
-      "note": "**This is the counter that produced the 1.90 ms figure six refuted attempts were aimed at.** The real miss is 1.04–1.38 ms. Found while scoping `rm-shader-cost` by re-deriving the number the item exists to close, which is the only reason it surfaced — it is stable to 0.03 ms across runs and looks impeccable until compared against the frame containing it. A clock-base mismatch is excluded: `gpu.queue_latency_rejected` totals 1/0/0. Kept rather than deleted, with the invalidation recorded at its declaration in `TelemetryCounters.def`, because it still tracks submission-to-retirement latency and deleting it would silently rewrite the history that quotes it.",
+      "verdict": "**34.92 ms on frames that completed in 33.27 ms**, in all three runs \u2014 impossible for a span inside the frame. Its origin is re-zeroed inside the retirement poll (`MetalRenderer.cpp:2351-2356`) rather than at present, so it straddles a boundary whenever retirement observation lags. It separates 2-slot from 3-slot frames by **0.31 ms** and sits on the wrong side of the deadline in both; `frame_ns \u2212 gpu.cp_fence_ns` separates them by **1.1\u20131.4 ms** and lands correctly on both sides.",
+      "note": "**This is the counter that produced the 1.90 ms figure six refuted attempts were aimed at.** The real miss is 1.04\u20131.38 ms. Found while scoping `rm-shader-cost` by re-deriving the number the item exists to close, which is the only reason it surfaced \u2014 it is stable to 0.03 ms across runs and looks impeccable until compared against the frame containing it. A clock-base mismatch is excluded: `gpu.queue_latency_rejected` totals 1/0/0. Kept rather than deleted, with the invalidation recorded at its declaration in `TelemetryCounters.def`, because it still tracks submission-to-retirement latency and deleting it would silently rewrite the history that quotes it.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "d9500c5",
         "date": "2026-08-06",
         "n": 3
       },
-      "ref": "00-master-plan.md — `gpu.frame_critical_path_ns` is not a deadline instrument"
+      "ref": "00-master-plan.md \u2014 `gpu.frame_critical_path_ns` is not a deadline instrument"
     },
     {
       "id": "fastmath-checkbox-inert",
@@ -1485,8 +1485,8 @@
         "90a00c6"
       ],
       "verdict": "Apple's header states `fastMathEnabled defaults to YES` (`MTLLibrary.h:306`) and deprecates the property (`API_DEPRECATED(\"Use mathMode instead\", macos(10.11, 15.0))`, `:308`). `RendererShaderMtl.cpp:316-317` calls the setter **only when the profile says true**, so setting it false sets nothing. **Nine of the twelve shipped game profiles that mention the key set it false**, and all nine silently get fast math.",
-      "note": "Found while scoping `rm-shader-cost`. It also puts the fork in contradiction with itself: fast math licenses the compiler to violate IEEE 754 on every shader, while `accurateShaderMul` — also on by default — pays **52,072 `mul_nonIEEE` call sites** to emulate `0 × Inf → 0`. Whichever is right, one is being paid for and not delivered. Fix is `setMathMode`, filed as `rm-mathmode-fix` because making the checkbox work is a real behaviour change for those nine titles.",
-      "ref": "00-master-plan.md — `gpu.frame_critical_path_ns` is not a deadline instrument"
+      "note": "Found while scoping `rm-shader-cost`. It also puts the fork in contradiction with itself: fast math licenses the compiler to violate IEEE 754 on every shader, while `accurateShaderMul` \u2014 also on by default \u2014 pays **52,072 `mul_nonIEEE` call sites** to emulate `0 \u00d7 Inf \u2192 0`. Whichever is right, one is being paid for and not delivered. Fix is `setMathMode`, filed as `rm-mathmode-fix` because making the checkbox work is a real behaviour change for those nine titles.",
+      "ref": "00-master-plan.md \u2014 `gpu.frame_critical_path_ns` is not a deadline instrument"
     },
     {
       "id": "remove-devkitppc-from-source",
@@ -1498,7 +1498,7 @@
         "434cb48"
       ],
       "verdict": "Official `dkp-pacman -S wiiu-dev` into `/opt/devkitpro` is the only supported path (same as CI). Deleted `testing/toolchain/build-devkitppc.sh` and rewrote present-tense setup docs so nothing points at `~/.local/devkitpro` or a no-root rebuild.",
-      "ref": "docs/testing/00-test-strategy.md — 4. The toolchain"
+      "ref": "docs/testing/00-test-strategy.md \u2014 4. The toolchain"
     },
     {
       "id": "agents-md-native",
@@ -1510,7 +1510,7 @@
         "624f8cf"
       ],
       "verdict": "Root brief is `AGENTS.md` (was `CLAUDE.md`); status-tracker rule lives at `.grok/rules/status-tracker.md` (was `.claude/rules/`). Present-tense docs and ledger `ref`s retargeted; historical ledger prose that names the old path is left as a record of the past.",
-      "ref": ".grok/rules/status-tracker.md — The obligation"
+      "ref": ".grok/rules/status-tracker.md \u2014 The obligation"
     },
     {
       "id": "cemu-re-mcp",
@@ -1562,18 +1562,50 @@
       ],
       "verdict": "Added project MCP `tessera-playtest` (`tools/tessera-playtest/`): launch/stop, raise, press/hold, title wait, screenshot via capture-scene.sh, JSON scenarios, and BotW load-save convenience. Wired in `.grok/config.toml`. Builds on Phase 0 `testing/playtest` helpers; still OS-keyboard (frontmost + Accessibility). Phase 2 remains ScriptedController.",
       "ref": "tools/tessera-playtest/README.md"
+    },
+    {
+      "id": "rm-housekeeping",
+      "title": "Wire the 14 unincremented telemetry counters (mem.*, pipelines, readback_queued)",
+      "area": "tooling",
+      "status": "landed",
+      "commits": [],
+      "verdict": "All twelve `mem.*`, `gpu.pipelines_compiled`, and `acc.readback_queued` now increment on the real choke points (buffer-cache scan/upload, shader-state hit/aux/miss, tex check/reload/bytes, index upload bytes, Metal PSO create, readback queue). Zeros from these counters were previously indistinguishable from \"not wired\".",
+      "note": "Locale pot drift (19 stale locales) is still open and deliberately not in this change. Positive-control verification is a BotW run with `--telemetry` showing non-zero mem.bufcache.* and mem.shadercache.hit in gameplay.",
+      "ref": ".grok/rules/measurement.md"
+    },
+    {
+      "id": "rm-fma",
+      "title": "FMA \u2014 single-rounding multiply-add on recompiler and interpreter",
+      "area": "cpu",
+      "status": "landed",
+      "commits": [],
+      "verdict": "IML ops `FPR_FMADD/FMSUB/FNMADD/FNMSUB` emit AArch64 fused instructions with the documented fmsub\u2194fnmsub crossover; interpreter uses `std::fma`. Scalar + paired-single + *S variants. Values-only suite: 325 \u2192 319 (and both arms still match).",
+      "note": "Does not alone clear the 116 mad-form residual \u2014 Espresso 25-bit frC product rounding is still missing on the recompiler path. That is a separate accuracy item under rm-fp-conformance.",
+      "ref": "02-cpu-jit-memory.md \u2014 3.2 FMA"
+    },
+    {
+      "id": "rm-mathmode-fix",
+      "title": "Replace inert setFastMathEnabled with setMathMode so shaderFastMath=false works",
+      "area": "graphics",
+      "status": "landed",
+      "commits": [],
+      "verdict": "`RendererShaderMtl::LibraryFromSource` now calls `setMathMode(MathModeFast|Safe)` for both profile values. Previously only the true arm called the deprecated setter, so false was a silent no-op (fast math stayed on).",
+      "note": "Behaviour change for the nine shipped profiles that set shaderFastMath false \u2014 they will now compile with safe math. accurateShaderMul Experiment 1 already showed strict mul is not a free Korok win; this is the other half of that contradiction.",
+      "ref": "00-master-plan.md \u2014 Two findings that land regardless"
     }
   ],
   "refuted": [
     {
       "id": "rm-shader-cost",
-      "title": "Shader cost — largest emitter construct (`accurateShaderMul` / `mul_nonIEEE`) does not buy Korok time",
+      "title": "Shader cost \u2014 largest emitter construct (`accurateShaderMul` / `mul_nonIEEE`) does not buy Korok time",
       "area": "graphics",
       "status": "refuted",
-      "commits": [],
-      "verdict": "Experiment 1 (config flip only): MSL positive control **52,072 → 0** `mul_nonIEEE` call sites; confounds draws/passes/bytes within ±0.5%. Gameplay-phase Δ`gpu.busy_ns` median-of-medians **−0.33 ms** (true 16.95–17.10, false 16.64–16.71). Under the pre-committed **&lt; 0.4 ms** bar → **refute**. Frame/fps stay 49.90 ms / 20.04 both arms. Not a deliverable — shipping false is an accuracy tradeoff.",
-      "note": "Harness `testing/run-mul-ab.sh`; traces `testing/traces/mul_ab/` + `summary.json`. macOS 26.6. Default phase pick in `telemetry-report.py` is longest-by-frames (menu); analysis forced the high-draw phase. Fence residual also −0.31 ms; both under magnitude. ALU may still dominate Metal GPU counters, but this construct is not the lever for the Korok deadline.",
-      "ref": "00-master-plan.md — Experiment 1 — `accurateShaderMul = false`",
+      "commits": [
+        "0bf169e"
+      ],
+      "verdict": "Experiment 1 (config flip only): MSL positive control **52,072 \u2192 0** `mul_nonIEEE` call sites; confounds draws/passes/bytes within \u00b10.5%. Gameplay-phase \u0394`gpu.busy_ns` median-of-medians **\u22120.33 ms** (true 16.95\u201317.10, false 16.64\u201316.71). Under the pre-committed **&lt; 0.4 ms** bar \u2192 **refute**. Frame/fps stay 49.90 ms / 20.04 both arms. Not a deliverable \u2014 shipping false is an accuracy tradeoff.",
+      "note": "Harness `testing/run-mul-ab.sh`; traces `testing/traces/mul_ab/` + `summary.json`. macOS 26.6. Default phase pick in `telemetry-report.py` is longest-by-frames (menu); analysis forced the high-draw phase. Fence residual also \u22120.31 ms; both under magnitude. ALU may still dominate Metal GPU counters, but this construct is not the lever for the Korok deadline.",
+      "ref": "00-master-plan.md \u2014 Experiment 1 \u2014 `accurateShaderMul = false`",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "a497562",
@@ -1591,8 +1623,8 @@
         "839466d",
         "b7c0367"
       ],
-      "verdict": "`queue_latency_ns` (14.29 → 14.69 ms) and `command_buffers` (7 → 7) do not move between the 20 fps and 30 fps arms. Confirmed a second way by the wrap fix: buffers **had** been overlapping for most of every run, and it bought nothing.",
-      "ref": "00-master-plan.md — Two Metal-side hypotheses are refuted",
+      "verdict": "`queue_latency_ns` (14.29 \u2192 14.69 ms) and `command_buffers` (7 \u2192 7) do not move between the 20 fps and 30 fps arms. Confirmed a second way by the wrap fix: buffers **had** been overlapping for most of every run, and it bought nothing.",
+      "ref": "00-master-plan.md \u2014 Two Metal-side hypotheses are refuted",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "b7c0367",
@@ -1608,8 +1640,8 @@
       "commits": [
         "c03dbbb"
       ],
-      "verdict": "Same evidence as above — `command_buffers` is identical in both arms. Tuning when work is submitted cannot move a frame that is waiting on work already submitted.",
-      "ref": "00-master-plan.md — Two Metal-side hypotheses are refuted"
+      "verdict": "Same evidence as above \u2014 `command_buffers` is identical in both arms. Tuning when work is submitted cannot move a frame that is waiting on work already submitted.",
+      "ref": "00-master-plan.md \u2014 Two Metal-side hypotheses are refuted"
     },
     {
       "id": "r-commit-on-idle",
@@ -1619,9 +1651,9 @@
       "commits": [
         "064d9a7"
       ],
-      "verdict": "True, and irrelevant. Work was held in **139,491 of 139,512** idle notifications per frame; committing at stall entry drops that **85%** and moves nothing else — frame time, fps, `cp_fence` and GPU busy all flat to within 0.6%.",
-      "note": "The two notification sites look identical to the CP and are nothing alike: `RingStarvation` fires ~129,000×/frame inside a park-and-recheck loop, `FenceStall` once. Committing on the first would mint a command buffer per spin.",
-      "ref": "00-master-plan.md — The commit-on-idle hypothesis is refuted"
+      "verdict": "True, and irrelevant. Work was held in **139,491 of 139,512** idle notifications per frame; committing at stall entry drops that **85%** and moves nothing else \u2014 frame time, fps, `cp_fence` and GPU busy all flat to within 0.6%.",
+      "note": "The two notification sites look identical to the CP and are nothing alike: `RingStarvation` fires ~129,000\u00d7/frame inside a park-and-recheck loop, `FenceStall` once. Committing on the first would mint a command buffer per spin.",
+      "ref": "00-master-plan.md \u2014 The commit-on-idle hypothesis is refuted"
     },
     {
       "id": "r-surgical-readback",
@@ -1631,8 +1663,8 @@
       "commits": [
         "1ba16d9"
       ],
-      "verdict": "Measured three ways, all negative. `readback_forcestart` is 0, `readback_age_at_wait_ns` is 14.19 ms (the transfers had already been running ~7 ms each), and `readback_draws_ahead` is 169/frame against 3,516 draws — the blit is not stuck behind its own command buffer either.",
-      "ref": "00-master-plan.md — The readback drain is not surgically improvable",
+      "verdict": "Measured three ways, all negative. `readback_forcestart` is 0, `readback_age_at_wait_ns` is 14.19 ms (the transfers had already been running ~7 ms each), and `readback_draws_ahead` is 169/frame against 3,516 draws \u2014 the blit is not stuck behind its own command buffer either.",
+      "ref": "00-master-plan.md \u2014 The readback drain is not surgically improvable",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "1ba16d9",
@@ -1648,9 +1680,9 @@
       "commits": [
         "b7c0367"
       ],
-      "verdict": "n=3 per arm, **every performance range overlaps**: frame 49.90 both, critical path 35.13–35.22 vs 35.10–35.23, force-finish 6.21–6.34 vs 6.14–6.27. The only separated metric was `command_buffers` 7 → 9, which merely proves the arm was live.",
-      "note": "Note the control-vs-control pair from that batch: `readback_forcefinish_ns` swings **±2% between identical runs** while frame time and critical path are stable to 0.0%. A \"3% improvement\" in that counter is noise.",
-      "ref": "00-master-plan.md — The readback drain is not surgically improvable"
+      "verdict": "n=3 per arm, **every performance range overlaps**: frame 49.90 both, critical path 35.13\u201335.22 vs 35.10\u201335.23, force-finish 6.21\u20136.34 vs 6.14\u20136.27. The only separated metric was `command_buffers` 7 \u2192 9, which merely proves the arm was live.",
+      "note": "Note the control-vs-control pair from that batch: `readback_forcefinish_ns` swings **\u00b12% between identical runs** while frame time and critical path are stable to 0.0%. A \"3% improvement\" in that counter is noise.",
+      "ref": "00-master-plan.md \u2014 The readback drain is not surgically improvable"
     },
     {
       "id": "r-inpass-streamout",
@@ -1662,7 +1694,7 @@
       ],
       "verdict": "Cancelled by its own gate before being built. It would have removed 300 MB/frame of redundant tile traffic from a GPU that is bandwidth-limited **12.8%** of the time.",
       "note": "Unblocked only if the ALU bottleneck is ever addressed and bandwidth becomes the limiter. The legality question is already answered in its favour.",
-      "ref": "00-master-plan.md — The GPU is ALU- and texture-bound",
+      "ref": "00-master-plan.md \u2014 The GPU is ALU- and texture-bound",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "fa24ab0",
@@ -1679,7 +1711,7 @@
         "7603cab"
       ],
       "verdict": "Both are **exactly zero** in BotW.",
-      "ref": "00-master-plan.md — Instrumenting three open questions"
+      "ref": "00-master-plan.md \u2014 Instrumenting three open questions"
     },
     {
       "id": "r-guest-snapshot",
@@ -1689,8 +1721,8 @@
       "commits": [
         "7603cab"
       ],
-      "verdict": "Found the cores idle 95% of the time — against their 96% baseline idle rate. **A probe with no control sample cannot discriminate.**",
-      "ref": "00-master-plan.md — Instrumenting three open questions"
+      "verdict": "Found the cores idle 95% of the time \u2014 against their 96% baseline idle rate. **A probe with no control sample cannot discriminate.**",
+      "ref": "00-master-plan.md \u2014 Instrumenting three open questions"
     },
     {
       "id": "r-wfe-ring-park",
@@ -1702,7 +1734,7 @@
         "dfaa971"
       ],
       "verdict": "It is a no-op. `sched_yield` is **36% of a core** in the same path.",
-      "ref": "00-master-plan.md — The ring-buffer `wfe` park is a no-op"
+      "ref": "00-master-plan.md \u2014 The ring-buffer `wfe` park is a no-op"
     },
     {
       "id": "r-flat-hle-charge",
@@ -1712,8 +1744,8 @@
       "commits": [
         "d81aa90"
       ],
-      "verdict": "A hypothetical 500 cycles/call sums to **25,103,500 against 15,384,240 actually retired — 163%.** It would more than double emulated guest time. Any charge must be tiered per function.",
-      "ref": "00-master-plan.md — The 33 ms frame decomposed"
+      "verdict": "A hypothetical 500 cycles/call sums to **25,103,500 against 15,384,240 actually retired \u2014 163%.** It would more than double emulated guest time. Any charge must be tiered per function.",
+      "ref": "00-master-plan.md \u2014 The 33 ms frame decomposed"
     },
     {
       "id": "r-readback-policy",
@@ -1725,41 +1757,41 @@
         "1ba16d9",
         "14551d8"
       ],
-      "verdict": "Refuted three ways without a run. **The size was a 14× units error** — 1,536 is the *texel* count; at `R32_G32_B32_A32_FLOAT` and `R16_G16_B16_A16_FLOAT` the six are **21,504 B**, which is the 21 KB `readback-targets` already recorded. **That entry had already answered the question**: the arrays are a GPU-computed data table the guest consumes, so the readback is not spurious. And **the cost is not divisible per surface** — every readback commits its own command buffer and every buffer waits on its predecessor, so `waitUntilCompleted()` transitively waits for all of them and skipping five of six recovers zero.",
-      "note": "Filed as open on a paragraph that reopened a landed verdict without citing it. The paragraph disclaimed reopening `r-surgical-readback`, the *scheduling* refutation, and silently reopened the *policy* one beside it — while restating an established 21 KB as 1.5 KB, so the contradiction read as a new and more alarming finding rather than as an error. **Two live findings survive the closure.** `LatteTextureReadback_Initate` has a second caller at `LatteSurfaceCopy.cpp:136` gated on `!sourceIsLinear && destinationIsLinear`, which never consults `enableReadback`, so nothing on file attributes any of the six surfaces to `LatteTexture.cpp:1311` — the line the item named. And `LatteTextureReadback_ReadbackToLinearBlocking` calls `ForceFinish()` inline at `LatteTextureReadback.cpp:201`, which increments the same counter and timer, so **`gpu.readback_forcefinish_ns` is an upper bound on the `GX2DrawDone` drain, not a measurement of it**.",
+      "verdict": "Refuted three ways without a run. **The size was a 14\u00d7 units error** \u2014 1,536 is the *texel* count; at `R32_G32_B32_A32_FLOAT` and `R16_G16_B16_A16_FLOAT` the six are **21,504 B**, which is the 21 KB `readback-targets` already recorded. **That entry had already answered the question**: the arrays are a GPU-computed data table the guest consumes, so the readback is not spurious. And **the cost is not divisible per surface** \u2014 every readback commits its own command buffer and every buffer waits on its predecessor, so `waitUntilCompleted()` transitively waits for all of them and skipping five of six recovers zero.",
+      "note": "Filed as open on a paragraph that reopened a landed verdict without citing it. The paragraph disclaimed reopening `r-surgical-readback`, the *scheduling* refutation, and silently reopened the *policy* one beside it \u2014 while restating an established 21 KB as 1.5 KB, so the contradiction read as a new and more alarming finding rather than as an error. **Two live findings survive the closure.** `LatteTextureReadback_Initate` has a second caller at `LatteSurfaceCopy.cpp:136` gated on `!sourceIsLinear && destinationIsLinear`, which never consults `enableReadback`, so nothing on file attributes any of the six surfaces to `LatteTexture.cpp:1311` \u2014 the line the item named. And `LatteTextureReadback_ReadbackToLinearBlocking` calls `ForceFinish()` inline at `LatteTextureReadback.cpp:201`, which increments the same counter and timer, so **`gpu.readback_forcefinish_ns` is an upper bound on the `GX2DrawDone` drain, not a measurement of it**.",
       "measured": {
         "scene": "botw-korok",
         "at_commit": "cebe17f",
         "date": "2026-08-06",
         "n": 3
       },
-      "ref": "00-master-plan.md — The readback drain is 96% six tiny surfaces"
+      "ref": "00-master-plan.md \u2014 The readback drain is 96% six tiny surfaces"
     }
   ],
   "traps": [
     {
       "title": "A BotW telemetry run is two workloads, and the split is ~50/50",
-      "body": "~4,050 frames of menu at 113 draws and 33.27 ms, then ~4,750 of gameplay at 3,516 draws and 49.90 ms. `--skip=60` removes none of it. A whole-file median describes no frame that occurred, and because two runs never have the same ratio, **that difference reads as a treatment effect**. It manufactured a confident −6.2%. Always pass `--phase=<gameplay>`."
+      "body": "~4,050 frames of menu at 113 draws and 33.27 ms, then ~4,750 of gameplay at 3,516 draws and 49.90 ms. `--skip=60` removes none of it. A whole-file median describes no frame that occurred, and because two runs never have the same ratio, **that difference reads as a treatment effect**. It manufactured a confident \u22126.2%. Always pass `--phase=<gameplay>`."
     },
     {
       "title": "MK8's attract mode is not a fixed workload",
-      "body": "It cycles demo scenes with very different draw loads, so two traces taken minutes apart are not comparable and neither are their sample counts. A first A/B read as \"4.4× faster\" from sample counts; the real figure was 1.77×. To compare implementations, put a runtime toggle behind an env var, flip it every ~20 s **inside one process**, discard windows that straddle a switch, and report the median of n≥5 per variant."
+      "body": "It cycles demo scenes with very different draw loads, so two traces taken minutes apart are not comparable and neither are their sample counts. A first A/B read as \"4.4\u00d7 faster\" from sample counts; the real figure was 1.77\u00d7. To compare implementations, put a runtime toggle behind an env var, flip it every ~20 s **inside one process**, discard windows that straddle a switch, and report the median of n\u22655 per variant."
     },
     {
       "title": "`xcprof compare` reports share of CPU, not absolute CPU",
-      "body": "If total CPU drops, everything that survives looks like a regression — it reported 15 of them for a change that cut CPU nearly in half. Use it to see *which* frames left the profile; use absolute process `cputime` over a fixed wall-clock window for the magnitude. Prefer `ps -o cputime=` deltas over `%cpu`, which is a decaying average."
+      "body": "If total CPU drops, everything that survives looks like a regression \u2014 it reported 15 of them for a change that cut CPU nearly in half. Use it to see *which* frames left the profile; use absolute process `cputime` over a fixed wall-clock window for the magnitude. Prefer `ps -o cputime=` deltas over `%cpu`, which is a decaying average."
     },
     {
       "title": "Do not divide BotW's GPU time by 16.67 ms",
-      "body": "BotW targets **30 FPS**, so the budget is 33.3 ms. An earlier revision divided by the 60 FPS budget and concluded the GPU was at \"108–147% of budget\" and \"is what caps the frame rate\" — both wrong. At ~50% duty cycle it is not the limiter in this scene, and cutting GPU time 16% moved the frame rate not at all."
+      "body": "BotW targets **30 FPS**, so the budget is 33.3 ms. An earlier revision divided by the 60 FPS budget and concluded the GPU was at \"108\u2013147% of budget\" and \"is what caps the frame rate\" \u2014 both wrong. At ~50% duty cycle it is not the limiter in this scene, and cutting GPU time 16% moved the frame rate not at all."
     },
     {
       "title": "`cemuLog_log` does not write to stdout",
-      "body": "It writes to `~/Library/Application Support/TesseraEmu/log.txt`. Grepping the process's redirected stdout for errors — or for your own instrumentation — silently finds nothing and reads as \"clean\". Use `--verbose`. And `CemuApp::OnExit` calls `_Exit()`, so **`kill -9` loses buffered log and shader-cache writes**."
+      "body": "It writes to `~/Library/Application Support/TesseraEmu/log.txt`. Grepping the process's redirected stdout for errors \u2014 or for your own instrumentation \u2014 silently finds nothing and reads as \"clean\". Use `--verbose`. And `CemuApp::OnExit` calls `_Exit()`, so **`kill -9` loses buffered log and shader-cache writes**."
     },
     {
       "title": "Scripted edits fail silently",
-      "body": "Source uses tabs; a heredoc written with spaces will no-op a Python `str.replace` and report success. Worse, an anchor that is not unique attaches your counter to the wrong call site — that happened, and put a counter on the *temporary* render-pass path, reading 2–4 passes/frame instead of 202. It was caught by arithmetic, not by review. Prefer explicit line ranges and always `git diff --stat` before building."
+      "body": "Source uses tabs; a heredoc written with spaces will no-op a Python `str.replace` and report success. Worse, an anchor that is not unique attaches your counter to the wrong call site \u2014 that happened, and put a counter on the *temporary* render-pass path, reading 2\u20134 passes/frame instead of 202. It was caught by arithmetic, not by review. Prefer explicit line ranges and always `git diff --stat` before building."
     },
     {
       "title": "An in-process scope timer cannot measure a fiber switch",
@@ -1767,51 +1799,50 @@
     },
     {
       "title": "A pixel diff of the MK8 title screen proves nothing",
-      "body": "The \"Press A to start\" prompt pulses and the background animates, so **~22% of pixels differ between any two captures**. Use targeted instrumentation to show a rendering change is live. Relatedly, `capture-scene.sh` uses `screencapture -R`, which grabs a screen *region* — raise the window first or you capture whatever is on top of it."
+      "body": "The \"Press A to start\" prompt pulses and the background animates, so **~22% of pixels differ between any two captures**. Use targeted instrumentation to show a rendering change is live. Relatedly, `capture-scene.sh` uses `screencapture -R`, which grabs a screen *region* \u2014 raise the window first or you capture whatever is on top of it."
     },
     {
       "title": "GPU-time counters soak: the same frame costs 5% more GPU after four minutes",
-      "body": "Across the Korok gameplay phase, sliced into sixths, **draws (3,472→3,518), render passes (202), attachment bytes (800 MB) and CPU core-busy (9.4–9.5 ms) are all flat, while `gpu.busy_ns` climbs 16.9→17.8 ms and `gpu.readback_forcefinish_ns` climbs 6.5→7.5 ms** — identical work, more GPU time, reproduced in all three runs. So the *median* of those counters is a function of how long you recorded and where in the run you sampled, and two arms of an A/B must be equal-length and equally-positioned or the longer one loses. Frame time, fps and `frame_critical_path_ns` do not drift at all (0.0%) because they are vsync-pinned, which is why this hides. It also explains the recorded 16.45 ms against today's 17.12–17.15, and retroactively explains the \"±2% swing between identical runs\" noted for the drain counter — that was not noise, it was window placement."
+      "body": "Across the Korok gameplay phase, sliced into sixths, **draws (3,472\u21923,518), render passes (202), attachment bytes (800 MB) and CPU core-busy (9.4\u20139.5 ms) are all flat, while `gpu.busy_ns` climbs 16.9\u219217.8 ms and `gpu.readback_forcefinish_ns` climbs 6.5\u21927.5 ms** \u2014 identical work, more GPU time, reproduced in all three runs. So the *median* of those counters is a function of how long you recorded and where in the run you sampled, and two arms of an A/B must be equal-length and equally-positioned or the longer one loses. Frame time, fps and `frame_critical_path_ns` do not drift at all (0.0%) because they are vsync-pinned, which is why this hides. It also explains the recorded 16.45 ms against today's 17.12\u201317.15, and retroactively explains the \"\u00b12% swing between identical runs\" noted for the drain counter \u2014 that was not noise, it was window placement."
     },
     {
       "title": "The build hash in every telemetry header is captured at cmake *configure* time",
-      "body": "`CMakeLists.txt:15` runs `git log --format=%h -1` inside `execute_process` and bakes the result into `-DEMULATOR_HASH`, which only re-evaluates when cmake reconfigures. A binary built from `cebe17f` reported `build 064d9a7` — eight commits stale — in its window title and in the `build` field of every `--telemetry` run header. `testing/capture-scene.sh` has the mirror-image problem: it stamps `baseline.tsv` with the *repo's* `git rev-parse HEAD`, which says nothing about what the binary was built from. **Neither surface proves provenance**; run `cmake -S . -B build …` before a measurement that will be quoted. The hash reaches everything through `precompiled.h`, so refreshing it costs a full rebuild."
+      "body": "`CMakeLists.txt:15` runs `git log --format=%h -1` inside `execute_process` and bakes the result into `-DEMULATOR_HASH`, which only re-evaluates when cmake reconfigures. A binary built from `cebe17f` reported `build 064d9a7` \u2014 eight commits stale \u2014 in its window title and in the `build` field of every `--telemetry` run header. `testing/capture-scene.sh` has the mirror-image problem: it stamps `baseline.tsv` with the *repo's* `git rev-parse HEAD`, which says nothing about what the binary was built from. **Neither surface proves provenance**; run `cmake -S . -B build \u2026` before a measurement that will be quoted. The hash reaches everything through `precompiled.h`, so refreshing it costs a full rebuild."
     },
     {
       "title": "A counter reading zero is not evidence until you check it has an increment site",
-      "body": "Sweeping all 113 `TLM_COUNTER` declarations against `src/` found **14 that nothing ever writes**: `gpu.pipelines_compiled`, `acc.render_self_dependency`, and **all twelve `mem.*`**. The `mem.*` block covers buffer-cache scans and uploads, texture-cache reloads and shader-cache hit/miss — precisely the subsystem behind the largest graphics finding on file, that `UploadToBufferCache` fires ~25/frame and breaks render passes. That finding had to be established by backtrace attribution at every pass teardown **because these counters do not work**. The instrumentation for the question was sitting in the file reading zero, and zero was indistinguishable from \"not wired\". Check the hook exists, and prefer a positive control in the same code path — `gpu.depth_sampled_draws` reads 392/frame beside the self-dependency detector for exactly this reason."
+      "body": "Sweeping all 113 `TLM_COUNTER` declarations against `src/` found **14 that nothing ever writes**: `gpu.pipelines_compiled`, `acc.render_self_dependency`, and **all twelve `mem.*`**. The `mem.*` block covers buffer-cache scans and uploads, texture-cache reloads and shader-cache hit/miss \u2014 precisely the subsystem behind the largest graphics finding on file, that `UploadToBufferCache` fires ~25/frame and breaks render passes. That finding had to be established by backtrace attribution at every pass teardown **because these counters do not work**. The instrumentation for the question was sitting in the file reading zero, and zero was indistinguishable from \"not wired\". Check the hook exists, and prefer a positive control in the same code path \u2014 `gpu.depth_sampled_draws` reads 392/frame beside the self-dependency detector for exactly this reason."
     },
     {
       "title": "The instrument only sees the scene you point it at",
-      "body": "A confirmed out-of-bounds write — geometry-shader texture bindings landing past the end of `MetalState::m_textures` and into the next member — survived in a fork this heavily measured because `gpu.draws_mesh` is **0** in BotW Korok, the only scene anyone measures. Absence of a signal in the benchmark is not absence of the bug, and a scene chosen for being *exactly repeatable* is by construction a narrow one. Where a defect is structural rather than statistical, prove it with a `static_assert` and stop waiting for a run to show it."
+      "body": "A confirmed out-of-bounds write \u2014 geometry-shader texture bindings landing past the end of `MetalState::m_textures` and into the next member \u2014 survived in a fork this heavily measured because `gpu.draws_mesh` is **0** in BotW Korok, the only scene anyone measures. Absence of a signal in the benchmark is not absence of the bug, and a scene chosen for being *exactly repeatable* is by construction a narrow one. Where a defect is structural rather than statistical, prove it with a `static_assert` and stop waiting for a run to show it."
     },
     {
       "title": "An update and DLC in mlc01 do not make a title bootable",
-      "body": "`~/Library/Application Support/TesseraEmu/mlc01/usr/title/` held `0005000e/101c9400` (BotW update, 3.0 GB, containing `U-King.rpx`) and `0005000c/101c9400` (DLC, 2.0 GB) — 5 GB of convincing-looking content with an executable in it. The **base** title is `00050000/…` and lives in `Roms/` as a disc image; an update carries only changed files, so with `Roms/` emptied nothing boots. Worth checking before planning any work whose verification is a run: the presence of `U-King.rpx` is not the presence of a game."
+      "body": "`~/Library/Application Support/TesseraEmu/mlc01/usr/title/` held `0005000e/101c9400` (BotW update, 3.0 GB, containing `U-King.rpx`) and `0005000c/101c9400` (DLC, 2.0 GB) \u2014 5 GB of convincing-looking content with an executable in it. The **base** title is `00050000/\u2026` and lives in `Roms/` as a disc image; an update carries only changed files, so with `Roms/` emptied nothing boots. Worth checking before planning any work whose verification is a run: the presence of `U-King.rpx` is not the presence of a game."
     },
     {
       "title": "A toolchain can be blocked two independent ways at once",
-      "body": "Building Wii U homebrew here needed devkitPPC, and the two obvious routes were both closed: the installer needs `sudo`, which cannot be answered when driving this repo remotely (and the agent shell has no TTY, so sudo's credential cache cannot carry across either), while `downloads.devkitpro.org` returns **403 via Cloudflare** — including its root, though `github.com` and `cloudflare.com` return 200, so it is site-specific. Critically that host serves **every** source devkitPro's buildscripts fetch, binutils/gcc/newlib included, not just their own components. The way through was that their download loop skips files that already exist and honours `BUILD_DKPRO_SRCDIR`, so pre-staging all six archives from GNU/sourceware/GitHub made the stock scripts work. Two genuine bugs in those scripts surfaced on the way: a three-argument call to a four-argument function in the mn10200 step, and no `--with-system-zlib`, whose bundled zlib defines `fdopen` to `NULL` and breaks the macOS SDK's `stdio.h`. All recorded in `docs/testing/00-test-strategy.md` §4."
+      "body": "Building Wii U homebrew here needed devkitPPC, and the two obvious routes were both closed: the installer needs `sudo`, which cannot be answered when driving this repo remotely (and the agent shell has no TTY, so sudo's credential cache cannot carry across either), while `downloads.devkitpro.org` returns **403 via Cloudflare** \u2014 including its root, though `github.com` and `cloudflare.com` return 200, so it is site-specific. Critically that host serves **every** source devkitPro's buildscripts fetch, binutils/gcc/newlib included, not just their own components. The way through was that their download loop skips files that already exist and honours `BUILD_DKPRO_SRCDIR`, so pre-staging all six archives from GNU/sourceware/GitHub made the stock scripts work. Two genuine bugs in those scripts surfaced on the way: a three-argument call to a four-argument function in the mn10200 step, and no `--with-system-zlib`, whose bundled zlib defines `fdopen` to `NULL` and breaks the macOS SDK's `stdio.h`. All recorded in `docs/testing/00-test-strategy.md` \u00a74."
     },
     {
       "title": "A homebrew sample reading zero frames is usually its own asset path, not the emulator",
-      "body": "wut's `gx2_triangle` booted cleanly, issued two command buffers and rendered **zero frames**, which reads exactly like a renderer defect. It is not. The sample loads its shader from the **SD card** — `WHBGetSdCardMountPath()`, backed by `<userdata>/sdcard/` — and **not** from the `.wuhb` bundle's `/vol/content`, so `WHBReadWholeFile` returned NULL and it `goto exit`ed before the render loop. Two compounding reasons it stayed invisible: the sample reports the failure through `WHBLogUdpInit` (**UDP**, port 4405) rather than OSReport, so `--forward-console-logging` showed nothing at all; and a title that exits early looks identical to one that renders nothing. `wut-tools` ships `udplogserver` to receive that stream. **Check a sample's own I/O and logging transport before suspecting the renderer**, and prefer `WHBLogCafeInit` in ROMs we write so the standard flag works."
+      "body": "wut's `gx2_triangle` booted cleanly, issued two command buffers and rendered **zero frames**, which reads exactly like a renderer defect. It is not. The sample loads its shader from the **SD card** \u2014 `WHBGetSdCardMountPath()`, backed by `<userdata>/sdcard/` \u2014 and **not** from the `.wuhb` bundle's `/vol/content`, so `WHBReadWholeFile` returned NULL and it `goto exit`ed before the render loop. Two compounding reasons it stayed invisible: the sample reports the failure through `WHBLogUdpInit` (**UDP**, port 4405) rather than OSReport, so `--forward-console-logging` showed nothing at all; and a title that exits early looks identical to one that renders nothing. `wut-tools` ships `udplogserver` to receive that stream. **Check a sample's own I/O and logging transport before suspecting the renderer**, and prefer `WHBLogCafeInit` in ROMs we write so the standard flag works."
     },
     {
       "title": "The graphics-test toolchain is three separate installs, and two of them are optional-looking but are not",
-      "body": "Building a Wii U test ROM needs devkitPPC (compiler), **wut-tools** (host utilities: `elf2rpl`, `rplimportgen`, `wuhbtool`) and **wut** (the library). Missing wut-tools fails deep inside wut's build with `rplimportgen: No such file or directory` rather than anything resembling \"a tool is missing\". `wuhbtool` additionally needs **libfreeimage**, whose absence fails at *configure* time with `'libfreeimage' not found` and takes the whole tools build with it. And graphics tests additionally need **CafeGLSL**'s `glslcompiler.rpl` in `cafeLibs/` — without it a ROM builds fine and reports `glslcompiler.rpl-not-found` at runtime. Official `dkp-pacman -S wiiu-dev` installs the first three together into `/opt/devkitpro`; CafeGLSL remains a separate download — see `testing/toolchain/README.md`."
+      "body": "Building a Wii U test ROM needs devkitPPC (compiler), **wut-tools** (host utilities: `elf2rpl`, `rplimportgen`, `wuhbtool`) and **wut** (the library). Missing wut-tools fails deep inside wut's build with `rplimportgen: No such file or directory` rather than anything resembling \"a tool is missing\". `wuhbtool` additionally needs **libfreeimage**, whose absence fails at *configure* time with `'libfreeimage' not found` and takes the whole tools build with it. And graphics tests additionally need **CafeGLSL**'s `glslcompiler.rpl` in `cafeLibs/` \u2014 without it a ROM builds fine and reports `glslcompiler.rpl-not-found` at runtime. Official `dkp-pacman -S wiiu-dev` installs the first three together into `/opt/devkitpro`; CafeGLSL remains a separate download \u2014 see `testing/toolchain/README.md`."
     }
   ],
   "roadmap": [
-
     {
       "id": "rm-inpass-copy",
       "title": "In-pass streamout copy (revive)",
       "area": "graphics",
       "status": "blocked",
-      "verdict": "Would remove ~70 same-FBO pass splits and 300 MB/frame. The legality question is already settled in its favour — `gpu.streamout_read_fragment` is 0, so a vertex-only intrapass barrier is legal on Apple silicon.",
+      "verdict": "Would remove ~70 same-FBO pass splits and 300 MB/frame. The legality question is already settled in its favour \u2014 `gpu.streamout_read_fragment` is 0, so a vertex-only intrapass barrier is legal on Apple silicon.",
       "gate": "**The ALU bottleneck must be addressed first** and bandwidth must become the limiter. Today it relieves a subsystem that bottlenecks the GPU 12.8% of the time.",
-      "ref": "00-master-plan.md — The GPU is ALU- and texture-bound"
+      "ref": "00-master-plan.md \u2014 The GPU is ALU- and texture-bound"
     },
     {
       "id": "rm-batch-streamout",
@@ -1820,16 +1851,16 @@
       "status": "blocked",
       "verdict": "Turns ~70 splits into ~1 per boundary without needing any intrapass barrier. Needs a dirty-pending-copy bit forcing a flush on first read.",
       "gate": "Same gate as the in-pass copy, and moot while the GPU is ALU-bound.",
-      "ref": "03-graphics-metal.md — 5.1(b)"
+      "ref": "03-graphics-metal.md \u2014 5.1(b)"
     },
     {
       "id": "rm-fiber-switch",
       "title": "Hand-written AArch64 fiber switch",
       "area": "cpu",
       "status": "deferred",
-      "verdict": "Measured at 70× — 454.5 ns → 6.5 ns, worth 1.43 ms/frame at 3,143 switches. Real, and not a frame-rate fix.",
+      "verdict": "Measured at 70\u00d7 \u2014 454.5 ns \u2192 6.5 ns, worth 1.43 ms/frame at 3,143 switches. Real, and not a frame-rate fix.",
       "gate": "Do it for power and headroom, not for fps: the work in a frame already fits one vsync period with 16.6% headroom, so removing 1.4 ms crosses no boundary.",
-      "ref": "02-cpu-jit-memory.md — 4.2"
+      "ref": "02-cpu-jit-memory.md \u2014 4.2"
     },
     {
       "id": "rm-hle-tiered-charge",
@@ -1837,17 +1868,17 @@
       "area": "cpu",
       "status": "open",
       "verdict": "An accuracy gap, not a speed one: guest threads issue a million library calls a second at zero emulated cost, including calls that on hardware are IPC round trips to IOSU.",
-      "gate": "A flat charge is **ruled out by measurement** — it would inflate guest time to 163%. The histogram shows the volume is cheap primitives and the expensive calls are rare, so the tiering must be per function.",
-      "ref": "00-master-plan.md — The 33 ms frame decomposed"
+      "gate": "A flat charge is **ruled out by measurement** \u2014 it would inflate guest time to 163%. The histogram shows the volume is cheap primitives and the expensive calls are rare, so the tiering must be per function.",
+      "ref": "00-master-plan.md \u2014 The 33 ms frame decomposed"
     },
     {
       "id": "rm-peephole",
       "title": "AArch64 backend peephole pass",
       "area": "cpu",
       "status": "open",
-      "verdict": "There is currently none — the only one that existed was x86-specific and was deleted with the backend. The `IMLUtil_*` helpers were kept as substrate for a replacement.",
+      "verdict": "There is currently none \u2014 the only one that existed was x86-specific and was deleted with the backend. The `IMLUtil_*` helpers were kept as substrate for a replacement.",
       "gate": "Profile before picking a codegen target. Both idle-wait bugs found in Stage 5 were invisible to the instruction-count metric the plan had ranked first.",
-      "ref": "02-cpu-jit-memory.md — 5.4"
+      "ref": "02-cpu-jit-memory.md \u2014 5.4"
     },
     {
       "id": "rm-offset0-fold",
@@ -1855,8 +1886,8 @@
       "area": "cpu",
       "status": "open",
       "verdict": "Named in the CPU plan as the highest instruction-count win available.",
-      "gate": "Same as above — the CPU is 18% busy in the scene that limits us, so this buys headroom, not frames.",
-      "ref": "02-cpu-jit-memory.md — 2.1"
+      "gate": "Same as above \u2014 the CPU is 18% busy in the scene that limits us, so this buys headroom, not frames.",
+      "ref": "02-cpu-jit-memory.md \u2014 2.1"
     },
     {
       "id": "rm-cycle-counting",
@@ -1865,16 +1896,7 @@
       "status": "open",
       "verdict": "The largest single win in the CPU plan for loop-heavy code.",
       "gate": "Wants the differential correctness harness (02, item 0.3) in place first.",
-      "ref": "02-cpu-jit-memory.md — 3.1"
-    },
-    {
-      "id": "rm-fma",
-      "title": "FMA — a correctness fix that also removes instructions",
-      "area": "cpu",
-      "status": "open",
-      "verdict": "Strictly more correct than the current lowering, and cheaper. The trap is the PPC↔ARM mnemonic crossover.",
-      "gate": "Gated on the differential correctness harness (02, item 0.3).",
-      "ref": "02-cpu-jit-memory.md — 3.2"
+      "ref": "02-cpu-jit-memory.md \u2014 3.1"
     },
     {
       "id": "rm-jit-reclaim",
@@ -1883,7 +1905,7 @@
       "status": "deferred",
       "verdict": "Deliberately not built. The leak was instrumented instead, and reclamation waits on that counter showing a problem.",
       "gate": "The leak counter has to demonstrate a problem worth this much machinery.",
-      "ref": "02-cpu-jit-memory.md — 4.4"
+      "ref": "02-cpu-jit-memory.md \u2014 4.4"
     },
     {
       "id": "rm-shrine-reconcile",
@@ -1891,8 +1913,8 @@
       "area": "tooling",
       "status": "open",
       "verdict": "Two instruments disagree: 28.6 fps / 149 passes / ~1190 draws / 15.6 ms GPU versus 30.06 fps / 132 passes / 3784 draws / 14.0 ms. Different counting (draw *calls* vs draw *sequences*), and the GPU figures predate the `839466d` `busy_ns` fix.",
-      "gate": "None — one run with the current harness settles it. Until then, quote neither.",
-      "ref": ".grok/rules/measurement.md — Current baseline (2026-07-26, after the Stage 5 idle-wait fixes)"
+      "gate": "None \u2014 one run with the current harness settles it. Until then, quote neither.",
+      "ref": ".grok/rules/measurement.md \u2014 Current baseline (2026-07-26, after the Stage 5 idle-wait fixes)"
     },
     {
       "id": "rm-notarization",
@@ -1900,26 +1922,17 @@
       "area": "platform",
       "status": "open",
       "verdict": "Signing from CMake is done; notarization is not. Needed before the DMG is distributable to anyone who did not build it.",
-      "gate": "None technical — needs credentials in CI.",
-      "ref": "01-foundation-platform-packaging.md — 6.3"
-    },
-    {
-      "id": "rm-housekeeping",
-      "title": "Housekeeping: 13 unincremented counters and 19 stale locales",
-      "area": "tooling",
-      "status": "open",
-      "verdict": "**Fourteen** counters are declared and never incremented: `gpu.pipelines_compiled`, all twelve `mem.*`, and `acc.readback_queued` (declared at `TelemetryCounters.def:259`, but the only thing that touches it is `NoteAccuracyDetail` at `LatteTextureReadback.cpp:109` — its frame-vector sum is exactly 0 across all 8,881 frames of `korok-head-r1`) (the twelfth, `mem.bufcache.upload_bytes`, is mentioned only in a doc comment). `acc.render_self_dependency` was the fourteenth and is now wired at `MetalRenderer.cpp:2434`. ~30 changed `_()` strings are untranslated across 19 locales.",
-      "gate": "None. Small, unglamorous, and neither blocks anything — but the `mem.*` block is not merely cosmetic: it is the instrumentation for buffer-cache and texture-cache behaviour, and its silence already cost one investigation.",
-      "ref": ".github/workflows/generate_pot.yml"
+      "gate": "None technical \u2014 needs credentials in CI.",
+      "ref": "01-foundation-platform-packaging.md \u2014 6.3"
     },
     {
       "id": "rm-fbfetch-coordinate",
       "title": "Restrict the framebuffer-fetch substitution to cases where it is valid",
       "area": "graphics",
       "status": "open",
-      "verdict": "**Confirmed by measurement.** The emitter rewrites every pixel-stage self-dependency to a coordinate-free framebuffer fetch — including the offset-sampling case, where it silently returns the current fragment instead of the neighbour. The reproducer alternates same-texel and offset-texel draws and both report as covered.",
-      "gate": "Still ungated and still has a failing test (`selfdep_caseB_offset_texel`), but **the urgency is now measured and it is low for open-world play**: all 22 self-dependent (shader, unit) pairs in Korok Forest are same-texel projective reads, so the substitution is valid for every one of them (`fbfetch-coordinate-sized`). Do it as a correctness guard, not as a fix for visible breakage. Before spending real effort, dump MSL from a scene that *would* break — a waterfall, heat haze, or water refraction — since a single scene cannot clear the whole game.",
-      "ref": "03-graphics-metal.md — 3.1",
+      "verdict": "**Confirmed by measurement.** The emitter rewrites every pixel-stage self-dependency to a coordinate-free framebuffer fetch \u2014 including the offset-sampling case, where it silently returns the current fragment instead of the neighbour. The reproducer alternates same-texel and offset-texel draws and both report as covered.",
+      "gate": "Still ungated and still has a failing test (`selfdep_caseB_offset_texel`), but **the urgency is now measured and it is low for open-world play**: all 22 self-dependent (shader, unit) pairs in Korok Forest are same-texel projective reads, so the substitution is valid for every one of them (`fbfetch-coordinate-sized`). Do it as a correctness guard, not as a fix for visible breakage. Before spending real effort, dump MSL from a scene that *would* break \u2014 a waterfall, heat haze, or water refraction \u2014 since a single scene cannot clear the whole game.",
+      "ref": "03-graphics-metal.md \u2014 3.1",
       "measured": {
         "scene": "self-dependency-rpx",
         "at_commit": "97ae3ad",
@@ -1932,24 +1945,18 @@
       "title": "Fix the 354 real floating-point and paired-single conformance failures",
       "area": "cpu",
       "status": "open",
-      "verdict": "175 paired-single, 120 double-extended, 36 single-extended, 19 `psq_*`, 3 integer. These are wrong *values*, not wrong status bits, and they are shared between the interpreter and the recompiler.",
-      "gate": "None. **Measure against the values-only build, not the default one**: `make clean && make EXTRA_DEFSYM=-Wa,--defsym,IGNORE_FPSCR_STATE=1` gives exactly the 354 wrong values and makes `report.py`'s ranking meaningful. The default build's table is dominated by the 676 FPSCR-state failures and points at the wrong instructions — it ranks `frsp` first, which is a state failure. Real ranking of the 354: ps_nmadd 18, psq_st 16, ps_nmsub 16, frsp 15, ps_cmpo1 14, ps_mul 14, fctiw 13, with **131 in the multiply-add family**. `ps_madd` is fixed (`ps-madd-double-rounding`); its siblings have the correct fused *shape* already, so their cause is different and is the next thing to isolate.",
-      "measured": {
-        "scene": "ppc750cl-rpx",
-        "at_commit": "59d8f21",
-        "date": "2026-08-03",
-        "n": 1
-      },
-      "ref": "docs/testing/00-test-strategy.md — First result"
+      "verdict": "Values-only suite (`IGNORE_FPSCR_STATE=1`) is **319** failures (was 354 at first measurement, 325 at session start). FMA family now uses fused `std::fma` / AArch64 `fmadd` with the PPC\u2194ARM mnemonic crossover isolated in the backend; `fctiw` honours FPSCR[RN] via `lrint`. Arms still identical (0 recompiler-only). Remaining mass is Espresso-specific: 25-bit frC product rounding, psq_*, fres/rsqrte tables, ps_cmpo1, frsp edge cases.",
+      "gate": "Continue against values-only ranking. Next clusters: (1) Espresso 25-bit frC on single FMA/mul, (2) psq load/store quantisation, (3) fres/rsqrte tables, (4) ps_cmpo1. Do not rank against default FPSCR build.",
+      "ref": "docs/testing/00-test-strategy.md \u2014 First result"
     },
     {
       "id": "rm-homebrew-exit-crash",
       "title": "Every homebrew title that exits normally SIGSEGVs the emulator",
       "area": "platform",
       "status": "open",
-      "verdict": "When the *guest* requests exit, `MainWindow::OnRequestGameExit` → `Close()` → `wxTopLevelWindowMac::Destroy()` → `wxWindow::Show(false)` faults in `objc_msgSend` on an `NSView`. Reproducible on every `.rpx` run, and the CLI branch it happens in is explicitly commented as existing *\"for homebrew testing setups that use Cemu via CLI\"*.",
-      "gate": "None. It does not corrupt results — the crash is strictly after the ROM's last output — but it makes the exit code useless, which blocks using a plain process exit status as a CI gate. **Two hypotheses already refuted, do not retry them:** (1) that the canvas was destroyed while the Latte thread was still presenting — adding `CafeSystem::ShutdownTitle()` + `DestroyCanvas()` before `Close()` changed nothing; (2) that closing from inside a dispatched event was the problem — deferring via `CallAfter` changed nothing. The identical backtrace in both cases points inside wx's own top-level teardown, not at our shutdown ordering.",
-      "ref": "docs/testing/00-test-strategy.md — Known issues"
+      "verdict": "When the *guest* requests exit, `MainWindow::OnRequestGameExit` \u2192 `Close()` \u2192 `wxTopLevelWindowMac::Destroy()` \u2192 `wxWindow::Show(false)` faults in `objc_msgSend` on an `NSView`. Reproducible on every `.rpx` run, and the CLI branch it happens in is explicitly commented as existing *\"for homebrew testing setups that use Cemu via CLI\"*.",
+      "gate": "None. It does not corrupt results \u2014 the crash is strictly after the ROM's last output \u2014 but it makes the exit code useless, which blocks using a plain process exit status as a CI gate. **Two hypotheses already refuted, do not retry them:** (1) that the canvas was destroyed while the Latte thread was still presenting \u2014 adding `CafeSystem::ShutdownTitle()` + `DestroyCanvas()` before `Close()` changed nothing; (2) that closing from inside a dispatched event was the problem \u2014 deferring via `CallAfter` changed nothing. The identical backtrace in both cases points inside wx's own top-level teardown, not at our shutdown ordering.",
+      "ref": "docs/testing/00-test-strategy.md \u2014 Known issues"
     },
     {
       "id": "rm-mesh-topology-vertex-count",
@@ -1957,7 +1964,7 @@
       "area": "graphics",
       "status": "open",
       "verdict": "GetMtlPrimitiveType translates TRIANGLE_STRIP, TRIANGLE_FAN, QUADS, QUAD_STRIP, LINE_LOOP and LINE_STRIP_ADJACENT without complaint; GetVerticesPerPrimitive knows none of them. The mesh path used the result as a divisor, and AArch64 udiv by zero does not trap, so a geometry-shader draw at any of those topologies dispatched nothing. 92a9885 guards the divide and counts it; it does not supply the missing counts, because the correct value for a strip or a fan is a claim about the geometry-shader emulation that should be tested, not guessed.",
-      "gate": "A homebrew ROM that runs a geometry shader at strip/fan/quad topology. `acc.mesh_draw_no_vtx_count` and `gpu.draws_mesh` both read 0 in the probe ROM, which uses no geometry shader — unexercised, not absent. Until such a ROM exists there is no oracle for what the counts should be.",
+      "gate": "A homebrew ROM that runs a geometry shader at strip/fan/quad topology. `acc.mesh_draw_no_vtx_count` and `gpu.draws_mesh` both read 0 in the probe ROM, which uses no geometry shader \u2014 unexercised, not absent. Until such a ROM exists there is no oracle for what the counts should be.",
       "ref": "testing/graphics-tests/probe-pack/README.md"
     },
     {
@@ -1966,7 +1973,7 @@
       "area": "graphics",
       "status": "open",
       "verdict": "`m_submittedCount` is incremented inside CommitCommandBuffer, so calling GetCurrentCommandBufferId after a commit returns the id of the next, not-yet-recorded buffer. LatteQueryObjectMtl::end stores that, and getResult then reports 'not ready' while the samples are in fact ready. Upstream returned the buffer pointer, which stays valid after commit. This one is ours, introduced with the software timeline in 323e93f.",
-      "gate": "A ROM issuing GX2 occlusion queries. There is no such test today and BotW reportedly issues none, so the defect has no observable consequence in any scene currently measured — which is exactly why it survived review. Not worth changing the timeline design without a test that fails first.",
+      "gate": "A ROM issuing GX2 occlusion queries. There is no such test today and BotW reportedly issues none, so the defect has no observable consequence in any scene currently measured \u2014 which is exactly why it survived review. Not worth changing the timeline design without a test that fails first.",
       "ref": "docs/porting/03-graphics-metal.md"
     },
     {
@@ -1993,7 +2000,7 @@
       "area": "graphics",
       "status": "deferred",
       "verdict": "The MetalState::m_textures sizing bug (54 entries for indices reaching 81, so geometry-shader bindings wrote into m_uniformBufferOffsets) is still live at upstream's tip, as is the graphic-pack sampler override writing through into LatteGPUState.contextNew.SQ_TEX_SAMPLER. Both are small, portable and reviewable by reading. The three defects in gp-output-shader-path are upstream's too.",
-      "gate": "Upstream's contribution policy asks that submitted code be written and understood by a human, and this fork's changes were written with AI assistance. Anything sent must be re-derived and written by a person. That is a real cost and the reason this is deferred rather than open — see the note in README.md.",
+      "gate": "Upstream's contribution policy asks that submitted code be written and understood by a human, and this fork's changes were written with AI assistance. Anything sent must be re-derived and written by a person. That is a real cost and the reason this is deferred rather than open \u2014 see the note in README.md.",
       "ref": "README.md"
     },
     {
@@ -2002,50 +2009,43 @@
       "area": "graphics",
       "status": "deferred",
       "verdict": "The only version of shader caching here with a large number attached: a probe measured 1,396 ms of MSL compilation collapsing to 2.3 ms by reloading a harvested `.binary.metallib` through `newLibraryWithURL:`. Unlike the cancelled `binaryArchives` design, this skips the frontend rather than the backend.",
-      "gate": "**First establish whether the OS cache already makes the frontend free in steady state.** Our warm frontend is 0.11 ms/shader against a probe's 57.7 ms/shader cold, and `com.apple.metal` is 111 MB on this machine — if macOS is already serving it, this closes too. Three further obstacles, all real: the reload behaviour is **undocumented** (Apple documents `makeBinaryArchive` and the offline `metal-source`/`metal-tt` tools, not this); Apple's warning about runtime-updated archives still applies; and **every entry point this fork emits is named `main0`** (`LatteDecompilerEmitMSL.cpp:4161`, looked up at `RendererShaderMtl.cpp:391`), so a multi-shader archive collapses to Metal-assigned mangles with no documented mapping back — unique names would invalidate every existing cache entry.",
-      "ref": "00-master-plan.md — Shader preload, measured at last"
-    },
-    {
-      "id": "rm-mathmode-fix",
-      "title": "Replace the deprecated `setFastMathEnabled` with `setMathMode` so the checkbox works",
-      "area": "graphics",
-      "status": "open",
-      "verdict": "`fastMathEnabled` is deprecated since macOS 15.0 and defaults to YES, and this fork only ever calls the setter for `true` — so `shader_fast_math = false` is inert. `setMathMode(MTLMathModeSafe)` would honour it.",
-      "gate": "**Measure before shipping.** Making the checkbox work is a behaviour change for the nine shipped profiles that set it false: their shaders would begin compiling with safe math, slower and more correct. Needs a before/after on at least one of those titles, and none is in `Roms/`. Decide the `accurateShaderMul` contradiction first — paying 52,072 call sites to emulate `0 × Inf → 0` while telling the compiler infinities do not exist is incoherent whichever way it resolves, and fixing math mode changes which half is load-bearing.",
-      "ref": "00-master-plan.md — `gpu.frame_critical_path_ns` is not a deadline instrument"
+      "gate": "**First establish whether the OS cache already makes the frontend free in steady state.** Our warm frontend is 0.11 ms/shader against a probe's 57.7 ms/shader cold, and `com.apple.metal` is 111 MB on this machine \u2014 if macOS is already serving it, this closes too. Three further obstacles, all real: the reload behaviour is **undocumented** (Apple documents `makeBinaryArchive` and the offline `metal-source`/`metal-tt` tools, not this); Apple's warning about runtime-updated archives still applies; and **every entry point this fork emits is named `main0`** (`LatteDecompilerEmitMSL.cpp:4161`, looked up at `RendererShaderMtl.cpp:391`), so a multi-shader archive collapses to Metal-assigned mangles with no documented mapping back \u2014 unique names would invalidate every existing cache entry.",
+      "ref": "00-master-plan.md \u2014 Shader preload, measured at last"
     }
   ],
-  "unattributed": [],
+  "unattributed": [
+    "a497562"
+  ],
   "stages": [
     {
       "id": "s1",
       "title": "Bootstrap and de-risk",
-      "goal": "Get a Metal-only arm64 build running at all, and retire the risks that would have invalidated the plan — chiefly whether MAP_JIT's documented one-region limit breaks the recompiler.",
-      "ref": "00-master-plan.md — Approach"
+      "goal": "Get a Metal-only arm64 build running at all, and retire the risks that would have invalidated the plan \u2014 chiefly whether MAP_JIT's documented one-region limit breaks the recompiler.",
+      "ref": "00-master-plan.md \u2014 Approach"
     },
     {
       "id": "s2",
       "title": "The purge",
       "goal": "Delete the alternatives rather than #ifdef around them: BackendX64, the x86 IML machinery, OpenGL, Vulkan/MoltenVK, glslang and the GLSL emitter.",
-      "ref": "00-master-plan.md — Approach"
+      "ref": "00-master-plan.md \u2014 Approach"
     },
     {
       "id": "s3",
       "title": "Correctness foundations",
       "goal": "Fix what silently corrupts before optimising anything: 16 KB pages, the JIT cursor truncating I-cache flushes, signing, and arm64 crash diagnostics.",
-      "ref": "00-master-plan.md — Approach"
+      "ref": "00-master-plan.md \u2014 Approach"
     },
     {
       "id": "s4",
       "title": "Scheduling and native integration",
       "goal": "Core counts before QoS, os_unfair_lock before priority donation, then native macOS integration.",
-      "ref": "00-master-plan.md — Approach"
+      "ref": "00-master-plan.md \u2014 Approach"
     },
     {
       "id": "s5",
       "title": "Performance, measured",
       "goal": "Build the measurement harness first; nothing is claimable without it. Then follow the counters rather than intuition.",
-      "ref": "00-master-plan.md — Approach"
+      "ref": "00-master-plan.md \u2014 Approach"
     },
     {
       "id": "s6",

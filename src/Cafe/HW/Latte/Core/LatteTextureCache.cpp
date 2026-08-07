@@ -3,6 +3,7 @@
 #include "Cafe/HW/Latte/Core/LatteTexture.h"
 #include "Cafe/HW/Latte/Renderer/Renderer.h"
 #include "Common/cpu_features.h"
+#include "Cemu/Telemetry/Telemetry.h"
 
 std::unordered_set<LatteTexture*> g_allTextures;
 
@@ -196,6 +197,7 @@ bool LatteTC_HasTextureChanged(LatteTexture* hostTexture, bool force)
 	if( hostTexture->lastDataUpdateFrameCounter == LatteGPUState.frameCounter && force == false)
 		return false;
 	hostTexture->lastDataUpdateFrameCounter = LatteGPUState.frameCounter;
+	TLM_INC(Mem, MemTexCacheChecks);
 	// we assume that certain texture properties indicate that the texture will never be written by the CPU
 	if (hostTexture->width == 1280 && hostTexture->format != Latte::E_GX2SURFFMT::R8_UNORM && force == false)
 	{

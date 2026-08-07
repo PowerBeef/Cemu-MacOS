@@ -850,6 +850,7 @@ bool IsDepthStencilFormat(MTL::PixelFormat format) {
 // TODO: do a cpu copy on Apple Silicon?
 void MetalRenderer::texture_loadSlice(LatteTexture* hostTexture, sint32 width, sint32 height, sint32 depth, void* pixelData, sint32 sliceIndex, sint32 mipIndex, uint32 compressedImageSize)
 {
+    TLM_ADD(Mem, MemTexCacheReloadBytes, (uint64)compressedImageSize);
     auto textureMtl = (LatteTextureMtl*)hostTexture;
 
     uint32 offsetZ = 0;
@@ -1075,6 +1076,8 @@ void MetalRenderer::bufferCache_init(const sint32 bufferSize)
 
 void MetalRenderer::bufferCache_upload(uint8* buffer, sint32 size, uint32 bufferOffset)
 {
+    TLM_INC(Mem, MemBufCacheUploads);
+    TLM_ADD(Mem, MemBufCacheUploadBytes, (uint64)(uint32)size);
     m_memoryManager->UploadToBufferCache(buffer, bufferOffset, size);
 }
 

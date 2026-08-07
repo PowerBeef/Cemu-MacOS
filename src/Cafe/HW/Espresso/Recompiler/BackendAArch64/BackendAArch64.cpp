@@ -1347,6 +1347,9 @@ void AArch64GenContext_t::fpr_r_r_r(IMLInstruction* imlInstruction)
 
 /*
  * FPR = op (fprA, fprB, fprC)
+ * FMA ops use PPC semantics (regR = ±(regA*regB ± regC)). ARM A64 swaps fmsub/fnmsub
+ * relative to that naming — map here and nowhere else (docs/porting/02 §3.2).
+ * ARM: fmadd(D,n,m,a) = a + n*m; fmsub = a - n*m; fnmadd = -a - n*m; fnmsub = -a + n*m.
  */
 void AArch64GenContext_t::fpr_r_r_r_r(IMLInstruction* imlInstruction)
 {
@@ -1359,6 +1362,26 @@ void AArch64GenContext_t::fpr_r_r_r_r(IMLInstruction* imlInstruction)
 	{
 		fcmp(regA, 0.0);
 		fcsel(regR, regC, regB, Cond::GE);
+	}
+	else if (imlInstruction->operation == PPCREC_IML_OP_FPR_FMADD)
+	{
+		// PPC A*B+C → ARM fmadd(D, A, B, C)
+		fmadd(regR, regA, regB, regC);
+	}
+	else if (imlInstruction->operation == PPCREC_IML_OP_FPR_FMSUB)
+	{
+		// PPC A*B-C → ARM fnmsub(D, A, B, C)  (= -C + A*B)
+		fnmsub(regR, regA, regB, regC);
+	}
+	else if (imlInstruction->operation == PPCREC_IML_OP_FPR_FNMADD)
+	{
+		// PPC -(A*B+C) → ARM fnmadd(D, A, B, C)
+		fnmadd(regR, regA, regB, regC);
+	}
+	else if (imlInstruction->operation == PPCREC_IML_OP_FPR_FNMSUB)
+	{
+		// PPC -(A*B-C) = C-A*B → ARM fmsub(D, A, B, C)
+		fmsub(regR, regA, regB, regC);
 	}
 	else
 	{

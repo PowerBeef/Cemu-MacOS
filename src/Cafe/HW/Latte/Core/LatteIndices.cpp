@@ -3,6 +3,7 @@
 #include "Cafe/HW/Latte/ISA/RegDefines.h"
 #include "Cafe/HW/Latte/Core/LattePerformanceMonitor.h"
 #include "Common/cpu_features.h"
+#include "Cemu/Telemetry/Telemetry.h"
 
 #include <arm_neon.h>
 
@@ -660,6 +661,7 @@ void LatteIndices_decode(const void* indexData, LatteIndexType indexType, uint32
 		LatteIndices_alternativeCalculateIndexMax(indexData, indexType, count, indexMax);
 	}
 	g_renderer->indexData_uploadIndexMemory(indexAllocation);
+	TLM_ADD(Mem, MemIndexUploadBytes, (uint64)indexOutputSize);
 	performanceMonitor.cycle[performanceMonitor.cycleIndex].indexDataUploaded += indexOutputSize;
 	// get least recently used cache entry
 	auto lruEntry = std::min_element(LatteIndexCache.entry.begin(), LatteIndexCache.entry.end(), [](const auto& a, const auto& b)

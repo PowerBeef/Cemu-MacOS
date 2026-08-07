@@ -405,6 +405,10 @@ bool MetalPipelineCompiler::Compile(bool forceCompile, bool isRenderThread, bool
    	{
        	cemuLog_log(LogType::Force, "error creating render pipeline state: {}", error->localizedDescription()->utf8String());
    	}
+	else
+	{
+		TLM_INC(Gpu, GpuPipelinesCompiled);
+	}
 
     if (showInOverlay)
 	{

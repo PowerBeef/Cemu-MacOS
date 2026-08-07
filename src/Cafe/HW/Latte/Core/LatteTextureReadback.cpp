@@ -103,6 +103,8 @@ void LatteTextureReadback_Initate(LatteTextureView* textureView)
 	// it mirrors defensively. That defence costs a full GPU pipeline drain at every
 	// GX2DrawDone: 6.75 ms/frame in BotW, which is the entire 20-vs-30 fps gap. If the target
 	// turns out to be something the guest never reads, the whole cost is for nothing.
+	// Frame-vector counter (the half NoteAccuracyDetail does not touch).
+	TLM_INC(Accuracy, AccReadbackQueued);
 	if (tlm::AreaEnabled(tlm::Area::Accuracy)) [[unlikely]]
 	{
 		LatteTexture* t = textureView->baseTexture;

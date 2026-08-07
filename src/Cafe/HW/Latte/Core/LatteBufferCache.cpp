@@ -2,6 +2,7 @@
 #include "util/ChunkedHeap/ChunkedHeap.h"
 #include "util/helpers/fspinlock.h"
 #include "config/ActiveSettings.h"
+#include "Cemu/Telemetry/Telemetry.h"
 
 #define CACHE_PAGE_SIZE		0x400
 #define CACHE_PAGE_SIZE_M1	(CACHE_PAGE_SIZE-1)
@@ -999,6 +1000,8 @@ public:
 
 		sint32 basePageIndex = getPageIndexFromAddrAligned(rangeBegin);
 		sint32 numPages = getPageCountFromRangeAligned(rangeBegin, rangeEnd);
+		TLM_INC(Mem, MemBufCacheScans);
+		TLM_ADD(Mem, MemBufCachePagesScanned, (uint64)(uint32)numPages);
 		uint8* pagePtr = memory_getPointerFromPhysicalOffset(rangeBegin);
 		sint32 uploadPageBegin = -1;
 		CachePageInfo* pageInfo = m_pageInfo.data() + basePageIndex;
@@ -1018,6 +1021,7 @@ public:
 				uint64 pageHash = hashPage(pagePtr);
 				if (pageInfo->hash != pageHash)
 				{
+					TLM_INC(Mem, MemBufCachePageMiss);
 					pageInfo->hash = pageHash;
 					// for pages that contain streamout data we do uploads with a much smaller granularity
 					// and skip uploading any data that is marked with streamout filler bytes
@@ -1033,6 +1037,7 @@ public:
 			pagePtr += CACHE_PAGE_SIZE;
 			if (pageInfo->hash != pageHash)
 			{
+				TLM_INC(Mem, MemBufCachePageMiss);
 				if (uploadPageBegin == -1)
 					uploadPageBegin = i + basePageIndex;
 				pageInfo->hash = pageHash;

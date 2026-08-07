@@ -3,7 +3,8 @@
 #include "PPCInterpreterInternal.h"
 #include "PPCInterpreterHelper.h"
 
-#include<math.h>
+#include <cmath>
+#include <math.h>
 
 // floating point utility
 
@@ -277,14 +278,9 @@ void PPCInterpreter_FCTIW(PPCInterpreter_t* hCPU, uint32 Opcode)
 	}
 	else
 	{
-		// todo: Support for other rounding modes than NEAR
-		double t = b + 0.5;
-		sint32 i = (sint32)t;
-		if (t - i < 0 || (t - i == 0 && b > 0))
-		{
-			i--;
-		}
-		v = (uint64)i;
+		// Honour FPSCR[RN] via the host mode set by PPCInterpreter_setRoundingModeFromFPSCR.
+		// lrint uses the current C rounding mode; the old +0.5 path only ever did round-half-up.
+		v = (uint64)(uint32)(sint32)std::lrint(b);
 	}
 	hCPU->fpr[frD].guint = 0xFFF8000000000000ULL | v;
 	if (v == 0 && ((*(uint64*)&b) >> 63))
@@ -445,7 +441,8 @@ void PPCInterpreter_FMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = hCPU->fpr[frA].fpr * hCPU->fpr[frC].fpr + hCPU->fpr[frB].fpr;
+	// std::fma is single-rounding; a*c+b can double-round even when the host contracts.
+	hCPU->fpr[frD].fpr = std::fma(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -457,7 +454,7 @@ void PPCInterpreter_FNMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = -(hCPU->fpr[frA].fpr * hCPU->fpr[frC].fpr + hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = -std::fma(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -469,7 +466,7 @@ void PPCInterpreter_FMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = (hCPU->fpr[frA].fpr * hCPU->fpr[frC].fpr - hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = std::fma(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, -hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -481,7 +478,7 @@ void PPCInterpreter_FNMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = -(hCPU->fpr[frA].fpr * hCPU->fpr[frC].fpr - hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = -std::fma(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, -hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
 }
@@ -631,7 +628,8 @@ void PPCInterpreter_FMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = (float)(hCPU->fpr[frA].fpr * roundTo25BitAccuracy(hCPU->fpr[frC].fpr) + hCPU->fpr[frB].fpr);
+	// Fused product-sum at double, then round to single.
+	hCPU->fpr[frD].fpr = (float)std::fma(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -645,7 +643,7 @@ void PPCInterpreter_FNMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fpr = (float)-(hCPU->fpr[frA].fpr * roundTo25BitAccuracy(hCPU->fpr[frC].fpr) + hCPU->fpr[frB].fpr);
+	hCPU->fpr[frD].fpr = (float)-std::fma(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -659,7 +657,7 @@ void PPCInterpreter_FMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fp0 = (float)(hCPU->fpr[frA].fp0 * roundTo25BitAccuracy(hCPU->fpr[frC].fp0) - hCPU->fpr[frB].fp0);
+	hCPU->fpr[frD].fp0 = (float)std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), -hCPU->fpr[frB].fp0);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -673,7 +671,7 @@ void PPCInterpreter_FNMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	hCPU->fpr[frD].fp0 = (float)-(hCPU->fpr[frA].fp0 * roundTo25BitAccuracy(hCPU->fpr[frC].fp0) - hCPU->fpr[frB].fp0);
+	hCPU->fpr[frD].fp0 = (float)-std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), -hCPU->fpr[frB].fp0);
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 

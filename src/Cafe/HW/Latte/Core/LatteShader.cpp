@@ -1197,6 +1197,7 @@ void LatteSHRC_UpdateActiveShaders()
 		uint64 combinedAuxHash = CalcCombinedAuxHash(shaderStateInfo->fetchShader, shaderStateInfo->vertexShader, shaderStateInfo->pixelShader);
 		if (shaderStateInfo->combinedAuxHash == combinedAuxHash) [[likely]]
 		{
+			TLM_INC(Mem, MemShaderCacheHit);
 			_activeFetchShader = shaderStateInfo->fetchShader;
 			_activeVertexShader = shaderStateInfo->vertexShader;
 			_activePixelShader = shaderStateInfo->pixelShader;
@@ -1208,6 +1209,7 @@ void LatteSHRC_UpdateActiveShaders()
 		{
 			if (auxVariant.combinedAuxHash == combinedAuxHash)
 			{
+				TLM_INC(Mem, MemShaderCacheHitAux);
 				_activeFetchShader = shaderStateInfo->fetchShader;
 				_activeVertexShader = auxVariant.vertexShader;
 				_activePixelShader = auxVariant.pixelShader;
@@ -1218,6 +1220,7 @@ void LatteSHRC_UpdateActiveShaders()
 		}
 	}
 	// no cache entry found, get/create shaders individually and add to cache
+	TLM_INC(Mem, MemShaderCacheMiss);
 	LatteFetchShader* fetchShader = LatteSHRC_GetOrCreateFetchShader();
 	_activeFetchShader = fetchShader;
 

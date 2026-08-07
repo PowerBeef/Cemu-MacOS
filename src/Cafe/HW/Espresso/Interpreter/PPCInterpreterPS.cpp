@@ -1,4 +1,5 @@
 #include "PPCInterpreterInternal.h"
+#include <cmath>
 
 // Gekko paired single math
 
@@ -73,12 +74,10 @@ void PPCInterpreter_PS_MADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	// ps_madd is FUSED: the product is not rounded before the add. The inner (float) cast here
-	// rounded it, making this the one member of the family that rounds twice -- every sibling
-	// (PS_NMADD, PS_MSUB, PS_NMSUB) already casts only the whole expression, as does FMADDS.
-	// ppc750cl.s's own changelog names this case: 'fmadds/ps_madd is not rounded twice'.
-	float s0 = (float)(hCPU->fpr[frA].fp0 * roundTo25BitAccuracy(hCPU->fpr[frC].fp0) + hCPU->fpr[frB].fp0);
-	float s1 = (float)(hCPU->fpr[frA].fp1 * roundTo25BitAccuracy(hCPU->fpr[frC].fp1) + hCPU->fpr[frB].fp1);
+	// ps_madd is FUSED: product is not rounded before the add. Use std::fma then cast once.
+	// ppc750cl.s changelog: 'fmadds/ps_madd is not rounded twice'.
+	float s0 = (float)std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	float s1 = (float)std::fma(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1);
 
 	hCPU->fpr[frD].fp0 = flushDenormalToZero(s0);
 	hCPU->fpr[frD].fp1 = flushDenormalToZero(s1);
@@ -96,8 +95,8 @@ void PPCInterpreter_PS_NMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode>>16)&0x1F;
 	frD = (Opcode>>21)&0x1F;
 
-	float s0 = (float)-(hCPU->fpr[frA].fp0 * roundTo25BitAccuracy(hCPU->fpr[frC].fp0) + hCPU->fpr[frB].fp0);
-	float s1 = (float)-(hCPU->fpr[frA].fp1 * roundTo25BitAccuracy(hCPU->fpr[frC].fp1) + hCPU->fpr[frB].fp1);
+	float s0 = (float)-std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	float s1 = (float)-std::fma(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), hCPU->fpr[frB].fp1);
 
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
@@ -115,8 +114,8 @@ void PPCInterpreter_PS_MSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode >> 16) & 0x1F;
 	frD = (Opcode >> 21) & 0x1F;
 
-	float s0 = (float)(hCPU->fpr[frA].fp0 * roundTo25BitAccuracy(hCPU->fpr[frC].fp0) - hCPU->fpr[frB].fp0);
-	float s1 = (float)(hCPU->fpr[frA].fp1 * roundTo25BitAccuracy(hCPU->fpr[frC].fp1) - hCPU->fpr[frB].fp1);
+	float s0 = (float)std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), -hCPU->fpr[frB].fp0);
+	float s1 = (float)std::fma(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), -hCPU->fpr[frB].fp1);
 
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;
@@ -134,8 +133,8 @@ void PPCInterpreter_PS_NMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	frA = (Opcode >> 16) & 0x1F;
 	frD = (Opcode >> 21) & 0x1F;
 
-	float s0 = (float)-(hCPU->fpr[frA].fp0 * roundTo25BitAccuracy(hCPU->fpr[frC].fp0) - hCPU->fpr[frB].fp0);
-	float s1 = (float)-(hCPU->fpr[frA].fp1 * roundTo25BitAccuracy(hCPU->fpr[frC].fp1) - hCPU->fpr[frB].fp1);
+	float s0 = (float)-std::fma(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), -hCPU->fpr[frB].fp0);
+	float s1 = (float)-std::fma(hCPU->fpr[frA].fp1, roundTo25BitAccuracy(hCPU->fpr[frC].fp1), -hCPU->fpr[frB].fp1);
 
 	hCPU->fpr[frD].fp0 = s0;
 	hCPU->fpr[frD].fp1 = s1;

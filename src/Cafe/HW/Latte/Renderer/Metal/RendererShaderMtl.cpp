@@ -313,8 +313,12 @@ MTL::Library* RendererShaderMtl::LibraryFromSource()
 
     // Compile from source
     NS_STACK_SCOPED MTL::CompileOptions* options = MTL::CompileOptions::alloc()->init();
-    if (g_current_game_profile->GetShaderFastMath())
-        options->setFastMathEnabled(true);
+    // setFastMathEnabled is deprecated (macOS 15+) and defaults to YES. Calling it only when
+    // true left shaderFastMath=false as a no-op — nine shipped profiles set false and still
+    // got fast math. setMathMode honours both arms (MathModeFast / MathModeSafe).
+    options->setMathMode(g_current_game_profile->GetShaderFastMath()
+                         ? MTL::MathModeFast
+                         : MTL::MathModeSafe);
 
     if (m_mtlr->GetPositionInvariance())
     {

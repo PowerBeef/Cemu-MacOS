@@ -3,6 +3,7 @@
 #include "Cafe/HW/Latte/Core/LatteShader.h"
 
 #include "Cafe/HW/Latte/Renderer/Renderer.h"
+#include "Cemu/Telemetry/Telemetry.h"
 
 #ifdef ENABLE_OPENGL
 #include "Cafe/HW/Latte/Renderer/OpenGL/OpenGLRenderer.h"
@@ -39,6 +40,7 @@ void LatteTextureLoader_UpdateTextureSliceData(LatteTexture* tex, uint32 sliceIn
 void LatteTexture_ReloadData(LatteTexture* tex)
 {
 	tex->reloadCount++;
+	TLM_INC(Mem, MemTexCacheReloads);
 	for(sint32 mip=0; mip<tex->mipLevels; mip++)
 	{
 		if(tex->dim == Latte::E_DIM::DIM_2D_ARRAY ||
