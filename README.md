@@ -4,7 +4,7 @@
 
 # TesseraEmu
 
-**A Wii U emulator for Apple Silicon Macs.**
+**A hard fork of Cemu — Apple Silicon and Metal only.**
 
 arm64 · Metal · macOS 26+
 
@@ -12,27 +12,98 @@ arm64 · Metal · macOS 26+
 
 ---
 
-The Wii U eShop closed in 2023. The console was discontinued in 2017, sold badly while it existed,
-and holds a library that never came out anywhere else. Hardware fails, discs rot, and nothing is
-being manufactured to replace either. Emulation is how these games stay playable.
+The Wii U eShop closed in 2023. The console was discontinued in 2017. Its library includes games that
+never shipped anywhere else. Hardware fails, discs rot, and nothing is being made to replace either.
+Emulation is how those titles stay playable.
 
-TesseraEmu exists to make that as good as it can be on one kind of machine: an Apple Silicon Mac.
-Not portable, not a compatibility layer, not a compromise. Just Apple Silicon and Metal, treated as
-the target rather than as one platform among several.
+TesseraEmu is not a portable emulator with a Mac backend bolted on. It is a **deliberate hard fork**
+of [Cemu](https://github.com/cemu-project/Cemu) that deletes every other target: **arm64 only**,
+**Metal only**, **macOS 26.0 minimum**. Three graphics backends became one; two host architectures
+became one. The binary links Metal and QuartzCore for drawing — not OpenGL, not Vulkan, not MoltenVK.
 
-A *tessera* is the single tile a mosaic is made from. The mark is a **T** laid in tesserae with one
-tile still resolving, which is roughly the honest state of any emulator: a picture assembled one
-verified piece at a time.
+A *tessera* is one tile in a mosaic. The mark is a **T** laid in tesserae with one tile still
+resolving: accuracy and performance are assembled one measured piece at a time, and the unfinished
+tile is left on purpose.
 
-> [!IMPORTANT]
-> **This is early.** No releases yet, a handful of titles exercised on one machine, no compatibility
-> list. If you want to play something today, [Cemu](https://github.com/cemu-project/Cemu) is the
-> mature, well-supported project and you should use it. Come back here when this one has earned it.
+> [!NOTE]
+> **No numbered releases yet.** Day-to-day play is still early (no public compatibility list; a
+> handful of titles exercised hard on one machine). If you need a mature multi-platform player
+> today, use [Cemu](https://github.com/cemu-project/Cemu). This repo is for people who care that the
+> guest CPU and graphics path are *measured*, not just that games boot.
 
-## Building it
+## Why a hard fork
 
-You need an Apple Silicon Mac (M1 or newer), macOS 26.0 or later, and the Xcode 26 command line
-tools.
+Upstream Cemu is portable by design. Portability has a cost: every codegen and renderer decision is
+mediated by `#ifdef`s and the lowest common denominator. TesseraEmu takes the opposite bet:
+
+| constraint | consequence |
+|---|---|
+| arm64 only | One JIT backend (`BackendAArch64`); x86 IML machinery deleted |
+| Metal only | Latte → MSL at runtime; no GLSL emitter, no MoltenVK |
+| macOS 26+ | APIs and page size (16 KB) assumed, not probed at runtime |
+
+If something looks like it needs a runtime arch or backend check, it doesn't — see
+[`AGENTS.md`](AGENTS.md) and [`docs/porting/`](docs/porting/).
+
+## What is verified
+
+Numbers below appear in [`docs/status/`](docs/status/) (the ledger). Do not invent new ones in
+prose without recording them there.
+
+### Guest CPU — Espresso conformance
+
+TesseraEmu runs [Andrew Church's `ppc750cl.s`](https://achurch.org/cpu-tests/ppc750cl.s) — a
+public-domain PowerPC suite **validated by its author against real Espresso silicon** — as ordinary
+Wii U homebrew. No game image, console, keys, or SDK required.
+
+| run | failures |
+|---|---:|
+| Recompiler, full FPSCR state | **0** |
+| Interpreter, full FPSCR state | **0** |
+| Unique to either arm | **0** |
+| Either arm, values only (`IGNORE_FPSCR_STATE=1`) | **0** |
+
+That is every instruction the suite checks — including all paired-single `ps_*` / `psq_*` ops —
+matching Espresso on **results and FPSCR bookkeeping** (FPRF, FI, exception stickies), with the
+JIT and the interpreter in lockstep.
+
+First landing was **1,030** failures (354 wrong values + 676 FPSCR state). Values closed first;
+full suite then **928 → 0**. How (shared helpers, PS defer, host IXC traps, FMA residual, TwoSum
+fadd): [`docs/testing/fpscr-suite-green.md`](docs/testing/fpscr-suite-green.md).
+
+### Performance (measured, not vibes)
+
+| | |
+|---|---|
+| **Mario Kart 8** | Locked **60 fps** at **~104% of one core** (was **~184%** before idle-spin fixes) |
+| **Breath of the Wild** (Korok Forest) | **20.04 fps** default; **30.06 fps** with `GX2DrawdoneSync` off — a config accuracy tradeoff, not a renderer mystery |
+| **GPU limiters** (Korok, active samples) | **45.6%** ALU-bound; texture sampling 22.8%; the whole memory path ~12.8% |
+
+Idle spins in the scheduler/command processor, fence parking, thread QoS by role, `os_unfair_lock`,
+ARMv8 AES for title decryption, and a lock-free audio ring are part of that picture. Graphics work
+that *didn't* pay off is first-class in the ledger (refuted / cancelled / reverted) so the next pass
+does not pay for it twice.
+
+### Correctness fixes that are not “suite green”
+
+Structural defects found by audit and instrumentation, not only by `ppc750cl`: out-of-bounds
+geometry-shader texture binds; graphic-pack output-shader crash and per-frame OOB pipeline store;
+16 KB page unmap holes; partial JIT invalidation; LOD bias never applied; render-pass splits for
+framebuffer self-dependency; failed Metal compiles no longer abort the process.
+
+### Platform
+
+Native `GameController.framework`, screensaver inhibition, high-resolution Metal drawables,
+symbolicated arm64 crash reports, build-time signing/entitlements. Carbon and SDL-on-main-thread
+input are gone.
+
+Live record of every attempt: **[`docs/status/`](docs/status/)**. Hardware notes:
+[`docs/hardware/`](docs/hardware/). Test ROMs and strategy: [`testing/`](testing/),
+[`docs/testing/`](docs/testing/).
+
+## Building
+
+Apple Silicon Mac (M1 or newer), macOS 26.0+, Xcode 26 command-line tools.
 
 ```sh
 brew install pkgconf nasm automake autoconf libtool cmake ninja
@@ -40,96 +111,45 @@ brew install pkgconf nasm automake autoconf libtool cmake ninja
 git clone --recursive https://github.com/PowerBeef/TesseraEmu
 cd TesseraEmu
 
-export VCPKG_DEFAULT_BINARY_CACHE="$HOME/.cache/vcpkg"
+export VCPKG_DEFAULT_BINARY_CACHE="$HOME/.cache/vcpkg"   # first configure is long without this
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMACOS_BUNDLE=OFF
-cmake --build build
+cmake --build build                                      # ~2 min clean on an M2 after deps
 
 ./bin/TesseraEmu_relwithdebinfo -g /path/to/title.wux
 ```
 
-The first configure builds every dependency from source and takes a while; later builds are about
-two minutes.
+You need `keys.txt` under `~/Library/Application Support/TesseraEmu/` (Wii U common key and per-title
+disc keys from **a console you own**). No keys, game code, or copyrighted assets ship in this repo.
 
-You also need `keys.txt` in `~/Library/Application Support/TesseraEmu/`, holding the Wii U common key
-and the disc key for each title. **Those come from a console you own.** No keys, game code or
-copyrighted assets are distributed here, and none will be.
+Coming from Cemu? On first run the data directory renames `.../Cemu` → `.../TesseraEmu` on the same
+volume when possible (atomic, no copy). If it cannot, your data is left alone and the log says what
+to run.
 
-Already using Cemu? On first run your data directory moves from `.../Cemu` to `.../TesseraEmu`:
-saves, installed titles, keys and all. Same volume, so it is one atomic rename with no copying. If
-it cannot, it leaves your data alone and tells you what to run.
+Full flags, bundles, signing: [`BUILD.md`](BUILD.md). Agent/dev brief: [`AGENTS.md`](AGENTS.md).
 
-See [BUILD.md](/BUILD.md) for app bundles, code signing and the full flag list.
+### CPU suite (no game image)
 
-## What is done so far
+```sh
+# needs official devkitPPC — see testing/toolchain/README.md
+cd testing/cpu-tests && make
+./run.sh                     | ./report.py -    # recompiler
+./run.sh --force-interpreter | ./report.py -    # interpreter
+```
 
-**CPU conformance**
-
-- Runs [Andrew Church's `ppc750cl.s`](https://achurch.org/cpu-tests/ppc750cl.s) — silicon-validated
-  against real Espresso — as Wii U homebrew. No game image, console, keys or SDK required.
-- **Values-only suite (`IGNORE_FPSCR_STATE=1`): 0 failures**, recompiler and interpreter identical.
-  Every wrong *result* the suite can see under that build is fixed (FP, paired-single, integer).
-- **Full suite with FPSCR state: 928 failures**, also arms identical — residual is FPSCR
-  bookkeeping (FPRF, FI/FR, exception stickies), not wrong answers. First landing was 1,030
-  (354 values + 676 FPSCR state); values are closed. See [`testing/cpu-tests/`](/testing/cpu-tests/).
-
-**Performance**
-
-- Removed three idle spins in the scheduler and command processor. Mario Kart 8 went from 184% to
-  104% of one core at an identical locked 60 FPS.
-- Parked a guest fence wait that was being spun on 65 million times a second, worth a further 20% of
-  process CPU in Breath of the Wild.
-- Thread QoS by role: guest cores and the GPU command thread run `USER_INTERACTIVE`, compilation
-  runs `UTILITY` and is sized against the efficiency cluster rather than total core count.
-- `FSpinlock` is now `os_unfair_lock`, so the kernel knows who holds a lock on an asymmetric CPU.
-- Title decryption uses the ARMv8 AES instructions instead of a software table.
-- Audio mixing moved to a lock-free ring, off a mutex that was being taken on CoreAudio's realtime
-  thread.
-
-**Correctness**
-
-- Fixed a constructor writing 248 bytes past the end of an array on every startup, which had been
-  papered over with a `// HACK: ... garbage data` comment for years.
-- Fixed geometry-shader texture bindings writing past the end of the renderer's texture array.
-- Fixed graphic packs with custom output shaders crashing on boot, and writing a pipeline pointer
-  out of bounds once per frame.
-- Fixed guest memory ranges failing to unmap on 16 KB pages, which left them writable across a title
-  switch.
-- Fixed the JIT invalidating only part of its generated code, a stale-instruction hazard on cold
-  paths.
-- Fixed sampler LOD bias never being applied, and graphic packs corrupting GPU registers.
-- Draws that sample the surface they are rendering into now split the render pass, including when
-  the two are separate texture objects over the same memory.
-- A shader stage that fails to compile now drops its draw instead of aborting the emulator.
-- Guest FP and paired-single semantics brought into line with Espresso on the values-only suite
-  (quantize, VE/ZE, FMA rounding, frsp/fctiw, merge excess-range, frsqrte denorms, lfd/PS hazards).
-
-**Platform**
-
-- Native `GameController.framework` input, screensaver inhibition through `NSProcessInfo`, SDL input
-  off the main thread, and Carbon removed.
-- `NSHighResolutionCapable`, without which macOS handed Metal a half-resolution drawable.
-- Crash reports with real symbolicated arm64 backtraces, and a signal handler that survives stack
-  overflow.
-- Code signing and entitlements handled by the build rather than by hand.
-- arm64-only, Metal-only, macOS 26.0 minimum — portability deliberately removed so the binary links
-  no GL/Vulkan/MoltenVK and no x86 path.
-
-Details and measurements for all of it are in [`docs/status/`](/docs/status/). There is also a
-[hardware reference](/docs/hardware/) and a set of [test ROMs](/testing/) that need no game image.
+Expect `RESULT=PASS failures=0` on both.
 
 ## Credit
 
-TesseraEmu is a fork of [Cemu](https://github.com/cemu-project/Cemu), which is the work of many
-people over many years and is the reason this project could exist at all. The Metal renderer it
-builds on was contributed to Cemu by SamoZ256. `LICENSE.txt` is untouched, the About dialog still
-credits Exzap and Petergov, and the copyright line reads *"Cemu Project and TesseraEmu
-contributors"*, extended rather than replaced.
+TesseraEmu is a fork of [Cemu](https://github.com/cemu-project/Cemu) — years of work by many people,
+and the only reason this project can exist. The native Metal renderer it builds on was contributed
+to Cemu by SamoZ256. `LICENSE.txt` is untouched; the About dialog still credits Exzap and Petergov;
+the copyright line is *"Cemu Project and TesseraEmu contributors"* — extended, not replaced.
 
-This project is **not affiliated with or endorsed by the Cemu project**, and carries its own name
-because MPL-2.0 grants no trademark rights. Licensed under [MPL-2.0](/LICENSE.txt).
+**Not affiliated with or endorsed by the Cemu project.** The name is separate because MPL-2.0 grants
+no trademark rights. Licensed under [MPL-2.0](LICENSE.txt).
 
 > [!NOTE]
-> **This project is AI-assisted development.** Cemu asks that contributed code be written and
-> understood by a human, for good reasons. **Do not submit these changes upstream as-is.**
+> **AI-assisted development.** Cemu asks that contributed code be written and understood by a human,
+> for good reasons. **Do not submit these changes upstream as-is.**
 
 Wii and Wii U are trademarks of Nintendo. TesseraEmu is not affiliated with Nintendo.

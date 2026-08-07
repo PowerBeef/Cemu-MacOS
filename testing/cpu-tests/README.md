@@ -77,22 +77,21 @@ Output is `TESSERA-CPUTEST` lines on stdout via `--forward-console-logging`. Pip
   instructions the suite assumes correct is broken: `beq`/`bne cr0`, `bl`, `blr`, `fcmpu`, `mflr`,
   `mtlr`. Fix that before reading anything else.
 
-**A non-zero count on the first run is the expected outcome, not a setback.** This is a 23,502-line
-silicon-validated suite meeting a JIT that has never been conformance-tested.
-
-### Measured (current — see `docs/status` item `rm-fp-conformance`)
+### Measured (current — ledger `fpscr-full-suite-green`, at `791556d`)
 
 | run | failures |
 |---|---|
-| recompiler, full FPSCR (`IGNORE` off) | **928** |
-| interpreter, full FPSCR | **928** |
+| recompiler, full FPSCR (`IGNORE` off) | **0** |
+| interpreter, full FPSCR | **0** |
 | unique to either arm | **0** |
 | either arm, `IGNORE_FPSCR_STATE=1` (values only) | **0** |
 
-**Values-only is green.** Every wrong *result* the suite can see under `IGNORE_FPSCR_STATE=1` is
-fixed; both arms stay identical. The residual **928** on the full suite is FPSCR bookkeeping
-(FPRF, FI/FR, exception stickies and enables) — dominated by `frsp`, the mad family, `fctiw`, and
-PS arithmetic. Gate for further work: wire those bits, re-measure the **full** suite.
+**Full suite green.** Values *and* FPSCR bookkeeping (FPRF, FI, exception stickies) match Espresso
+on every instruction the suite checks, and the recompiler matches the interpreter. That is the
+load-bearing accuracy claim for this fork's guest FP/PS path.
+
+How the residual was driven from 1,030 → 0 — host IXC traps, PS defer, FMA residual, TwoSum fadd —
+is written up in [`docs/testing/fpscr-suite-green.md`](../../docs/testing/fpscr-suite-green.md).
 
 ### First landing (2026-08-03, historical)
 
@@ -103,9 +102,8 @@ PS arithmetic. Gate for further work: wire those bits, re-measure the **full** s
 | unique to either arm | **0** |
 | recompiler, `IGNORE_FPSCR_STATE=1` | **354** |
 
-At first landing the arms were already identical (shared decode/semantics, not AArch64-only). Of
-1,030, **676** were FPSCR state and **354** wrong values. The value pile is closed; full-suite
-count fell 1,030 → **928**.
+At first landing the arms already matched (shared decode/semantics, not AArch64-only). Split:
+**676** FPSCR state, **354** wrong values. Values closed first; full suite then 928 → … → **0**.
 
 ## What it does not cover
 

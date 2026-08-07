@@ -1628,14 +1628,14 @@
         "791556d"
       ],
       "verdict": "Full `ppc750cl` suite (FPSCR state on) is **PASS failures=0** on both interpreter and recompiler. Path: 928 \u2192 840 \u2192 285 \u2192 189 \u2192 152 \u2192 95 \u2192 87 \u2192 45 \u2192 31 \u2192 7 \u2192 5 \u2192 0. Final lever: noinline FMA residual `fma(a,c,-r)+b` (host IXC and RZ\u2260RU miss RTZ halfway edges; LLVM CSE defeats same-function residual) plus TwoSum residual on fadd/fsub so the suite's follow-up fadd after RTZ fmadd still sets FI. Values-only remains green; arms identical.",
-      "note": "Non-goals held: FR, OE/UE, softfloat rewrite. Pack OX under PS defer kept in acc (bind_dest clears pending). Apple Silicon: hardware fmadd honors RMode for the 1.333\u2026\u00b71.5+0 edge; FPSR.IXC stays clear; fesetround-based RZ\u2260RU is optimized away.",
+      "note": "Non-goals held: FR, OE/UE, softfloat rewrite. Pack OX under PS defer kept in acc (bind_dest clears pending). Apple Silicon: hardware fmadd honors RMode for the 1.333\u2026\u00b71.5+0 edge; FPSR.IXC stays clear; fesetround-based RZ\u2260RU is optimized away. Write-up: docs/testing/fpscr-suite-green.md. README and testing/cpu-tests rebased on PASS failures=0.",
       "measured": {
         "scene": "ppc750cl.s full FPSCR (IGNORE_FPSCR_STATE=0), int+rec",
         "at_commit": "791556d",
         "date": "2026-08-07",
         "n": 1
       },
-      "ref": "docs/testing/00-test-strategy.md \u2014 First result"
+      "ref": "docs/testing/fpscr-suite-green.md \u2014 How the full suite went green"
     }
   ],
   "refuted": [

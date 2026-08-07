@@ -1,33 +1,30 @@
 # Testing TesseraEmu — strategy, tools, provenance
 
-**Status: the CPU conformance suite is the live gate for FP/PS accuracy.** Values-only is green;
-full suite residual is FPSCR bookkeeping. Read [§7 Status](#7-status-honest) and
-`docs/status` item `rm-fp-conformance` before quoting numbers.
+**Status: the CPU conformance suite is green.** Full FPSCR and values-only both report
+`PASS failures=0` on interpreter and recompiler. Read [§7 Status](#7-status-honest), ledger item
+`fpscr-full-suite-green`, and the write-up [`fpscr-suite-green.md`](fpscr-suite-green.md) before
+changing FP helpers or quoting numbers.
 
-### Current result (2026-08-07 — `rm-fp-conformance`)
+### Current result (2026-08-07 — `fpscr-full-suite-green`, at `791556d`)
 
 | run | failures |
 |---|---|
-| recompiler, full FPSCR (`IGNORE` off) | **928** |
-| interpreter, full FPSCR | **928** |
+| recompiler, full FPSCR (`IGNORE` off) | **0** |
+| interpreter, full FPSCR | **0** |
 | failures unique to either arm | **0** |
 | either arm, `IGNORE_FPSCR_STATE=1` (values only) | **0** |
 
 **What that means:**
 
-1. **Values-only is closed.** Every wrong *result* the suite can see with FPSCR state checks
-   suppressed is fixed; arms stay identical. The integer core was already essentially correct; the
-   FP and paired-single *value* paths are now suite-green under IGNORE.
-2. **Full suite residual is FPSCR bookkeeping** (FPRF, FI/FR, exception stickies/enables), not a
-   second pile of wrong answers. Highest volume: `frsp`, the mad family, `fctiw`, PS arithmetic.
-3. **Arms remain identical** on both builds — still shared decode/semantics, not AArch64-only.
+1. **Values and FPSCR bookkeeping are closed** for every instruction the suite checks — results,
+   FPRF, FI, and exception stickies match Espresso.
+2. **Arms remain identical** — shared `ATTR_MS_ABI` helpers, not an AArch64-only fluke.
+3. **Host IEEE flags are not trusted.** The last mile used software residual (FMA
+   `fma(a,c,-r)+b`, fadd TwoSum) because Apple Silicon clears IXC on suite RTZ edges and LLVM
+   CSE defeats same-function RZ≠RU. See [`fpscr-suite-green.md`](fpscr-suite-green.md).
 
-Landed along the way (ledger has the commits): PS quantize / VE / FMA, frsp/fctiw FZ paths, mad
-double-rounding, FPSCR moves (mcrfs/mtfs*/CR1), mcrxr/stwcx, fdiv tininess, excess-range merge
-slot asymmetry, frsqrte denorms, lfd→ps1 hazard, denorm-merge sticky store encoding. Detail lives
-in `docs/status/ledger.json` and the commit trail claimed by `rm-fp-conformance`.
-
-**Next lever:** wire FPRF + FI/FR on `frsp` and the mad family; re-measure the **full** suite.
+Path from first landing: **1,030 → 928 (values closed) → … → 0**. Non-goals held: `FR`, OE/UE
+enabled paths, softfloat rewrite, cycle accuracy.
 
 ### First result (2026-08-03, historical)
 
@@ -83,9 +80,10 @@ layer for a Latte→MSL decompiler. They are useful as **test designs**, not as 
 
 Layered from the guest CPU outward. Each layer states what it can and cannot prove.
 
-### 3.1 CPU conformance — `ppc750cl.s` — **assembled, never run**
+### 3.1 CPU conformance — `ppc750cl.s` — **green (full FPSCR + values)**
 
-The single highest-value artefact found. See `testing/cpu-tests/README.md` for the full write-up.
+The single highest-value artefact found. Suite runner: `testing/cpu-tests/`. How FPSCR went from
+1,030 failures to 0: [`fpscr-suite-green.md`](fpscr-suite-green.md).
 
 - 23,502 lines of self-checking PowerPC assembly by Andrew Church.
 - **Public domain** — the header states "No copyright is claimed on this file."
@@ -256,7 +254,7 @@ conformance-tested. Every failure is a finding and belongs in `docs/status/ledge
 | wut-tools (`elf2rpl`, `rplimportgen`, `wuhbtool`, …) | **via `wiiu-dev`** |
 | wut (`libwut.a` + headers) | **via `wiiu-dev`** |
 | `ppc750cl.rpx` / `.wuhb` | **builds** — 1,105 `ps_*`, 93 `psq_*` preserved into the ROM |
-| **`ppc750cl` executed on TesseraEmu** | **YES** — values-only **0**; full FPSCR **928**; both arms identical |
+| **`ppc750cl` executed on TesseraEmu** | **YES** — values-only **0**; full FPSCR **0**; both arms identical |
 | `report.py` classification and `--compare` | **working against real logs** |
 | Interpreter-vs-JIT fuzzer | not built |
 | HLE / `coreinit` tests | not built |
