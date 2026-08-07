@@ -1215,6 +1215,9 @@ public:
 				case 38:
 					PPCInterpreter_MTFSB1X(hCPU, opcode);
 					break;
+				case 70: // mtfsb0
+					PPCInterpreter_MTFSB0X(hCPU, opcode);
+					break;
 				case 40:
 					PPCInterpreter_FNEG(hCPU, opcode);
 					break;

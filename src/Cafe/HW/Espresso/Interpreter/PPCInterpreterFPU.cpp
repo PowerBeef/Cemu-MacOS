@@ -150,40 +150,51 @@ static inline uint64 ppc_quiet_nan(uint64 x)
 	return x | 0x0008000000000000ULL;
 }
 
-// Returns true and writes *out when a special (NaN / invalid) short-circuits.
-// isMsub: effective addend is −b for the ∞±∞ check only; NaN selection uses raw b.
-// FPSCR[VE] result-suppression (check_fpu_noresult) is not handled here — both
-// arms leave that residual for a later FPSCR-aware pass.
-static bool ppc_fmadd_try_special(double a, double b, double c, bool isMsub, double* out)
+// SNaN: exp all-ones, frac nonzero, quiet bit (MSB of frac) clear.
+static inline bool ppc_bits_is_snan(uint64 x)
+{
+	return ppc_bits_is_nan(x) && ((x & 0x0008000000000000ULL) == 0);
+}
+
+// Special-case result class for VE handling:
+//  0 = not special — use std::fma
+//  1 = write *out (QNaN-only selection; no invalid exception → VE does not suppress)
+//  2 = invalid (SNaN operand and/or 0·∞ / ∞−∞) — VE suppresses frD write
+static int ppc_fmadd_try_special(double a, double b, double c, bool isMsub, double* out)
 {
 	const uint64 ua = *(uint64*)&a;
 	const uint64 ub = *(uint64*)&b;
 	const uint64 uc = *(uint64*)&c;
 
-	if (ppc_bits_is_nan(ua))
+	const bool snanA = ppc_bits_is_snan(ua);
+	const bool snanB = ppc_bits_is_snan(ub);
+	const bool snanC = ppc_bits_is_snan(uc);
+	const bool anySNaN = snanA || snanB || snanC;
+	const bool nanA = ppc_bits_is_nan(ua);
+	const bool nanB = ppc_bits_is_nan(ub);
+	const bool nanC = ppc_bits_is_nan(uc);
+
+	// NaN selection order frA → frB → frC (Espresso / ppc750cl.s).
+	if (nanA || nanB || nanC)
 	{
-		const uint64 r = ppc_quiet_nan(ua);
+		uint64 selected;
+		if (nanA)
+			selected = ua;
+		else if (nanB)
+			selected = ub;
+		else
+			selected = uc;
+		const uint64 r = ppc_quiet_nan(selected);
 		*out = *(double*)&r;
-		return true;
-	}
-	if (ppc_bits_is_nan(ub))
-	{
-		const uint64 r = ppc_quiet_nan(ub);
-		*out = *(double*)&r;
-		return true;
-	}
-	if (ppc_bits_is_nan(uc))
-	{
-		const uint64 r = ppc_quiet_nan(uc);
-		*out = *(double*)&r;
-		return true;
+		// SNaN anywhere signals invalid even if a QNaN was selected first.
+		return anySNaN ? 2 : 1;
 	}
 
 	// 0 · ∞ or ∞ · 0 → VXIMZ default QNaN
 	if ((ppc_bits_is_zero(ua) && ppc_bits_is_inf(uc)) || (ppc_bits_is_inf(ua) && ppc_bits_is_zero(uc)))
 	{
 		*out = *(double*)&kPpcDefaultQNaN;
-		return true;
+		return 2;
 	}
 
 	// ∞ · finite ± ∞ of opposite sign → VXISI default QNaN
@@ -196,26 +207,61 @@ static bool ppc_fmadd_try_special(double a, double b, double c, bool isMsub, dou
 		if (prodSign != addSign)
 		{
 			*out = *(double*)&kPpcDefaultQNaN;
-			return true;
+			return 2;
 		}
 	}
 
-	return false;
+	return 0;
+}
+
+// Prior frD + VE, set by ppc_fma_bind_dest before each helper call so both the
+// interpreter and the recompiler can honour FPSCR[VE] result suppression.
+static thread_local double s_fma_prev = 0.0;
+static thread_local bool s_fma_ve = false;
+static thread_local bool s_fma_suppressed = false;
+
+ATTR_MS_ABI void ppc_fma_bind_dest(double prevFrD)
+{
+	s_fma_prev = prevFrD;
+	s_fma_suppressed = false;
+	PPCInterpreter_t* hCPU = PPCInterpreter_getCurrentInstance();
+	s_fma_ve = hCPU && (hCPU->fpscr & FPSCR_VE);
+}
+
+ATTR_MS_ABI bool ppc_fma_was_suppressed()
+{
+	return s_fma_suppressed;
+}
+
+static inline double ppc_fma_finish_special(int kind, double specialResult)
+{
+	// kind 2 + VE → leave destination unchanged (suite check_fpu_noresult).
+	if (kind == 2 && s_fma_ve)
+	{
+		s_fma_suppressed = true;
+		return s_fma_prev;
+	}
+	s_fma_suppressed = false;
+	return specialResult;
 }
 
 ATTR_MS_ABI double ppc_fmadd(double a, double c, double b)
 {
 	double r;
-	if (ppc_fmadd_try_special(a, b, c, false, &r))
-		return r;
+	const int kind = ppc_fmadd_try_special(a, b, c, false, &r);
+	if (kind != 0)
+		return ppc_fma_finish_special(kind, r);
+	s_fma_suppressed = false;
 	return std::fma(a, c, b);
 }
 
 ATTR_MS_ABI double ppc_fmsub(double a, double c, double b)
 {
 	double r;
-	if (ppc_fmadd_try_special(a, b, c, true, &r))
-		return r;
+	const int kind = ppc_fmadd_try_special(a, b, c, true, &r);
+	if (kind != 0)
+		return ppc_fma_finish_special(kind, r);
+	s_fma_suppressed = false;
 	return std::fma(a, c, -b);
 }
 
@@ -223,16 +269,20 @@ ATTR_MS_ABI double ppc_fnmadd(double a, double c, double b)
 {
 	double r;
 	// Selected/generated NaN is not sign-flipped (suite fnmadd NaN cases use f10/f12 as-is).
-	if (ppc_fmadd_try_special(a, b, c, false, &r))
-		return r;
+	const int kind = ppc_fmadd_try_special(a, b, c, false, &r);
+	if (kind != 0)
+		return ppc_fma_finish_special(kind, r);
+	s_fma_suppressed = false;
 	return -std::fma(a, c, b);
 }
 
 ATTR_MS_ABI double ppc_fnmsub(double a, double c, double b)
 {
 	double r;
-	if (ppc_fmadd_try_special(a, b, c, true, &r))
-		return r;
+	const int kind = ppc_fmadd_try_special(a, b, c, true, &r);
+	if (kind != 0)
+		return ppc_fma_finish_special(kind, r);
+	s_fma_suppressed = false;
 	return -std::fma(a, c, -b);
 }
 
@@ -564,6 +614,7 @@ void PPCInterpreter_FMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fmadd(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
@@ -576,6 +627,7 @@ void PPCInterpreter_FNMADD(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fnmadd(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
@@ -588,6 +640,7 @@ void PPCInterpreter_FMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fmsub(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
@@ -600,6 +653,7 @@ void PPCInterpreter_FNMSUB(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
 	hCPU->fpr[frD].fpr = ppc_fnmsub(hCPU->fpr[frA].fpr, hCPU->fpr[frC].fpr, hCPU->fpr[frB].fpr);
 
 	PPCInterpreter_nextInstruction(hCPU);
@@ -761,8 +815,11 @@ void PPCInterpreter_FMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	const double r = ppc_fmadd(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
-	hCPU->fpr[frD].fpr = ppc_maybe_round_single(r);
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	double r = ppc_fmadd(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
+	if (!ppc_fma_was_suppressed())
+		r = ppc_maybe_round_single(r);
+	hCPU->fpr[frD].fpr = r;
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -776,8 +833,11 @@ void PPCInterpreter_FNMADDS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	const double r = ppc_fnmadd(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
-	hCPU->fpr[frD].fpr = ppc_maybe_round_single(r);
+	ppc_fma_bind_dest(hCPU->fpr[frD].fpr);
+	double r = ppc_fnmadd(hCPU->fpr[frA].fpr, roundTo25BitAccuracy(hCPU->fpr[frC].fpr), hCPU->fpr[frB].fpr);
+	if (!ppc_fma_was_suppressed())
+		r = ppc_maybe_round_single(r);
+	hCPU->fpr[frD].fpr = r;
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -791,8 +851,11 @@ void PPCInterpreter_FMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	const double r = ppc_fmsub(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
-	hCPU->fpr[frD].fp0 = ppc_maybe_round_single(r);
+	ppc_fma_bind_dest(hCPU->fpr[frD].fp0);
+	double r = ppc_fmsub(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	if (!ppc_fma_was_suppressed())
+		r = ppc_maybe_round_single(r);
+	hCPU->fpr[frD].fp0 = r;
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 
@@ -806,8 +869,11 @@ void PPCInterpreter_FNMSUBS(PPCInterpreter_t* hCPU, uint32 Opcode)
 	int frD, frA, frB, frC;
 	PPC_OPC_TEMPL_A(Opcode, frD, frA, frB, frC);
 
-	const double r = ppc_fnmsub(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
-	hCPU->fpr[frD].fp0 = ppc_maybe_round_single(r);
+	ppc_fma_bind_dest(hCPU->fpr[frD].fp0);
+	double r = ppc_fnmsub(hCPU->fpr[frA].fp0, roundTo25BitAccuracy(hCPU->fpr[frC].fp0), hCPU->fpr[frB].fp0);
+	if (!ppc_fma_was_suppressed())
+		r = ppc_maybe_round_single(r);
+	hCPU->fpr[frD].fp0 = r;
 	if (PPC_PSE)
 		hCPU->fpr[frD].fp1 = hCPU->fpr[frD].fp0;
 

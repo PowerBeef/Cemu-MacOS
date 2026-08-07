@@ -45,14 +45,35 @@ void PPCInterpreter_MTFSB1X(PPCInterpreter_t* hCPU, uint32 Opcode)
 	cemuLog_logDebug(LogType::Force, "Rare instruction: MTFSB1X");
 	int crbD, n1, n2;
 	PPC_OPC_TEMPL_X(Opcode, crbD, n1, n2);
+	// Bits 1 and 2 (FEX, VX) are computed and not writable.
 	if (crbD != 1 && crbD != 2) 
 	{
-		hCPU->fpscr |= 1 << (31 - crbD);
+		hCPU->fpscr |= 1u << (31 - crbD);
 		PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
 	}
 	if (Opcode & PPC_OPC_RC) 
 	{
 		// update cr1 flags
+		PPC_ASSERT(true);
+	}
+
+	PPCInterpreter_nextInstruction(hCPU);
+}
+
+// mtfsb0 crbD — clear one FPSCR bit. Was unimplemented, so VE (and other enables)
+// stuck on after the suite's first `mtfsb1 24` / `mtfsb0 24` pair and every later
+// invalid FMA looked like a VE-suppressed noresult.
+void PPCInterpreter_MTFSB0X(PPCInterpreter_t* hCPU, uint32 Opcode)
+{
+	int crbD, n1, n2;
+	PPC_OPC_TEMPL_X(Opcode, crbD, n1, n2);
+	if (crbD != 1 && crbD != 2)
+	{
+		hCPU->fpscr &= ~(1u << (31 - crbD));
+		PPCInterpreter_setRoundingModeFromFPSCR(hCPU);
+	}
+	if (Opcode & PPC_OPC_RC)
+	{
 		PPC_ASSERT(true);
 	}
 

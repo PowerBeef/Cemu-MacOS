@@ -192,6 +192,12 @@ ATTR_MS_ABI double roundTo25BitAccuracy(double d);
 // (order frA → frB → frC; SNaN quieted; 0·∞ → default QNaN; nmadd does not
 // flip NaN sign). Args are (frA, frC, frB) matching the product A·C ± B.
 // Callables from the recompiler via make_call_imm.
+//
+// Call ppc_fma_bind_dest(current frD) immediately before each helper so that
+// FPSCR[VE] can suppress the write (return the prior value) on invalid ops.
+ATTR_MS_ABI void ppc_fma_bind_dest(double prevFrD);
+// True after a helper returned prevFrD because VE blocked an invalid op.
+ATTR_MS_ABI bool ppc_fma_was_suppressed();
 ATTR_MS_ABI double ppc_fmadd(double a, double c, double b);
 ATTR_MS_ABI double ppc_fmsub(double a, double c, double b);
 ATTR_MS_ABI double ppc_fnmadd(double a, double c, double b);
@@ -209,6 +215,7 @@ void PPCInterpreter_MFMSR(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MTMSR(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MFTB(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MTFSB1X(PPCInterpreter_t* hCPU, uint32 Opcode);
+void PPCInterpreter_MTFSB0X(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MFCR(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MCRF(PPCInterpreter_t* hCPU, uint32 Opcode);
 void PPCInterpreter_MTCRF(PPCInterpreter_t* hCPU, uint32 Opcode);
