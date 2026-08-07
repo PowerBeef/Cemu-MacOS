@@ -299,7 +299,56 @@ static inline void ppc_fpscr_note_mul_inexact(double a, double c, double r)
 {
 	if (!std::isfinite(a) || !std::isfinite(c) || !std::isfinite(r))
 		return;
-	if (std::fma(a, c, -r) != 0.0)
+	// Bit test: (-0.0 == 0.0) is true in IEEE, so use integer compare.
+	const double resid = std::fma(a, c, -r);
+	uint64 bits;
+	std::memcpy(&bits, &resid, sizeof(bits));
+	if ((bits << 1) != 0) // any nonzero payload (incl. −0 only is zero)
+		s_fpscr_pending_sticky |= FPSCR_XX;
+}
+
+// True iff a*c+b is not exactly the rounded result r.
+// Host FPSR.IXC is clear on some RTZ halfway edges (suite: 1.333…·1.5+0 → 2−ulp).
+// noinline: LLVM reassoc of fma(a,c,-r)+b → 0 after r=fma(a,c,b) is wrong.
+static void ppc_fpscr_note_fma_inexact(double a, double c, double b, double r) __attribute__((noinline));
+static void ppc_fpscr_note_fma_inexact(double a, double c, double b, double r)
+{
+	if (!std::isfinite(a) || !std::isfinite(c) || !std::isfinite(b) || !std::isfinite(r))
+		return;
+	const double t = std::fma(a, c, -r);
+	const double resid = std::fma(1.0, t, b);
+	uint64 bits;
+	std::memcpy(&bits, &resid, sizeof(bits));
+	if ((bits << 1) != 0)
+		s_fpscr_pending_sticky |= FPSCR_XX;
+}
+
+// Single-domain residual (host fmaf IXC also misses suite edges).
+static void ppc_fpscr_note_fmaf_inexact(float a, float c, float b, float r) __attribute__((noinline));
+static void ppc_fpscr_note_fmaf_inexact(float a, float c, float b, float r)
+{
+	if (!std::isfinite(a) || !std::isfinite(c) || !std::isfinite(b) || !std::isfinite(r))
+		return;
+	const float t = std::fmaf(a, c, -r);
+	const float resid = t + b;
+	uint32 bits;
+	std::memcpy(&bits, &resid, sizeof(bits));
+	if ((bits << 1) != 0)
+		s_fpscr_pending_sticky |= FPSCR_XX;
+}
+
+// TwoSum error term: nonzero ⇒ a+b is not exactly r (host IXC misses RTZ edges,
+// e.g. suite fmadd 2−ulp then fadd +2^-53 still wants FI on the fadd).
+static void ppc_fpscr_note_add_inexact(double a, double b, double r) __attribute__((noinline));
+static void ppc_fpscr_note_add_inexact(double a, double b, double r)
+{
+	if (!std::isfinite(a) || !std::isfinite(b) || !std::isfinite(r))
+		return;
+	const double z = r - a;
+	const double resid = (a - (r - z)) + (b - z);
+	uint64 bits;
+	std::memcpy(&bits, &resid, sizeof(bits));
+	if ((bits << 1) != 0)
 		s_fpscr_pending_sticky |= FPSCR_XX;
 }
 
@@ -679,12 +728,11 @@ static inline double ppc_fma_double_commit(double a, double c, double b, bool ne
 {
 	__arm_wsr("fpsr", 0);
 	double r = ppc_fma_double_nofz(a, c, b);
+	// Residual against the pre-negate fused result (fmsub already passes −b).
+	ppc_fpscr_note_fma_inexact(a, c, b, r);
 	if (negate)
 		r = -r;
 	ppc_fpscr_note_host_fpsr();
-	// Software FI when b is ±0 (suite 1.333…·1.5+0 → 2−ulp with FI; host IXC misses).
-	if ((b == 0.0 || b == -0.0) && std::isfinite(a) && std::isfinite(c) && std::isfinite(r))
-		ppc_fpscr_note_mul_inexact(a, c, r);
 	// Overflow of a*c+b: finite inputs → Inf.
 	const uint64 ua = *(const uint64*)&a, uc = *(const uint64*)&c, ub = *(const uint64*)&b;
 	const uint64 ur = *(const uint64*)&r;
@@ -807,6 +855,8 @@ static inline double ppc_fma_single_domain(double a, double cIn, double b, bool 
 
 	__arm_wsr("fpsr", 0);
 	double r;
+	// Addend as used in the fused op (before optional result negate).
+	const double bUse = b;
 	if (cOverflowToInf)
 	{
 		// 25-bit round of DBL_MAX is 2^1024, which IEEE-packs as Inf. Multiplying
@@ -817,6 +867,8 @@ static inline double ppc_fma_single_domain(double a, double cIn, double b, bool 
 		const double prod = (std::signbit(a) != std::signbit(c)) ? -mag : mag;
 		r = prod + b;
 		r = ppc_fma_result_to_single(r);
+		// Residual vs packed single (domain of the instruction result).
+		ppc_fpscr_note_fma_inexact(a, c, bUse, r);
 	}
 	else
 	{
@@ -831,7 +883,7 @@ static inline double ppc_fma_single_domain(double a, double cIn, double b, bool 
 		const float fb = ppc_bits_to_f32(sb);
 
 		// Finite double that becomes Inf as f32, or excess precision → double fma
-		// then IEEE-round to single (not ConvertToSingleNoFTZ truncate).
+		// then pack to single (ConvertToSingleNoFTZ for denorm sticky).
 		const bool overflowed =
 			(std::isfinite(a) && !std::isfinite(fa)) ||
 			(std::isfinite(c) && !std::isfinite(fc)) ||
@@ -845,14 +897,18 @@ static inline double ppc_fma_single_domain(double a, double cIn, double b, bool 
 		{
 			r = ppc_fma_double_nofz(a, c, b);
 			r = ppc_fma_result_to_single(r);
+			// Against packed result so single-domain trunc counts as inexact.
+			ppc_fpscr_note_fma_inexact(a, c, bUse, r);
 		}
 		else
 		{
 			// Exact f32 operands: fmaf keeps denormal sticky (suite 0x7F000001).
 			// FZ already clear for this whole function.
-			const uint32 sr = ppc_f32_to_bits(std::fmaf(fa, fc, fb));
+			const float fr = std::fmaf(fa, fc, fb);
+			const uint32 sr = ppc_f32_to_bits(fr);
 			const uint64 dr = ConvertToDoubleNoFTZ(sr);
 			r = *(double*)&dr;
+			ppc_fpscr_note_fmaf_inexact(fa, fc, fb, fr);
 		}
 	}
 	ppc_fpscr_note_host_fpsr();
@@ -1954,6 +2010,7 @@ ATTR_MS_ABI double ppc_fadd(double a, double b)
 	__arm_wsr("fpsr", 0);
 	const double r = a + b;
 	ppc_fpscr_note_host_fpsr();
+	ppc_fpscr_note_add_inexact(a, b, r);
 	ppc_arith_commit_fpscr(r, false);
 	return r;
 }
@@ -1972,6 +2029,7 @@ ATTR_MS_ABI double ppc_fsub(double a, double b)
 	__arm_wsr("fpsr", 0);
 	const double r = a - b;
 	ppc_fpscr_note_host_fpsr();
+	ppc_fpscr_note_add_inexact(a, -b, r);
 	ppc_arith_commit_fpscr(r, false);
 	return r;
 }
@@ -2195,7 +2253,11 @@ ATTR_MS_ABI double ppc_ps_pack_arith(double r)
 		constexpr double kMaxSingle = 0x1.fffffep+127;
 		if (std::isfinite(r) && std::fabs(r) > kMaxSingle)
 		{
-			ppc_fpscr_note_sticky(FPSCR_OX | FPSCR_XX);
+			// OR into acc when deferring — bind_dest for the next lane clears pending.
+			if (s_fpscr_defer)
+				s_fpscr_acc_sticky |= FPSCR_OX | FPSCR_XX;
+			else
+				ppc_fpscr_note_sticky(FPSCR_OX | FPSCR_XX);
 			const uint64 inf = (b & 0x8000000000000000ULL) | 0x7FF0000000000000ULL;
 			out = *(const double*)&inf;
 		}
